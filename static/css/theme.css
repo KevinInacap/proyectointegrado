@@ -1,0 +1,133 @@
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap');
+
+:root {
+    --muni-red: #C41230;
+    --muni-red-hover: #A00E26;
+    --muni-red-dark: #920000;
+    --muni-red-light: #FFF1F2;
+
+    --muni-dark: #0F172A;
+    --muni-dark-slate: #1E293B;
+    --muni-gray-dark: #334155;
+    --muni-gray: #64748B;
+    --muni-gray-light: #94A3B8;
+    --muni-border: #E2E8F0;
+    --muni-border-light: #F1F5F9;
+    --muni-bg-page: #F8FAFC;
+    --muni-bg-card: #FFFFFF;
+
+    --status-success: #16A34A;
+    --status-success-bg: #DCFCE7;
+    --status-warning: #D97706;
+    --status-warning-bg: #FEF3C7;
+    --status-danger: #DC2626;
+    --status-danger-bg: #FEE2E2;
+    --status-info: #0284C7;
+    --status-info-bg: #E0F2FE;
+
+    --font-heading: 'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    --font-body: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+
+    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.07), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
+    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -4px rgba(0, 0, 0, 0.04);
+}
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    font-family: var(--font-body);
+    background-color: var(--muni-bg-page);
+    color: var(--muni-dark);
+    margin: 0;
+    padding: 0;
+    -webkit-font-smoothing: antialiased;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+    font-family: var(--font-heading);
+    font-weight: 700;
+    color: var(--muni-dark);
+}
+
+.btn-muni-primary {
+    background-color: var(--muni-red);
+    color: #FFFFFF;
+    border: none;
+    border-radius: 8px;
+    font-family: var(--font-heading);
+    font-weight: 600;
+    padding: 0.625rem 1.25rem;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+}
+
+.btn-muni-primary:hover {
+    background-color: var(--muni-red-hover);
+    color: #FFFFFF;
+    box-shadow: 0 4px 12px rgba(196, 18, 48, 0.25);
+}
+
+.btn-muni-outline {
+    background-color: transparent;
+    color: var(--muni-red);
+    border: 1.5px solid var(--muni-red);
+    border-radius: 8px;
+    font-family: var(--font-heading);
+    font-weight: 600;
+    padding: 0.625rem 1.25rem;
+    transition: all 0.2s ease;
+}
+
+.btn-muni-outline:hover {
+    background-color: var(--muni-red);
+    color: #FFFFFF;
+}
+
+.muni-card {
+    background: var(--muni-bg-card);
+    border: 1px solid var(--muni-border);
+    border-radius: 12px;
+    box-shadow: var(--shadow-sm);
+    padding: 1.5rem;
+    transition: box-shadow 0.2s ease;
+}
+
+.muni-card:hover {
+    box-shadow: var(--shadow-md);
+}
+
+.badge-status {
+    padding: 0.35rem 0.75rem;
+    border-radius: 9999px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+}
+
+.badge-status-success {
+    background-color: var(--status-success-bg);
+    color: var(--status-success);
+}
+
+.badge-status-warning {
+    background-color: var(--status-warning-bg);
+    color: var(--status-warning);
+}
+
+.badge-status-danger {
+    background-color: var(--status-danger-bg);
+    color: var(--status-danger);
+}
