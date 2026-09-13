@@ -1,0 +1,995 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SGR Alcaldía & Control Central · Ilustre Municipalidad de La Serena</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        :root {
+            --muni-navy: #071326;
+            --muni-navy-slate: #0F172A;
+            --muni-red: #C41230;
+            --muni-red-hover: #9E0E26;
+            --muni-rose: #E11D48;
+            --muni-bg: #F8FAFC;
+            --muni-card-bg: #FFFFFF;
+            --muni-border: #E2E8F0;
+            --muni-border-subtle: #EDF2F7;
+            --muni-text-main: #0F172A;
+            --muni-text-muted: #64748B;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+            background-color: var(--muni-bg);
+            color: var(--muni-text-main);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* HEADER FLOTANTE INSTITUCIONAL */
+        .floating-header-wrapper {
+            padding: 0.5rem 0.5rem 0 0.5rem;
+        }
+
+        .floating-navbar {
+            margin: 1rem 1.5rem 1.5rem 1.5rem;
+            background: var(--muni-navy);
+            border-radius: 16px;
+            box-shadow: 0 10px 25px -5px rgba(7, 19, 38, 0.25);
+            padding: 0.85rem 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+            position: sticky;
+            top: 1rem;
+            z-index: 1020;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .header-brand {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            text-decoration: none;
+            color: #FFFFFF;
+        }
+
+        .header-logo {
+            height: 40px;
+            width: auto;
+            object-fit: contain;
+        }
+
+        .header-title-box {
+            border-left: 1px solid rgba(255, 255, 255, 0.2);
+            padding-left: 14px;
+        }
+
+        .header-title {
+            font-size: 1rem;
+            font-weight: 800;
+            letter-spacing: 0.3px;
+            color: #FFFFFF;
+            line-height: 1.2;
+            margin: 0;
+        }
+
+        .header-subtitle {
+            font-size: 0.74rem;
+            color: #94A3B8;
+            margin: 0;
+            font-weight: 500;
+        }
+
+        .pill-select {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            color: #FFFFFF;
+            border-radius: 10px;
+            padding: 7px 14px;
+            font-size: 0.84rem;
+            font-weight: 600;
+            outline: none;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .pill-select option {
+            background-color: #0F172A;
+            color: #FFFFFF;
+        }
+
+        .pill-select:focus {
+            border-color: #38bdf8;
+            background: rgba(255, 255, 255, 0.14);
+        }
+
+        .user-badge-container {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .user-pill-card {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            padding: 5px 12px 5px 8px;
+            border-radius: 9999px;
+            color: #FFFFFF;
+        }
+
+        .user-avatar-circle {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #E11D48, #C41230);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 0.85rem;
+            color: #FFFFFF;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .user-meta-text {
+            display: flex;
+            flex-direction: column;
+            line-height: 1.15;
+            text-align: left;
+        }
+
+        .user-meta-name {
+            font-size: 0.8rem;
+            font-weight: 700;
+            color: #F8FAFC;
+        }
+
+        .user-meta-role {
+            font-size: 0.68rem;
+            color: #38BDF8;
+            font-weight: 600;
+        }
+
+        .btn-logout-pill {
+            background: rgba(225, 29, 72, 0.15);
+            border: 1px solid rgba(225, 29, 72, 0.4);
+            color: #FDA4AF;
+            padding: 6px 14px;
+            border-radius: 9999px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s ease;
+        }
+
+        .btn-logout-pill:hover {
+            background: #E11D48;
+            color: #FFFFFF;
+            border-color: #E11D48;
+            transform: translateY(-1px);
+        }
+
+        /* MAIN WRAPPER */
+        .dashboard-container {
+            max-width: 1440px;
+            margin: 0 auto;
+            padding: 0 1.5rem 3rem 1.5rem;
+            flex: 1;
+            width: 100%;
+        }
+
+        /* SUBHEADER BANNER */
+        .admin-banner {
+            background: linear-gradient(135deg, #071326 0%, #1e293b 100%);
+            border-radius: 18px;
+            padding: 1.5rem 2rem;
+            margin-bottom: 2rem;
+            color: #FFFFFF;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 10px 20px -5px rgba(7, 19, 38, 0.15);
+        }
+
+        .admin-banner-title {
+            font-size: 1.4rem;
+            font-weight: 800;
+            margin-bottom: 0.35rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .admin-banner-desc {
+            font-size: 0.88rem;
+            color: #94A3B8;
+            margin: 0;
+        }
+
+        .btn-export-report {
+            background: linear-gradient(135deg, #C41230, #E11D48);
+            color: #FFFFFF;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 12px;
+            font-size: 0.88rem;
+            font-weight: 700;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 4px 14px rgba(196, 18, 48, 0.35);
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+
+        .btn-export-report:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(196, 18, 48, 0.5);
+            color: #FFFFFF;
+        }
+
+        /* KPIS GRID */
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 1.25rem;
+            margin-bottom: 2rem;
+        }
+
+        .kpi-card {
+            background: var(--muni-card-bg);
+            border: 1px solid var(--muni-border);
+            border-radius: 16px;
+            padding: 1.35rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .kpi-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 20px -5px rgba(0, 0, 0, 0.1);
+        }
+
+        .kpi-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: #cbd5e1;
+        }
+
+        .kpi-card.kpi-primary::before { background: linear-gradient(90deg, #10B981, #059669); }
+        .kpi-card.kpi-blue::before { background: linear-gradient(90deg, #2563EB, #3B82F6); }
+        .kpi-card.kpi-purple::before { background: linear-gradient(90deg, #7C3AED, #9333EA); }
+        .kpi-card.kpi-danger::before { background: linear-gradient(90deg, #EF4444, #DC2626); }
+
+        .kpi-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .kpi-title {
+            font-size: 0.8rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--muni-text-muted);
+            margin: 0;
+        }
+
+        .kpi-icon-badge {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.15rem;
+        }
+
+        .kpi-icon-green { background: rgba(16, 185, 129, 0.12); color: #059669; }
+        .kpi-icon-blue { background: rgba(37, 99, 235, 0.12); color: #2563EB; }
+        .kpi-icon-purple { background: rgba(124, 58, 237, 0.12); color: #7C3AED; }
+        .kpi-icon-red { background: rgba(239, 68, 68, 0.12); color: #DC2626; }
+
+        .kpi-value-row {
+            display: flex;
+            align-items: baseline;
+            gap: 10px;
+            margin-bottom: 0.5rem;
+        }
+
+        .kpi-number {
+            font-size: 2.1rem;
+            font-weight: 800;
+            color: var(--muni-text-main);
+            line-height: 1;
+        }
+
+        .kpi-meta-badge {
+            font-size: 0.72rem;
+            font-weight: 700;
+            padding: 3px 8px;
+            border-radius: 6px;
+        }
+
+        .badge-success-soft { background: #DCFCE7; color: #15803D; }
+        .badge-danger-soft { background: #FEE2E2; color: #B91C1C; }
+        .badge-info-soft { background: #DBEAFE; color: #1D4ED8; }
+        .badge-warning-soft { background: #FEF3C7; color: #B45309; }
+
+        .kpi-footer-text {
+            font-size: 0.78rem;
+            color: var(--muni-text-muted);
+            font-weight: 500;
+        }
+
+        /* SECTION CARDS */
+        .section-card {
+            background: var(--muni-card-bg);
+            border: 1px solid var(--muni-border);
+            border-radius: 18px;
+            padding: 1.6rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 10px -2px rgba(0, 0, 0, 0.04);
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.3rem;
+            flex-wrap: wrap;
+            gap: 0.75rem;
+        }
+
+        .section-title {
+            font-size: 1.12rem;
+            font-weight: 800;
+            color: var(--muni-text-main);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin: 0;
+        }
+
+        .section-subtitle {
+            font-size: 0.8rem;
+            color: var(--muni-text-muted);
+            margin-top: 2px;
+        }
+
+        /* TABLES */
+        .table-responsive-sgr {
+            overflow-x: auto;
+            border-radius: 12px;
+            border: 1px solid var(--muni-border);
+        }
+
+        .table-sgr {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 0;
+            font-size: 0.875rem;
+        }
+
+        .table-sgr th {
+            background: #F1F5F9;
+            color: #475569;
+            font-weight: 700;
+            text-transform: uppercase;
+            font-size: 0.72rem;
+            letter-spacing: 0.6px;
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--muni-border);
+            text-align: left;
+            white-space: nowrap;
+        }
+
+        .table-sgr td {
+            padding: 13px 16px;
+            border-bottom: 1px solid var(--muni-border-subtle);
+            color: #334155;
+            vertical-align: middle;
+        }
+
+        .table-sgr tr:last-child td {
+            border-bottom: none;
+        }
+
+        .table-sgr tr:hover td {
+            background: #F8FAFC;
+        }
+
+        .status-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 4px 10px;
+            border-radius: 9999px;
+            font-size: 0.74rem;
+            font-weight: 700;
+        }
+
+        .status-chip-green { background: #DCFCE7; color: #166534; }
+        .status-chip-amber { background: #FEF3C7; color: #92400E; }
+        .status-chip-red { background: #FEE2E2; color: #991B1B; }
+        .status-chip-blue { background: #E0E7FF; color: #3730A3; }
+        .status-chip-purple { background: #F3E8FF; color: #6B21A8; }
+
+        .btn-outline-action {
+            background: transparent;
+            border: 1px solid var(--muni-border);
+            color: #475569;
+            padding: 6px 12px;
+            border-radius: 8px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .btn-outline-action:hover {
+            background: #071326;
+            color: #FFFFFF;
+            border-color: #071326;
+        }
+
+        /* FOOTER */
+        .dashboard-footer {
+            background: #FFFFFF;
+            border-top: 1px solid var(--muni-border);
+            padding: 1.25rem 2rem;
+            text-align: center;
+            font-size: 0.8rem;
+            color: var(--muni-text-muted);
+            margin-top: auto;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- 1. TOPBAR FLOTANTE INSTITUCIONAL -->
+    <div class="floating-header-wrapper">
+        <header class="floating-navbar">
+            <a href="{% url 'activities:dashboard_admin' %}" class="header-brand">
+                <img src="{% static 'images/laserena_horizontal_blanco.svg' %}" 
+                     alt="Municipalidad de La Serena" 
+                     class="header-logo">
+                <div class="header-title-box">
+                    <h1 class="header-title">SGR ALCALDÍA & CONTROL CENTRAL</h1>
+                    <p class="header-subtitle">Ilustre Municipalidad de La Serena · Dirección de Control Comunal</p>
+                </div>
+            </a>
+
+            <!-- Selector Comunal Activo -->
+            <div class="d-flex align-items-center gap-2">
+                <label for="delegationSelect" class="text-white-50 small d-none d-md-inline" style="font-size: 0.75rem;">
+                    <i class="bi bi-geo-alt me-1"></i>VISTA TERRITORIAL:
+                </label>
+                <select id="delegationSelect" class="pill-select" onchange="filterTerritory(this.value)">
+                    <option value="Consolidado Comunal" selected>🏛️ Consolidado Comunal (Todas las Delegaciones)</option>
+                    <option value="Centro Histórico">📍 Delegación Centro Histórico</option>
+                    <option value="Las Compañías">📍 Delegación Las Compañías</option>
+                    <option value="La Pampa">📍 Delegación La Pampa</option>
+                    <option value="La Antena">📍 Delegación La Antena</option>
+                    <option value="Avenida del Mar">📍 Delegación Avenida del Mar</option>
+                    <option value="Sector Rural">📍 Delegación Sector Rural</option>
+                </select>
+            </div>
+
+            <!-- Perfil Activo y Logout -->
+            <div class="user-badge-container">
+                <div class="user-pill-card">
+                    <div class="user-avatar-circle">
+                        <i class="bi bi-shield-check"></i>
+                    </div>
+                    <div class="user-meta-text">
+                        <span class="user-meta-name">{{ user_name }}</span>
+                        <span class="user-meta-role">Nivel Estratégico · RBAC Admin</span>
+                    </div>
+                </div>
+                <a href="{% url 'core:logout' %}" class="btn-logout-pill" title="Cerrar sesión">
+                    <i class="bi bi-box-arrow-right"></i>
+                    <span class="d-none d-sm-inline">Salir</span>
+                </a>
+            </div>
+        </header>
+    </div>
+
+    <!-- MAIN DASHBOARD CONTENT -->
+    <main class="dashboard-container">
+
+        <!-- SUBHEADER BANNER CON BOTÓN REPORTE EJECUTIVO -->
+        <div class="admin-banner">
+            <div>
+                <h2 class="admin-banner-title">
+                    <i class="bi bi-speedometer2 text-danger"></i>
+                    Tablero de Mando Integral y Control Estratégico SGR
+                </h2>
+                <p class="admin-banner-desc">
+                    Consolidado Comunal · Período Trimestral Vigente: <strong>{{ current_period }}</strong> (Base de evaluación institucional: 80% mínimo).
+                </p>
+            </div>
+            <button type="button" class="btn-export-report" id="btnExportReport" onclick="exportExecutiveReport()">
+                <i class="bi bi-file-earmark-pdf-fill"></i>
+                Descargar Reporte Ejecutivo Trimestral (PDF/Excel)
+            </button>
+        </div>
+
+        <!-- 4 KPIS ESTRATÉGICOS SUPERIORES -->
+        <div class="kpi-grid">
+            <!-- KPI 1 -->
+            <div class="kpi-card kpi-primary">
+                <div class="kpi-header">
+                    <span class="kpi-title">% Cumplimiento Global Comunal</span>
+                    <div class="kpi-icon-badge kpi-icon-green">
+                        <i class="bi bi-graph-up-arrow"></i>
+                    </div>
+                </div>
+                <div class="kpi-value-row">
+                    <span class="kpi-number">{{ kpi.comunal_compliance }}%</span>
+                    <span class="kpi-meta-badge badge-success-soft">+8.4% sobre meta</span>
+                </div>
+                <div class="kpi-footer-text">
+                    Meta base institucional: <strong>80.0%</strong> comunal
+                </div>
+            </div>
+
+            <!-- KPI 2 -->
+            <div class="kpi-card kpi-blue">
+                <div class="kpi-header">
+                    <span class="kpi-title">Evidencias Auditadas Comunal</span>
+                    <div class="kpi-icon-badge kpi-icon-blue">
+                        <i class="bi bi-camera-fill"></i>
+                    </div>
+                </div>
+                <div class="kpi-value-row">
+                    <span class="kpi-number">{{ kpi.total_evidences }}</span>
+                    <span class="kpi-meta-badge badge-info-soft">100% fotográficas</span>
+                </div>
+                <div class="kpi-footer-text">
+                    Registros con validez técnica en las 6 delegaciones
+                </div>
+            </div>
+
+            <!-- KPI 3 -->
+            <div class="kpi-card kpi-purple">
+                <div class="kpi-header">
+                    <span class="kpi-title">Compromisos en Tubo Comunal</span>
+                    <div class="kpi-icon-badge kpi-icon-purple">
+                        <i class="bi bi-kanban"></i>
+                    </div>
+                </div>
+                <div class="kpi-value-row">
+                    <span class="kpi-number">{{ kpi.tubo_total }}</span>
+                    <span class="kpi-meta-badge badge-success-soft">{{ kpi.tubo_completed }} Realizados</span>
+                </div>
+                <div class="kpi-footer-text">
+                    {{ kpi.tubo_pending }} pendientes en agenda colectiva territorial
+                </div>
+            </div>
+
+            <!-- KPI 4 -->
+            <div class="kpi-card kpi-danger">
+                <div class="kpi-header">
+                    <span class="kpi-title">Delegación Crítica en Rezago</span>
+                    <div class="kpi-icon-badge kpi-icon-red">
+                        <i class="bi bi-exclamation-triangle-fill"></i>
+                    </div>
+                </div>
+                <div class="kpi-value-row">
+                    <span class="kpi-number" style="font-size: 1.6rem; color: #DC2626;">{{ kpi.critical_delegation }}</span>
+                    <span class="kpi-meta-badge badge-danger-soft">{{ kpi.critical_pct }}% Semáforo Rojo</span>
+                </div>
+                <div class="kpi-footer-text">
+                    Requiere plan de contingencia y refuerzo operativo
+                </div>
+            </div>
+        </div>
+
+        <!-- GRÁFICO COMPARATIVO TERRITORIAL (CHART.JS) -->
+        <section class="section-card">
+            <div class="section-header">
+                <div>
+                    <h3 class="section-title">
+                        <i class="bi bi-bar-chart-fill text-primary"></i>
+                        Comparativa de Cumplimiento Territorial (% Logro vs Meta 80%)
+                    </h3>
+                    <p class="section-subtitle">
+                        Rendimiento acumulado de las 6 delegaciones territoriales al día de corte
+                    </p>
+                </div>
+                <div class="d-flex align-items-center gap-2">
+                    <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 px-2 py-1">
+                        <i class="bi bi-check-circle me-1"></i> >=80% Meta Cumplida
+                    </span>
+                    <span class="badge bg-danger bg-opacity-10 text-danger border border-danger border-opacity-25 px-2 py-1">
+                        <i class="bi bi-x-circle me-1"></i> &lt;80% Bajo Meta
+                    </span>
+                </div>
+            </div>
+            <div style="height: 320px; position: relative;">
+                <canvas id="territorialChart"></canvas>
+            </div>
+        </section>
+
+        <!-- PANEL DE PARAMETRIZACIÓN SGR (100% OBLIGATORIO) -->
+        <section class="section-card">
+            <div class="section-header">
+                <div>
+                    <h3 class="section-title">
+                        <i class="bi bi-sliders2-vertical text-danger"></i>
+                        Panel de Parametrización SGR (Matriz Institucional de Metas)
+                    </h3>
+                    <p class="section-subtitle">
+                        Ponderadores por cargo y metas operativas para el ciclo de 91 días (Tercer Trimestre).
+                    </p>
+                </div>
+                <div class="d-flex align-items-center gap-2">
+                    <span class="badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25 px-3 py-2 fw-bold" id="badgeSumCheck">
+                        <i class="bi bi-check2-all me-1"></i> Suma Ponderadores: 100% (Verificado)
+                    </span>
+                    <button class="btn-outline-action" onclick="openParamEditModal()">
+                        <i class="bi bi-pencil-square"></i> Ajustar Ponderadores
+                    </button>
+                </div>
+            </div>
+
+            <div class="table-responsive-sgr">
+                <table class="table-sgr">
+                    <thead>
+                        <tr>
+                            <th>Cargo / Estamento</th>
+                            <th>Ítem Medible del Servicio</th>
+                            <th>Ponderador (%)</th>
+                            <th>Meta del Trimestre</th>
+                            <th>Días del Período</th>
+                            <th>Estado Matriz</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in parametrizacion %}
+                        <tr>
+                            <td><strong>{{ item.cargo }}</strong></td>
+                            <td>{{ item.item }}</td>
+                            <td>
+                                <span class="badge bg-light text-dark border px-2 py-1 fw-bold">
+                                    {{ item.ponderador }}%
+                                </span>
+                            </td>
+                            <td>{{ item.meta_trimestre }}</td>
+                            <td>{{ item.dias_periodo }} días</td>
+                            <td>
+                                <span class="status-chip status-chip-green">
+                                    <i class="bi bi-lock-fill"></i> Parametrizado
+                                </span>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- REGISTRO DE TRAZABILIDAD Y AUDITORÍA COMUNAL -->
+        <section class="section-card">
+            <div class="section-header">
+                <div>
+                    <h3 class="section-title">
+                        <i class="bi bi-shield-shaded text-success"></i>
+                        Registro de Trazabilidad y Auditoría Comunal
+                    </h3>
+                    <p class="section-subtitle">
+                        Bitácora inalterable de eventos, validaciones y modificaciones en el SGR territorial.
+                    </p>
+                </div>
+                <div class="d-flex align-items-center gap-2">
+                    <input type="text" id="filterAuditInput" class="form-control form-control-sm" placeholder="Buscar en bitácora..." style="max-width: 220px;" onkeyup="filterAuditTable()">
+                </div>
+            </div>
+
+            <div class="table-responsive-sgr">
+                <table class="table-sgr" id="auditTable">
+                    <thead>
+                        <tr>
+                            <th>Usuario / Funcionario</th>
+                            <th>Fecha y Hora</th>
+                            <th>Acción Registrada</th>
+                            <th>Delegación</th>
+                            <th>Estado</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for log in auditoria_logs %}
+                        <tr>
+                            <td><strong>{{ log.usuario }}</strong></td>
+                            <td class="text-muted"><i class="bi bi-clock me-1"></i>{{ log.fecha }}</td>
+                            <td>{{ log.accion }}</td>
+                            <td>
+                                <span class="badge bg-secondary bg-opacity-10 text-secondary border">
+                                    {{ log.delegacion }}
+                                </span>
+                            </td>
+                            <td>
+                                {% if log.estado == 'Válido' %}
+                                    <span class="status-chip status-chip-green"><i class="bi bi-check-circle"></i> Válido</span>
+                                {% elif log.estado == 'Ingresado' %}
+                                    <span class="status-chip status-chip-blue"><i class="bi bi-arrow-up-right"></i> Ingresado</span>
+                                {% elif log.estado == 'Devuelto' %}
+                                    <span class="status-chip status-chip-red"><i class="bi bi-arrow-counterclockwise"></i> Devuelto</span>
+                                {% elif log.estado == 'Auditoría' %}
+                                    <span class="status-chip status-chip-amber"><i class="bi bi-gear-fill"></i> Auditoría</span>
+                                {% else %}
+                                    <span class="status-chip status-chip-purple"><i class="bi bi-check2-all"></i> {{ log.estado }}</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- FOOTER INSTITUCIONAL -->
+    <footer class="dashboard-footer">
+        <div class="container-fluid">
+            <span>Ilustre Municipalidad de La Serena · Sistema de Gestión de Resultados (SGR) Territorial 2026 · Proyecto Integrado INACAP</span>
+        </div>
+    </footer>
+
+    <!-- LOGICA CHART.JS & SWEETALERT2 -->
+    <script>
+        // Inicialización de Gráfico Territorial Horizontal Chart.js
+        document.addEventListener('DOMContentLoaded', function() {
+            const ctx = document.getElementById('territorialChart');
+            if (ctx) {
+                const delegationsData = [
+                    { name: 'Centro Histórico', compliance: 95.0, color: '#10B981' },
+                    { name: 'La Pampa', compliance: 92.0, color: '#2563EB' },
+                    { name: 'Avenida del Mar', compliance: 91.0, color: '#06B6D4' },
+                    { name: 'Las Compañías', compliance: 88.0, color: '#7C3AED' },
+                    { name: 'La Antena', compliance: 84.0, color: '#F59E0B' },
+                    { name: 'Sector Rural', compliance: 71.4, color: '#EF4444' }
+                ];
+
+                new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: delegationsData.map(d => d.name),
+                        datasets: [
+                            {
+                                label: '% Cumplimiento Actual',
+                                data: delegationsData.map(d => d.compliance),
+                                backgroundColor: delegationsData.map(d => d.color),
+                                borderRadius: 8,
+                                barThickness: 24,
+                            }
+                        ]
+                    },
+                    options: {
+                        indexAxis: 'y',
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                display: false
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        return ' ' + context.raw + '% de cumplimiento SGR';
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            x: {
+                                min: 0,
+                                max: 100,
+                                ticks: {
+                                    callback: function(value) {
+                                        return value + '%';
+                                    }
+                                },
+                                grid: {
+                                    color: '#E2E8F0'
+                                }
+                            },
+                            y: {
+                                grid: {
+                                    display: false
+                                },
+                                ticks: {
+                                    font: {
+                                        weight: '600'
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+        });
+
+        // Función de exportación de reporte ejecutivo
+        function exportExecutiveReport() {
+            Swal.fire({
+                title: 'Descargar Reporte Ejecutivo SGR',
+                text: 'Seleccione el formato oficial para la generación del informe comunal consolidado:',
+                icon: 'question',
+                showCancelButton: true,
+                showDenyButton: true,
+                confirmButtonText: '<i class="bi bi-file-earmark-pdf"></i> Informe PDF Oficial',
+                denyButtonText: '<i class="bi bi-file-earmark-spreadsheet"></i> Planilla Excel Auditada',
+                cancelButtonText: 'Cancelar',
+                confirmButtonColor: '#C41230',
+                denyButtonColor: '#10B981',
+                background: '#0F172A',
+                color: '#FFFFFF'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Generando PDF Oficial...',
+                        text: 'El reporte ejecutivo trimestral ha sido compilado y descargado con folio institucional SGR-2026-T3.',
+                        timer: 2000,
+                        showConfirmButton: false,
+                        background: '#0F172A',
+                        color: '#FFFFFF'
+                    });
+                } else if (result.isDenied) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Exportando Excel...',
+                        text: 'La matriz completa con fórmulas y trazabilidad ha sido descargada.',
+                        timer: 2000,
+                        showConfirmButton: false,
+                        background: '#0F172A',
+                        color: '#FFFFFF'
+                    });
+                }
+            });
+        }
+
+        // Filtro territorial activo en Topbar
+        function filterTerritory(val) {
+            Swal.fire({
+                icon: 'info',
+                title: 'Filtrando Territorio',
+                text: 'Cargando indicadores consolidados para: ' + val,
+                timer: 1200,
+                showConfirmButton: false,
+                background: '#0F172A',
+                color: '#FFFFFF'
+            });
+        }
+
+        // Modal de ajuste de ponderadores con validación 100%
+        function openParamEditModal() {
+            Swal.fire({
+                title: 'Parametrización SGR Trimestral',
+                html: `
+                    <div style="text-align: left; font-size: 0.85rem; color: #cbd5e1;">
+                        <p>Ajuste los ponderadores porcentuales (la suma debe ser exactamente 100%):</p>
+                        <div class="mb-2">
+                            <label class="form-label">Territorial OO.CC. (%):</label>
+                            <input id="swalP1" type="number" class="form-control form-control-sm" value="35">
+                        </div>
+                        <div class="mb-2">
+                            <label class="form-label">Gestor Social (%):</label>
+                            <input id="swalP2" type="number" class="form-control form-control-sm" value="30">
+                        </div>
+                        <div class="mb-2">
+                            <label class="form-label">Prevención y Seguridad (%):</label>
+                            <input id="swalP3" type="number" class="form-control form-control-sm" value="20">
+                        </div>
+                        <div class="mb-2">
+                            <label class="form-label">Medio Ambiente / Obras (%):</label>
+                            <input id="swalP4" type="number" class="form-control form-control-sm" value="15">
+                        </div>
+                    </div>
+                `,
+                showCancelButton: true,
+                confirmButtonText: 'Validar y Guardar',
+                cancelButtonText: 'Cancelar',
+                confirmButtonColor: '#C41230',
+                background: '#0F172A',
+                color: '#FFFFFF',
+                preConfirm: () => {
+                    const p1 = parseInt(document.getElementById('swalP1').value) || 0;
+                    const p2 = parseInt(document.getElementById('swalP2').value) || 0;
+                    const p3 = parseInt(document.getElementById('swalP3').value) || 0;
+                    const p4 = parseInt(document.getElementById('swalP4').value) || 0;
+                    const total = p1 + p2 + p3 + p4;
+
+                    if (total !== 100) {
+                        Swal.showValidationMessage(`La suma actual es ${total}%. Debe sumar obligatoriamente 100% según la Matriz SGR.`);
+                        return false;
+                    }
+                    return { p1, p2, p3, p4, total };
+                }
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Matriz SGR Parametrizada',
+                        text: 'Los nuevos ponderadores (100% verificado) han sido registrados en la bitácora de auditoría.',
+                        background: '#0F172A',
+                        color: '#FFFFFF'
+                    });
+                }
+            });
+        }
+
+        // Filtro rápido para la tabla de bitácora
+        function filterAuditTable() {
+            const input = document.getElementById('filterAuditInput');
+            const filter = input.value.toLowerCase();
+            const table = document.getElementById('auditTable');
+            const tr = table.getElementsByTagName('tr');
+
+            for (let i = 1; i < tr.length; i++) {
+                const td = tr[i].getElementsByTagName('td');
+                let found = false;
+                for (let j = 0; j < td.length; j++) {
+                    if (td[j]) {
+                        const txt = td[j].textContent || td[j].innerText;
+                        if (txt.toLowerCase().indexOf(filter) > -1) {
+                            found = true;
+                            break;
+                        }
+                    }
+                }
+                tr[i].style.display = found ? '' : 'none';
+            }
+        }
+    </script>
+</body>
+</html>
