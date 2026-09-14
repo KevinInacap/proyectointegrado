@@ -1,7 +1,5 @@
 # Sistema de Gestión de Resultados (SGR) — Ilustre Municipalidad de La Serena
 
-Prototipo institucional desarrollado
-
 ## 🏛️ Descripción del Proyecto
 
 El **Sistema de Gestión de Resultados (SGR)** es una solución web diseñada para centralizar, monitorear y evaluar la gestión operativa de funcionarios y delegaciones de la **Ilustre Municipalidad de La Serena** (Región de Coquimbo, Chile). 
