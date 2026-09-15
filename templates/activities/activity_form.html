@@ -1,0 +1,19 @@
+{% extends 'base.html' %}
+
+{% block title %}Registrar Actividad | Ilustre Municipalidad de La Serena{% endblock %}
+
+{% block content %}
+<div class="py-4">
+    <div class="mb-4">
+        <h1 class="h3 fw-bold text-dark mb-1">Registro de Actividad</h1>
+        <p class="text-muted mb-0">Formulario institucional de ingreso de evidencias y gestión territorial</p>
+    </div>
+
+    <div class="muni-card">
+        <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            <p class="text-muted small">Módulo en proceso de actualización según las normas gráficas oficiales.</p>
+        </form>
+    </div>
+</div>
+{% endblock %}
