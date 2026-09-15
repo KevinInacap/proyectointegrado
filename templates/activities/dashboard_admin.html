@@ -1,0 +1,1501 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mando Estratégico Comunal SGR · Ilustre Municipalidad de La Serena</title>
+
+    <!-- Google Fonts: Plus Jakarta Sans -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- Bootstrap 5.3 & Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    
+    <!-- Librerías Externas -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        :root {
+            --serena-primary: #8B1D2C;       /* Rojo Colonial Serena */
+            --serena-primary-hover: #701522;
+            --serena-primary-soft: #FDF2F4;
+            --serena-navy: #0F172A;          /* Azul Marino Pizarra */
+            --serena-navy-hover: #1E293B;
+            --serena-navy-accent: #1E3A8A;   /* Azul Marino Institucional */
+            --serena-navy-light: #3B82F6;
+            --serena-bg: #F8FAFC;            /* Gris Niebla Claro */
+            --serena-surface: #FFFFFF;       /* Blanco Puro */
+            --serena-border: #E2E8F0;        /* Gris Divisorio */
+            --serena-border-subtle: #F1F5F9;
+            --serena-text-main: #1E293B;     /* Gris Carbón Oscuro */
+            --serena-text-muted: #64748B;    /* Gris Neutro */
+            --serena-text-light: #94A3B8;
+            --serena-success: #0D9488;       /* Verde Pizarra Sobrio */
+            --serena-success-soft: #F0FDFA;
+            --serena-warning: #B45309;       /* Ámbar Ocre */
+            --serena-warning-soft: #FFFBEB;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: var(--serena-bg);
+            color: var(--serena-text-main);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* 1. HEADER FLOTANTE INSTITUCIONAL */
+        .topbar-wrapper {
+            padding: 1rem 1.5rem 0 1.5rem;
+            max-width: 1440px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        .header-navbar {
+            background-color: var(--serena-navy);
+            border-radius: 14px;
+            padding: 0.85rem 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+            box-shadow: 0 4px 16px -2px rgba(15, 23, 42, 0.15);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .header-brand {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            text-decoration: none;
+            color: #FFFFFF;
+        }
+
+        .header-logo {
+            height: 38px;
+            width: auto;
+            object-fit: contain;
+        }
+
+        .header-title-box {
+            border-left: 1px solid rgba(255, 255, 255, 0.18);
+            padding-left: 14px;
+        }
+
+        .header-title {
+            font-size: 0.95rem;
+            font-weight: 700;
+            letter-spacing: 0.4px;
+            color: #FFFFFF;
+            line-height: 1.2;
+            margin: 0;
+        }
+
+        .header-subtitle {
+            font-size: 0.72rem;
+            color: #94A3B8;
+            margin: 0;
+            font-weight: 500;
+        }
+
+        .selector-box {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .selector-label {
+            font-size: 0.72rem;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            color: #94A3B8;
+            text-transform: uppercase;
+        }
+
+        .minimal-select {
+            background: rgba(255, 255, 255, 0.07);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            color: #FFFFFF;
+            border-radius: 8px;
+            padding: 6px 12px;
+            font-size: 0.82rem;
+            font-weight: 500;
+            outline: none;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .minimal-select:focus {
+            border-color: rgba(255, 255, 255, 0.4);
+            background: rgba(255, 255, 255, 0.12);
+        }
+
+        .minimal-select option {
+            background-color: var(--serena-navy);
+            color: #FFFFFF;
+        }
+
+        .header-user-zone {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .user-pill {
+            display: flex;
+            align-items: center;
+            gap: 9px;
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            padding: 4px 12px 4px 6px;
+            border-radius: 9999px;
+        }
+
+        .user-pill-avatar {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background: var(--serena-primary);
+            color: #FFFFFF;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.75rem;
+            font-weight: 700;
+        }
+
+        .user-pill-text {
+            font-size: 0.78rem;
+            font-weight: 600;
+            color: #FFFFFF;
+            letter-spacing: 0.2px;
+        }
+
+        .btn-exit-outline {
+            background: transparent;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: #E2E8F0;
+            padding: 5px 12px;
+            border-radius: 8px;
+            font-size: 0.76rem;
+            font-weight: 600;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s ease;
+        }
+
+        .btn-exit-outline:hover {
+            background: rgba(255, 255, 255, 0.12);
+            color: #FFFFFF;
+            border-color: rgba(255, 255, 255, 0.35);
+        }
+
+        /* 2. CONTENEDOR PRINCIPAL */
+        .content-area {
+            max-width: 1440px;
+            margin: 0 auto;
+            padding: 1.5rem 1.5rem 3rem 1.5rem;
+            flex: 1;
+            width: 100%;
+        }
+
+        /* 3. BARRA DE CONTEXTO ESTRATÉGICO CON WIDGET DE RITMO DEL PERÍODO */
+        .context-bar {
+            background: var(--serena-surface);
+            border: 1px solid var(--serena-border);
+            border-radius: 14px;
+            padding: 1.25rem 1.75rem;
+            margin-bottom: 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1.25rem;
+            box-shadow: 0 1px 3px rgba(15, 23, 42, 0.03);
+        }
+
+        .context-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--serena-navy);
+            margin: 0 0 0.25rem 0;
+            letter-spacing: -0.2px;
+        }
+
+        .context-period {
+            font-size: 0.82rem;
+            color: var(--serena-text-muted);
+            margin: 0;
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .period-chip {
+            background-color: #F1F5F9;
+            color: var(--serena-navy);
+            font-weight: 600;
+            padding: 3px 9px;
+            border-radius: 6px;
+            font-size: 0.78rem;
+            border: 1px solid #E2E8F0;
+        }
+
+        /* WIDGET DE RITMO DEL PERÍODO (CÁLCULO FORMAL SGR) */
+        .rhythm-widget {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: #F8FAFC;
+            border: 1px solid #E2E8F0;
+            border-radius: 10px;
+            padding: 8px 16px;
+        }
+
+        .rhythm-item {
+            display: flex;
+            flex-direction: column;
+            line-height: 1.2;
+        }
+
+        .rhythm-label {
+            font-size: 0.68rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+            color: var(--serena-text-muted);
+        }
+
+        .rhythm-value {
+            font-size: 0.86rem;
+            font-weight: 700;
+            color: var(--serena-navy);
+        }
+
+        .rhythm-divider {
+            width: 1px;
+            height: 26px;
+            background-color: #CBD5E1;
+        }
+
+        .btn-serena-primary {
+            background-color: var(--serena-primary);
+            color: #FFFFFF;
+            border: 1px solid var(--serena-primary);
+            border-radius: 9px;
+            padding: 9px 18px;
+            font-size: 0.84rem;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .btn-serena-primary:hover {
+            background-color: var(--serena-primary-hover);
+            border-color: var(--serena-primary-hover);
+            color: #FFFFFF;
+            box-shadow: 0 2px 6px rgba(139, 29, 44, 0.25);
+        }
+
+        /* 4. TARJETAS KPI EJECUTIVAS */
+        .kpi-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.25rem;
+            margin-bottom: 1.75rem;
+        }
+
+        .kpi-card-exec {
+            background: var(--serena-surface);
+            border: 1px solid var(--serena-border);
+            border-radius: 14px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+            cursor: default;
+        }
+
+        .kpi-card-exec:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.06);
+            border-color: #CBD5E1;
+        }
+
+        .kpi-label {
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--serena-text-muted);
+            margin-bottom: 0.75rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .kpi-value-block {
+            display: flex;
+            align-items: baseline;
+            gap: 10px;
+            margin-bottom: 0.65rem;
+        }
+
+        .kpi-stat {
+            font-size: 2.2rem;
+            font-weight: 700;
+            color: var(--serena-navy);
+            line-height: 1;
+            letter-spacing: -0.5px;
+        }
+
+        .kpi-stat-warning {
+            font-size: 1.7rem;
+            font-weight: 700;
+            color: var(--serena-primary);
+            line-height: 1;
+        }
+
+        .capsule-badge {
+            font-size: 0.72rem;
+            font-weight: 600;
+            padding: 3px 8px;
+            border-radius: 6px;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .capsule-teal {
+            background-color: var(--serena-success-soft);
+            color: var(--serena-success);
+            border: 1px solid #CCFBF1;
+        }
+
+        .capsule-crimson {
+            background-color: var(--serena-primary-soft);
+            color: var(--serena-primary);
+            border: 1px solid #FCE7EB;
+        }
+
+        .capsule-neutral {
+            background-color: #F1F5F9;
+            color: var(--serena-text-muted);
+            border: 1px solid #E2E8F0;
+        }
+
+        .kpi-footer-note {
+            font-size: 0.76rem;
+            color: var(--serena-text-muted);
+            line-height: 1.4;
+        }
+
+        /* 5. SECCIÓN VISUAL ENRIQUECIDA: GRÁFICO DOBLE (65% / 35%) */
+        .charts-double-grid {
+            display: grid;
+            grid-template-columns: 65fr 35fr;
+            gap: 1.5rem;
+            margin-bottom: 1.75rem;
+        }
+
+        @media (max-width: 992px) {
+            .charts-double-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .chart-card-exec {
+            background: var(--serena-surface);
+            border: 1px solid var(--serena-border);
+            border-radius: 14px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .card-header-clean {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 0.75rem;
+            margin-bottom: 1.25rem;
+        }
+
+        .card-title-clean {
+            font-size: 1.02rem;
+            font-weight: 700;
+            color: var(--serena-navy);
+            margin: 0;
+            letter-spacing: -0.2px;
+        }
+
+        .legend-group {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            font-size: 0.74rem;
+            color: var(--serena-text-muted);
+            font-weight: 500;
+        }
+
+        .legend-indicator {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 3px;
+            margin-right: 5px;
+            vertical-align: middle;
+        }
+
+        .legend-blue { background-color: var(--serena-navy-accent); }
+        .legend-crimson { background-color: var(--serena-primary); }
+
+        .chart-box-bars {
+            height: 270px;
+            position: relative;
+            width: 100%;
+        }
+
+        .doughnut-wrapper {
+            position: relative;
+            height: 230px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .doughnut-center-text {
+            position: absolute;
+            text-align: center;
+            pointer-events: none;
+            line-height: 1.15;
+        }
+
+        .doughnut-center-number {
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: var(--serena-navy);
+            display: block;
+        }
+
+        .doughnut-center-sub {
+            font-size: 0.68rem;
+            font-weight: 600;
+            color: var(--serena-text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        /* 6. PANEL INFERIOR: TRAZABILIDAD Y MATRIZ SGR (60% / 40%) */
+        .bottom-grid {
+            display: grid;
+            grid-template-columns: 60fr 40fr;
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        @media (max-width: 992px) {
+            .bottom-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .panel-exec {
+            background: var(--serena-surface);
+            border: 1px solid var(--serena-border);
+            border-radius: 14px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .table-responsive-clean {
+            overflow-x: auto;
+            border-radius: 10px;
+            border: 1px solid var(--serena-border);
+        }
+
+        .table-clean {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.82rem;
+            margin: 0;
+        }
+
+        .table-clean th {
+            background-color: #F8FAFC;
+            color: #475569;
+            font-weight: 700;
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            padding: 10px 12px;
+            border-bottom: 1px solid var(--serena-border);
+            text-align: left;
+            white-space: nowrap;
+        }
+
+        .table-clean td {
+            padding: 10px 12px;
+            border-bottom: 1px solid var(--serena-border-subtle);
+            color: var(--serena-text-main);
+            vertical-align: middle;
+            transition: background-color 0.3s ease;
+        }
+
+        .table-clean tr:last-child td {
+            border-bottom: none;
+        }
+
+        .table-clean tr:hover td {
+            background-color: #F8FAFC;
+        }
+
+        .row-highlighted td {
+            background-color: #FEF2F2 !important;
+            border-left: 3px solid var(--serena-primary);
+        }
+
+        .badge-status {
+            font-size: 0.72rem;
+            font-weight: 600;
+            padding: 3px 8px;
+            border-radius: 5px;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .badge-status-green {
+            background-color: #ECFDF5;
+            color: #065F46;
+            border: 1px solid #A7F3D0;
+        }
+
+        .badge-status-amber {
+            background-color: #FFFBEB;
+            color: #92400E;
+            border: 1px solid #FDE68A;
+        }
+
+        .badge-status-red {
+            background-color: #FEF2F2;
+            color: #991B1B;
+            border: 1px solid #FECACA;
+        }
+
+        .btn-action-pill {
+            background: transparent;
+            border: 1px solid #CBD5E1;
+            color: var(--serena-navy);
+            border-radius: 6px;
+            padding: 3px 9px;
+            font-size: 0.74rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            white-space: nowrap;
+        }
+
+        .btn-action-pill:hover {
+            background: var(--serena-navy);
+            color: #FFFFFF;
+            border-color: var(--serena-navy);
+        }
+
+        /* MATRIZ DE PONDERACIONES ACTIVA CON PROGRESO DUAL */
+        .matrix-row-dual {
+            padding: 10px 0;
+            border-bottom: 1px solid var(--serena-border-subtle);
+        }
+
+        .matrix-row-dual:last-child {
+            border-bottom: none;
+        }
+
+        .matrix-dual-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 6px;
+        }
+
+        .matrix-dual-title {
+            font-size: 0.82rem;
+            font-weight: 600;
+            color: var(--serena-navy);
+        }
+
+        .matrix-dual-stats {
+            font-size: 0.76rem;
+            font-weight: 700;
+            color: var(--serena-text-muted);
+        }
+
+        .dual-progress-bar {
+            height: 7px;
+            border-radius: 9999px;
+            background-color: #E2E8F0;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .dual-progress-fill {
+            height: 100%;
+            border-radius: 9999px;
+            background-color: var(--serena-navy-accent);
+            transition: width 0.6s ease;
+        }
+
+        /* 7. FOOTER SOBRIO */
+        .footer-exec {
+            border-top: 1px solid var(--serena-border);
+            background: var(--serena-surface);
+            padding: 1.25rem 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+            font-size: 0.78rem;
+            color: var(--serena-text-muted);
+            margin-top: auto;
+        }
+
+        .footer-badge {
+            font-size: 0.74rem;
+            font-weight: 500;
+            color: var(--serena-text-muted);
+        }
+    </style>
+</head>
+<body>
+
+    <!-- 1. HEADER FORMAL INSTITUCIONAL -->
+    <div class="topbar-wrapper">
+        <header class="header-navbar">
+            <a href="{% url 'activities:dashboard_admin' %}" class="header-brand">
+                <img src="{% static 'images/laserena_horizontal_blanco.svg' %}" 
+                     alt="Municipalidad de La Serena" 
+                     class="header-logo">
+                <div class="header-title-box">
+                    <h1 class="header-title">SISTEMA DE GESTIÓN DE RESULTADOS (SGR)</h1>
+                    <p class="header-subtitle">Ilustre Municipalidad de La Serena · Dirección de Control Comunal</p>
+                </div>
+            </a>
+
+            <!-- Selector Territorial Minimalista -->
+            <div class="selector-box">
+                <span class="selector-label d-none d-lg-inline">Territorio:</span>
+                <select id="delegationSelect" class="minimal-select" onchange="filterTerritory(this.value)">
+                    <option value="Consolidado Comunal" selected>Consolidado Comunal (Todas las Delegaciones)</option>
+                    <option value="Centro Histórico">Delegación Centro Histórico</option>
+                    <option value="Las Compañías">Delegación Las Compañías</option>
+                    <option value="La Pampa">Delegación La Pampa</option>
+                    <option value="La Antena - La Florida">Delegación La Antena - La Florida</option>
+                    <option value="Avenida del Mar">Delegación Avenida del Mar</option>
+                    <option value="Sector Rural">Delegación Sector Rural</option>
+                </select>
+            </div>
+
+            <!-- Identificación de Usuario y Salida -->
+            <div class="header-user-zone">
+                <div class="user-pill">
+                    <div class="user-pill-avatar">
+                        <i class="bi bi-person-fill"></i>
+                    </div>
+                    <span class="user-pill-text">Alcaldía La Serena | Nivel Estratégico</span>
+                </div>
+                <a href="{% url 'core:logout' %}" class="btn-exit-outline" title="Cerrar sesión">
+                    <i class="bi bi-box-arrow-right"></i>
+                    <span class="d-none d-sm-inline">Cerrar Sesión</span>
+                </a>
+            </div>
+        </header>
+    </div>
+
+    <!-- 2. CONTENIDO PRINCIPAL -->
+    <main class="content-area">
+
+        <!-- BARRA DE CONTEXTO ESTRATÉGICO CON WIDGET DE RITMO DEL PERÍODO (RN-007) -->
+        <section class="context-bar">
+            <div>
+                <h2 class="context-title">Mando Estratégico Comunal SGR</h2>
+                <div class="context-period">
+                    <span>Período evaluado:</span>
+                    <span class="period-chip">T3 - Trimestre Julio - Septiembre 2026</span>
+                    <span class="text-muted d-none d-md-inline">· Meta base mínima: 80,0%</span>
+                </div>
+            </div>
+
+            <!-- WIDGET DE AVANCE TEMPORAL DIARIO (CÁLCULO OFICIAL SGR) -->
+            <div class="rhythm-widget">
+                <div class="rhythm-item">
+                    <span class="rhythm-label">Días Computables</span>
+                    <span class="rhythm-value">56 / 91 días</span>
+                </div>
+                <div class="rhythm-divider"></div>
+                <div class="rhythm-item">
+                    <span class="rhythm-label">Ritmo Lineal Esperado</span>
+                    <span class="rhythm-value">61,5%</span>
+                </div>
+                <div class="rhythm-divider"></div>
+                <div class="rhythm-item">
+                    <span class="rhythm-label">Avance Real Comunal</span>
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="rhythm-value text-dark">88,4%</span>
+                        <span class="capsule-badge capsule-teal" style="font-size: 0.68rem;">+26,9% sobre ritmo</span>
+                    </div>
+                </div>
+            </div>
+
+            <div>
+                <button type="button" class="btn-serena-primary" onclick="exportExecutiveReport()">
+                    <i class="bi bi-file-earmark-arrow-down"></i>
+                    Exportar Informe Ejecutivo
+                </button>
+            </div>
+        </section>
+
+        <!-- 3. TARJETAS KPI EJECUTIVAS (REFINAMIENTO MINIMALISTA) -->
+        <section class="kpi-row">
+            <!-- KPI 1 -->
+            <div class="kpi-card-exec">
+                <div class="kpi-label">
+                    <span>Cumplimiento Comunal</span>
+                    <i class="bi bi-graph-up text-secondary"></i>
+                </div>
+                <div class="kpi-value-block">
+                    <span class="kpi-stat">88,4%</span>
+                    <span class="capsule-badge capsule-teal">+8.4% sobre meta</span>
+                </div>
+                <div class="kpi-footer-note">
+                    Promedio ponderado comunal sobre meta base de 80.0%
+                </div>
+            </div>
+
+            <!-- KPI 2 -->
+            <div class="kpi-card-exec">
+                <div class="kpi-label">
+                    <span>Evidencias Validadas</span>
+                    <i class="bi bi-check2-circle text-secondary"></i>
+                </div>
+                <div class="kpi-value-block">
+                    <span class="kpi-stat">1.482</span>
+                    <span class="capsule-badge capsule-neutral">Auditadas</span>
+                </div>
+                <div class="kpi-footer-note">
+                    100% fotográficas con código inmutable verificado
+                </div>
+            </div>
+
+            <!-- KPI 3 -->
+            <div class="kpi-card-exec">
+                <div class="kpi-label">
+                    <span>Tubo de Trabajo Comunal</span>
+                    <i class="bi bi-card-checklist text-secondary"></i>
+                </div>
+                <div class="kpi-value-block">
+                    <span class="kpi-stat">245</span>
+                    <span class="capsule-badge capsule-neutral">198 cerrados</span>
+                </div>
+                <div class="kpi-footer-note">
+                    47 compromisos activos en agenda colectiva territorial
+                </div>
+            </div>
+
+            <!-- KPI 4 -->
+            <div class="kpi-card-exec">
+                <div class="kpi-label">
+                    <span>Delegación con Rezago</span>
+                    <i class="bi bi-exclamation-circle text-secondary"></i>
+                </div>
+                <div class="kpi-value-block">
+                    <span class="kpi-stat-warning">Sector Rural</span>
+                    <span class="capsule-badge capsule-crimson">71,4%</span>
+                </div>
+                <div class="kpi-footer-note">
+                    Bajo el umbral institucional de 80%; requiere seguimiento
+                </div>
+            </div>
+        </section>
+
+        <!-- 4. SECCIÓN VISUAL ENRIQUECIDA: GRÁFICO DOBLE (65% / 35%) -->
+        <section class="charts-double-grid">
+            
+            <!-- Columna Izquierda (65%): Gráfico de Barras con Tooltip enriquecido y Evento onClick -->
+            <div class="chart-card-exec">
+                <div class="card-header-clean">
+                    <div>
+                        <h3 class="card-title-clean">Rendimiento Territorial por Delegación (% Cumplimiento vs Meta 80%)</h3>
+                        <p class="text-muted small mb-0 mt-1" style="font-size: 0.76rem;">
+                            Haga clic en cualquier barra para filtrar y auditar la delegación en la tabla inferior
+                        </p>
+                    </div>
+                    <div class="legend-group">
+                        <span><span class="legend-indicator legend-blue"></span> Cumple Meta (≥80%)</span>
+                        <span><span class="legend-indicator legend-crimson"></span> Bajo Meta (&lt;80%)</span>
+                        <span class="border-start ps-2 text-muted">Línea Meta: 80%</span>
+                    </div>
+                </div>
+                <div class="chart-box-bars">
+                    <canvas id="territorialChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Columna Derecha (35%): Gráfico de Dona Distribución por Tipo de Gestión -->
+            <div class="chart-card-exec">
+                <div class="card-header-clean">
+                    <div>
+                        <h3 class="card-title-clean">Distribución por Tipo de Gestión</h3>
+                        <p class="text-muted small mb-0 mt-1" style="font-size: 0.76rem;">
+                            Participación proporcional de gestiones comunales
+                        </p>
+                    </div>
+                </div>
+                <div class="doughnut-wrapper">
+                    <canvas id="managementTypeChart"></canvas>
+                    <div class="doughnut-center-text">
+                        <span class="doughnut-center-number">1.482</span>
+                        <span class="doughnut-center-sub">Total Gestiones</span>
+                    </div>
+                </div>
+                <div class="mt-2 d-flex justify-content-between text-muted" style="font-size: 0.72rem;">
+                    <span><i class="bi bi-circle-fill text-primary me-1" style="font-size: 0.6rem;"></i> Terreno 35%</span>
+                    <span><i class="bi bi-circle-fill text-info me-1" style="font-size: 0.6rem;"></i> Social 25%</span>
+                    <span><i class="bi bi-circle-fill text-secondary me-1" style="font-size: 0.6rem;"></i> Reuniones 20%</span>
+                    <span><i class="bi bi-circle-fill text-warning me-1" style="font-size: 0.6rem;"></i> Tubo 10%</span>
+                    <span><i class="bi bi-circle-fill text-success me-1" style="font-size: 0.6rem;"></i> Talleres 10%</span>
+                </div>
+            </div>
+
+        </section>
+
+        <!-- 5. PANEL INFERIOR: TRAZABILIDAD TERRITORIAL Y MATRIZ SGR (60% / 40%) -->
+        <section class="bottom-grid">
+            
+            <!-- Columna 1 (60%): Tabla Ejecutiva de las 6 Delegaciones con Acción Rápida -->
+            <div class="panel-exec">
+                <div class="card-header-clean">
+                    <div>
+                        <h4 class="card-title-clean">Estado Consolidado por Delegación</h4>
+                        <p class="text-muted small mb-0 mt-1" style="font-size: 0.76rem;">
+                            Monitoreo de metas trimestrales, compromisos y validaciones de evidencias
+                        </p>
+                    </div>
+                    <button class="btn btn-sm btn-outline-secondary" onclick="viewAuditModal()" style="font-size: 0.74rem;">
+                        <i class="bi bi-journal-text me-1"></i> Ver Auditoría
+                    </button>
+                </div>
+
+                <div class="table-responsive-clean">
+                    <table class="table-clean" id="delegationsTable">
+                        <thead>
+                            <tr>
+                                <th>Delegación</th>
+                                <th>Encargado</th>
+                                <th>Meta T3</th>
+                                <th>Avance</th>
+                                <th>Tubo</th>
+                                <th>Semáforo</th>
+                                <th>Auditar</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr id="row-centro-historico" data-delegation="Centro Histórico">
+                                <td><strong>Centro Histórico</strong></td>
+                                <td class="text-muted">Alan Von Kretschmann</td>
+                                <td>450 aten.</td>
+                                <td>428 (95,0%)</td>
+                                <td>42</td>
+                                <td><span class="badge-status badge-status-green"><i class="bi bi-check-circle-fill"></i> Verde</span></td>
+                                <td>
+                                    <button type="button" class="btn-action-pill" onclick="openDelegationDetail('Centro Histórico', 'Alan Von Kretschmann', '+56 51 2207861', 450, 428, 95.0, 42, 'Verde')">
+                                        Ver Detalle
+                                    </button>
+                                </td>
+                            </tr>
+                            <tr id="row-la-pampa" data-delegation="La Pampa">
+                                <td><strong>La Pampa</strong></td>
+                                <td class="text-muted">María Soledad Rojas</td>
+                                <td>380 aten.</td>
+                                <td>350 (92,0%)</td>
+                                <td>38</td>
+                                <td><span class="badge-status badge-status-green"><i class="bi bi-check-circle-fill"></i> Verde</span></td>
+                                <td>
+                                    <button type="button" class="btn-action-pill" onclick="openDelegationDetail('La Pampa', 'María Soledad Rojas', '+56 51 2206788', 380, 350, 92.0, 38, 'Verde')">
+                                        Ver Detalle
+                                    </button>
+                                </td>
+                            </tr>
+                            <tr id="row-avenida-del-mar" data-delegation="Avenida del Mar">
+                                <td><strong>Avenida del Mar</strong></td>
+                                <td class="text-muted">Rodrigo Fuenzalida</td>
+                                <td>320 aten.</td>
+                                <td>291 (91,0%)</td>
+                                <td>29</td>
+                                <td><span class="badge-status badge-status-green"><i class="bi bi-check-circle-fill"></i> Verde</span></td>
+                                <td>
+                                    <button type="button" class="btn-action-pill" onclick="openDelegationDetail('Avenida del Mar', 'Rodrigo Fuenzalida', '+56 51 2206518', 320, 291, 91.0, 29, 'Verde')">
+                                        Ver Detalle
+                                    </button>
+                                </td>
+                            </tr>
+                            <tr id="row-las-companias" data-delegation="Las Compañías">
+                                <td><strong>Las Compañías</strong></td>
+                                <td class="text-muted">Pablo Cuadra Corrales</td>
+                                <td>520 aten.</td>
+                                <td>458 (88,0%)</td>
+                                <td>65</td>
+                                <td><span class="badge-status badge-status-green"><i class="bi bi-check-circle-fill"></i> Verde</span></td>
+                                <td>
+                                    <button type="button" class="btn-action-pill" onclick="openDelegationDetail('Las Compañías', 'Pablo Cuadra Corrales', '+56 51 2206527', 520, 458, 88.0, 65, 'Verde')">
+                                        Ver Detalle
+                                    </button>
+                                </td>
+                            </tr>
+                            <tr id="row-la-antena-la-florida" data-delegation="La Antena - La Florida">
+                                <td><strong>La Antena - La Florida</strong></td>
+                                <td class="text-muted">Elizabeth Villanueva</td>
+                                <td>410 aten.</td>
+                                <td>344 (84,0%)</td>
+                                <td>44</td>
+                                <td><span class="badge-status badge-status-green"><i class="bi bi-check-circle-fill"></i> Verde</span></td>
+                                <td>
+                                    <button type="button" class="btn-action-pill" onclick="openDelegationDetail('La Antena - La Florida', 'Elizabeth Villanueva', '+56 51 2206618', 410, 344, 84.0, 44, 'Verde')">
+                                        Ver Detalle
+                                    </button>
+                                </td>
+                            </tr>
+                            <tr id="row-sector-rural" data-delegation="Sector Rural">
+                                <td><strong>Sector Rural</strong></td>
+                                <td class="text-muted">Manuel Barraza D.</td>
+                                <td>280 aten.</td>
+                                <td>200 (71,4%)</td>
+                                <td>27</td>
+                                <td><span class="badge-status badge-status-red"><i class="bi bi-exclamation-triangle-fill"></i> Rojo</span></td>
+                                <td>
+                                    <button type="button" class="btn-action-pill" onclick="openDelegationDetail('Sector Rural', 'Manuel Barraza D.', '+56 51 2206687', 280, 200, 71.4, 27, 'Rojo')">
+                                        Ver Detalle
+                                    </button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Columna 2 (40%): Matriz SGR con Ponderaciones Activas y Progreso Dual -->
+            <div class="panel-exec">
+                <div class="card-header-clean">
+                    <div>
+                        <h4 class="card-title-clean">Matriz SGR: Ponderaciones Activas</h4>
+                        <p class="text-muted small mb-0 mt-1" style="font-size: 0.76rem;">
+                            Pesos normativos vs. avance real consolidado
+                        </p>
+                    </div>
+                    <button class="btn btn-sm btn-outline-secondary" onclick="openParamAdjustModal()" style="font-size: 0.74rem;">
+                        <i class="bi bi-sliders me-1"></i> Ajustar Ponderadores
+                    </button>
+                </div>
+
+                <div class="matrix-list">
+                    <!-- Ítem 1 -->
+                    <div class="matrix-row-dual">
+                        <div class="matrix-dual-header">
+                            <span class="matrix-dual-title">Operativos y Terreno Comunal</span>
+                            <span class="matrix-dual-stats">Peso: 35% · <span class="text-dark">Avance: 32,8%</span></span>
+                        </div>
+                        <div class="dual-progress-bar">
+                            <div class="dual-progress-fill" style="width: 93.7%;"></div>
+                        </div>
+                    </div>
+
+                    <!-- Ítem 2 -->
+                    <div class="matrix-row-dual">
+                        <div class="matrix-dual-header">
+                            <span class="matrix-dual-title">Atención Telefónica y Presencial</span>
+                            <span class="matrix-dual-stats">Peso: 25% · <span class="text-dark">Avance: 22,5%</span></span>
+                        </div>
+                        <div class="dual-progress-bar">
+                            <div class="dual-progress-fill" style="width: 90.0%;"></div>
+                        </div>
+                    </div>
+
+                    <!-- Ítem 3 -->
+                    <div class="matrix-row-dual">
+                        <div class="matrix-dual-header">
+                            <span class="matrix-dual-title">Reuniones y Mesas de Trabajo</span>
+                            <span class="matrix-dual-stats">Peso: 20% · <span class="text-dark">Avance: 17,2%</span></span>
+                        </div>
+                        <div class="dual-progress-bar">
+                            <div class="dual-progress-fill" style="width: 86.0%;"></div>
+                        </div>
+                    </div>
+
+                    <!-- Ítem 4 -->
+                    <div class="matrix-row-dual">
+                        <div class="matrix-dual-header">
+                            <span class="matrix-dual-title">Tubo de Trabajo y Compromisos</span>
+                            <span class="matrix-dual-stats">Peso: 10% · <span class="text-dark">Avance: 8,1%</span></span>
+                        </div>
+                        <div class="dual-progress-bar">
+                            <div class="dual-progress-fill" style="width: 80.8%;"></div>
+                        </div>
+                    </div>
+
+                    <!-- Ítem 5 -->
+                    <div class="matrix-row-dual">
+                        <div class="matrix-dual-header">
+                            <span class="matrix-dual-title">Talleres Territoriales</span>
+                            <span class="matrix-dual-stats">Peso: 10% · <span class="text-dark">Avance: 7,8%</span></span>
+                        </div>
+                        <div class="dual-progress-bar">
+                            <div class="dual-progress-fill" style="width: 78.0%;"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-3 pt-2 border-top d-flex justify-content-between align-items-center text-muted" style="font-size: 0.74rem;">
+                    <span>Sumatoria Ponderadores: <strong>100%</strong> (Exigencia RN-001)</span>
+                    <span class="capsule-badge capsule-teal">Cumplimiento: 88,4%</span>
+                </div>
+            </div>
+
+        </section>
+
+    </main>
+
+    <!-- FOOTER INSTITUCIONAL SOBRIO -->
+    <footer class="footer-exec">
+        <span>Ilustre Municipalidad de La Serena · Sistema de Gestión de Resultados (SGR) Territorial 2026 · Dirección de Control Comunal</span>
+        <span class="footer-badge">SGR La Serena v1.0 • Sistema de Gestión y Rendimiento Territorial • 2026</span>
+    </footer>
+
+    <!-- SCRIPT CHART.JS & FUNCIONALIDAD INTERACTIVA -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            initBarChart();
+            initDoughnutChart();
+        });
+
+        // 1. Gráfico de Barras Horizontales con Tooltips Enriquecidos y onClick
+        function initBarChart() {
+            const ctx = document.getElementById('territorialChart');
+            if (!ctx) return;
+
+            const delegationsData = [
+                { name: 'Centro Histórico', compliance: 95.0, validated: 428, goal: 450, diff: '-22', id: 'row-centro-historico' },
+                { name: 'La Pampa', compliance: 92.0, validated: 350, goal: 380, diff: '-30', id: 'row-la-pampa' },
+                { name: 'Avenida del Mar', compliance: 91.0, validated: 291, goal: 320, diff: '-29', id: 'row-avenida-del-mar' },
+                { name: 'Las Compañías', compliance: 88.0, validated: 458, goal: 520, diff: '-62', id: 'row-las-companias' },
+                { name: 'La Antena - La Florida', compliance: 84.0, validated: 344, goal: 410, diff: '-66', id: 'row-la-antena-la-florida' },
+                { name: 'Sector Rural', compliance: 71.4, validated: 200, goal: 280, diff: '-80', id: 'row-sector-rural' }
+            ];
+
+            const barColors = delegationsData.map(d => d.compliance >= 80 ? '#1E3A8A' : '#8B1D2C');
+
+            const territorialChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: delegationsData.map(d => d.name),
+                    datasets: [
+                        {
+                            label: '% Cumplimiento Actual',
+                            data: delegationsData.map(d => d.compliance),
+                            backgroundColor: barColors,
+                            borderRadius: 6,
+                            barThickness: 20,
+                        }
+                    ]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    onClick: (event, elements) => {
+                        if (elements.length > 0) {
+                            const index = elements[0].index;
+                            const targetItem = delegationsData[index];
+                            highlightDelegationRow(targetItem.id, targetItem.name);
+                        }
+                    },
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            backgroundColor: '#0F172A',
+                            titleFont: { size: 12, family: 'Plus Jakarta Sans', weight: '700' },
+                            bodyFont: { size: 11, family: 'Plus Jakarta Sans' },
+                            padding: 12,
+                            cornerRadius: 8,
+                            callbacks: {
+                                title: function(context) {
+                                    return context[0].label;
+                                },
+                                label: function(context) {
+                                    const item = delegationsData[context.dataIndex];
+                                    return [
+                                        ` % Cumplimiento: ${item.compliance}%`,
+                                        ` Avance Validado: ${item.validated} atenciones`,
+                                        ` Meta Asignada: ${item.goal} atenciones`,
+                                        ` Diferencia al objetivo: ${item.diff} atenciones`
+                                    ];
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            min: 0,
+                            max: 100,
+                            ticks: {
+                                font: { family: 'Plus Jakarta Sans', size: 11 },
+                                color: '#64748B',
+                                callback: function(value) { return value + '%'; }
+                            },
+                            grid: {
+                                color: '#E2E8F0',
+                                borderDash: [3, 3]
+                            }
+                        },
+                        y: {
+                            grid: { display: false },
+                            ticks: {
+                                font: { family: 'Plus Jakarta Sans', size: 11, weight: '600' },
+                                color: '#1E293B'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // 2. Gráfico de Dona: Distribución por Tipo de Gestión Comunal
+        function initDoughnutChart() {
+            const ctx = document.getElementById('managementTypeChart');
+            if (!ctx) return;
+
+            new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: [
+                        'Operativos y Terreno',
+                        'Atención Social y RSH',
+                        'Reuniones y Comités Barriales',
+                        'Tubo de Trabajo y Compromisos',
+                        'Talleres Territoriales'
+                    ],
+                    datasets: [
+                        {
+                            data: [35, 25, 20, 10, 10],
+                            backgroundColor: [
+                                '#1E3A8A', // Azul Marino Principal
+                                '#3B82F6', // Azul Claro
+                                '#64748B', // Pizarra
+                                '#B45309', // Ámbar Ocre
+                                '#0D9488'  // Verde Pizarra
+                            ],
+                            borderWidth: 2,
+                            borderColor: '#FFFFFF',
+                            hoverOffset: 4
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    cutout: '72%',
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            backgroundColor: '#0F172A',
+                            padding: 10,
+                            cornerRadius: 8,
+                            callbacks: {
+                                label: function(context) {
+                                    return ` ${context.label}: ${context.raw}% de la gestión`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Función de resaltado interactivo al hacer clic en las barras
+        function highlightDelegationRow(rowId, name) {
+            const allRows = document.querySelectorAll('#delegationsTable tbody tr');
+            allRows.forEach(r => r.classList.remove('row-highlighted'));
+
+            const targetRow = document.getElementById(rowId);
+            if (targetRow) {
+                targetRow.classList.add('row-highlighted');
+                targetRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+                Swal.fire({
+                    toast: true,
+                    position: 'top-end',
+                    icon: 'info',
+                    title: `Delegación: ${name}`,
+                    text: 'Fila seleccionada y resaltada en la tabla inferior.',
+                    showConfirmButton: false,
+                    timer: 2000,
+                    background: '#0F172A',
+                    color: '#FFFFFF'
+                });
+            }
+        }
+
+        // 3. Modal Detalle Ejecutivo de Delegación (SweetAlert2 tema oscuro institucional)
+        function openDelegationDetail(name, leader, phone, meta, valid, pct, tubo, status) {
+            const isCritical = status === 'Rojo';
+            const statusColor = isCritical ? '#EF4444' : '#10B981';
+            const statusBg = isCritical ? 'rgba(239, 68, 68, 0.15)' : 'rgba(16, 185, 129, 0.15)';
+            const rezago = meta - valid;
+
+            Swal.fire({
+                title: `<span style="color: #FFFFFF; font-size: 1.15rem; font-weight: 700;">Ficha Ejecutiva · Delegación ${name}</span>`,
+                html: `
+                    <div style="text-align: left; font-size: 0.82rem; color: #E2E8F0; line-height: 1.5;">
+                        <div style="background: rgba(255,255,255,0.05); border-radius: 8px; padding: 12px; margin-bottom: 12px; border: 1px solid rgba(255,255,255,0.1);">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                                <div>
+                                    <strong style="color: #FFFFFF; font-size: 0.9rem;">${leader}</strong>
+                                    <div style="color: #94A3B8; font-size: 0.74rem;">Encargado(a) Territorial de Delegación</div>
+                                </div>
+                                <span style="background: ${statusBg}; color: ${statusColor}; font-weight: 700; font-size: 0.72rem; padding: 3px 8px; border-radius: 5px;">
+                                    Semáforo: ${status}
+                                </span>
+                            </div>
+                            <div style="color: #94A3B8; font-size: 0.76rem;">
+                                <i class="bi bi-telephone me-1"></i> Contacto Institucional: <strong>${phone}</strong>
+                            </div>
+                        </div>
+
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px;">
+                            <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); padding: 8px; border-radius: 6px;">
+                                <div style="color: #94A3B8; font-size: 0.7rem;">Meta Trimestral</div>
+                                <div style="font-weight: 700; font-size: 1rem; color: #FFFFFF;">${meta} atenciones</div>
+                            </div>
+                            <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); padding: 8px; border-radius: 6px;">
+                                <div style="color: #94A3B8; font-size: 0.7rem;">Avance Validado</div>
+                                <div style="font-weight: 700; font-size: 1rem; color: #FFFFFF;">${valid} (${pct}%)</div>
+                            </div>
+                        </div>
+
+                        <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); padding: 10px; border-radius: 6px; margin-bottom: 12px;">
+                            <div style="font-size: 0.76rem; font-weight: 600; color: #FFFFFF; margin-bottom: 4px;">
+                                <i class="bi bi-kanban me-1 text-info"></i> Tubo de Trabajo y Compromisos:
+                            </div>
+                            <div style="color: #94A3B8; font-size: 0.74rem;">
+                                • <strong>${tubo} compromisos</strong> registrados en agenda colectiva vecinal.<br>
+                                • ${isCritical ? '<span style="color: #F87171;">Alerta: Registra 8 compromisos con fecha próxima a vencer.</span>' : '<span style="color: #34D399;">Operación en plazo normal sin compromisos críticos vencidos.</span>'}
+                            </div>
+                        </div>
+
+                        <div style="color: #94A3B8; font-size: 0.73rem;">
+                            Diferencia al corte: <strong>-${rezago} atenciones</strong> para completar el 100% de la meta semestral.
+                        </div>
+                    </div>
+                `,
+                background: '#0F172A',
+                color: '#FFFFFF',
+                showCancelButton: true,
+                confirmButtonText: '<i class="bi bi-bell-fill me-1"></i> Emitir Alerta de Gestión',
+                cancelButtonText: 'Cerrar Ficha',
+                confirmButtonColor: '#8B1D2C',
+                cancelButtonColor: '#334155',
+                width: '520px'
+            }).then((res) => {
+                if (res.isConfirmed) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Alerta de Gestión Emitida',
+                        text: `Se ha notificado formalmente a la jefatura de ${name} para activar refuerzo operativo conforme al protocolo SGR.`,
+                        background: '#0F172A',
+                        color: '#FFFFFF',
+                        confirmButtonColor: '#8B1D2C'
+                    });
+                }
+            });
+        }
+
+        // 4. Modal de Bitácora de Auditoría Reciente
+        function viewAuditModal() {
+            Swal.fire({
+                title: '<span style="color: #FFFFFF; font-size: 1.15rem; font-weight: 700;">Bitácora de Auditoría Comunal SGR</span>',
+                html: `
+                    <div style="text-align: left; font-size: 0.8rem; color: #E2E8F0; max-height: 280px; overflow-y: auto;">
+                        <div style="padding-bottom: 8px; margin-bottom: 8px; border-bottom: 1px solid rgba(255,255,255,0.1);">
+                            <div style="font-weight: 600; color: #FFFFFF;">Jorge Cortés (Verificador Técnico)</div>
+                            <div style="color: #94A3B8; font-size: 0.72rem;">13 Sep 2026, 15:42 · Aprobación de Evidencia COM1761 en Las Compañías</div>
+                        </div>
+                        <div style="padding-bottom: 8px; margin-bottom: 8px; border-bottom: 1px solid rgba(255,255,255,0.1);">
+                            <div style="font-weight: 600; color: #FFFFFF;">Patricia Vega (Gestora Territorial)</div>
+                            <div style="color: #94A3B8; font-size: 0.72rem;">13 Sep 2026, 14:15 · Carga fotográfica de actividad ACT-2026-0843 en La Pampa</div>
+                        </div>
+                        <div style="padding-bottom: 8px; margin-bottom: 8px; border-bottom: 1px solid rgba(255,255,255,0.1);">
+                            <div style="font-weight: 600; color: #FFFFFF;">Jorge Cortés (Verificador Técnico)</div>
+                            <div style="color: #94A3B8; font-size: 0.72rem;">13 Sep 2026, 12:30 · Devolución técnica ACT-2026-0842 (Foto borrosa) en Sector Rural</div>
+                        </div>
+                        <div style="padding-bottom: 8px; margin-bottom: 8px; border-bottom: 1px solid rgba(255,255,255,0.1);">
+                            <div style="font-weight: 600; color: #FFFFFF;">Administrador General (Alcaldía)</div>
+                            <div style="color: #94A3B8; font-size: 0.72rem;">12 Sep 2026, 09:00 · Parametrización SGR T3 verificada al 100% de ponderación</div>
+                        </div>
+                        <div>
+                            <div style="font-weight: 600; color: #FFFFFF;">Kevin Encina (Gestor Territorial)</div>
+                            <div style="color: #94A3B8; font-size: 0.72rem;">12 Sep 2026, 17:20 · Cierre de compromiso TUB-2026-019 en agenda La Pampa</div>
+                        </div>
+                    </div>
+                `,
+                background: '#0F172A',
+                color: '#FFFFFF',
+                confirmButtonText: 'Cerrar Registro',
+                confirmButtonColor: '#334155',
+                width: '560px'
+            });
+        }
+
+        // 5. Modal de Ajuste de Ponderadores (100% Obligatorio)
+        function openParamAdjustModal() {
+            Swal.fire({
+                title: '<span style="color: #FFFFFF; font-size: 1.15rem; font-weight: 700;">Ajuste de Ponderadores Matriz SGR</span>',
+                html: `
+                    <div style="text-align: left; font-size: 0.82rem; color: #E2E8F0;">
+                        <p class="mb-2" style="color: #94A3B8;">La sumatoria total debe ser estrictamente 100% (Regla RN-001):</p>
+                        <div class="mb-2">
+                            <label class="form-label mb-1 text-light small">Operativos y Terreno (%):</label>
+                            <input id="swalP1" type="number" class="form-control form-control-sm bg-dark text-white border-secondary" value="35">
+                        </div>
+                        <div class="mb-2">
+                            <label class="form-label mb-1 text-light small">Atención Social y Presencial (%):</label>
+                            <input id="swalP2" type="number" class="form-control form-control-sm bg-dark text-white border-secondary" value="25">
+                        </div>
+                        <div class="mb-2">
+                            <label class="form-label mb-1 text-light small">Reuniones y Mesas de Trabajo (%):</label>
+                            <input id="swalP3" type="number" class="form-control form-control-sm bg-dark text-white border-secondary" value="20">
+                        </div>
+                        <div class="mb-2">
+                            <label class="form-label mb-1 text-light small">Tubo de Trabajo y Compromisos (%):</label>
+                            <input id="swalP4" type="number" class="form-control form-control-sm bg-dark text-white border-secondary" value="10">
+                        </div>
+                        <div class="mb-2">
+                            <label class="form-label mb-1 text-light small">Talleres Territoriales (%):</label>
+                            <input id="swalP5" type="number" class="form-control form-control-sm bg-dark text-white border-secondary" value="10">
+                        </div>
+                    </div>
+                `,
+                background: '#0F172A',
+                color: '#FFFFFF',
+                showCancelButton: true,
+                confirmButtonText: 'Validar y Guardar',
+                cancelButtonText: 'Cancelar',
+                confirmButtonColor: '#8B1D2C',
+                cancelButtonColor: '#334155',
+                preConfirm: () => {
+                    const p1 = parseInt(document.getElementById('swalP1').value) || 0;
+                    const p2 = parseInt(document.getElementById('swalP2').value) || 0;
+                    const p3 = parseInt(document.getElementById('swalP3').value) || 0;
+                    const p4 = parseInt(document.getElementById('swalP4').value) || 0;
+                    const p5 = parseInt(document.getElementById('swalP5').value) || 0;
+                    const sum = p1 + p2 + p3 + p4 + p5;
+
+                    if (sum !== 100) {
+                        Swal.showValidationMessage(`La sumatoria actual es ${sum}%. Debe sumar exactamente 100% para ser válida.`);
+                        return false;
+                    }
+                    return { p1, p2, p3, p4, p5 };
+                }
+            }).then((res) => {
+                if (res.isConfirmed) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Parámetros Actualizados',
+                        text: 'La nueva distribución de ponderadores (100% verificado) ha sido registrada en el sistema.',
+                        background: '#0F172A',
+                        color: '#FFFFFF',
+                        confirmButtonColor: '#8B1D2C'
+                    });
+                }
+            });
+        }
+
+        // Exportación de informe ejecutivo
+        function exportExecutiveReport() {
+            Swal.fire({
+                title: 'Exportar Informe Ejecutivo SGR',
+                text: 'Seleccione el formato oficial para el informe consolidado comunal:',
+                icon: 'question',
+                showCancelButton: true,
+                showDenyButton: true,
+                confirmButtonText: '<i class="bi bi-file-earmark-pdf"></i> Informe PDF Oficial',
+                denyButtonText: '<i class="bi bi-file-earmark-spreadsheet"></i> Planilla Excel Auditada',
+                cancelButtonText: 'Cancelar',
+                confirmButtonColor: '#8B1D2C',
+                denyButtonColor: '#0F172A',
+                background: '#FFFFFF',
+                color: '#1E293B'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Informe PDF Generado',
+                        text: 'El reporte ejecutivo trimestral SGR-2026-T3 ha sido compilado satisfactoriamente.',
+                        confirmButtonColor: '#0F172A',
+                        background: '#FFFFFF',
+                        color: '#1E293B'
+                    });
+                } else if (result.isDenied) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Excel Descargado',
+                        text: 'La matriz consolidada de las 6 delegaciones ha sido exportada.',
+                        confirmButtonColor: '#0F172A',
+                        background: '#FFFFFF',
+                        color: '#1E293B'
+                    });
+                }
+            });
+        }
+
+        // Filtro territorial activo en Topbar
+        function filterTerritory(val) {
+            Swal.fire({
+                title: 'Cargando Filtro Territorial',
+                text: 'Consultando indicadores de: ' + val,
+                timer: 900,
+                showConfirmButton: false,
+                background: '#FFFFFF',
+                color: '#1E293B',
+                icon: 'info'
+            });
+        }
+    </script>
+</body>
+</html>

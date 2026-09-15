@@ -11,8 +11,9 @@
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/vanilla-tilt/1.8.0/vanilla-tilt.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
     <style>
         * {
@@ -145,7 +146,7 @@
         }
 
         .auth-card-header {
-            margin-bottom: 1.65rem;
+            margin-bottom: 1.5rem;
         }
 
         .auth-card-title {
@@ -165,7 +166,7 @@
         }
 
         .form-field-group {
-            margin-bottom: 1.2rem;
+            margin-bottom: 1.15rem;
             text-align: left;
         }
 
@@ -252,7 +253,7 @@
             justify-content: space-between;
             align-items: center;
             font-size: 0.8rem;
-            margin-bottom: 1.35rem;
+            margin-bottom: 1.25rem;
         }
 
         .remember-checkbox {
@@ -329,9 +330,57 @@
             transform: translateX(4px);
         }
 
+        /* Botones de Acceso Rápido Demo (RBAC) */
+        .demo-quick-access {
+            margin-top: 1.25rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.45rem;
+            align-items: center;
+        }
+
+        .demo-label {
+            font-size: 11px;
+            font-weight: 700;
+            color: rgba(255, 255, 255, 0.55);
+            text-transform: uppercase;
+            letter-spacing: 0.6px;
+        }
+
+        .demo-chips-group {
+            display: flex;
+            gap: 6px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .demo-chip {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.16);
+            color: #cbd5e1;
+            font-size: 11px;
+            font-weight: 600;
+            padding: 5px 10px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            user-select: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            text-decoration: none;
+        }
+
+        .demo-chip:hover {
+            background: rgba(255, 255, 255, 0.18);
+            border-color: #38bdf8;
+            color: #ffffff;
+            transform: translateY(-1px);
+        }
+
         .auth-card-footer {
-            margin-top: 1.65rem;
-            padding-top: 1.1rem;
+            margin-top: 1.35rem;
+            padding-top: 1rem;
             border-top: 1px solid rgba(255, 255, 255, 0.12);
             text-align: center;
             font-size: 0.75rem;
@@ -421,7 +470,7 @@
                 {% endfor %}
             {% endif %}
 
-            <form method="post" action="{% url 'core:login' %}" id="loginForm">
+            <form method="post" action="{% url 'core:login' %}" id="loginForm" novalidate>
                 {% csrf_token %}
 
                 <div class="form-field-group">
@@ -464,7 +513,7 @@
                         <input type="checkbox" id="rememberMe" name="remember_me">
                         <span>Recordarme</span>
                     </label>
-                    <a href="#" class="forgot-pwd-link" onclick="alert('Contacta al Departamento de Tecnologías de la Información (DTI): soporte@laserena.cl'); return false;">
+                    <a href="#" class="forgot-pwd-link" onclick="Swal.fire({icon: 'info', title: 'Recuperación de Acceso', text: 'Contacta al Departamento de Tecnologías de la Información (DTI): soporte@laserena.cl', confirmButtonColor: '#e11d48', background: '#0f172a', color: '#ffffff'}); return false;">
                         ¿Olvidaste tu contraseña?
                     </a>
                 </div>
@@ -473,6 +522,22 @@
                     <span>Acceder al Portal</span>
                     <i class="bi bi-arrow-right"></i>
                 </button>
+
+                <!-- Botones Demo RBAC para Acceso Directo a Vistas Especializadas -->
+                <div class="demo-quick-access">
+                    <span class="demo-label">Acceso Rápido Demo (RBAC)</span>
+                    <div class="demo-chips-group">
+                        <a href="{% url 'core:login' %}?rol=admin" class="demo-chip" title="Vista Alcaldía y Control Comunal">
+                            <i class="bi bi-building"></i> Admin / Alcaldía
+                        </a>
+                        <a href="{% url 'core:login' %}?rol=verificador" class="demo-chip" title="Vista Supervisor y Auditoría">
+                            <i class="bi bi-patch-check"></i> Verificador / Supervisor
+                        </a>
+                        <a href="{% url 'core:login' %}?rol=gestor" class="demo-chip" title="Vista Terreno y Tubo de Trabajo">
+                            <i class="bi bi-geo-alt"></i> Gestor / Terreno
+                        </a>
+                    </div>
+                </div>
             </form>
 
             <footer class="auth-card-footer">
@@ -489,6 +554,8 @@
         const toggle = document.getElementById('togglePassword');
         const pwd = document.getElementById('password');
         const icon = document.getElementById('eyeIcon');
+        const form = document.getElementById('loginForm');
+        const usernameInput = document.getElementById('username');
 
         if (toggle && pwd && icon) {
             toggle.addEventListener('click', function(e) {
@@ -496,6 +563,55 @@
                 const isPass = pwd.getAttribute('type') === 'password';
                 pwd.setAttribute('type', isPass ? 'text' : 'password');
                 icon.className = isPass ? 'bi bi-eye-slash' : 'bi bi-eye';
+            });
+        }
+
+        if (form && usernameInput && pwd) {
+            form.addEventListener('submit', function(e) {
+                e.preventDefault();
+                const rut = usernameInput.value.trim();
+                const password = pwd.value.trim();
+
+                if (!rut || !password) {
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'Campos requeridos',
+                        text: 'Por favor, ingrese su RUT y contraseña institucional.',
+                        confirmButtonColor: '#e11d48',
+                        background: '#0f172a',
+                        color: '#ffffff'
+                    });
+                    return;
+                }
+
+                const rutPattern = /^[0-9kK\.\-]+$/;
+                const suspiciousPattern = /[<>'";`]|--|\/\*|\*\/|\b(script|union|select|insert|update|delete|drop|alert)\b/i;
+
+                if (!rutPattern.test(rut) || suspiciousPattern.test(rut) || suspiciousPattern.test(password)) {
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'Carácter no permitido',
+                        text: 'Se detectaron caracteres inválidos o código malicioso. Ingrese un formato válido.',
+                        confirmButtonColor: '#e11d48',
+                        background: '#0f172a',
+                        color: '#ffffff'
+                    });
+                    return;
+                }
+
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Autenticación exitosa',
+                    text: 'Redirigiendo al panel...',
+                    showConfirmButton: false,
+                    timer: 1000,
+                    background: '#0f172a',
+                    color: '#ffffff'
+                });
+
+                setTimeout(function() {
+                    form.submit();
+                }, 1000);
             });
         }
 

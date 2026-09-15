@@ -1,0 +1,930 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SGR Auditoría & Supervisión Territorial · Las Compañías</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <style>
+        :root {
+            --muni-navy: #071326;
+            --muni-navy-slate: #0F172A;
+            --muni-red: #C41230;
+            --muni-red-hover: #9E0E26;
+            --muni-rose: #E11D48;
+            --muni-bg: #F8FAFC;
+            --muni-card-bg: #FFFFFF;
+            --muni-border: #E2E8F0;
+            --muni-border-subtle: #EDF2F7;
+            --muni-text-main: #0F172A;
+            --muni-text-muted: #64748B;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+            background-color: var(--muni-bg);
+            color: var(--muni-text-main);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* HEADER FLOTANTE INSTITUCIONAL */
+        .floating-header-wrapper {
+            padding: 0.5rem 0.5rem 0 0.5rem;
+        }
+
+        .floating-navbar {
+            margin: 1rem 1.5rem 1.5rem 1.5rem;
+            background: var(--muni-navy);
+            border-radius: 16px;
+            box-shadow: 0 10px 25px -5px rgba(7, 19, 38, 0.25);
+            padding: 0.85rem 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+            position: sticky;
+            top: 1rem;
+            z-index: 1020;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .header-brand {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            text-decoration: none;
+            color: #FFFFFF;
+        }
+
+        .header-logo {
+            height: 40px;
+            width: auto;
+            object-fit: contain;
+        }
+
+        .header-title-box {
+            border-left: 1px solid rgba(255, 255, 255, 0.2);
+            padding-left: 14px;
+        }
+
+        .header-title {
+            font-size: 1rem;
+            font-weight: 800;
+            letter-spacing: 0.3px;
+            color: #FFFFFF;
+            line-height: 1.2;
+            margin: 0;
+        }
+
+        .header-subtitle {
+            font-size: 0.74rem;
+            color: #94A3B8;
+            margin: 0;
+            font-weight: 500;
+        }
+
+        .jurisdiction-badge {
+            background: rgba(56, 189, 248, 0.15);
+            border: 1px solid rgba(56, 189, 248, 0.4);
+            color: #38BDF8;
+            padding: 6px 14px;
+            border-radius: 9999px;
+            font-size: 0.82rem;
+            font-weight: 700;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .user-badge-container {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .user-pill-card {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            padding: 5px 12px 5px 8px;
+            border-radius: 9999px;
+            color: #FFFFFF;
+        }
+
+        .user-avatar-circle {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #0284C7, #0369A1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 0.85rem;
+            color: #FFFFFF;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .user-meta-text {
+            display: flex;
+            flex-direction: column;
+            line-height: 1.15;
+            text-align: left;
+        }
+
+        .user-meta-name {
+            font-size: 0.8rem;
+            font-weight: 700;
+            color: #F8FAFC;
+        }
+
+        .user-meta-role {
+            font-size: 0.68rem;
+            color: #38BDF8;
+            font-weight: 600;
+        }
+
+        .btn-logout-pill {
+            background: rgba(225, 29, 72, 0.15);
+            border: 1px solid rgba(225, 29, 72, 0.4);
+            color: #FDA4AF;
+            padding: 6px 14px;
+            border-radius: 9999px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s ease;
+        }
+
+        .btn-logout-pill:hover {
+            background: #E11D48;
+            color: #FFFFFF;
+            border-color: #E11D48;
+            transform: translateY(-1px);
+        }
+
+        /* MAIN WRAPPER */
+        .dashboard-container {
+            max-width: 1440px;
+            margin: 0 auto;
+            padding: 0 1.5rem 3rem 1.5rem;
+            flex: 1;
+            width: 100%;
+        }
+
+        /* SUBHEADER BANNER */
+        .verifier-banner {
+            background: linear-gradient(135deg, #071326 0%, #0F2A4A 100%);
+            border-radius: 18px;
+            padding: 1.5rem 2rem;
+            margin-bottom: 2rem;
+            color: #FFFFFF;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 10px 20px -5px rgba(7, 19, 38, 0.15);
+        }
+
+        .verifier-banner-title {
+            font-size: 1.35rem;
+            font-weight: 800;
+            margin-bottom: 0.35rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .verifier-banner-desc {
+            font-size: 0.88rem;
+            color: #94A3B8;
+            margin: 0;
+        }
+
+        /* KPIS GRID */
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 1.25rem;
+            margin-bottom: 2rem;
+        }
+
+        .kpi-card {
+            background: var(--muni-card-bg);
+            border: 1px solid var(--muni-border);
+            border-radius: 16px;
+            padding: 1.35rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .kpi-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 20px -5px rgba(0, 0, 0, 0.1);
+        }
+
+        .kpi-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+        }
+
+        .kpi-card.kpi-amber::before { background: linear-gradient(90deg, #F59E0B, #D97706); }
+        .kpi-card.kpi-green::before { background: linear-gradient(90deg, #10B981, #059669); }
+        .kpi-card.kpi-red::before { background: linear-gradient(90deg, #EF4444, #DC2626); }
+        .kpi-card.kpi-blue::before { background: linear-gradient(90deg, #2563EB, #3B82F6); }
+
+        .kpi-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .kpi-title {
+            font-size: 0.8rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--muni-text-muted);
+            margin: 0;
+        }
+
+        .kpi-icon-badge {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.15rem;
+        }
+
+        .kpi-icon-amber { background: rgba(245, 158, 11, 0.12); color: #D97706; }
+        .kpi-icon-green { background: rgba(16, 185, 129, 0.12); color: #059669; }
+        .kpi-icon-red { background: rgba(239, 68, 68, 0.12); color: #DC2626; }
+        .kpi-icon-blue { background: rgba(37, 99, 235, 0.12); color: #2563EB; }
+
+        .kpi-value-row {
+            display: flex;
+            align-items: baseline;
+            gap: 10px;
+            margin-bottom: 0.5rem;
+        }
+
+        .kpi-number {
+            font-size: 2.1rem;
+            font-weight: 800;
+            color: var(--muni-text-main);
+            line-height: 1;
+        }
+
+        .kpi-meta-badge {
+            font-size: 0.72rem;
+            font-weight: 700;
+            padding: 3px 8px;
+            border-radius: 6px;
+        }
+
+        .badge-warning-soft { background: #FEF3C7; color: #B45309; }
+        .badge-success-soft { background: #DCFCE7; color: #15803D; }
+        .badge-danger-soft { background: #FEE2E2; color: #B91C1C; }
+        .badge-info-soft { background: #DBEAFE; color: #1D4ED8; }
+
+        .kpi-footer-text {
+            font-size: 0.78rem;
+            color: var(--muni-text-muted);
+            font-weight: 500;
+        }
+
+        /* SECTION CARDS */
+        .section-card {
+            background: var(--muni-card-bg);
+            border: 1px solid var(--muni-border);
+            border-radius: 18px;
+            padding: 1.6rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 10px -2px rgba(0, 0, 0, 0.04);
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.3rem;
+            flex-wrap: wrap;
+            gap: 0.75rem;
+        }
+
+        .section-title {
+            font-size: 1.12rem;
+            font-weight: 800;
+            color: var(--muni-text-main);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin: 0;
+        }
+
+        .section-subtitle {
+            font-size: 0.8rem;
+            color: var(--muni-text-muted);
+            margin-top: 2px;
+        }
+
+        /* TABLES */
+        .table-responsive-sgr {
+            overflow-x: auto;
+            border-radius: 12px;
+            border: 1px solid var(--muni-border);
+        }
+
+        .table-sgr {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 0;
+            font-size: 0.875rem;
+        }
+
+        .table-sgr th {
+            background: #F1F5F9;
+            color: #475569;
+            font-weight: 700;
+            text-transform: uppercase;
+            font-size: 0.72rem;
+            letter-spacing: 0.6px;
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--muni-border);
+            text-align: left;
+            white-space: nowrap;
+        }
+
+        .table-sgr td {
+            padding: 13px 16px;
+            border-bottom: 1px solid var(--muni-border-subtle);
+            color: #334155;
+            vertical-align: middle;
+        }
+
+        .table-sgr tr:last-child td {
+            border-bottom: none;
+        }
+
+        .table-sgr tr:hover td {
+            background: #F8FAFC;
+        }
+
+        .evidence-thumb {
+            width: 52px;
+            height: 52px;
+            border-radius: 8px;
+            object-fit: cover;
+            border: 2px solid var(--muni-border);
+            cursor: pointer;
+            transition: transform 0.2s ease, border-color 0.2s ease;
+        }
+
+        .evidence-thumb:hover {
+            transform: scale(1.08);
+            border-color: #2563EB;
+        }
+
+        .btn-audit-approve {
+            background: #10B981;
+            color: #FFFFFF;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 8px;
+            font-size: 0.78rem;
+            font-weight: 700;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .btn-audit-approve:hover {
+            background: #059669;
+            transform: translateY(-1px);
+        }
+
+        .btn-audit-reject {
+            background: #EF4444;
+            color: #FFFFFF;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 8px;
+            font-size: 0.78rem;
+            font-weight: 700;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .btn-audit-reject:hover {
+            background: #DC2626;
+            transform: translateY(-1px);
+        }
+
+        .btn-audit-view {
+            background: #F1F5F9;
+            color: #334155;
+            border: 1px solid var(--muni-border);
+            padding: 6px 10px;
+            border-radius: 8px;
+            font-size: 0.78rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .btn-audit-view:hover {
+            background: #E2E8F0;
+        }
+
+        .progress-sgr-wrapper {
+            width: 140px;
+            background: #E2E8F0;
+            height: 8px;
+            border-radius: 9999px;
+            overflow: hidden;
+            display: inline-block;
+            vertical-align: middle;
+            margin-right: 8px;
+        }
+
+        .progress-sgr-fill {
+            height: 100%;
+            border-radius: 9999px;
+        }
+
+        /* SEMÁFOROS DINÁMICOS */
+        .semaphore-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 10px;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 700;
+        }
+
+        .sem-verde { background: #DCFCE7; color: #166534; border: 1px solid rgba(22, 101, 52, 0.2); }
+        .sem-ambar { background: #FEF3C7; color: #92400E; border: 1px solid rgba(146, 64, 14, 0.2); }
+        .sem-rojo { background: #FEE2E2; color: #991B1B; border: 1px solid rgba(153, 27, 27, 0.2); }
+
+        .sem-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+        }
+
+        .sem-dot-verde { background: #10B981; box-shadow: 0 0 6px #10B981; }
+        .sem-dot-ambar { background: #F59E0B; box-shadow: 0 0 6px #F59E0B; }
+        .sem-dot-rojo { background: #EF4444; box-shadow: 0 0 6px #EF4444; }
+
+        /* FOOTER */
+        .dashboard-footer {
+            background: #FFFFFF;
+            border-top: 1px solid var(--muni-border);
+            padding: 1.25rem 2rem;
+            text-align: center;
+            font-size: 0.8rem;
+            color: var(--muni-text-muted);
+            margin-top: auto;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- 1. TOPBAR FLOTANTE INSTITUCIONAL CON JURISDICCIÓN FIJADA -->
+    <div class="floating-header-wrapper">
+        <header class="floating-navbar">
+            <a href="{% url 'activities:dashboard_verificador' %}" class="header-brand">
+                <img src="{% static 'images/laserena_horizontal_blanco.svg' %}" 
+                     alt="Municipalidad de La Serena" 
+                     class="header-logo">
+                <div class="header-title-box">
+                    <h1 class="header-title">SGR AUDITORÍA & CONTROL TERRITORIAL</h1>
+                    <p class="header-subtitle">Ilustre Municipalidad de La Serena · Jefatura de Supervisión</p>
+                </div>
+            </a>
+
+            <!-- Jurisdicción Fija: Las Compañías -->
+            <div class="jurisdiction-badge">
+                <i class="bi bi-geo-alt-fill"></i>
+                <span>JURISDICCIÓN: {{ current_delegation }}</span>
+            </div>
+
+            <!-- Perfil Activo y Logout -->
+            <div class="user-badge-container">
+                <div class="user-pill-card">
+                    <div class="user-avatar-circle">
+                        <i class="bi bi-patch-check"></i>
+                    </div>
+                    <div class="user-meta-text">
+                        <span class="user-meta-name">{{ user_name }}</span>
+                        <span class="user-meta-role">Supervisor Territorial · RBAC Verificador</span>
+                    </div>
+                </div>
+                <a href="{% url 'core:logout' %}" class="btn-logout-pill" title="Cerrar sesión">
+                    <i class="bi bi-box-arrow-right"></i>
+                    <span class="d-none d-sm-inline">Salir</span>
+                </a>
+            </div>
+        </header>
+    </div>
+
+    <!-- MAIN CONTENT -->
+    <main class="dashboard-container">
+
+        <!-- SUBHEADER BANNER DE SUPERVISIÓN -->
+        <div class="verifier-banner">
+            <div>
+                <h2 class="verifier-banner-title">
+                    <i class="bi bi-clipboard-check text-info"></i>
+                    Bandeja de Validación Fotográfica y Semáforo al Día
+                </h2>
+                <p class="verifier-banner-desc">
+                    Control de calidad de terreno, auditoría de medios de verificación y fiscalización diaria de metas (91 días de ciclo).
+                </p>
+            </div>
+            <div class="d-flex align-items-center gap-2">
+                <span class="badge bg-light text-dark px-3 py-2 fw-bold">
+                    <i class="bi bi-calendar-event me-1"></i> Día 56 / 91 (Trimestre T3)
+                </span>
+            </div>
+        </div>
+
+        <!-- 4 KPIS DE SUPERVISIÓN -->
+        <div class="kpi-grid">
+            <!-- KPI 1 -->
+            <div class="kpi-card kpi-amber">
+                <div class="kpi-header">
+                    <span class="kpi-title">Evidencias Pendientes</span>
+                    <div class="kpi-icon-badge kpi-icon-amber">
+                        <i class="bi bi-hourglass-split"></i>
+                    </div>
+                </div>
+                <div class="kpi-value-row">
+                    <span class="kpi-number">{{ kpi.pending_reviews }}</span>
+                    <span class="kpi-meta-badge badge-warning-soft">En cola de revisión</span>
+                </div>
+                <div class="kpi-footer-text">
+                    Requieren auditoría fotográfica antes de 24 hrs
+                </div>
+            </div>
+
+            <!-- KPI 2 -->
+            <div class="kpi-card kpi-green">
+                <div class="kpi-header">
+                    <span class="kpi-title">Puntos Validados Hoy</span>
+                    <div class="kpi-icon-badge kpi-icon-green">
+                        <i class="bi bi-check-circle-fill"></i>
+                    </div>
+                </div>
+                <div class="kpi-value-row">
+                    <span class="kpi-number">{{ kpi.points_validated_today }}</span>
+                    <span class="kpi-meta-badge badge-success-soft">+1 pt cada una</span>
+                </div>
+                <div class="kpi-footer-text">
+                    Aportan directamente al logro de meta institucional
+                </div>
+            </div>
+
+            <!-- KPI 3 -->
+            <div class="kpi-card kpi-red">
+                <div class="kpi-header">
+                    <span class="kpi-title">Evidencias Devueltas</span>
+                    <div class="kpi-icon-badge kpi-icon-red">
+                        <i class="bi bi-arrow-return-left"></i>
+                    </div>
+                </div>
+                <div class="kpi-value-row">
+                    <span class="kpi-number">{{ kpi.rejected_count }}</span>
+                    <span class="kpi-meta-badge badge-danger-soft">Con observación</span>
+                </div>
+                <div class="kpi-footer-text">
+                    En proceso de subsanación por gestor en terreno
+                </div>
+            </div>
+
+            <!-- KPI 4 -->
+            <div class="kpi-card kpi-blue">
+                <div class="kpi-header">
+                    <span class="kpi-title">Semáforo Promedio Delegación</span>
+                    <div class="kpi-icon-badge kpi-icon-blue">
+                        <i class="bi bi-traffic-light"></i>
+                    </div>
+                </div>
+                <div class="kpi-value-row">
+                    <span class="kpi-number">{{ kpi.delegation_avg }}%</span>
+                    <span class="kpi-meta-badge badge-success-soft">{{ kpi.delegation_status }}</span>
+                </div>
+                <div class="kpi-footer-text">
+                    Rendimiento global de funcionarios en Las Compañías
+                </div>
+            </div>
+        </div>
+
+        <!-- BANDEJA DE AUDITORÍA DE EVIDENCIAS (COLA DE VALIDACIÓN) -->
+        <section class="section-card">
+            <div class="section-header">
+                <div>
+                    <h3 class="section-title">
+                        <i class="bi bi-camera-fill text-primary"></i>
+                        Cola de Validación de Evidencias Fotográficas
+                    </h3>
+                    <p class="section-subtitle">
+                        Inspeccione los respaldos gráficos cargados por los gestores territoriales y asigne o devuelva el punto de logro.
+                    </p>
+                </div>
+                <div class="d-flex align-items-center gap-2">
+                    <span class="badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25 px-2 py-1">
+                        <i class="bi bi-info-circle me-1"></i> La aprobación suma +1 punto de cumplimiento
+                    </span>
+                </div>
+            </div>
+
+            <div class="table-responsive-sgr">
+                <table class="table-sgr" id="evidenceQueueTable">
+                    <thead>
+                        <tr>
+                            <th>Código Único</th>
+                            <th>Fecha</th>
+                            <th>Funcionario Responsable</th>
+                            <th>Ítem / Servicio</th>
+                            <th>Evidencia Gráfica</th>
+                            <th>Estado Actual</th>
+                            <th>Acciones de Verificación</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in evidence_queue %}
+                        <tr id="row-{{ item.code }}">
+                            <td>
+                                <span class="badge bg-light text-primary border border-primary border-opacity-25 fw-bold">
+                                    {{ item.code }}
+                                </span>
+                            </td>
+                            <td class="text-muted"><i class="bi bi-calendar3 me-1"></i>{{ item.date }}</td>
+                            <td><strong>{{ item.official }}</strong></td>
+                            <td>{{ item.item }}</td>
+                            <td>
+                                <img src="{{ item.thumbnail }}" 
+                                     alt="Evidencia {{ item.code }}" 
+                                     class="evidence-thumb" 
+                                     title="Click para ampliar imagen"
+                                     onclick="previewEvidence('{{ item.code }}', '{{ item.official }}', '{{ item.item }}', '{{ item.description }}', '{{ item.thumbnail }}')">
+                            </td>
+                            <td>
+                                <span class="badge bg-warning bg-opacity-10 text-warning border border-warning border-opacity-25 px-2 py-1 status-label-box" id="status-{{ item.code }}">
+                                    <i class="bi bi-hourglass-split me-1"></i> {{ item.status }}
+                                </span>
+                            </td>
+                            <td>
+                                <div class="d-flex align-items-center gap-1">
+                                    <button type="button" class="btn-audit-approve" onclick="approveEvidence('{{ item.code }}', '{{ item.official }}')">
+                                        <i class="bi bi-check-lg"></i> Aprobar (+1 pt)
+                                    </button>
+                                    <button type="button" class="btn-audit-reject" onclick="rejectEvidence('{{ item.code }}', '{{ item.official }}')">
+                                        <i class="bi bi-x-lg"></i> Rechazar
+                                    </button>
+                                    <button type="button" class="btn-audit-view" onclick="previewEvidence('{{ item.code }}', '{{ item.official }}', '{{ item.item }}', '{{ item.description }}', '{{ item.thumbnail }}')">
+                                        <i class="bi bi-eye"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- TABLA SEMÁFORO AL DÍA DE FUNCIONARIOS -->
+        <section class="section-card">
+            <div class="section-header">
+                <div>
+                    <h3 class="section-title">
+                        <i class="bi bi-speedometer2 text-danger"></i>
+                        Monitoreo del Semáforo al Día por Funcionario (Las Compañías)
+                    </h3>
+                    <p class="section-subtitle">
+                        Reglas de corte: <strong>Verde &gt;=100%</strong> de la meta esperada al día | <strong>Ámbar 60-99%</strong> | <strong>Rojo &lt;60%</strong> (Rezago crítico).
+                    </p>
+                </div>
+                <div class="d-flex align-items-center gap-2">
+                    <span class="semaphore-badge sem-verde"><span class="sem-dot sem-dot-verde"></span> Óptimo</span>
+                    <span class="semaphore-badge sem-ambar"><span class="sem-dot sem-dot-ambar"></span> Alerta</span>
+                    <span class="semaphore-badge sem-rojo"><span class="sem-dot sem-dot-rojo"></span> Crítico</span>
+                </div>
+            </div>
+
+            <div class="table-responsive-sgr">
+                <table class="table-sgr">
+                    <thead>
+                        <tr>
+                            <th>Funcionario Municipal</th>
+                            <th>Cargo / Estamento</th>
+                            <th>Días Transcurridos</th>
+                            <th>Meta Esperada al Día</th>
+                            <th>Cumplimiento Actual</th>
+                            <th>Semáforo al Día</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for staff in officials_monitoring %}
+                        <tr>
+                            <td><strong>{{ staff.name }}</strong></td>
+                            <td>{{ staff.role }}</td>
+                            <td>{{ staff.days_elapsed }} días</td>
+                            <td><strong>{{ staff.expected_meta }}%</strong></td>
+                            <td>
+                                <div class="progress-sgr-wrapper">
+                                    <div class="progress-sgr-fill bg-{{ staff.status_class }}" style="width: {% if staff.current_compliance > 100 %}100{% else %}{{ staff.current_compliance }}{% endif %}%;"></div>
+                                </div>
+                                <span class="fw-bold text-{{ staff.status_class }}">{{ staff.current_compliance }}%</span>
+                            </td>
+                            <td>
+                                {% if staff.status_label == 'Verde' %}
+                                    <span class="semaphore-badge sem-verde">
+                                        <span class="sem-dot sem-dot-verde"></span> Al Día (&gt;=100%)
+                                    </span>
+                                {% elif staff.status_label == 'Ámbar' %}
+                                    <span class="semaphore-badge sem-ambar">
+                                        <span class="sem-dot sem-dot-ambar"></span> Alerta (60-99%)
+                                    </span>
+                                {% else %}
+                                    <span class="semaphore-badge sem-rojo">
+                                        <span class="sem-dot sem-dot-rojo"></span> Crítico (&lt;60%)
+                                    </span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- FOOTER INSTITUCIONAL -->
+    <footer class="dashboard-footer">
+        <div class="container-fluid">
+            <span>Ilustre Municipalidad de La Serena · Módulo de Supervisión y Auditoría SGR · Delegación Las Compañías</span>
+        </div>
+    </footer>
+
+    <!-- LOGICA DE VALIDACIÓN CON SWEETALERT2 -->
+    <script>
+        // Modal para APROBAR Evidencia Fotográfica (+1 Punto de logro)
+        function approveEvidence(code, official) {
+            Swal.fire({
+                title: 'Aprobar Evidencia ' + code,
+                html: `
+                    <div style="text-align: left; font-size: 0.88rem; color: #cbd5e1;">
+                        <p>¿Confirma la validación técnica de esta evidencia para <strong>${official}</strong>?</p>
+                        <div class="alert alert-success d-flex align-items-center p-2 mb-0" style="background: rgba(16, 185, 129, 0.15); border: 1px solid rgba(16, 185, 129, 0.3); color: #6ee7b7;">
+                            <i class="bi bi-award-fill me-2 fs-5"></i>
+                            <div>Esta acción sumará <strong>+1 punto de logro</strong> al cumplimiento institucional del funcionario.</div>
+                        </div>
+                    </div>
+                `,
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonText: '<i class="bi bi-check-circle"></i> Sí, Aprobar (+1 pt)',
+                cancelButtonText: 'Cancelar',
+                confirmButtonColor: '#10B981',
+                background: '#0F172A',
+                color: '#FFFFFF'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    // Actualizar fila visualmente
+                    const statusBox = document.getElementById('status-' + code);
+                    if (statusBox) {
+                        statusBox.className = 'badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 px-2 py-1';
+                        statusBox.innerHTML = '<i class="bi bi-check2-circle me-1"></i> Aprobado (+1 pt)';
+                    }
+                    Swal.fire({
+                        icon: 'success',
+                        title: '¡Evidencia Aprobada!',
+                        text: `Se ha acreditado 1 punto a la meta de ${official}. El registro ha sido firmado digitalmente.`,
+                        background: '#0F172A',
+                        color: '#FFFFFF',
+                        timer: 2000,
+                        showConfirmButton: false
+                    });
+                }
+            });
+        }
+
+        // Modal para RECHAZAR / DEVOLVER con Textarea Obligatorio y Sanitización
+        function rejectEvidence(code, official) {
+            Swal.fire({
+                title: 'Devolver Evidencia ' + code,
+                html: `
+                    <div style="text-align: left; font-size: 0.85rem; color: #cbd5e1;">
+                        <p>Indique el motivo técnico del rechazo u observación para <strong>${official}</strong>:</p>
+                        <textarea id="rejectObservation" class="form-control" rows="4" placeholder="Ej: Fotografía borrosa, no se aprecia placa patente o el trabajo ejecutado no coincide con el ítem..." style="background: #1E293B; border-color: #475569; color: #FFFFFF; font-size: 0.85rem;"></textarea>
+                    </div>
+                `,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: '<i class="bi bi-arrow-return-left"></i> Devolver con Observación',
+                cancelButtonText: 'Cancelar',
+                confirmButtonColor: '#EF4444',
+                background: '#0F172A',
+                color: '#FFFFFF',
+                preConfirm: () => {
+                    const obs = document.getElementById('rejectObservation').value.trim();
+                    if (!obs) {
+                        Swal.showValidationMessage('Debe ingresar obligatoriamente una observación que fundamente la devolución.');
+                        return false;
+                    }
+                    // Sanitización contra SQLi y XSS
+                    const suspiciousPattern = /[<>'";`]|--|\/\*|\*\/|\b(script|union|select|insert|update|delete|drop|alert)\b/i;
+                    if (suspiciousPattern.test(obs)) {
+                        Swal.showValidationMessage('Se detectaron caracteres no permitidos o código potencialmente peligroso.');
+                        return false;
+                    }
+                    return obs;
+                }
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    const statusBox = document.getElementById('status-' + code);
+                    if (statusBox) {
+                        statusBox.className = 'badge bg-danger bg-opacity-10 text-danger border border-danger border-opacity-25 px-2 py-1';
+                        statusBox.innerHTML = '<i class="bi bi-x-circle me-1"></i> Devuelto';
+                    }
+                    Swal.fire({
+                        icon: 'info',
+                        title: 'Evidencia Devuelta',
+                        text: `Se notificó a ${official} para corregir el respaldo con la observación: "${result.value}"`,
+                        background: '#0F172A',
+                        color: '#FFFFFF'
+                    });
+                }
+            });
+        }
+
+        // Modal para previsualizar evidencia fotográfica y ficha completa
+        function previewEvidence(code, official, item, desc, thumbUrl) {
+            Swal.fire({
+                title: 'Evidencia Fotográfica: ' + code,
+                html: `
+                    <div style="text-align: left; font-size: 0.85rem; color: #cbd5e1;">
+                        <img src="${thumbUrl}" alt="${code}" style="width: 100%; max-height: 280px; object-fit: cover; border-radius: 12px; margin-bottom: 12px; border: 1px solid rgba(255,255,255,0.2);">
+                        <p class="mb-1"><strong>Funcionario:</strong> ${official}</p>
+                        <p class="mb-1"><strong>Ítem Medible:</strong> ${item}</p>
+                        <p class="mb-1"><strong>Descripción:</strong> ${desc}</p>
+                        <p class="mb-0 text-muted small"><i class="bi bi-geo-alt"></i> Coordenadas GPS verificadas en Delegación Las Compañías.</p>
+                    </div>
+                `,
+                confirmButtonText: 'Cerrar',
+                confirmButtonColor: '#0284C7',
+                background: '#0F172A',
+                color: '#FFFFFF'
+            });
+        }
+    </script>
+</body>
+</html>
