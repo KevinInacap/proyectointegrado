@@ -330,54 +330,6 @@
             transform: translateX(4px);
         }
 
-        /* Botones de Acceso Rápido Demo (RBAC) */
-        .demo-quick-access {
-            margin-top: 1.25rem;
-            display: flex;
-            flex-direction: column;
-            gap: 0.45rem;
-            align-items: center;
-        }
-
-        .demo-label {
-            font-size: 11px;
-            font-weight: 700;
-            color: rgba(255, 255, 255, 0.55);
-            text-transform: uppercase;
-            letter-spacing: 0.6px;
-        }
-
-        .demo-chips-group {
-            display: flex;
-            gap: 6px;
-            justify-content: center;
-            flex-wrap: wrap;
-        }
-
-        .demo-chip {
-            background: rgba(255, 255, 255, 0.08);
-            border: 1px solid rgba(255, 255, 255, 0.16);
-            color: #cbd5e1;
-            font-size: 11px;
-            font-weight: 600;
-            padding: 5px 10px;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            user-select: none;
-            display: inline-flex;
-            align-items: center;
-            gap: 5px;
-            text-decoration: none;
-        }
-
-        .demo-chip:hover {
-            background: rgba(255, 255, 255, 0.18);
-            border-color: #38bdf8;
-            color: #ffffff;
-            transform: translateY(-1px);
-        }
-
         .auth-card-footer {
             margin-top: 1.35rem;
             padding-top: 1rem;
@@ -522,22 +474,6 @@
                     <span>Acceder al Portal</span>
                     <i class="bi bi-arrow-right"></i>
                 </button>
-
-                <!-- Botones Demo RBAC para Acceso Directo a Vistas Especializadas -->
-                <div class="demo-quick-access">
-                    <span class="demo-label">Acceso Rápido Demo (RBAC)</span>
-                    <div class="demo-chips-group">
-                        <a href="{% url 'core:login' %}?rol=admin" class="demo-chip" title="Vista Alcaldía y Control Comunal">
-                            <i class="bi bi-building"></i> Admin / Alcaldía
-                        </a>
-                        <a href="{% url 'core:login' %}?rol=verificador" class="demo-chip" title="Vista Supervisor y Auditoría">
-                            <i class="bi bi-patch-check"></i> Verificador / Supervisor
-                        </a>
-                        <a href="{% url 'core:login' %}?rol=gestor" class="demo-chip" title="Vista Terreno y Tubo de Trabajo">
-                            <i class="bi bi-geo-alt"></i> Gestor / Terreno
-                        </a>
-                    </div>
-                </div>
             </form>
 
             <footer class="auth-card-footer">
@@ -599,19 +535,12 @@
                     return;
                 }
 
-                Swal.fire({
-                    icon: 'success',
-                    title: 'Autenticación exitosa',
-                    text: 'Redirigiendo al panel...',
-                    showConfirmButton: false,
-                    timer: 1000,
-                    background: '#0f172a',
-                    color: '#ffffff'
-                });
-
-                setTimeout(function() {
-                    form.submit();
-                }, 1000);
+                const submitBtn = document.getElementById('btnSubmit');
+                if (submitBtn) {
+                    submitBtn.disabled = true;
+                    submitBtn.innerHTML = '<span>Verificando...</span> <i class="bi bi-hourglass-split"></i>';
+                }
+                form.submit();
             });
         }
 
