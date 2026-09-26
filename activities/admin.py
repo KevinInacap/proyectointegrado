@@ -51,8 +51,26 @@ class ActivityAdmin(admin.ModelAdmin):
     )
     search_fields = ('activity_code', 'problem_description', 'contact_name', 'executed_action')
     ordering = ('-activity_date', '-created_at')
+    date_hierarchy = 'activity_date'
     inlines = [EvidenceInline, ValidationInline]
     actions = ['approve_selected', 'mark_for_correction', 'soft_delete_selected', 'restore_selected']
+
+    # Seguridad Clase 5: Proteger acceso y modificación directa por URL a nivel de objeto
+    def has_change_permission(self, request, obj=None):
+        allowed = super().has_change_permission(request, obj)
+        if not allowed:
+            return False
+        if obj is None or request.user.is_superuser:
+            return True
+        if hasattr(request.user, 'profile') and request.user.profile.delegation:
+            return obj.delegation_id == request.user.profile.delegation_id
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        # Evitar eliminación física accidental para usuarios no administradores (Clase 3 y 5)
+        if not request.user.is_superuser:
+            return False
+        return super().has_delete_permission(request, obj)
 
     @admin.display(description="Estado de validación", ordering='validation_status')
     def status_badge(self, obj):
