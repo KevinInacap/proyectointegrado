@@ -1,6 +1,7 @@
 from django.contrib import admin, messages
 from django.utils import timezone
 from django.utils.html import format_html
+from django.utils.safestring import mark_safe
 from organization.models import Delegation
 from .models import ServiceCatalog, Activity, Evidence, Validation
 
@@ -70,12 +71,8 @@ class ActivityAdmin(admin.ModelAdmin):
     @admin.display(description="¿Agenda Colectiva?", ordering='is_collective_agenda')
     def agenda_display(self, obj):
         if obj.is_collective_agenda:
-            return format_html(
-                '<span style="color: #15803d; font-weight: bold;">✓ Sí (En agenda)</span>'
-            )
-        return format_html(
-            '<span style="color: #94a3b8;">— No</span>'
-        )
+            return mark_safe('<span style="color: #15803d; font-weight: bold;">✓ Sí (En agenda)</span>')
+        return mark_safe('<span style="color: #94a3b8;">— No</span>')
 
     @admin.action(description="✓ Aprobar actividades seleccionadas")
     def approve_selected(self, request, queryset):
