@@ -291,87 +291,262 @@ def dashboard_gestor_view(request):
     tubo_trabajo = [
         {
             'code': 'TUB-2026-041',
-            'request_date': '10 Sep 2026',
-            'problem': 'Instalación de luminaria led en pasaje interior.',
+            'request_date': '10 Sep',
+            'problem': 'Instalación de luminaria LED en pasaje interior.',
             'requester': 'Junta de Vecinos El Milagro',
+            'phone': '+56 9 8452 1102',
             'responsible': 'Kevin Encina',
             'due_date': '18 Sep 2026',
             'status': 'En Proceso'
         },
         {
             'code': 'TUB-2026-042',
-            'request_date': '11 Sep 2026',
+            'request_date': '11 Sep',
             'problem': 'Poda de árboles que obstruyen cables en Av. Cuatro Esquinas.',
             'requester': 'Comité Vecinal Las Pircas',
+            'phone': '+56 9 9331 4455',
             'responsible': 'Kevin Encina',
             'due_date': '20 Sep 2026',
             'status': 'Pendiente'
         },
         {
             'code': 'TUB-2026-043',
-            'request_date': '12 Sep 2026',
+            'request_date': '12 Sep',
             'problem': 'Nivelación de calzada y bacheo preventivo.',
             'requester': 'Línea 23 Colectivos',
+            'phone': '+56 9 7622 8891',
             'responsible': 'Kevin Encina',
             'due_date': '22 Sep 2026',
-            'status': 'Ingresado'
+            'status': 'Pendiente'
         },
         {
             'code': 'TUB-2026-039',
-            'request_date': '08 Sep 2026',
-            'problem': 'Retiro de microbasural y demarcación de no botar escombros.',
+            'request_date': '08 Sep',
+            'problem': 'Retiro de microbasural y demarcación preventiva.',
             'requester': 'Vecinos Calle Los Perales',
+            'phone': '+56 9 6554 2210',
             'responsible': 'Kevin Encina',
             'due_date': '12 Sep 2026',
             'status': 'Realizado'
         },
     ]
 
-    historial_personal = [
+    # Registros propios del funcionario activo (Kevin Encina) para auditoría y edición
+    mis_evidencias = [
         {
-            'code': 'ORC711',
+            'code': 'ORC-2026-711',
             'date': '13 Sep 2026',
+            'activity_type': 'Operativo Terreno',
             'activity': 'Visita inspectiva y catastro de aceras en La Pampa',
-            'contact': 'Carmen Gloria Astudillo',
+            'contact': 'Carmen Gloria Astudillo (JJ.VV. El Milagro)',
             'phone': '+56 9 8452 1102',
-            'item': 'Operativo Terreno',
-            'status': 'Aprobado'
+            'thumbnail': '/static/img/faro_laserena_daylight.jpg',
+            'hash_inmutable': 'SHA-256: d8f3a199bc4012e87a21f649281c0029b4e112aa84e5671',
+            'supervisor_status': 'Aprobada',
+            'status': 'Realizado',
+            'due_date': '13 Sep 2026',
+            'supervisor_note': 'Validación técnica conforme en terreno por jefatura de delegación.',
+            'last_modified': '13 Sep 2026, 16:30'
         },
         {
-            'code': 'SOC902',
+            'code': 'SOC-2026-902',
             'date': '12 Sep 2026',
+            'activity_type': 'Gestión Social',
             'activity': 'Atención en terreno y encuesta RSH a adulto mayor',
             'contact': 'Roberto Morales Pizarro',
             'phone': '+56 9 7321 9940',
-            'item': 'Gestión Social',
-            'status': 'Aprobado'
+            'thumbnail': '/static/img/faro_laserena_daylight.jpg',
+            'hash_inmutable': 'SHA-256: a1b2c3d4e5f6789012345678abcdef9012345678fedcba0',
+            'supervisor_status': 'Aprobada',
+            'status': 'Realizado',
+            'due_date': '12 Sep 2026',
+            'supervisor_note': 'Ficha RSH digitada y cotejada con Registro Social de Hogares.',
+            'last_modified': '12 Sep 2026, 17:15'
         },
         {
-            'code': 'LOR541',
+            'code': 'LOR-2026-541',
             'date': '12 Sep 2026',
+            'activity_type': 'Comité Vecinal',
             'activity': 'Mesa de seguridad preventiva barrial',
-            'contact': 'Loreto Valenzuela',
+            'contact': 'Loreto Valenzuela (JJ.VV. Tierras Blancas)',
             'phone': '+56 9 6554 2210',
-            'item': 'Comité Vecinal',
-            'status': 'Pendiente'
+            'thumbnail': '/static/img/faro_laserena_daylight.jpg',
+            'hash_inmutable': 'SHA-256: 7f8e9d0c1b2a345678901234abcdef0123456789abcdef1',
+            'supervisor_status': 'En Revisión',
+            'status': 'En Proceso',
+            'due_date': '19 Sep 2026',
+            'supervisor_note': 'En espera de corroboración con acta de asistencia vecinal.',
+            'last_modified': '12 Sep 2026, 18:40'
         },
         {
-            'code': 'ORC708',
+            'code': 'ORC-2026-708',
             'date': '11 Sep 2026',
+            'activity_type': 'Operativo Terreno',
             'activity': 'Supervisión de cuadrilla de aseo borde costero',
-            'contact': 'Esteban Collao',
+            'contact': 'Esteban Collao (Cuadrilla Sur)',
             'phone': '+56 9 7844 5511',
-            'item': 'Operativo Terreno',
-            'status': 'Rechazado'
+            'thumbnail': '/static/img/faro_laserena_daylight.jpg',
+            'hash_inmutable': 'SHA-256: 4e5d6c7b8a90123456789012abcdef34567890abcdef12',
+            'supervisor_status': 'Observada',
+            'status': 'Pendiente',
+            'due_date': '18 Sep 2026',
+            'supervisor_note': 'Observación: Fotografía con ángulo lejano; se solicita re-adjuntar registro de cuadrilla trabajando.',
+            'last_modified': '11 Sep 2026, 14:20'
+        },
+        {
+            'code': 'ACT-2026-0839',
+            'date': '10 Sep 2026',
+            'activity_type': 'Fiscalización Obras',
+            'activity': 'Verificación de reparación de bacheo en Av. El Santo',
+            'contact': 'Dirección de Tránsito / Vecinos',
+            'phone': '+56 9 8452 1100',
+            'thumbnail': '/static/img/faro_laserena_daylight.jpg',
+            'hash_inmutable': 'SHA-256: c3d4e5f6a1b2012345678901abcdef678901abcdef34',
+            'supervisor_status': 'Aprobada',
+            'status': 'Realizado',
+            'due_date': '10 Sep 2026',
+            'supervisor_note': 'Certificación de término de obras provisorias archivada.',
+            'last_modified': '10 Sep 2026, 12:00'
+        },
+        {
+            'code': 'SEC-2026-0312',
+            'date': '09 Sep 2026',
+            'activity_type': 'Seguridad Ciudadana',
+            'activity': 'Levantamiento de punto ciego e instalación de foco solar',
+            'contact': 'Comité Vecinal Las Pircas',
+            'phone': '+56 9 9331 4455',
+            'thumbnail': '/static/img/faro_laserena_daylight.jpg',
+            'hash_inmutable': 'SHA-256: b2c3d4e5f6a1789012345678abcdef0123456789fedcba',
+            'supervisor_status': 'En Revisión',
+            'status': 'En Proceso',
+            'due_date': '17 Sep 2026',
+            'supervisor_note': 'Pendiente visto bueno de inspector de alumbrado público.',
+            'last_modified': '09 Sep 2026, 19:10'
         },
     ]
 
-    user_name = request.session.get('user_name') if request.session.get('user_role') == 'Territorial OO.CC.' else 'Kevin Encina Molina'
+    historial_personal = mis_evidencias
+
+    user_name = request.session.get('user_name') or (request.user.get_full_name() if request.user.is_authenticated else 'Kevin Encina Molina')
+    user_rut = request.session.get('user_rut', '12.345.678-K')
+    user_role = request.session.get('user_role', 'Territorial OO.CC.')
+    user_delegation = request.session.get('user_delegation', 'Delegación La Pampa')
+    first_name = user_name.split()[0] if user_name else 'Funcionario'
+
+    ciudadania_records = [
+        {
+            'rut': '14.821.309-4',
+            'name': 'María Eugenia Tapia Rojas',
+            'address': 'Calle Los Lúcumos 1240, La Pampa',
+            'phone': '+56 9 8452 1190',
+            'rsh_tramo': '40%',
+            'rsh_status': 'Vulnerable Prioritario',
+            'last_attention': '14 Sep 2026',
+            'case_type': 'Subsidio Agua Potable y Ficha RSH',
+            'stage': 2,
+            'status': 'En Seguimiento'
+        },
+        {
+            'rut': '11.543.882-K',
+            'name': 'Rosa Elena Castillo Barraza',
+            'address': 'Pje. Los Arrayanes 412, La Pampa',
+            'phone': '+56 9 9331 4455',
+            'rsh_tramo': '50%',
+            'rsh_status': 'Medio Vulnerable',
+            'last_attention': '13 Sep 2026',
+            'case_type': 'Ayuda Social Paliativa Emergencia',
+            'stage': 1,
+            'status': 'Pendiente Doc.'
+        },
+        {
+            'rut': '16.290.714-3',
+            'name': 'Carlos Hernán Álvarez Godoy',
+            'address': 'Av. Gabriel González Videla 2850, La Pampa',
+            'phone': '+56 9 7622 8891',
+            'rsh_tramo': '60%',
+            'rsh_status': 'Sector Medio',
+            'last_attention': '11 Sep 2026',
+            'case_type': 'Orientación Subsidio Habitacional DS-49',
+            'stage': 3,
+            'status': 'Completado'
+        },
+        {
+            'rut': '18.402.195-2',
+            'name': 'Camila Ignacia Pizarro Cortés',
+            'address': 'Calle Cisternas 1950, La Florida / La Pampa',
+            'phone': '+56 9 6554 9901',
+            'rsh_tramo': '40%',
+            'rsh_status': 'Vulnerable Prioritario',
+            'last_attention': '09 Sep 2026',
+            'case_type': 'Postulación Beca Municipal Estudiantil',
+            'stage': 2,
+            'status': 'En Revisión'
+        },
+        {
+            'rut': '9.874.321-1',
+            'name': 'Guillermo Segundo Mondaca Vega',
+            'address': 'Pje. Los Perales 510, San Joaquín',
+            'phone': '+56 9 5412 3344',
+            'rsh_tramo': '40%',
+            'rsh_status': 'Adulto Mayor Prioritario',
+            'last_attention': '08 Sep 2026',
+            'case_type': 'Atención Domiciliaria RSH Adulto Mayor',
+            'stage': 3,
+            'status': 'Completado'
+        },
+    ]
+
+    active_cases_count = len([t for t in tubo_trabajo if t.get('status') != 'Realizado'])
+    citizens_count = len(ciudadania_records)
+
+    # Data model estructurado para módulos del portal según rol/permisos
+    dashboard_sections = [
+        {
+            'id': 'gestion',
+            'title': 'Gestión',
+            'subtitle': 'Operaciones y seguimiento de solicitudes en terreno',
+            'modules': [
+                {
+                    'id': 'module-cases',
+                    'title': 'Agregar / Ver casos',
+                    'description': 'Gestiona, registra y realiza seguimiento a los casos asignados a tu unidad en terreno.',
+                    'icon': 'bi-folder2-open',
+                    'variant': 'primary',  # Azul institucional
+                    'action_label': 'Gestionar casos',
+                    'onclick': 'openCasesSection()',
+                    'badge': f'{active_cases_count} en tubo',
+                    'meta': 'Tubo de trabajo activo'
+                }
+            ]
+        },
+        {
+            'id': 'consulta',
+            'title': 'Consulta',
+            'subtitle': 'Padrón vecinal y registros sociales comunales',
+            'modules': [
+                {
+                    'id': 'module-citizenship',
+                    'title': 'Revisar datos de la ciudadanía',
+                    'description': 'Consulta información verificada, historial de atenciones y datos comunales de vecinas y vecinos.',
+                    'icon': 'bi-people-fill',
+                    'variant': 'secondary',  # Carmesí / Burdeo institucional
+                    'action_label': 'Consultar ciudadanía',
+                    'onclick': 'openCitizenshipSection()',
+                    'badge': f'{citizens_count} fichas',
+                    'meta': 'Fichas RSH y Territorio'
+                }
+            ]
+        }
+    ]
+
     context = {
+        'first_name': first_name,
         'user_name': user_name,
-        'user_role': 'Territorial OO.CC.',
-        'current_delegation': 'Delegación La Pampa',
+        'user_role': user_role,
+        'user_rut': user_rut,
+        'current_delegation': user_delegation,
         'current_period': 'T3 - Septiembre 2026',
+        'dashboard_sections': dashboard_sections,
         'kpi': {
             'my_accumulated_validated': 38,
             'my_compliance_pct': 84.4,
@@ -381,6 +556,8 @@ def dashboard_gestor_view(request):
         },
         'tubo_trabajo': tubo_trabajo,
         'historial_personal': historial_personal,
+        'mis_evidencias': mis_evidencias,
+        'ciudadania_records': ciudadania_records,
     }
     return render(request, 'activities/dashboard_gestor.html', context)
 

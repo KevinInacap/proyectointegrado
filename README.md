@@ -47,34 +47,69 @@ La pantalla de acceso institucional fue concebida para combinar rigor técnico, 
 
 ## 🚀 Instalación y Puesta en Marcha
 
-### 1. Activar el entorno virtual
-En Windows (PowerShell):
-```powershell
-.\.venv\Scripts\Activate.ps1
-```
-
-En Linux / macOS:
+### 1. Crear el entorno virtual
 ```bash
-source .venv/bin/activate
+python -m venv .venv
 ```
 
-### 2. Instalar dependencias
+### 2. Activar el entorno virtual
+
+* **En Git Bash:**
+  ```bash
+  source .venv/Scripts/activate
+  ```
+
+* **En Windows (PowerShell):**
+  ```powershell
+  .\.venv\Scripts\Activate.ps1
+  ```
+
+* **En Windows (CMD):**
+  ```cmd
+  .venv\Scripts\activate.bat
+  ```
+
+* **En Linux / macOS:**
+  ```bash
+  source .venv/bin/activate
+  ```
+
+### 3. Instalar dependencias
 ```bash
 pip install -r requirements.txt
 ```
 
-### 3. Aplicar migraciones
+### 4. Configurar variables de entorno
+Crea tu archivo local `.env` a partir de la plantilla:
+* En Git Bash / Linux:
+  ```bash
+  cp .env.example .env
+  ```
+* En Windows (PowerShell):
+  ```powershell
+  Copy-Item .env.example .env
+  ```
+
+### 5. Verificar y aplicar migraciones
 ```bash
+python manage.py check
 python manage.py migrate
 ```
 
-### 4. Ejecutar el servidor de desarrollo
+### 6. Cargar datos reproducibles (Seed)
+Ejecuta el comando para poblar la base de datos con usuarios y datos operativos:
+```bash
+python manage.py seed_data
+```
+
+### 7. Ejecutar el servidor de desarrollo
 ```bash
 python manage.py runserver
 ```
 
 Abre en el navegador:  
-👉 **`http://127.0.0.1:8000/`**
+* **Portal de Acceso:** `http://127.0.0.1:8000/`  
+* **Django Admin:** `http://127.0.0.1:8000/admin/`  
 
 ---
 

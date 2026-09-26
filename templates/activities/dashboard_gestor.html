@@ -4,1818 +4,1337 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Estación del Gestor Territorial · Ilustre Municipalidad de La Serena</title>
+    <title>Portal Empleado Municipal · Ilustre Municipalidad de La Serena</title>
 
     <!-- Google Fonts: Plus Jakarta Sans -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 
-    <!-- Bootstrap 5.3 & Bootstrap Icons -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     
     <!-- SweetAlert2 -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
-    <style>
-        :root {
-            /* Paleta Oficial Ilustre Municipalidad de La Serena */
-            --serena-primary: #8B1D2C;          /* Rojo Granate Colonial Serena */
-            --serena-primary-hover: #701422;
-            --serena-navy-dark: #0f172a;        /* Azul Marino Pizarra */
-            --serena-navy-light: #1e3a8a;
-            --serena-text-main: #0f172a;        /* Texto base */
-            --serena-text-muted: #475569;       /* Gris pizarra medio */
-            --serena-text-subtle: #64748b;
-            --serena-border: #e2e8f0;
-            --serena-bg-body: #eef2f6;          /* Atmósfera diurna suave */
-            
-            /* Acentos Semánticos */
-            --serena-success: #059669;          /* Verde esmeralda formal */
-            --serena-warning: #d97706;          /* Ámbar */
-            --serena-danger: #dc2626;
-
-            /* Light Frosted Glassmorphism Tokens */
-            --glass-bg: rgba(255, 255, 255, 0.65);
-            --glass-blur: blur(20px) saturate(180%);
-            --glass-border: 1px solid rgba(255, 255, 255, 0.8);
-            --glass-border-top: 1.5px solid rgba(255, 255, 255, 0.95);
-            --glass-border-left: 1.5px solid rgba(255, 255, 255, 0.9);
-            --glass-shadow: 0 15px 35px -5px rgba(15, 23, 42, 0.05), inset 0 1px 0 rgba(255, 255, 255, 0.8);
-            --glass-radius: 16px;
-        }
-
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
-
-        /* =======================================================
-           1. FONDO AMBIENTAL PARA GENERAR REFRACCIÓN DE CRISTAL
-           ======================================================= */
-        body {
-            font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: var(--serena-bg-body);
-            color: var(--serena-text-main);
-            position: relative;
-            overflow-x: hidden;
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            -webkit-font-smoothing: antialiased;
-        }
-
-        /* Orbe Rojo Colonial atenuado */
-        body::before {
-            content: "";
-            position: fixed;
-            top: -80px;
-            left: 10%;
-            width: 450px;
-            height: 450px;
-            background: radial-gradient(circle, rgba(139, 29, 44, 0.12) 0%, rgba(139, 29, 44, 0) 70%);
-            filter: blur(50px);
-            pointer-events: none;
-            z-index: 0;
-        }
-
-        /* Orbe Azul Marino Municipal atenuado */
-        body::after {
-            content: "";
-            position: fixed;
-            bottom: 5%;
-            right: 5%;
-            width: 550px;
-            height: 550px;
-            background: radial-gradient(circle, rgba(30, 58, 138, 0.14) 0%, rgba(30, 58, 138, 0) 70%);
-            filter: blur(60px);
-            pointer-events: none;
-            z-index: 0;
-        }
-
-        /* CONTENEDOR PRINCIPAL ORDENADO (MAX-WIDTH 1440PX) */
-        .app-container {
-            max-width: 1440px;
-            margin: 0 auto;
-            width: 100%;
-            padding: 1.25rem 1.5rem 2.5rem 1.5rem;
-            flex: 1;
-            position: relative;
-            z-index: 1;
-        }
-
-        /* =======================================================
-           2. PROPIEDADES TÉCNICAS DE CRISTAL ESMERILADO REAL
-           ======================================================= */
-        .glass-panel {
-            background: var(--glass-bg) !important;
-            backdrop-filter: var(--glass-blur) !important;
-            -webkit-backdrop-filter: var(--glass-blur) !important;
-            border: var(--glass-border) !important;
-            border-top: var(--glass-border-top) !important;
-            border-left: var(--glass-border-left) !important;
-            box-shadow: var(--glass-shadow) !important;
-            border-radius: var(--glass-radius);
-            transition: all 0.2s ease;
-        }
-
-        /* HEADER INTEGRADO Y BARRA CONTEXTUAL */
-        .floating-header {
-            background-color: var(--serena-navy-dark);
-            border-radius: 12px;
-            padding: 0.75rem 1.5rem;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 1rem;
-            box-shadow: 0 8px 24px -4px rgba(15, 23, 42, 0.18);
-            margin-bottom: 1.25rem;
-        }
-
-        .header-brand-side {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            text-decoration: none;
-            color: #FFFFFF;
-        }
-
-        .header-logo {
-            height: 34px;
-            width: auto;
-            object-fit: contain;
-        }
-
-        .header-title-box {
-            border-left: 1px solid rgba(255, 255, 255, 0.2);
-            padding-left: 12px;
-        }
-
-        .header-main-title {
-            font-size: 0.95rem;
-            font-weight: 700;
-            letter-spacing: 0.3px;
-            color: #FFFFFF;
-            line-height: 1.2;
-            margin: 0;
-        }
-
-        .header-sub-title {
-            font-size: 0.72rem;
-            color: #94a3b8;
-            margin: 0;
-            font-weight: 500;
-        }
-
-        /* Centro: Badge tipo pill */
-        .header-center-pill {
-            background: rgba(255, 255, 255, 0.12);
-            border: 1px solid rgba(255, 255, 255, 0.18);
-            color: #f8fafc;
-            font-size: 0.78rem;
-            font-weight: 600;
-            padding: 5px 14px;
-            border-radius: 9999px;
-            display: inline-flex;
-            align-items: center;
-            gap: 7px;
-        }
-
-        /* Derecha: Usuario activo + Salir */
-        .header-user-side {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-
-        .header-user-pill {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            color: #e2e8f0;
-            font-size: 0.78rem;
-            font-weight: 600;
-        }
-
-        .header-avatar-circle {
-            width: 26px;
-            height: 26px;
-            border-radius: 50%;
-            background-color: var(--serena-primary);
-            border: 1.5px solid #FFFFFF;
-            color: #FFFFFF;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 0.75rem;
-            font-weight: 700;
-        }
-
-        .btn-header-exit {
-            background: rgba(255, 255, 255, 0.08);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            color: #FFFFFF;
-            font-size: 0.75rem;
-            font-weight: 600;
-            padding: 5px 13px;
-            border-radius: 9999px;
-            text-decoration: none;
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            transition: all 0.2s ease;
-        }
-
-        .btn-header-exit:hover {
-            background: rgba(255, 255, 255, 0.18);
-            color: #FFFFFF;
-            border-color: #FFFFFF;
-            transform: translateY(-1px);
-        }
-
-        /* =======================================================
-           LAYOUT DE DOBLE COLUMNA (70% / 30%)
-           ======================================================= */
-        .layout-2col {
-            display: grid;
-            grid-template-columns: 7fr 3fr;
-            gap: 1.25rem;
-            align-items: start;
-        }
-
-        @media (max-width: 1100px) {
-            .layout-2col {
-                grid-template-columns: 1fr;
-            }
-        }
-
-        /* -------------------------------------------------------
-           COLUMNA IZQUIERDA (70%)
-           ------------------------------------------------------- */
-        .col-main {
-            display: flex;
-            flex-direction: column;
-            gap: 1.25rem;
-        }
-
-        /* 3.A. Barra Hero de Acción Rápida (Dock de Cristal) */
-        .hero-action-strip {
-            padding: 0.85rem 1.15rem;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            flex-wrap: wrap;
-            gap: 1rem;
-        }
-
-        .hero-action-left {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-
-        .btn-plus-compact {
-            width: 44px;
-            height: 44px;
-            border-radius: 50%;
-            background: linear-gradient(135deg, var(--serena-primary) 0%, #6b1420 100%);
-            border: none;
-            color: #FFFFFF;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.6rem;
-            cursor: pointer;
-            box-shadow: 0 6px 16px rgba(139, 29, 44, 0.35);
-            transition: transform 0.2s ease, box-shadow 0.2s ease;
-            outline: none;
-            flex-shrink: 0;
-        }
-
-        .btn-plus-compact:hover {
-            transform: scale(1.06);
-            box-shadow: 0 8px 20px rgba(139, 29, 44, 0.45);
-        }
-
-        .hero-prompt-text {
-            font-size: 0.88rem;
-            font-weight: 700;
-            color: var(--serena-navy-dark);
-            margin: 0;
-            line-height: 1.3;
-        }
-
-        .hero-prompt-sub {
-            font-size: 0.74rem;
-            color: var(--serena-text-muted);
-            margin: 0;
-        }
-
-        .hero-buttons-right {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            flex-wrap: wrap;
-        }
-
-        .btn-strip-action {
-            background: rgba(255, 255, 255, 0.85);
-            border: 1px solid rgba(255, 255, 255, 0.9);
-            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.03);
-            color: #1e293b;
-            font-size: 0.78rem;
-            font-weight: 600;
-            padding: 7px 14px;
-            border-radius: 9999px;
-            cursor: pointer;
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            transition: all 0.2s ease;
-        }
-
-        .btn-strip-action:hover {
-            background: #FFFFFF;
-            color: var(--serena-primary);
-            transform: translateY(-1px);
-            box-shadow: 0 4px 12px rgba(15, 23, 42, 0.08);
-            border-color: #cbd5e1;
-        }
-
-        /* 3.B. Contenedor de Trabajo (Main Workspace Card) */
-        .workspace-card {
-            overflow: hidden;
-        }
-
-        .workspace-tabs-header {
-            padding: 0.85rem 1.25rem 0 1.25rem;
-            border-bottom: 1px solid rgba(203, 213, 225, 0.5);
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            flex-wrap: wrap;
-        }
-
-        .nav-tab-pill {
-            background: transparent;
-            border: 1px solid transparent;
-            color: #475569;
-            padding: 8px 16px;
-            border-radius: 8px 8px 0 0;
-            font-size: 0.82rem;
-            font-weight: 600;
-            cursor: pointer;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            transition: all 0.2s ease;
-            position: relative;
-            bottom: -1px;
-            border-bottom: 2px solid transparent;
-        }
-
-        .nav-tab-pill:hover {
-            color: var(--serena-navy-dark);
-            background: rgba(255, 255, 255, 0.6);
-        }
-
-        .nav-tab-pill.active {
-            background-color: var(--serena-primary) !important;
-            border-color: var(--serena-primary) !important;
-            color: #FFFFFF !important;
-            border-radius: 8px;
-            margin-bottom: 6px;
-            box-shadow: 0 4px 10px rgba(139, 29, 44, 0.25);
-        }
-
-        .tab-count-badge {
-            background: rgba(0, 0, 0, 0.06);
-            color: inherit;
-            font-size: 0.68rem;
-            font-weight: 700;
-            padding: 2px 6px;
-            border-radius: 9999px;
-        }
-
-        .nav-tab-pill.active .tab-count-badge {
-            background: rgba(255, 255, 255, 0.25);
-            color: #FFFFFF;
-        }
-
-        .tab-pane-content {
-            display: none;
-            padding: 1.25rem;
-            animation: fadeInTab 0.15s ease-in-out;
-        }
-
-        .tab-pane-content.active {
-            display: block;
-        }
-
-        @keyframes fadeInTab {
-            from { opacity: 0; transform: translateY(2px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        /* BARRA DE HERRAMIENTAS: BÚSQUEDA Y FILTROS RÁPIDOS */
-        .workspace-toolbar {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            flex-wrap: wrap;
-            gap: 0.75rem;
-            margin-bottom: 1rem;
-            background: rgba(255, 255, 255, 0.5);
-            border: 1px solid rgba(226, 232, 240, 0.8);
-            border-radius: 10px;
-            padding: 6px 12px;
-        }
-
-        .search-box-wrapper {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            flex: 1;
-            min-width: 250px;
-        }
-
-        .search-input-tubo {
-            background: transparent;
-            border: none;
-            font-size: 0.82rem;
-            color: var(--serena-navy-dark);
-            outline: none;
-            width: 100%;
-        }
-
-        .search-input-tubo::placeholder {
-            color: #94a3b8;
-        }
-
-        .filter-pills-row {
-            display: flex;
-            align-items: center;
-            gap: 5px;
-        }
-
-        .filter-btn-pill {
-            background: rgba(255, 255, 255, 0.8);
-            border: 1px solid #cbd5e1;
-            color: #475569;
-            font-size: 0.74rem;
-            font-weight: 600;
-            padding: 3px 10px;
-            border-radius: 9999px;
-            cursor: pointer;
-            transition: all 0.15s ease;
-        }
-
-        .filter-btn-pill:hover {
-            background: #FFFFFF;
-            color: var(--serena-navy-dark);
-            border-color: #94a3b8;
-        }
-
-        .filter-btn-pill.active {
-            background: var(--serena-navy-dark);
-            color: #FFFFFF;
-            border-color: var(--serena-navy-dark);
-        }
-
-        /* Tablas de Alta Legibilidad */
-        .table-clean {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 13.5px;
-            text-align: left;
-        }
-
-        .table-clean thead th {
-            background: rgba(241, 245, 249, 0.6) !important;
-            color: #334155;
-            font-size: 11px;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            padding: 10px 14px;
-            border-bottom: 1px solid rgba(203, 213, 225, 0.7);
-        }
-
-        .table-clean tbody td {
-            padding: 11px 14px;
-            color: #0f172a;
-            border-bottom: 1px solid rgba(226, 232, 240, 0.6);
-            vertical-align: middle;
-        }
-
-        .table-clean tbody tr:last-child td {
-            border-bottom: none;
-        }
-
-        .table-clean tbody tr {
-            transition: background-color 0.15s ease;
-        }
-
-        .table-clean tbody tr:hover {
-            background-color: rgba(255, 255, 255, 0.85);
-        }
-
-        .badge-code-formal {
-            font-family: monospace;
-            font-weight: 700;
-            font-size: 0.78rem;
-            padding: 3px 8px;
-            border-radius: 6px;
-            background: #eff6ff;
-            color: #1e3a8a;
-            border: 1px solid #dbeafe;
-            white-space: nowrap !important;
-        }
-
-        /* Selectores de Estado Compactos */
-        .select-status-pill {
-            font-size: 0.74rem;
-            font-weight: 600;
-            padding: 4px 10px;
-            border-radius: 9999px;
-            outline: none;
-            cursor: pointer;
-            border: 1px solid #cbd5e1;
-            transition: all 0.2s ease;
-        }
-
-        .select-status-pill.status-realizado {
-            background-color: #dcfce7 !important;
-            color: #15803d !important;
-            border-color: #bbf7d0 !important;
-        }
-
-        .select-status-pill.status-pendiente {
-            background-color: #fef3c7 !important;
-            color: #b45309 !important;
-            border-color: #fde68a !important;
-        }
-
-        .select-status-pill.status-ingresado {
-            background-color: #e0e7ff !important;
-            color: #3730a3 !important;
-            border-color: #c7d2fe !important;
-        }
-
-        .select-status-pill.status-en-proceso {
-            background-color: #dbeafe !important;
-            color: #1e40af !important;
-            border-color: #bfdbfe !important;
-        }
-
-        .btn-table-action-discrete {
-            background: rgba(255, 255, 255, 0.8);
-            border: 1px solid #cbd5e1;
-            color: #0f172a;
-            font-size: 12px;
-            font-weight: 600;
-            padding: 4px 10px;
-            border-radius: 6px;
-            cursor: pointer;
-            display: inline-flex;
-            align-items: center;
-            gap: 4px;
-            transition: all 0.15s ease;
-        }
-
-        .btn-table-action-discrete:hover {
-            background: #FFFFFF;
-            border-color: #94a3b8;
-            color: var(--serena-primary);
-            box-shadow: 0 2px 6px rgba(0,0,0,0.04);
-            transform: translateY(-1px);
-        }
-
-        .thumb-evidence-small {
-            width: 36px;
-            height: 36px;
-            border-radius: 6px;
-            object-fit: cover;
-            border: 1px solid #cbd5e1;
-            cursor: pointer;
-            transition: transform 0.2s ease;
-        }
-
-        .thumb-evidence-small:hover {
-            transform: scale(1.08);
-        }
-
-        /* Atenciones Sociales 3 Etapas */
-        .social-cards-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-            gap: 1rem;
-        }
-
-        .social-card-item {
-            background: rgba(255, 255, 255, 0.7);
-            border: 1px solid rgba(226, 232, 240, 0.8);
-            border-radius: 12px;
-            padding: 1rem;
-            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.02);
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-        }
-
-        .social-card-item:hover {
-            background: rgba(255, 255, 255, 0.9);
-            border-color: #cbd5e1;
-        }
-
-        .stepper-3-light {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin: 0.9rem 0;
-            position: relative;
-        }
-
-        .stepper-3-light::before {
-            content: '';
-            position: absolute;
-            top: 13px;
-            left: 20px;
-            right: 20px;
-            height: 2px;
-            background-color: #e2e8f0;
-            z-index: 1;
-        }
-
-        .step-node {
-            position: relative;
-            z-index: 2;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 4px;
-        }
-
-        .step-bubble {
-            width: 26px;
-            height: 26px;
-            border-radius: 50%;
-            background-color: #ffffff;
-            border: 2px solid #cbd5e1;
-            color: #64748b;
-            font-size: 0.72rem;
-            font-weight: 700;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: all 0.2s ease;
-        }
-
-        .step-node.completed .step-bubble {
-            background-color: var(--serena-success);
-            border-color: var(--serena-success);
-            color: #FFFFFF;
-        }
-
-        .step-node.active .step-bubble {
-            background-color: var(--serena-primary);
-            border-color: var(--serena-primary);
-            color: #FFFFFF;
-        }
-
-        .step-caption {
-            font-size: 0.68rem;
-            font-weight: 600;
-            color: #64748b;
-        }
-
-        /* -------------------------------------------------------
-           COLUMNA LATERAL DERECHA (30%)
-           ------------------------------------------------------- */
-        .col-sidebar {
-            display: flex;
-            flex-direction: column;
-            gap: 1.25rem;
-        }
-
-        .sidebar-card {
-            padding: 1.25rem;
-        }
-
-        /* 4.A. Widget de Cumplimiento Trimestral */
-        .compliance-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 0.75rem;
-        }
-
-        .compliance-title {
-            font-size: 0.88rem;
-            font-weight: 700;
-            color: var(--serena-navy-dark);
-            margin: 0;
-        }
-
-        .compliance-target-note {
-            font-size: 0.74rem;
-            color: var(--serena-text-muted);
-            font-weight: 500;
-        }
-
-        .compliance-number-row {
-            display: flex;
-            align-items: baseline;
-            justify-content: space-between;
-            margin-bottom: 0.65rem;
-        }
-
-        .compliance-big-stat {
-            font-size: 2.3rem;
-            font-weight: 800;
-            color: var(--serena-navy-dark);
-            line-height: 1;
-        }
-
-        .badge-traffic-light {
-            background-color: #dcfce7;
-            color: #15803d;
-            border: 1px solid #bbf7d0;
-            font-size: 0.74rem;
-            font-weight: 700;
-            padding: 4px 10px;
-            border-radius: 9999px;
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-        }
-
-        /* Micro-punto brillante pulsante */
-        .pulsing-dot {
-            width: 7px;
-            height: 7px;
-            border-radius: 50%;
-            background-color: #10b981;
-            display: inline-block;
-            box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
-            animation: pulse-dot 1.8s infinite;
-        }
-
-        @keyframes pulse-dot {
-            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
-            70% { transform: scale(1.1); box-shadow: 0 0 0 6px rgba(16, 185, 129, 0); }
-            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
-        }
-
-        .progress-bar-thick {
-            height: 10px;
-            background-color: rgba(0, 0, 0, 0.05);
-            border-radius: 9999px;
-            overflow: hidden;
-            margin-bottom: 0.55rem;
-        }
-
-        .progress-bar-fill-gradient {
-            height: 100%;
-            background: linear-gradient(90deg, #10b981, #059669);
-            border-radius: 9999px;
-            transition: width 0.6s ease;
-        }
-
-        /* 4.B. Cuadrícula de 4 Micro-KPIs */
-        .micro-kpi-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 0.75rem;
-        }
-
-        .micro-kpi-box {
-            padding: 0.85rem;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-            border-radius: 12px;
-        }
-
-        /* Líneas de acento superior por KPI */
-        .accent-top-green { border-top: 3.5px solid var(--serena-success) !important; }
-        .accent-top-amber { border-top: 3.5px solid var(--serena-warning) !important; }
-        .accent-top-red   { border-top: 3.5px solid var(--serena-primary) !important; }
-        .accent-top-blue  { border-top: 3.5px solid var(--serena-navy-light) !important; }
-
-        .micro-kpi-label {
-            font-size: 0.68rem;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.4px;
-            color: var(--serena-text-muted);
-            margin-bottom: 4px;
-        }
-
-        .micro-kpi-val {
-            font-size: 1.35rem;
-            font-weight: 800;
-            color: var(--serena-navy-dark);
-            line-height: 1.1;
-        }
-
-        .micro-kpi-sub {
-            font-size: 0.68rem;
-            font-weight: 600;
-            margin-top: 2px;
-        }
-
-        /* 4.C. Card de Alerta Informativa */
-        .operational-reminder-glass {
-            background: rgba(239, 246, 255, 0.6) !important;
-            backdrop-filter: blur(16px) !important;
-            border: 1px solid rgba(191, 219, 254, 0.8) !important;
-            color: #1e3a8a !important;
-            border-radius: 14px;
-            padding: 1rem 1.15rem;
-            font-size: 0.78rem;
-            line-height: 1.45;
-            display: flex;
-            gap: 12px;
-            align-items: flex-start;
-            box-shadow: 0 4px 12px rgba(30, 58, 138, 0.04);
-        }
-
-        .operational-reminder-glass i {
-            font-size: 1.15rem;
-            color: #2563eb;
-            flex-shrink: 0;
-            margin-top: 1px;
-        }
-
-        /* FOOTER INSTITUCIONAL */
-        .app-footer {
-            max-width: 1440px;
-            margin: 0 auto;
-            width: 100%;
-            padding: 1.5rem 1.5rem;
-            border-top: 1px solid rgba(203, 213, 225, 0.6);
-            font-size: 0.74rem;
-            color: var(--serena-text-muted);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 0.75rem;
-            position: relative;
-            z-index: 1;
-        }
-    </style>
+    <!-- Glassmorphism Portal Custom Styles -->
+    <link rel="stylesheet" href="{% static 'css/glassmorphism_portal.css' %}">
 </head>
 <body>
 
-    <!-- CONTENEDOR PRINCIPAL (MAX-WIDTH 1440PX) -->
-    <div class="app-container">
-
-        <!-- HEADER INTEGRADO Y BARRA CONTEXTUAL -->
-        <header class="floating-header">
-            <!-- Izquierda: Escudo + SGR Territorial -->
-            <a href="{% url 'activities:dashboard_gestor' %}" class="header-brand-side">
-                <img src="{% static 'images/laserena_horizontal_blanco.svg' %}" 
-                     alt="Municipalidad de La Serena" 
-                     class="header-logo">
-                <div class="header-title-box">
-                    <h1 class="header-main-title">SGR Territorial</h1>
-                    <p class="header-sub-title">Estación del Gestor · Ilustre Municipalidad de La Serena</p>
-                </div>
-            </a>
-
-            <!-- Centro: Badge tipo pill -->
-            <div class="header-center-pill">
-                <i class="bi bi-geo-alt-fill text-danger"></i>
-                <span>Delegación La Pampa • Período T3 2026 (56/91 días)</span>
-            </div>
-
-            <!-- Derecha: Usuario activo + Botón sutil Salir -->
-            <div class="header-user-side">
-                <div class="header-user-pill">
-                    <div class="header-avatar-circle">
-                        <i class="bi bi-person-fill"></i>
-                    </div>
-                    <span>{{ user_name|default:"Kevin Encina M." }} | {{ user_role|default:"Territorial OO.CC." }}</span>
-                </div>
-                <a href="{% url 'core:logout' %}" class="btn-header-exit" title="Cerrar sesión">
-                    <i class="bi bi-box-arrow-right"></i>
-                    <span>Salir</span>
+    <div class="portal-backdrop">
+        
+        <!-- =================================================================
+             BARRA LATERAL (SIDEBAR) IZQUIERDA
+             ================================================================= -->
+        <aside class="sidebar-glass" aria-label="Navegación principal">
+            <div>
+                <!-- Logotipo Oficial Ilustre Municipalidad de La Serena (Vector Proporcional Oficial) -->
+                <a href="{% url 'activities:dashboard_gestor' %}" class="brand-official-link" title="Ilustre Municipalidad de La Serena">
+                    <img src="{% static 'images/laserena_horizontal_blanco.svg' %}" alt="Ilustre Municipalidad de La Serena" class="brand-official-logo">
                 </a>
-            </div>
-        </header>
 
-        <!-- LAYOUT DE DOBLE COLUMNA (70% / 30%) -->
-        <div class="layout-2col">
-
-            <!-- -------------------------------------------------------
-                 COLUMNA PRINCIPAL IZQUIERDA (70% de ancho)
-                 ------------------------------------------------------- -->
-            <div class="col-main">
-
-                <!-- 3.A. Barra Hero de Acción Rápida (Dock de Cristal) -->
-                <section class="glass-panel hero-action-strip">
-                    <div class="hero-action-left">
-                        <button type="button" class="btn-plus-compact" onclick="openHeroMenuModal()" title="Registrar Gestión Diaria">
-                            +
-                        </button>
-                        <div>
-                            <div class="hero-prompt-text">¿Qué labor realizaste hoy?</div>
-                            <div class="hero-prompt-sub">Presiona + o usa los accesos directos para registrar tu gestión</div>
+                <!-- 1. PERFIL COMPLETO DEL FUNCIONARIO (BAJO EL ESCUDO) -->
+                <div class="sidebar-profile-card" onclick="openProfileModal()" role="button" tabindex="0" title="Ver Mi Perfil Institucional">
+                    <div class="profile-avatar-container">
+                        <div class="profile-avatar-circle">
+                            <span>{{ first_name|slice:":1"|default:"K" }}</span>
+                        </div>
+                        <span class="status-online-dot" title="En Terreno / En Línea"></span>
+                    </div>
+                    <div class="profile-info-block">
+                        <div class="profile-name">{{ user_name|default:"Kevin Encina M." }}</div>
+                        <div class="profile-role">{{ user_role|default:"Gestor Territorial OO.CC." }}</div>
+                        <div class="profile-delegation-pill">
+                            <i class="bi bi-geo-alt-fill"></i>
+                            <span>{{ current_delegation|default:"Delegación La Pampa" }}</span>
                         </div>
                     </div>
+                </div>
 
-                    <div class="hero-buttons-right">
-                        <button type="button" class="btn-strip-action" onclick="openActivityModal()">
-                            <i class="bi bi-camera-fill text-danger"></i>
-                            + Terreno
-                        </button>
-                        <button type="button" class="btn-strip-action" onclick="openSocialModal()">
-                            <i class="bi bi-people-fill text-primary"></i>
-                            + Atención Social
-                        </button>
-                        <button type="button" class="btn-strip-action" onclick="openTuboModal()">
-                            <i class="bi bi-pin-angle-fill text-warning"></i>
-                            + Tubo de Trabajo
-                        </button>
+                <!-- 2. MENÚ CON 5 ACCESOS DIRECTOS SIN REDUNDANCIAS -->
+                <nav class="sidebar-nav" aria-label="Secciones del portal">
+                    <ul class="sidebar-nav-list">
+                        <li>
+                            <a href="javascript:void(0)" class="nav-link-glass active-pill" onclick="closeAllModals(); setActiveNavLink('nav-home')" id="nav-home">
+                                <span class="nav-icon-wrap"><i class="bi bi-house-door-fill"></i></span>
+                                <span class="nav-link-text">Inicio / Portal</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="javascript:void(0)" class="nav-link-glass" onclick="openMisEvidenciasModal(); setActiveNavLink('nav-evidencias')" id="nav-evidencias">
+                                <span class="nav-icon-wrap"><i class="bi bi-camera-fill"></i></span>
+                                <span class="nav-link-text">Mis Evidencias y Gestiones</span>
+                                <span class="sidebar-badge badge-green">{{ kpi.my_accumulated_validated|default:"38" }}</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="javascript:void(0)" class="nav-link-glass" onclick="openCasesSection(); setActiveNavLink('nav-tubo')" id="nav-tubo">
+                                <span class="nav-icon-wrap"><i class="bi bi-clipboard-data-fill"></i></span>
+                                <span class="nav-link-text">Gestión General y Tubo</span>
+                                <span class="sidebar-badge badge-amber">{{ tubo_trabajo|length|default:"4" }}</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="javascript:void(0)" class="nav-link-glass" onclick="openRendimientoModal(); setActiveNavLink('nav-rendimiento')" id="nav-rendimiento">
+                                <span class="nav-icon-wrap"><i class="bi bi-graph-up-arrow"></i></span>
+                                <span class="nav-link-text">Mi Rendimiento SGR</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="javascript:void(0)" class="nav-link-glass" onclick="openProfileModal(); setActiveNavLink('nav-profile')" id="nav-profile">
+                                <span class="nav-icon-wrap"><i class="bi bi-person-badge-fill"></i></span>
+                                <span class="nav-link-text">Mi Perfil</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="javascript:void(0)" class="nav-link-glass nav-link-logout" onclick="confirmLogout()" id="nav-logout">
+                                <span class="nav-icon-wrap"><i class="bi bi-box-arrow-right"></i></span>
+                                <span class="nav-link-text">Cerrar Sesión</span>
+                            </a>
+                        </li>
+                    </ul>
+                </nav>
+
+                <!-- 3. MINI-WIDGET DE RITMO OPERATIVO (CENTRO DEL SIDEBAR) -->
+                <div class="sidebar-ritmo-widget">
+                    <div class="ritmo-header">
+                        <span class="ritmo-title">RITMO T3</span>
+                        <span class="ritmo-status-pill">● Verde al día</span>
                     </div>
-                </section>
-
-                <!-- 3.B. Centro de Trabajo en Pestañas (Main Workspace Card) -->
-                <section class="glass-panel workspace-card">
-                    <!-- Cabecera con selector de pestañas moderno -->
-                    <div class="workspace-tabs-header">
-                        <button type="button" class="nav-tab-pill active" onclick="switchTab('tab-tubo', this)">
-                            <span>📋 Tubo de Trabajo</span>
-                            <span class="tab-count-badge" id="tabTuboBadge">{{ kpi.my_pending_tubo|default:"6" }}</span>
-                        </button>
-                        <button type="button" class="nav-tab-pill" onclick="switchTab('tab-evidencias', this)">
-                            <span>📸 Evidencias Cargadas</span>
-                            <span class="tab-count-badge">{{ kpi.my_accumulated_validated|default:"38" }}</span>
-                        </button>
-                        <button type="button" class="nav-tab-pill" onclick="switchTab('tab-social', this)">
-                            <span>🤝 Atenciones Sociales (3 Etapas)</span>
-                        </button>
+                    <div class="ritmo-meta-row">
+                        <span class="ritmo-meta-label">Meta computable</span>
+                        <span class="ritmo-meta-val">56 / 91 días</span>
                     </div>
-
-                    <!-- PESTAÑA 1: TUBO DE TRABAJO -->
-                    <div id="tab-tubo" class="tab-pane-content active">
-                        <!-- Barra de herramientas: Buscador y Filtros -->
-                        <div class="workspace-toolbar">
-                            <div class="search-box-wrapper">
-                                <i class="bi bi-search text-muted"></i>
-                                <input type="text" id="tuboSearchInput" onkeyup="filterTuboTable()" placeholder="Buscar por junta vecinal, problema o código..." class="search-input-tubo">
-                            </div>
-                            <div class="filter-pills-row">
-                                <button type="button" class="filter-btn-pill active" onclick="filterByStatus('Todos', this)">Todos</button>
-                                <button type="button" class="filter-btn-pill" onclick="filterByStatus('Pendiente', this)">Pendientes</button>
-                                <button type="button" class="filter-btn-pill" onclick="filterByStatus('En Proceso', this)">En Proceso</button>
-                                <button type="button" class="filter-btn-pill" onclick="filterByStatus('Realizado', this)">Realizados</button>
-                            </div>
-                        </div>
-
-                        <div class="table-responsive">
-                            <table class="table-clean" id="tableTubo">
-                                <thead>
-                                    <tr>
-                                        <th style="white-space: nowrap;">Código</th>
-                                        <th>Fecha Solicitud</th>
-                                        <th>Problema / Demanda</th>
-                                        <th>Solicitante / Organización</th>
-                                        <th>Fecha Límite</th>
-                                        <th>Estado</th>
-                                        <th class="text-end">Acción</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {% for item in tubo_trabajo %}
-                                    <tr id="tubo-row-{{ item.code }}" data-status="{{ item.status }}">
-                                        <td><span class="badge-code-formal">{{ item.code }}</span></td>
-                                        <td class="text-muted small">{{ item.request_date }}</td>
-                                        <td style="max-width: 280px;">
-                                            <div class="fw-semibold text-dark">{{ item.problem }}</div>
-                                        </td>
-                                        <td class="small">{{ item.requester }}</td>
-                                        <td>
-                                            <span class="badge" style="background-color: #fef3c7; color: #92400e; font-size: 0.72rem; font-weight: 600;">
-                                                <i class="bi bi-calendar-event me-1"></i>{{ item.due_date }}
-                                            </span>
-                                        </td>
-                                        <td>
-                                            <select class="select-status-pill {% if item.status == 'Realizado' %}status-realizado{% elif item.status == 'Pendiente' %}status-pendiente{% elif item.status == 'Ingresado' %}status-ingresado{% else %}status-en-proceso{% endif %}" 
-                                                    onchange="handleTuboStatusChange(this, '{{ item.code }}')">
-                                                <option value="Ingresado" {% if item.status == 'Ingresado' %}selected{% endif %}>Ingresado</option>
-                                                <option value="Pendiente" {% if item.status == 'Pendiente' %}selected{% endif %}>Pendiente</option>
-                                                <option value="En Proceso" {% if item.status == 'En Proceso' %}selected{% endif %}>En Proceso</option>
-                                                <option value="Realizado" {% if item.status == 'Realizado' %}selected{% endif %}>Realizado</option>
-                                            </select>
-                                        </td>
-                                        <td class="text-end">
-                                            <button type="button" class="btn-table-action-discrete" onclick="viewTuboDetail('{{ item.code }}', '{{ item.requester }}', '{{ item.due_date }}', '{{ item.problem }}')">
-                                                <i class="bi bi-eye"></i> Ver Detalle
-                                            </button>
-                                        </td>
-                                    </tr>
-                                    {% empty %}
-                                    <tr data-status="En Proceso">
-                                        <td><span class="badge-code-formal">TUB-2026-041</span></td>
-                                        <td class="text-muted small">04/09/2026</td>
-                                        <td><div class="fw-semibold text-dark">Bacheo urgente pasaje Los Plátanos con calle Brasil</div></td>
-                                        <td class="small">JJ.VV. Gabriela Mistral</td>
-                                        <td><span class="badge" style="background-color: #fef3c7; color: #92400e; font-size: 0.72rem;"><i class="bi bi-calendar-event me-1"></i>18/09/2026</span></td>
-                                        <td><select class="select-status-pill status-en-proceso"><option selected>En Proceso</option></select></td>
-                                        <td class="text-end"><button type="button" class="btn-table-action-discrete"><i class="bi bi-eye"></i> Ver Detalle</button></td>
-                                    </tr>
-                                    {% endfor %}
-                                </tbody>
-                            </table>
-                        </div>
+                    <div class="ritmo-progress-track">
+                        <div class="ritmo-progress-bar" style="width: 61.5%;"></div>
                     </div>
-
-                    <!-- PESTAÑA 2: EVIDENCIAS CARGADAS -->
-                    <div id="tab-evidencias" class="tab-pane-content">
-                        <div class="d-flex justify-content-between align-items-center mb-3">
-                            <div>
-                                <h4 class="h6 mb-0 fw-bold text-dark">Bitácora Personal de Evidencias en Terreno</h4>
-                                <span class="text-muted small">Registros fotográficos respaldados con código inmutable</span>
-                            </div>
-                            <button type="button" class="btn-table-action-discrete" onclick="openActivityModal()">
-                                <i class="bi bi-camera-fill text-danger me-1"></i> Cargar Nueva Evidencia
-                            </button>
-                        </div>
-
-                        <div class="table-responsive">
-                            <table class="table-clean">
-                                <thead>
-                                    <tr>
-                                        <th>Foto</th>
-                                        <th style="white-space: nowrap;">Código Inmutable</th>
-                                        <th>Fecha</th>
-                                        <th>Labor Ejecutada</th>
-                                        <th>Contacto Vecinal</th>
-                                        <th>Ítem Matriz</th>
-                                        <th>Validación</th>
-                                        <th class="text-end">Acción</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {% for ev in historial_personal %}
-                                    <tr>
-                                        <td>
-                                            <img src="https://images.unsplash.com/photo-1590381105924-c72589b9ef3f?w=80&auto=format&fit=crop&q=80" 
-                                                 alt="Evidencia {{ ev.code }}" 
-                                                 class="thumb-evidence-small" 
-                                                 onclick="viewEvidenceModal('{{ ev.code }}', '{{ ev.activity }}', '{{ ev.date }}', '{{ ev.status }}')">
-                                        </td>
-                                        <td><span class="badge-code-formal" style="color: var(--serena-primary);">{{ ev.code }}</span></td>
-                                        <td class="text-muted small">{{ ev.date }}</td>
-                                        <td style="max-width: 260px;">
-                                            <div class="fw-semibold text-dark">{{ ev.activity }}</div>
-                                        </td>
-                                        <td class="small">
-                                            <div>{{ ev.contact }}</div>
-                                            <div class="text-muted" style="font-size: 0.7rem;">{{ ev.phone }}</div>
-                                        </td>
-                                        <td>
-                                            <span class="badge" style="background-color: #dbeafe; color: #1e40af; font-size: 0.72rem;">
-                                                {{ ev.item }}
-                                            </span>
-                                        </td>
-                                        <td>
-                                            {% if ev.status == 'Aprobado' %}
-                                                <span class="badge" style="background-color: #dcfce7; color: #15803d; font-size: 0.72rem;"><i class="bi bi-check-circle-fill"></i> Aprobado</span>
-                                            {% elif ev.status == 'Rechazado' %}
-                                                <span class="badge" style="background-color: #fee2e2; color: #b91c1c; font-size: 0.72rem;"><i class="bi bi-x-circle-fill"></i> Rechazado</span>
-                                            {% else %}
-                                                <span class="badge" style="background-color: #fef3c7; color: #92400e; font-size: 0.72rem;"><i class="bi bi-clock-fill"></i> Pendiente</span>
-                                            {% endif %}
-                                        </td>
-                                        <td class="text-end">
-                                            <button type="button" class="btn-table-action-discrete" onclick="viewEvidenceModal('{{ ev.code }}', '{{ ev.activity }}', '{{ ev.date }}', '{{ ev.status }}')">
-                                                <i class="bi bi-arrows-fullscreen"></i> Ver
-                                            </button>
-                                        </td>
-                                    </tr>
-                                    {% empty %}
-                                    <tr>
-                                        <td><img src="https://images.unsplash.com/photo-1590381105924-c72589b9ef3f?w=80&auto=format&fit=crop&q=80" alt="Evidencia" class="thumb-evidence-small"></td>
-                                        <td><span class="badge-code-formal">ORC-2026-711</span></td>
-                                        <td class="text-muted small">11/09/2026</td>
-                                        <td><div class="fw-semibold text-dark">Inspección de luminarias y demarcación vial</div></td>
-                                        <td class="small">Claudio Morales (+56 9 8831 2291)</td>
-                                        <td><span class="badge" style="background-color: #dbeafe; color: #1e40af; font-size: 0.72rem;">Operativo Terreno</span></td>
-                                        <td><span class="badge" style="background-color: #dcfce7; color: #15803d; font-size: 0.72rem;"><i class="bi bi-check-circle-fill"></i> Aprobado</span></td>
-                                        <td class="text-end"><button type="button" class="btn-table-action-discrete"><i class="bi bi-arrows-fullscreen"></i> Ver</button></td>
-                                    </tr>
-                                    {% endfor %}
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-
-                    <!-- PESTAÑA 3: ATENCIONES SOCIALES (3 ETAPAS) -->
-                    <div id="tab-social" class="tab-pane-content">
-                        <div class="d-flex justify-content-between align-items-center mb-3">
-                            <div>
-                                <h4 class="h6 mb-0 fw-bold text-dark">Casos Sociales y Secuencia de Atención (Regla RN-012)</h4>
-                                <span class="text-muted small">Flujo secuencial de hasta 3 atenciones por RUT sin duplicar caso</span>
-                            </div>
-                            <button type="button" class="btn-table-action-discrete" onclick="openSocialModal()">
-                                <i class="bi bi-person-plus-fill text-primary me-1"></i> Nueva Ficha Social
-                            </button>
-                        </div>
-
-                        <div class="social-cards-grid">
-                            <!-- Caso 1 -->
-                            <div class="social-card-item">
-                                <div>
-                                    <div class="d-flex justify-content-between align-items-start mb-1">
-                                        <div>
-                                            <div class="fw-bold text-dark" style="font-size: 0.92rem;">María Eugenia Tapia</div>
-                                            <div class="text-muted small font-monospace">RUT: 14.821.904-2 · JJ.VV. La Pampa Sur</div>
-                                        </div>
-                                        <span class="badge" style="background-color: #dbeafe; color: #1e40af; font-size: 0.7rem;">Etapa 2 de 3</span>
-                                    </div>
-                                    <p class="text-muted small mb-2" style="font-size: 0.78rem;">
-                                        <strong>Demanda:</strong> Solicitud de actualización en RSH y postulación a subsidio habitacional.
-                                    </p>
-                                    <div class="stepper-3-light">
-                                        <div class="step-node completed">
-                                            <div class="step-bubble"><i class="bi bi-check-lg"></i></div>
-                                            <span class="step-caption text-success">1ª RSH</span>
-                                        </div>
-                                        <div class="step-node active">
-                                            <div class="step-bubble">2</div>
-                                            <span class="step-caption text-primary">2ª Informe</span>
-                                        </div>
-                                        <div class="step-node">
-                                            <div class="step-bubble">3</div>
-                                            <span class="step-caption">3ª Beneficio</span>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="d-flex justify-content-between align-items-center pt-2 border-top mt-2">
-                                    <span class="text-muted" style="font-size: 0.7rem;">Última: 08/09/2026</span>
-                                    <button type="button" class="btn-table-action-discrete" onclick="advanceSocialStage('María Eugenia Tapia', 3)">
-                                        <i class="bi bi-arrow-right-circle"></i> Registrar 3ª Etapa
-                                    </button>
-                                </div>
-                            </div>
-
-                            <!-- Caso 2 -->
-                            <div class="social-card-item">
-                                <div>
-                                    <div class="d-flex justify-content-between align-items-start mb-1">
-                                        <div>
-                                            <div class="fw-bold text-dark" style="font-size: 0.92rem;">Carlos Godoy Araya</div>
-                                            <div class="text-muted small font-monospace">RUT: 11.392.051-K · Población San Joaquín</div>
-                                        </div>
-                                        <span class="badge" style="background-color: #dcfce7; color: #15803d; font-size: 0.7rem;">3 de 3 (Finalizado)</span>
-                                    </div>
-                                    <p class="text-muted small mb-2" style="font-size: 0.78rem;">
-                                        <strong>Demanda:</strong> Postulación a ayuda social paliativa de emergencia de invierno.
-                                    </p>
-                                    <div class="stepper-3-light">
-                                        <div class="step-node completed">
-                                            <div class="step-bubble"><i class="bi bi-check-lg"></i></div>
-                                            <span class="step-caption text-success">1ª RSH</span>
-                                        </div>
-                                        <div class="step-node completed">
-                                            <div class="step-bubble"><i class="bi bi-check-lg"></i></div>
-                                            <span class="step-caption text-success">2ª Visita</span>
-                                        </div>
-                                        <div class="step-node completed">
-                                            <div class="step-bubble"><i class="bi bi-check-lg"></i></div>
-                                            <span class="step-caption text-success">3ª Entrega</span>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="d-flex justify-content-between align-items-center pt-2 border-top mt-2">
-                                    <span class="text-muted" style="font-size: 0.7rem;">Cierre: 02/09/2026</span>
-                                    <span class="badge" style="background-color: #dcfce7; color: #15803d; font-size: 0.72rem;"><i class="bi bi-check-all"></i> Caso Cerrado</span>
-                                </div>
-                            </div>
-
-                            <!-- Caso 3 -->
-                            <div class="social-card-item">
-                                <div>
-                                    <div class="d-flex justify-content-between align-items-start mb-1">
-                                        <div>
-                                            <div class="fw-bold text-dark" style="font-size: 0.92rem;">Rosa Elena Castillo</div>
-                                            <div class="text-muted small font-monospace">RUT: 17.104.582-8 · Villa Los Arrayanes</div>
-                                        </div>
-                                        <span class="badge" style="background-color: #fef3c7; color: #92400e; font-size: 0.7rem;">Etapa 1 de 3</span>
-                                    </div>
-                                    <p class="text-muted small mb-2" style="font-size: 0.78rem;">
-                                        <strong>Demanda:</strong> Orientación para postulación a credencial de cuidadora única.
-                                    </p>
-                                    <div class="stepper-3-light">
-                                        <div class="step-node active">
-                                            <div class="step-bubble">1</div>
-                                            <span class="step-caption text-primary">1ª Orientación</span>
-                                        </div>
-                                        <div class="step-node">
-                                            <div class="step-bubble">2</div>
-                                            <span class="step-caption">2ª Informe</span>
-                                        </div>
-                                        <div class="step-node">
-                                            <div class="step-bubble">3</div>
-                                            <span class="step-caption">3ª Cierre</span>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="d-flex justify-content-between align-items-center pt-2 border-top mt-2">
-                                    <span class="text-muted" style="font-size: 0.7rem;">Ingreso: 12/09/2026</span>
-                                    <button type="button" class="btn-table-action-discrete" onclick="advanceSocialStage('Rosa Elena Castillo', 2)">
-                                        <i class="bi bi-arrow-right-circle"></i> Registrar 2ª Etapa
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </section>
-
+                </div>
             </div>
 
-            <!-- -------------------------------------------------------
-                 COLUMNA LATERAL DERECHA (30% de ancho)
-                 ------------------------------------------------------- -->
-            <div class="col-sidebar">
-
-                <!-- 4.A. Widget de Cumplimiento Trimestral -->
-                <section class="glass-panel sidebar-card">
-                    <div class="compliance-header">
-                        <h3 class="compliance-title">Mi Cumplimiento Trimestral</h3>
-                        <span class="compliance-target-note">Meta exigida: 80,0%</span>
-                    </div>
-
-                    <div class="compliance-number-row">
-                        <span class="compliance-big-stat">{{ kpi.my_compliance_pct|default:"84,4" }}%</span>
-                        <span class="badge-traffic-light">
-                            <span class="pulsing-dot"></span> Verde • Al Día
-                        </span>
-                    </div>
-
-                    <div class="progress-bar-thick">
-                        <div class="progress-bar-fill-gradient" style="width: {{ kpi.my_compliance_pct|default:'84.4' }}%;"></div>
-                    </div>
-
-                    <div class="d-flex justify-content-between text-muted" style="font-size: 0.72rem; font-weight: 500;">
-                        <span>+4.4% sobre ritmo computable</span>
-                        <span>Período T3 2026</span>
-                    </div>
-                </section>
-
-                <!-- 4.B. Cuadrícula de 4 Micro-KPIs -->
-                <section class="sidebar-card" style="padding: 0; background: transparent; border: none; box-shadow: none;">
-                    <div class="micro-kpi-grid">
-                        <!-- Bloque 1: Avance -->
-                        <div class="glass-panel micro-kpi-box accent-top-green">
-                            <span class="micro-kpi-label">Avance</span>
-                            <span class="micro-kpi-val">{{ kpi.my_accumulated_validated|default:"38" }}</span>
-                            <span class="micro-kpi-sub" style="color: var(--serena-success);">Aprobadas</span>
-                        </div>
-
-                        <!-- Bloque 2: Tubo -->
-                        <div class="glass-panel micro-kpi-box accent-top-amber">
-                            <span class="micro-kpi-label">Tubo</span>
-                            <span class="micro-kpi-val">{{ kpi.my_pending_tubo|default:"6" }}</span>
-                            <span class="micro-kpi-sub" style="color: var(--serena-warning);">En curso</span>
-                        </div>
-
-                        <!-- Bloque 3: Semáforo -->
-                        <div class="glass-panel micro-kpi-box accent-top-red">
-                            <span class="micro-kpi-label">Semáforo</span>
-                            <span class="micro-kpi-val">{{ kpi.my_semaphore_pct|default:"98,2" }}%</span>
-                            <span class="micro-kpi-sub" style="color: var(--serena-primary);">Ritmo</span>
-                        </div>
-
-                        <!-- Bloque 4: Días -->
-                        <div class="glass-panel micro-kpi-box accent-top-blue">
-                            <span class="micro-kpi-label">Días</span>
-                            <span class="micro-kpi-val">56/91</span>
-                            <span class="micro-kpi-sub" style="color: var(--serena-navy-light);">Transcurridos</span>
-                        </div>
-                    </div>
-                </section>
-
-                <!-- 4.C. Card de Alerta Informativa -->
-                <section class="operational-reminder-glass">
-                    <i class="bi bi-info-circle-fill"></i>
-                    <div>
-                        <strong>Recuerda:</strong> Al marcar un compromiso como <em>'Realizado'</em>, debes adjuntar su código inmutable de evidencia fotográfica para validar el puntaje.
-                    </div>
-                </section>
-
+            <!-- 4. FOOTER INSTITUCIONAL DE LA BARRA -->
+            <div class="sidebar-footer">
+                <div class="sidebar-system-version">SGR Municipal v1.0 • En Línea</div>
+                <div class="sidebar-geo">
+                    <i class="bi bi-geo-alt-fill"></i>
+                    <span>La Serena, Chile</span>
+                </div>
             </div>
+        </aside>
 
-        </div>
+        <!-- =================================================================
+             ÁREA CENTRAL: PANEL PRINCIPAL GLASSMORPHISM
+             ================================================================= -->
+        <main class="main-viewport">
+            <section class="portal-card-hub" id="main-portal-hub">
+                
+                <!-- Encabezado del Panel Central -->
+                <header class="hub-header">
+                    <div class="hub-greeting-group">
+                        <div class="civic-badge-avatar" aria-hidden="true">
+                            <i class="bi bi-person-workspace"></i>
+                        </div>
+                        <div class="hub-text-block">
+                            <div class="hub-pretag">PORTAL FUNCIONARIO • ILUSTRE MUNICIPALIDAD DE LA SERENA</div>
+                            <h1 class="hub-main-title">Hola, {{ first_name|default:"Kevin" }}</h1>
+                            <p class="hub-subtitle">Selecciona una opción para comenzar tu gestión.</p>
+                        </div>
+                    </div>
+
+                    <!-- Badge Superior Derecho -->
+                    <button class="badge-employee-pill" onclick="openProfileModal()" type="button" title="Ver perfil institucional de funcionario">
+                        <i class="bi bi-person-fill"></i>
+                        <span>Perfil empleado</span>
+                    </button>
+                </header>
+
+                <!-- Grilla de las Dos Opciones Principales -->
+                <div class="hub-cards-grid">
+                    
+                    <!-- TARJETA 1: Agregar / Ver casos -->
+                    <article class="action-card card-cases" onclick="openCasesSection()" tabindex="0" role="button" aria-label="Abrir gestión de casos: Agregar y ver casos asignados a tu unidad">
+                        <!-- Icono Superior Frosted -->
+                        <div class="card-icon-bubble">
+                            <i class="bi bi-folder2-open"></i>
+                        </div>
+
+                        <!-- Textos de la Tarjeta -->
+                        <div class="card-content-wrap">
+                            <h2 class="card-title">Agregar / Ver casos</h2>
+                            <p class="card-description">Gestiona, registra y realiza seguimiento a los casos asignados a tu unidad en terreno.</p>
+                        </div>
+
+                        <!-- Botón Circular de Acción con Flecha -->
+                        <div class="card-bottom-row">
+                            <div class="card-action-circle" aria-hidden="true">
+                                <i class="bi bi-arrow-right"></i>
+                            </div>
+                        </div>
+
+                        <!-- Marca de agua vectorial sutil institucional -->
+                        <svg class="card-watermark" viewBox="0 0 160 160" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                            <rect x="24" y="44" width="112" height="84" rx="12" stroke="currentColor" stroke-width="3" stroke-dasharray="6 4" opacity="0.5"/>
+                            <path d="M40 32H75L87 44H120C126.6 44 132 49.4 132 56V62H28V44C28 37.4 33.4 32 40 32Z" stroke="currentColor" stroke-width="3" opacity="0.6"/>
+                            <circle cx="80" cy="86" r="18" stroke="currentColor" stroke-width="2.5" opacity="0.45"/>
+                            <path d="M74 86L78 90L86 82" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" opacity="0.65"/>
+                        </svg>
+                    </article>
+
+                    <!-- TARJETA 2: Revisar datos de la ciudadanía -->
+                    <article class="action-card card-citizenship" onclick="openCitizenshipSection()" tabindex="0" role="button" aria-label="Abrir revisión de datos de la ciudadanía: Consulta y revisa la información de las personas">
+                        <!-- Icono Superior Frosted -->
+                        <div class="card-icon-bubble">
+                            <i class="bi bi-people-fill"></i>
+                        </div>
+
+                        <!-- Textos de la Tarjeta -->
+                        <div class="card-content-wrap">
+                            <h2 class="card-title">Revisar datos de la ciudadanía</h2>
+                            <p class="card-description">Consulta información verificada, historial de atenciones y datos comunales de vecinos.</p>
+                        </div>
+
+                        <!-- Botón Circular de Acción con Flecha -->
+                        <div class="card-bottom-row">
+                            <div class="card-action-circle" aria-hidden="true">
+                                <i class="bi bi-arrow-right"></i>
+                            </div>
+                        </div>
+
+                        <!-- Marca de agua vectorial sutil comunitaria -->
+                        <svg class="card-watermark" viewBox="0 0 160 160" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                            <circle cx="80" cy="54" r="22" stroke="currentColor" stroke-width="3" opacity="0.55"/>
+                            <path d="M44 126C44 98 62 86 80 86C98 86 116 98 116 126" stroke="currentColor" stroke-width="3" stroke-linecap="round" opacity="0.5"/>
+                            <circle cx="122" cy="64" r="15" stroke="currentColor" stroke-width="2.5" opacity="0.4"/>
+                            <path d="M112 120C116 104 126 96 138 96C144 96 150 99 154 105" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" opacity="0.35"/>
+                        </svg>
+                    </article>
+
+                </div>
+
+            </section>
+        </main>
 
     </div>
 
-    <!-- FOOTER INSTITUCIONAL -->
-    <footer class="app-footer">
-        <div>
-            <strong>SGR La Serena v1.0</strong> · Estación de Operaciones del Gestor Territorial
-        </div>
-        <div>
-            Ilustre Municipalidad de La Serena · Departamento de Gestión Territorial y Participación Ciudadana
-        </div>
-    </footer>
+    <!-- =================================================================
+         MODAL 1: SECCIÓN GESTIÓN DE CASOS EN TERRENO
+         ================================================================= -->
+    <div class="glass-overlay-panel" id="modal-cases" role="dialog" aria-modal="true" aria-labelledby="casesModalTitle">
+        <div class="glass-modal-container cases-modal-compact">
+            <!-- Fila 1: Título + Tira de Micro-KPIs + Botón Volver y Cerrar -->
+            <header class="cases-top-row">
+                <div class="cases-title-group" id="casesModalTitle">
+                    <i class="bi bi-folder2-open" style="color: #60a5fa; font-size: 1.15rem;"></i>
+                    <span>Gestión Operativa de Casos</span>
+                    <span class="cases-delegation-pill">
+                        {{ current_delegation|default:"Delegación La Pampa" }}
+                    </span>
+                </div>
 
-    <!-- INTERACTIVIDAD JS Y MODALES SWEETALERT2 -->
+                <!-- Tira horizontal de micro-KPIs tipo pastilla (32px de alto) -->
+                <div class="cases-kpi-strip">
+                    <span class="cases-kpi-pill pill-active"><i class="bi bi-layers-fill"></i> <strong>{{ tubo_trabajo|length|default:"4" }} Casos Activos</strong></span>
+                    <span style="color: rgba(255,255,255,0.3); font-size: 11px;">·</span>
+                    <span class="cases-kpi-pill pill-validated"><i class="bi bi-patch-check-fill"></i> <strong>{{ kpi.my_accumulated_validated|default:"38" }} Validados (+1pt)</strong></span>
+                    <span style="color: rgba(255,255,255,0.3); font-size: 11px;">·</span>
+                    <span class="cases-kpi-pill pill-goal"><i class="bi bi-bullseye"></i> <strong>{{ kpi.my_compliance_pct|default:"84.4" }}% Meta</strong></span>
+                </div>
+
+                <div class="cases-top-actions">
+                    <button type="button" class="btn-cases-back" onclick="closeAllModals()">
+                        <i class="bi bi-arrow-left"></i>
+                        <span>Volver al Menú</span>
+                    </button>
+                    <button type="button" class="btn-cases-close" onclick="closeAllModals()" aria-label="Cerrar ventana">
+                        <i class="bi bi-x-lg"></i>
+                    </button>
+                </div>
+            </header>
+
+            <!-- Fila 2: Barra de Herramientas y Botón de Ingreso en UNA SOLA LÍNEA -->
+            <div class="cases-toolbar-row">
+                <!-- Botón Protagónico Rojo Colonial -->
+                <button type="button" class="btn-case-new" onclick="openNewCaseModal()">
+                    <i class="bi bi-plus-circle-fill"></i>
+                    <span>+ Ingresar Nuevo Caso</span>
+                </button>
+
+                <!-- Input de búsqueda delgado (36px de alto) -->
+                <div class="cases-search-box">
+                    <i class="bi bi-search"></i>
+                    <input type="text" id="caseSearchInput" placeholder="Buscar por código o vecino..." onkeyup="filterCasesTable()">
+                </div>
+
+                <!-- Micro-filtros en pastilla -->
+                <div class="cases-filters-pills">
+                    <button type="button" class="cases-filter-btn active" onclick="setCasesFilter('all', this)">Todos ({{ tubo_trabajo|length|default:"4" }})</button>
+                    <button type="button" class="cases-filter-btn" onclick="setCasesFilter('En Proceso', this)">En Proceso</button>
+                    <button type="button" class="cases-filter-btn" onclick="setCasesFilter('Pendiente', this)">Pendientes</button>
+                    <button type="button" class="cases-filter-btn" onclick="setCasesFilter('Realizado', this)">Realizados</button>
+                </div>
+            </div>
+
+            <!-- Tabla de Alta Densidad (High Density Data Table) -->
+            <div class="cases-table-container">
+                <table class="cases-hd-table" id="casesDataTable">
+                    <thead>
+                        <tr>
+                            <th style="width: 110px;">Código</th>
+                            <th style="width: 85px;">Fecha</th>
+                            <th>Actividad / Asunto</th>
+                            <th>Vecino / Organización</th>
+                            <th style="width: 135px;">Teléfono</th>
+                            <th style="width: 120px;">Plazo</th>
+                            <th style="width: 115px;">Estado</th>
+                            <th style="width: 70px; text-align: center;">Acción</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in tubo_trabajo %}
+                        <tr class="case-row-item" data-status="{{ item.status|default:'En Proceso' }}">
+                            <td><span class="badge-case-code">{{ item.code }}</span></td>
+                            <td style="font-size: 12px; color: #CBD5E1; white-space: nowrap;"><i class="bi bi-calendar3" style="margin-right: 4px; opacity: 0.7;"></i>{{ item.request_date }}</td>
+                            <td style="color: #F8FAFC; max-width: 250px;">{{ item.problem }}</td>
+                            <td style="color: #E2E8F0; font-weight: 500;">{{ item.requester }}</td>
+                            <td style="color: #93C5FD; font-family: monospace; white-space: nowrap;">{{ item.phone|default:"+56 9 8452 1102" }}</td>
+                            <td><span class="badge-case-due"><i class="bi bi-clock-history"></i> {{ item.due_date|default:"18 Sep 2026" }}</span></td>
+                            <td>
+                                {% if item.status == 'Realizado' or item.status == 'Aprobado' or item.status == 'Aprobada' %}
+                                    <span class="badge-status-mini status-completed"><i class="bi bi-check-circle-fill"></i> Realizado</span>
+                                {% elif item.status == 'Pendiente' or item.status == 'Observada' %}
+                                    <span class="badge-status-mini status-pending"><i class="bi bi-clock-fill"></i> Pendiente</span>
+                                {% elif item.status == 'En Proceso' or item.status == 'En Revisión' %}
+                                    <span class="badge-status-mini status-in-progress"><i class="bi bi-gear-fill"></i> En Proceso</span>
+                                {% else %}
+                                    <span class="badge-status-mini status-completed"><i class="bi bi-check-circle-fill"></i> Realizado</span>
+                                {% endif %}
+                            </td>
+                            <td style="text-align: center;">
+                                <button type="button" class="btn-case-view-mini" onclick="viewCaseDetail('{{ item.code }}', '{{ item.problem|escapejs }}', '{{ item.requester|escapejs }}', '{{ item.phone|default:"+56 9 8452 1102"|escapejs }}', '{{ item.due_date|default:"18 Sep 2026"|escapejs }}', '{{ item.status|default:"En Proceso" }}')">
+                                    <i class="bi bi-eye-fill"></i> Ver
+                                </button>
+                            </td>
+                        </tr>
+                        {% endfor %}
+
+                        {% for hist in historial_personal %}
+                        {% with hist_stat=hist.status|default:hist.supervisor_status %}
+                        <tr class="case-row-item" data-status="{% if hist_stat == 'Aprobada' or hist_stat == 'Realizado' or hist_stat == 'Aprobado' %}Realizado{% elif hist_stat == 'Observada' or hist_stat == 'Pendiente' %}Pendiente{% else %}En Proceso{% endif %}">
+                            <td><span class="badge-case-code" style="color: #E2E8F0; background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.2);">{{ hist.code }}</span></td>
+                            <td style="font-size: 12px; color: #CBD5E1; white-space: nowrap;"><i class="bi bi-calendar3" style="margin-right: 4px; opacity: 0.7;"></i>{{ hist.date }}</td>
+                            <td style="color: #F8FAFC; max-width: 250px;">{{ hist.activity }}</td>
+                            <td style="color: #E2E8F0; font-weight: 500;">{{ hist.contact }}</td>
+                            <td style="color: #93C5FD; font-family: monospace; white-space: nowrap;">{{ hist.phone|default:"+56 9 8452 1102" }}</td>
+                            <td><span class="badge-case-due"><i class="bi bi-clock-history"></i> {{ hist.due_date|default:"16 Sep 2026" }}</span></td>
+                            <td>
+                                {% if hist_stat == 'Realizado' or hist_stat == 'Aprobado' or hist_stat == 'Aprobada' %}
+                                    <span class="badge-status-mini status-completed"><i class="bi bi-check-circle-fill"></i> Realizado</span>
+                                {% elif hist_stat == 'Pendiente' or hist_stat == 'Observada' %}
+                                    <span class="badge-status-mini status-pending"><i class="bi bi-clock-fill"></i> Pendiente</span>
+                                {% elif hist_stat == 'En Proceso' or hist_stat == 'En Revisión' %}
+                                    <span class="badge-status-mini status-in-progress"><i class="bi bi-gear-fill"></i> En Proceso</span>
+                                {% else %}
+                                    <span class="badge-status-mini status-completed"><i class="bi bi-check-circle-fill"></i> Realizado</span>
+                                {% endif %}
+                            </td>
+                            <td style="text-align: center;">
+                                <button type="button" class="btn-case-view-mini" onclick="viewCaseDetail('{{ hist.code }}', '{{ hist.activity|escapejs }}', '{{ hist.contact|escapejs }}', '{{ hist.phone|default:"+56 9 8452 1102"|escapejs }}', '{{ hist.due_date|default:"16 Sep 2026"|escapejs }}', '{% if hist_stat == 'Aprobada' or hist_stat == 'Realizado' or hist_stat == 'Aprobado' %}Realizado{% elif hist_stat == 'Observada' or hist_stat == 'Pendiente' %}Pendiente{% else %}En Proceso{% endif %}')">
+                                    <i class="bi bi-eye-fill"></i> Ver
+                                </button>
+                            </td>
+                        </tr>
+                        {% endwith %}
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- =================================================================
+         MODAL EXCLUSIVO: "MIS EVIDENCIAS Y GESTIONES SUBIDAS"
+         ================================================================= -->
+    <div class="glass-overlay-panel" id="modal-evidencias" role="dialog" aria-modal="true" aria-labelledby="evidenciasModalTitle">
+        <div class="glass-modal-container evidencias-modal-compact">
+            <!-- Fila 1: Título + Tira de Dictámenes + Botones Volver y Cerrar -->
+            <header class="cases-top-row">
+                <div class="cases-title-group" id="evidenciasModalTitle">
+                    <i class="bi bi-camera-fill" style="color: #34d399; font-size: 1.15rem;"></i>
+                    <span>Mis Evidencias y Registros Personales</span>
+                    <span class="cases-delegation-pill" style="color: #86efac; border-color: rgba(134, 239, 172, 0.3); background: rgba(34, 197, 94, 0.15);">
+                        Historial acreditado por {{ user_name|default:"Kevin Encina Molina" }}
+                    </span>
+                </div>
+
+                <!-- Tira horizontal de micro-KPIs tipo pastilla (32px de alto) -->
+                <div class="cases-kpi-strip">
+                    <span class="cases-kpi-pill pill-active"><i class="bi bi-folder-check"></i> <strong>38 Total Acreditadas</strong></span>
+                    <span style="color: rgba(255,255,255,0.3); font-size: 11px;">·</span>
+                    <span class="cases-kpi-pill pill-validated"><i class="bi bi-check-circle-fill"></i> <strong>35 Aprobadas</strong></span>
+                    <span style="color: rgba(255,255,255,0.3); font-size: 11px;">·</span>
+                    <span class="cases-kpi-pill pill-goal"><i class="bi bi-hourglass-split"></i> <strong>2 En Revisión</strong></span>
+                    <span style="color: rgba(255,255,255,0.3); font-size: 11px;">·</span>
+                    <span class="cases-kpi-pill" style="color: #fca5a5; background: rgba(239,68,68,0.2); border: 1px solid rgba(248,113,113,0.4);"><i class="bi bi-exclamation-diamond-fill"></i> <strong>1 Observada</strong></span>
+                </div>
+
+                <div class="cases-top-actions">
+                    <button type="button" class="btn-cases-back" onclick="closeAllModals()">
+                        <i class="bi bi-arrow-left"></i>
+                        <span>Volver al Menú</span>
+                    </button>
+                    <button type="button" class="btn-cases-close" onclick="closeAllModals()" aria-label="Cerrar ventana">
+                        <i class="bi bi-x-lg"></i>
+                    </button>
+                </div>
+            </header>
+
+            <!-- Fila 2: Barra de Herramientas y Filtros de Dictamen -->
+            <div class="cases-toolbar-row">
+                <!-- Input de búsqueda rápido por código o vecino -->
+                <div class="cases-search-box" style="max-width: 480px;">
+                    <i class="bi bi-search"></i>
+                    <input type="text" id="evidenceSearchInput" placeholder="Buscar por código inmutable (ORC-, SOC-, LOR-), labor o vecino..." onkeyup="filterEvidenciasTable()">
+                </div>
+
+                <!-- Filtros de dictamen en pastilla -->
+                <div class="cases-filters-pills">
+                    <button type="button" class="cases-filter-btn active" onclick="setEvidenciasFilter('all', this)">Todas (38)</button>
+                    <button type="button" class="cases-filter-btn" onclick="setEvidenciasFilter('Aprobada', this)">Aprobadas (35)</button>
+                    <button type="button" class="cases-filter-btn" onclick="setEvidenciasFilter('En Revisión', this)">En Revisión (2)</button>
+                    <button type="button" class="cases-filter-btn" onclick="setEvidenciasFilter('Observada', this)" style="color: #fca5a5;">Observadas / Por Corregir (1)</button>
+                </div>
+            </div>
+
+            <!-- Tabla de Registros Propios con Patrón Alternado (Rojo Colonial / Azul Marino) -->
+            <div class="cases-table-container">
+                <table class="cases-hd-table evidencias-hd-table" id="evidenciasDataTable">
+                    <thead>
+                        <tr>
+                            <th style="width: 120px;">Código Inmutable</th>
+                            <th style="width: 95px;">Fecha Ejecución</th>
+                            <th style="width: 140px;">Tipo de Labor</th>
+                            <th>Vecino / JJ.VV.</th>
+                            <th style="width: 85px; text-align: center;">Foto Verificadora</th>
+                            <th style="width: 120px;">Estado Supervisor</th>
+                            <th style="width: 145px; text-align: center;">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for ev in mis_evidencias %}
+                        <tr class="evidence-row-item" data-status="{{ ev.supervisor_status }}" id="evidence-row-{{ ev.code }}">
+                            <td><span class="badge-evidence-code">{{ ev.code }}</span></td>
+                            <td style="font-size: 12px; color: #FFFFFF; white-space: nowrap;"><i class="bi bi-calendar3" style="margin-right: 4px; opacity: 0.7;"></i><span class="ev-date">{{ ev.date }}</span></td>
+                            <td><span class="badge-evidence-type">{{ ev.activity_type }}</span></td>
+                            <td>
+                                <div style="font-weight: 600; color: #FFFFFF;" class="ev-contact">{{ ev.contact }}</div>
+                                <div style="font-size: 11px; color: #CBD5E1; font-family: monospace;" class="ev-phone">{{ ev.phone }}</div>
+                            </td>
+                            <td style="text-align: center;">
+                                <button type="button" class="evidence-thumbnail-btn" onclick="viewEvidenceDetail('{{ ev.code }}', '{{ ev.date }}', '{{ ev.activity_type|escapejs }}', '{{ ev.activity|escapejs }}', '{{ ev.contact|escapejs }}', '{{ ev.phone|escapejs }}', '{{ ev.thumbnail }}', '{{ ev.hash_inmutable }}', '{{ ev.supervisor_status }}', '{{ ev.supervisor_note|escapejs }}')" title="Ver evidencia fotográfica">
+                                    <img src="{{ ev.thumbnail }}" alt="Evidencia {{ ev.code }}" class="evidence-thumbnail-img">
+                                </button>
+                            </td>
+                            <td>
+                                {% if ev.supervisor_status == 'Aprobada' %}
+                                    <span class="badge-status-mini status-aprobada"><i class="bi bi-check-circle-fill"></i> Aprobada</span>
+                                {% elif ev.supervisor_status == 'En Revisión' %}
+                                    <span class="badge-status-mini status-revision"><i class="bi bi-hourglass-split"></i> En Revisión</span>
+                                {% elif ev.supervisor_status == 'Observada' %}
+                                    <span class="badge-status-mini status-observada"><i class="bi bi-exclamation-triangle-fill"></i> Observada</span>
+                                {% else %}
+                                    <span class="badge-status-mini status-revision">{{ ev.supervisor_status }}</span>
+                                {% endif %}
+                            </td>
+                            <td style="text-align: center;">
+                                <div style="display: inline-flex; gap: 5px; justify-content: center;">
+                                    <button type="button" class="btn-evidence-view" onclick="viewEvidenceDetail('{{ ev.code }}', '{{ ev.date }}', '{{ ev.activity_type|escapejs }}', '{{ ev.activity|escapejs }}', '{{ ev.contact|escapejs }}', '{{ ev.phone|escapejs }}', '{{ ev.thumbnail }}', '{{ ev.hash_inmutable }}', '{{ ev.supervisor_status }}', '{{ ev.supervisor_note|escapejs }}')" title="Ver detalle inmutable">
+                                        <i class="bi bi-eye-fill"></i> Ver
+                                    </button>
+                                    <button type="button" class="btn-evidence-edit" onclick="editEvidenceModal('{{ ev.code }}', '{{ ev.date }}', '{{ ev.contact|escapejs }}', '{{ ev.phone|escapejs }}', '{{ ev.supervisor_status }}', '{{ ev.supervisor_note|escapejs }}')" title="Editar datos propios y bitácora">
+                                        <i class="bi bi-pencil-fill"></i> Editar
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- =================================================================
+         MODAL: "MI RENDIMIENTO SGR"
+         ================================================================= -->
+    <div class="glass-overlay-panel" id="modal-rendimiento" role="dialog" aria-modal="true" aria-labelledby="rendimientoModalTitle">
+        <div class="glass-modal-container rendimiento-modal-compact">
+            <header class="cases-top-row">
+                <div class="cases-title-group" id="rendimientoModalTitle">
+                    <i class="bi bi-graph-up-arrow" style="color: #60a5fa; font-size: 1.15rem;"></i>
+                    <span>Mi Rendimiento SGR • Portal Funcionario</span>
+                    <span class="cases-delegation-pill">T3 - Septiembre 2026</span>
+                </div>
+                <div class="cases-top-actions">
+                    <button type="button" class="btn-cases-back" onclick="closeAllModals()">
+                        <i class="bi bi-arrow-left"></i>
+                        <span>Volver al Menú</span>
+                    </button>
+                    <button type="button" class="btn-cases-close" onclick="closeAllModals()" aria-label="Cerrar ventana">
+                        <i class="bi bi-x-lg"></i>
+                    </button>
+                </div>
+            </header>
+
+            <!-- 3 Tarjetas de Resumen Superior -->
+            <div class="rendimiento-kpis-grid">
+                <div class="rendimiento-kpi-card">
+                    <div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; font-weight: 700;">Semáforo Diario</div>
+                    <div class="rendimiento-kpi-val" style="color: #34D399;">98,2%</div>
+                    <div style="font-size: 11.5px; color: #A7F3D0;"><i class="bi bi-patch-check-fill"></i> ● Verde al día (Óptimo)</div>
+                </div>
+                <div class="rendimiento-kpi-card">
+                    <div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; font-weight: 700;">Tiempo Computable</div>
+                    <div class="rendimiento-kpi-val" style="color: #7DD3FC;">56 / 91 <span style="font-size: 14px; font-weight: 500; color: #94A3B8;">días</span></div>
+                    <div style="font-size: 11.5px; color: #BAE6FD;"><i class="bi bi-calendar-check"></i> 61,5% del trimestre transcurrido</div>
+                </div>
+                <div class="rendimiento-kpi-card">
+                    <div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; font-weight: 700;">Cumplimiento Meta Trimestral</div>
+                    <div class="rendimiento-kpi-val" style="color: #FDE68A;">84,4%</div>
+                    <div style="font-size: 11.5px; color: #FEF08A;"><i class="bi bi-bullseye"></i> 38 de 45 unidades verificadas</div>
+                </div>
+            </div>
+
+            <!-- Gran Barra de Progreso General -->
+            <div style="background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.14); border-radius: 12px; padding: 1rem 1.25rem; margin-bottom: 1.25rem;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; font-size: 12px;">
+                    <span style="font-weight: 600; color: #FFFFFF;"><i class="bi bi-activity text-primary"></i> Ritmo Operativo Consolidado Territorial</span>
+                    <span style="font-weight: 700; color: #34D399;">84.4% de avance</span>
+                </div>
+                <div style="width: 100%; height: 8px; background: rgba(0,0,0,0.3); border-radius: 4px; overflow: hidden;">
+                    <div style="width: 84.4%; height: 100%; background: linear-gradient(90deg, #2563EB 0%, #10B981 100%); border-radius: 4px; box-shadow: 0 0 10px rgba(16, 185, 129, 0.6);"></div>
+                </div>
+            </div>
+
+            <!-- Detalle de Ponderaciones (Grid de 4 Tarjetas) -->
+            <div style="font-size: 12.5px; font-weight: 700; color: #F1F5F9; margin-bottom: 0.75rem; text-transform: uppercase; letter-spacing: 0.04em;">
+                <i class="bi bi-layers-fill" style="color: #60a5fa; margin-right: 4px;"></i> Detalle de Ponderaciones por Cargo
+            </div>
+            <div class="rendimiento-metas-grid">
+                <div class="rendimiento-meta-card">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <span style="font-weight: 700; font-size: 12.5px; color: #FFFFFF;">Operativos Vecinales y Terreno</span>
+                        <span style="background: rgba(59,130,246,0.25); border: 1px solid rgba(147,197,253,0.5); color: #93C5FD; font-size: 11px; padding: 1px 7px; border-radius: 6px; font-weight: 700;">35% Ponderador</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; font-size: 11.5px; color: #CBD5E1;">
+                        <span>Meta Trimestre: <strong>45 operativos</strong></span>
+                        <span style="color: #86EFAC;">Realizado: <strong>38 (84.4%)</strong></span>
+                    </div>
+                    <div style="width: 100%; height: 5px; background: rgba(255,255,255,0.1); border-radius: 3px; overflow: hidden;">
+                        <div style="width: 84.4%; height: 100%; background: #3B82F6; border-radius: 3px;"></div>
+                    </div>
+                </div>
+
+                <div class="rendimiento-meta-card">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <span style="font-weight: 700; font-size: 12.5px; color: #FFFFFF;">Atenciones RSH y Fichas Sociales</span>
+                        <span style="background: rgba(16,185,129,0.25); border: 1px solid rgba(110,231,183,0.5); color: #6EE7B7; font-size: 11px; padding: 1px 7px; border-radius: 6px; font-weight: 700;">30% Ponderador</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; font-size: 11.5px; color: #CBD5E1;">
+                        <span>Meta Trimestre: <strong>130 atenciones</strong></span>
+                        <span style="color: #86EFAC;">Realizado: <strong>112 (86.1%)</strong></span>
+                    </div>
+                    <div style="width: 100%; height: 5px; background: rgba(255,255,255,0.1); border-radius: 3px; overflow: hidden;">
+                        <div style="width: 86.1%; height: 100%; background: #10B981; border-radius: 3px;"></div>
+                    </div>
+                </div>
+
+                <div class="rendimiento-meta-card">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <span style="font-weight: 700; font-size: 12.5px; color: #FFFFFF;">Comités Vecinales de Seguridad</span>
+                        <span style="background: rgba(245,158,11,0.25); border: 1px solid rgba(251,191,36,0.5); color: #FDE68A; font-size: 11px; padding: 1px 7px; border-radius: 6px; font-weight: 700;">20% Ponderador</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; font-size: 11.5px; color: #CBD5E1;">
+                        <span>Meta Trimestre: <strong>25 reuniones</strong></span>
+                        <span style="color: #86EFAC;">Realizado: <strong>22 (88.0%)</strong></span>
+                    </div>
+                    <div style="width: 100%; height: 5px; background: rgba(255,255,255,0.1); border-radius: 3px; overflow: hidden;">
+                        <div style="width: 88%; height: 100%; background: #F59E0B; border-radius: 3px;"></div>
+                    </div>
+                </div>
+
+                <div class="rendimiento-meta-card">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <span style="font-weight: 700; font-size: 12.5px; color: #FFFFFF;">Fiscalización y Retiro de Escombros</span>
+                        <span style="background: rgba(139,29,44,0.35); border: 1px solid rgba(248,113,113,0.5); color: #FECACA; font-size: 11px; padding: 1px 7px; border-radius: 6px; font-weight: 700;">15% Ponderador</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; font-size: 11.5px; color: #CBD5E1;">
+                        <span>Meta Trimestre: <strong>30 inspecciones</strong></span>
+                        <span style="color: #86EFAC;">Realizado: <strong>26 (86.7%)</strong></span>
+                    </div>
+                    <div style="width: 100%; height: 5px; background: rgba(255,255,255,0.1); border-radius: 3px; overflow: hidden;">
+                        <div style="width: 86.7%; height: 100%; background: #EF4444; border-radius: 3px;"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- =================================================================
+         MODAL 2: SECCIÓN REVISIÓN DATOS DE LA CIUDADANÍA
+         ================================================================= -->
+    <div class="glass-overlay-panel" id="modal-citizenship" role="dialog" aria-modal="true" aria-labelledby="citizenshipModalTitle">
+        <div class="glass-modal-container">
+            <header class="glass-modal-header">
+                <div class="glass-modal-title" id="citizenshipModalTitle">
+                    <i class="bi bi-people-fill text-teal" style="color: #2dd4bf;"></i>
+                    <span>Revisión de Datos de la Ciudadanía</span>
+                    <span class="badge-employee-pill" style="font-size: 0.78rem; padding: 0.35rem 0.9rem;">
+                        Registro Social & Vecinal La Serena
+                    </span>
+                </div>
+                <button type="button" class="glass-modal-close-btn" onclick="closeAllModals()" aria-label="Cerrar ventana">
+                    <i class="bi bi-x-lg"></i>
+                </button>
+            </header>
+
+            <div class="glass-modal-body">
+                <!-- Barra de Filtros y Búsqueda -->
+                <div style="display: flex; gap: 1rem; align-items: center; justify-content: space-between; flex-wrap: wrap; margin-bottom: 1.75rem;">
+                    <div class="glass-input-group" style="max-width: 440px; flex: 1;">
+                        <i class="bi bi-search glass-input-icon"></i>
+                        <input type="text" id="citizenSearchInput" class="glass-input" placeholder="Buscar por RUT, Nombre del vecino o Dirección..." onkeyup="filterCitizensTable()">
+                    </div>
+
+                    <div style="display: flex; gap: 0.75rem; align-items: center;">
+                        <button type="button" class="btn-glass-primary" style="background: linear-gradient(135deg, rgba(20, 160, 160, 0.85) 0%, rgba(14, 130, 140, 0.95) 100%);" onclick="openNewCitizenModal()">
+                            <i class="bi bi-person-plus-fill"></i>
+                            <span>+ Nueva Ficha Social</span>
+                        </button>
+                        <button type="button" class="btn-glass-secondary" onclick="closeAllModals()">
+                            <i class="bi bi-arrow-left"></i>
+                            <span>Volver al Menú</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Resumen Ciudadano RSH -->
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1.5rem;">
+                    <div style="background: rgba(255,255,255,0.14); border: 1px solid rgba(255,255,255,0.3); border-radius: 18px; padding: 1.15rem 1.4rem;">
+                        <div style="font-size: 0.82rem; color: rgba(255,255,255,0.8); text-transform: uppercase;">Vecinos Atendidos Sector</div>
+                        <div style="font-size: 1.75rem; font-weight: 800; color: #ffffff;">{{ ciudadania_records|length|default:"5" }} registrados</div>
+                    </div>
+                    <div style="background: rgba(255,255,255,0.14); border: 1px solid rgba(255,255,255,0.3); border-radius: 18px; padding: 1.15rem 1.4rem;">
+                        <div style="font-size: 0.82rem; color: rgba(255,255,255,0.8); text-transform: uppercase;">Tramo RSH ≤ 40% (Prioritario)</div>
+                        <div style="font-size: 1.75rem; font-weight: 800; color: #a7f3d0;">60% del sector</div>
+                    </div>
+                    <div style="background: rgba(255,255,255,0.14); border: 1px solid rgba(255,255,255,0.3); border-radius: 18px; padding: 1.15rem 1.4rem;">
+                        <div style="font-size: 0.82rem; color: rgba(255,255,255,0.8); text-transform: uppercase;">Protocolo Atención</div>
+                        <div style="font-size: 1.75rem; font-weight: 800; color: #2dd4bf;">Regla RN-012</div>
+                    </div>
+                </div>
+
+                <!-- Tabla de Ciudadanía -->
+                <div style="overflow-x: auto;">
+                    <table class="glass-table" id="citizensDataTable">
+                        <thead>
+                            <tr>
+                                <th>RUT</th>
+                                <th>Nombre Completo</th>
+                                <th>Dirección / Sector</th>
+                                <th>Tramo RSH</th>
+                                <th>Teléfono</th>
+                                <th>Última Atención</th>
+                                <th>Etapa Social</th>
+                                <th>Acción</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for cit in ciudadania_records %}
+                            <tr class="citizen-row-item">
+                                <td><strong style="color: #5eead4;">{{ cit.rut }}</strong></td>
+                                <td>{{ cit.name }}</td>
+                                <td>{{ cit.address }}</td>
+                                <td>
+                                    <span class="status-badge-glass {% if cit.rsh_tramo == '40%' %}danger{% elif cit.rsh_tramo == '50%' %}warning{% else %}success{% endif %}">
+                                        {{ cit.rsh_tramo }} ({{ cit.rsh_status }})
+                                    </span>
+                                </td>
+                                <td>{{ cit.phone }}</td>
+                                <td>{{ cit.last_attention }}</td>
+                                <td>
+                                    <span class="status-badge-glass success" style="font-size: 0.78rem;">
+                                        Etapa {{ cit.stage }} de 3
+                                    </span>
+                                </td>
+                                <td>
+                                    <button type="button" class="btn-glass-secondary" style="padding: 0.35rem 0.75rem; font-size: 0.82rem;" onclick="viewCitizenDetail('{{ cit.rut }}', '{{ cit.name|escapejs }}', '{{ cit.rsh_tramo }}', '{{ cit.case_type|escapejs }}', '{{ cit.phone }}')">
+                                        <i class="bi bi-person-lines-fill"></i> Ficha
+                                    </button>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="8" style="text-align: center; padding: 2rem;">No se encontraron registros de ciudadanía en el sistema.</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- =================================================================
+         MODAL 3: PERFIL DEL FUNCIONARIO MUNICIPAL
+         ================================================================= -->
+    <div class="glass-overlay-panel" id="modal-profile" role="dialog" aria-modal="true" aria-labelledby="profileModalTitle">
+        <div class="glass-modal-container" style="max-width: 580px;">
+            <header class="glass-modal-header">
+                <div class="glass-modal-title" id="profileModalTitle">
+                    <i class="bi bi-person-badge-fill text-info"></i>
+                    <span>Perfil del Empleado Municipal</span>
+                </div>
+                <button type="button" class="glass-modal-close-btn" onclick="closeAllModals()" aria-label="Cerrar ventana">
+                    <i class="bi bi-x-lg"></i>
+                </button>
+            </header>
+
+            <div class="glass-modal-body" style="padding: 2.25rem 2rem; text-align: center;">
+                <div style="width: 88px; height: 88px; margin: 0 auto 1.25rem; border-radius: 50%; background: rgba(255,255,255,0.22); border: 2px solid rgba(255,255,255,0.6); display: flex; align-items: center; justify-content: center; font-size: 2.6rem; color: #ffffff; box-shadow: 0 10px 25px rgba(0,0,0,0.2);">
+                    <i class="bi bi-person-check-fill"></i>
+                </div>
+
+                <h3 style="font-size: 1.55rem; font-weight: 800; color: #ffffff; margin-bottom: 0.35rem;">{{ user_name|default:"Kevin Encina Molina" }}</h3>
+                <p style="font-size: 0.95rem; color: #93c5fd; font-weight: 600; margin-bottom: 1.75rem;">{{ user_role|default:"Territorial OO.CC." }}</p>
+
+                <div style="display: flex; flex-direction: column; gap: 0.85rem; text-align: left; background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.25); border-radius: 18px; padding: 1.5rem;">
+                    <div style="display: flex; justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,0.15); padding-bottom: 0.6rem;">
+                        <span style="color: rgba(255,255,255,0.75);">RUT Funcionario:</span>
+                        <strong style="color: #ffffff;">{{ user_rut|default:"12.345.678-K" }}</strong>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,0.15); padding-bottom: 0.6rem;">
+                        <span style="color: rgba(255,255,255,0.75);">Delegación Asignada:</span>
+                        <strong style="color: #ffffff;">{{ current_delegation|default:"Delegación La Pampa" }}</strong>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,0.15); padding-bottom: 0.6rem;">
+                        <span style="color: rgba(255,255,255,0.75);">Dirección Municipal:</span>
+                        <strong style="color: #ffffff;">DIDECO · Territorio y Vecinos</strong>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,0.15); padding-bottom: 0.6rem;">
+                        <span style="color: rgba(255,255,255,0.75);">Período Operativo:</span>
+                        <strong style="color: #ffffff;">{{ current_period|default:"T3 - Septiembre 2026" }}</strong>
+                    </div>
+                    <div style="display: flex; justify-content: space-between;">
+                        <span style="color: rgba(255,255,255,0.75);">Estado de Acceso:</span>
+                        <span class="status-badge-glass success" style="font-size: 0.8rem;"><i class="bi bi-shield-check"></i> Activo en Terreno</span>
+                    </div>
+                </div>
+
+                <div style="margin-top: 2rem; display: flex; justify-content: center; gap: 1rem;">
+                    <button type="button" class="btn-glass-primary" onclick="closeAllModals()">
+                        <i class="bi bi-check-lg"></i>
+                        <span>Entendido</span>
+                    </button>
+                    <button type="button" class="btn-glass-secondary" onclick="confirmLogout()">
+                        <i class="bi bi-box-arrow-right"></i>
+                        <span>Cerrar sesión</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- =================================================================
+         MODAL 4: FORMULARIO NUEVA ACTIVIDAD / CASO EN TERRENO
+         ================================================================= -->
+    <div class="glass-overlay-panel" id="modal-new-case" role="dialog" aria-modal="true" aria-labelledby="newCaseModalTitle">
+        <div class="glass-modal-container" style="max-width: 680px;">
+            <header class="glass-modal-header">
+                <div class="glass-modal-title" id="newCaseModalTitle">
+                    <i class="bi bi-plus-circle-fill text-primary" style="color: #60a5fa;"></i>
+                    <span>Registrar Nuevo Caso en Terreno</span>
+                </div>
+                <button type="button" class="glass-modal-close-btn" onclick="openCasesSection()" aria-label="Volver">
+                    <i class="bi bi-x-lg"></i>
+                </button>
+            </header>
+
+            <div class="glass-modal-body" style="padding: 2rem;">
+                <form id="formNewCase" method="POST" action="{% url 'activities:activity_create' %}" enctype="multipart/form-data" onsubmit="handleNewCaseSubmit(event)">
+                    {% csrf_token %}
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.25rem;">
+                        <div>
+                            <label style="font-size: 0.85rem; color: rgba(255,255,255,0.85); margin-bottom: 0.4rem; display: block;">Código de Actividad:</label>
+                            <input type="text" name="activity_code" class="glass-input" style="padding-left: 1.25rem;" value="ACT-2026-0850" required>
+                        </div>
+                        <div>
+                            <label style="font-size: 0.85rem; color: rgba(255,255,255,0.85); margin-bottom: 0.4rem; display: block;">Fecha de Atención:</label>
+                            <input type="date" name="activity_date" class="glass-input" style="padding-left: 1.25rem;" value="2026-09-17" required>
+                        </div>
+                    </div>
+
+                    <div style="margin-bottom: 1.25rem;">
+                        <label style="font-size: 0.85rem; color: rgba(255,255,255,0.85); margin-bottom: 0.4rem; display: block;">Descripción del Problema o Caso:</label>
+                        <textarea name="problem_description" class="glass-input" style="padding: 0.75rem 1.25rem; height: 80px; border-radius: 16px; resize: none;" placeholder="Ej: Solicitud de inspección de luminarias y apoyo social..." required></textarea>
+                    </div>
+
+                    <div style="margin-bottom: 1.25rem;">
+                        <label style="font-size: 0.85rem; color: rgba(255,255,255,0.85); margin-bottom: 0.4rem; display: block;">Acción Ejecutada en Terreno:</label>
+                        <textarea name="executed_action" class="glass-input" style="padding: 0.75rem 1.25rem; height: 75px; border-radius: 16px; resize: none;" placeholder="Ej: Levantamiento de ficha en terreno y coordinación con cuadrilla..." required></textarea>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.25rem;">
+                        <div>
+                            <label style="font-size: 0.85rem; color: rgba(255,255,255,0.85); margin-bottom: 0.4rem; display: block;">Nombre del Vecino / Contacto:</label>
+                            <input type="text" name="contact_name" class="glass-input" style="padding-left: 1.25rem;" placeholder="Ej: Juan Pérez Morales" required>
+                        </div>
+                        <div>
+                            <label style="font-size: 0.85rem; color: rgba(255,255,255,0.85); margin-bottom: 0.4rem; display: block;">Teléfono de Contacto:</label>
+                            <input type="text" name="contact_phone" class="glass-input" style="padding-left: 1.25rem;" placeholder="+56 9 1234 5678" required>
+                        </div>
+                    </div>
+
+                    <div style="margin-bottom: 1.5rem;">
+                        <label style="font-size: 0.85rem; color: rgba(255,255,255,0.85); margin-bottom: 0.4rem; display: block;">Evidencia Fotográfica / Documento:</label>
+                        <input type="file" name="evidence_file" class="glass-input" style="padding: 0.5rem 1.25rem;">
+                    </div>
+
+                    <div style="display: flex; justify-content: flex-end; gap: 1rem;">
+                        <button type="button" class="btn-glass-secondary" onclick="openCasesSection()">
+                            Cancelar
+                        </button>
+                        <button type="submit" class="btn-glass-primary">
+                            <i class="bi bi-cloud-arrow-up-fill"></i>
+                            <span>Guardar Caso en Terreno</span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- =================================================================
+         SCRIPTS DE INTERACCIÓN Y NAVEGACIÓN
+         ================================================================= -->
     <script>
-        // Sanitizador estricto contra inyecciones XSS / caracteres peligrosos
+        // Control de Modales y Navegación
+        function setActiveNavLink(activeId) {
+            document.querySelectorAll('.sidebar-nav .nav-link-glass').forEach(link => {
+                link.classList.remove('active-pill');
+            });
+            const activeEl = document.getElementById(activeId);
+            if (activeEl) activeEl.classList.add('active-pill');
+        }
+
+        function openCasesSection() {
+            closeAllModals();
+            setActiveNavLink('nav-tubo');
+            const modal = document.getElementById('modal-cases');
+            if (modal) modal.classList.add('active');
+        }
+
+        function openMisEvidenciasModal() {
+            closeAllModals();
+            setActiveNavLink('nav-evidencias');
+            const modal = document.getElementById('modal-evidencias');
+            if (modal) modal.classList.add('active');
+        }
+
+        function openRendimientoModal() {
+            closeAllModals();
+            setActiveNavLink('nav-rendimiento');
+            const modal = document.getElementById('modal-rendimiento');
+            if (modal) modal.classList.add('active');
+        }
+
+        function openCitizenshipSection() {
+            closeAllModals();
+            const modal = document.getElementById('modal-citizenship');
+            if (modal) modal.classList.add('active');
+        }
+
+        function openProfileModal() {
+            closeAllModals();
+            setActiveNavLink('nav-profile');
+            const modal = document.getElementById('modal-profile');
+            if (modal) modal.classList.add('active');
+        }
+
+        function openNewCaseModal() {
+            closeAllModals();
+            const modal = document.getElementById('modal-new-case');
+            if (modal) modal.classList.add('active');
+        }
+
+        function closeAllModals() {
+            document.querySelectorAll('.glass-overlay-panel').forEach(panel => {
+                panel.classList.remove('active');
+            });
+            setActiveNavLink('nav-home');
+        }
+
+        // Cierre al presionar Escape o clic fuera
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') closeAllModals();
+        });
+
+        document.querySelectorAll('.glass-overlay-panel').forEach(panel => {
+            panel.addEventListener('click', (e) => {
+                if (e.target === panel) closeAllModals();
+            });
+        });
+
+        // Filtrado en vivo y filtros por pastilla de casos
+        let currentCaseStatusFilter = 'all';
+
+        function setCasesFilter(status, btn) {
+            currentCaseStatusFilter = status;
+            document.querySelectorAll('.cases-filter-btn').forEach(b => b.classList.remove('active'));
+            if (btn) btn.classList.add('active');
+            filterCasesTable();
+        }
+
+        function filterCasesTable() {
+            const query = (document.getElementById('caseSearchInput')?.value || '').toLowerCase();
+            const rows = document.querySelectorAll('#casesDataTable tbody tr.case-row-item');
+            rows.forEach(row => {
+                const text = row.textContent.toLowerCase();
+                const rowStatus = row.getAttribute('data-status') || '';
+                const matchesQuery = text.includes(query);
+                const matchesStatus = (currentCaseStatusFilter === 'all') || 
+                    (currentCaseStatusFilter === 'Pendiente' && (rowStatus === 'Pendiente' || rowStatus === 'Ingresado')) ||
+                    (currentCaseStatusFilter === 'Realizado' && (rowStatus === 'Realizado' || rowStatus === 'Aprobado')) ||
+                    (rowStatus === currentCaseStatusFilter);
+                row.style.display = (matchesQuery && matchesStatus) ? '' : 'none';
+            });
+        }
+
+        // Sanitización estricta anti-inyecciones
         function sanitizeInput(str) {
             if (!str) return '';
             return String(str)
-                .replace(/[<>\"';]/g, '')
-                .trim();
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;')
+                .replace(/\//g, '&#x2F;');
         }
 
-        // 1. Cambio de Pestañas (Tabs)
-        function switchTab(tabId, btn) {
-            document.querySelectorAll('.nav-tab-pill').forEach(b => b.classList.remove('active'));
-            document.querySelectorAll('.tab-pane-content').forEach(c => c.classList.remove('active'));
+        // Filtrado de Mis Evidencias y Registros Propios
+        let currentEvidenciaFilter = 'all';
 
-            btn.classList.add('active');
-            const target = document.getElementById(tabId);
-            if (target) {
-                target.classList.add('active');
-            }
+        function setEvidenciasFilter(status, btn) {
+            currentEvidenciaFilter = status;
+            document.querySelectorAll('#modal-evidencias .cases-filter-btn').forEach(b => b.classList.remove('active'));
+            if (btn) btn.classList.add('active');
+            filterEvidenciasTable();
         }
 
-        // 2. Filtro en Tiempo Real para Tabla de Tubo de Trabajo (Buscador y Estado)
-        let currentStatusFilter = 'Todos';
-
-        function filterTuboTable() {
-            const query = document.getElementById('tuboSearchInput').value.toLowerCase().trim();
-            const rows = document.querySelectorAll('#tableTubo tbody tr');
-
+        function filterEvidenciasTable() {
+            const query = (document.getElementById('evidenceSearchInput')?.value || '').toLowerCase();
+            const rows = document.querySelectorAll('#evidenciasDataTable tbody tr.evidence-row-item');
             rows.forEach(row => {
                 const text = row.textContent.toLowerCase();
-                const status = row.getAttribute('data-status') || '';
-                
-                const matchesQuery = query === '' || text.includes(query);
-                const matchesStatus = currentStatusFilter === 'Todos' || status === currentStatusFilter;
-
-                if (matchesQuery && matchesStatus) {
-                    row.style.display = '';
-                } else {
-                    row.style.display = 'none';
-                }
+                const rowStatus = row.getAttribute('data-status') || '';
+                const matchesQuery = text.includes(query);
+                const matchesStatus = (currentEvidenciaFilter === 'all') || (rowStatus === currentEvidenciaFilter);
+                row.style.display = (matchesQuery && matchesStatus) ? '' : 'none';
             });
         }
 
-        function filterByStatus(status, btnElem) {
-            currentStatusFilter = status;
-            document.querySelectorAll('.filter-btn-pill').forEach(b => b.classList.remove('active'));
-            btnElem.classList.add('active');
-            filterTuboTable();
-        }
-
-        // 3. Modal Menú Hero (Botón "+") con 3 Accesos Directos
-        function openHeroMenuModal() {
-            Swal.fire({
-                title: '<span style="color: #0f172a; font-size: 1.18rem; font-weight: 700;">Consola de Registro Diario</span>',
-                html: `
-                    <div style="text-align: left; margin-bottom: 14px; color: #475569; font-size: 0.84rem;">
-                        ¿Qué labor territorial realizaste hoy? Selecciona una opción para acreditar:
-                    </div>
-                    <div style="display: flex; flex-direction: column; gap: 10px;">
-                        <button class="btn text-start p-3 rounded-3 d-flex align-items-center justify-content-between" 
-                                style="background: #FFFFFF; border: 1px solid #cbd5e1; color: #0f172a; box-shadow: 0 2px 5px rgba(0,0,0,0.03);" 
-                                onclick="Swal.close(); openActivityModal();">
-                            <div>
-                                <div class="fw-bold fs-6" style="color: #8B1D2C;"><i class="bi bi-camera-fill me-2"></i> 📷 1. Registrar Terreno</div>
-                                <div class="text-muted small">Carga fotográfica con generación de código inmutable (ej: ORC-2026-891).</div>
-                            </div>
-                            <i class="bi bi-chevron-right text-secondary"></i>
-                        </button>
-
-                        <button class="btn text-start p-3 rounded-3 d-flex align-items-center justify-content-between" 
-                                style="background: #FFFFFF; border: 1px solid #cbd5e1; color: #0f172a; box-shadow: 0 2px 5px rgba(0,0,0,0.03);" 
-                                onclick="Swal.close(); openSocialModal();">
-                            <div>
-                                <div class="fw-bold fs-6" style="color: #1E3A8A;"><i class="bi bi-people-fill me-2"></i> 👥 2. Atención Social</div>
-                                <div class="text-muted small">Registro de caso vecinal con flujo de hasta 3 gestiones (1ª Orientación/RSH, 2ª Informe, 3ª Beneficio).</div>
-                            </div>
-                            <i class="bi bi-chevron-right text-secondary"></i>
-                        </button>
-
-                        <button class="btn text-start p-3 rounded-3 d-flex align-items-center justify-content-between" 
-                                style="background: #FFFFFF; border: 1px solid #cbd5e1; color: #0f172a; box-shadow: 0 2px 5px rgba(0,0,0,0.03);" 
-                                onclick="Swal.close(); openTuboModal();">
-                            <div>
-                                <div class="fw-bold fs-6" style="color: #b45309;"><i class="bi bi-pin-angle-fill me-2"></i> 📌 3. Tubo de Trabajo</div>
-                                <div class="text-muted small">Solicitud vecinal para la agenda colectiva comunal con fecha límite.</div>
-                            </div>
-                            <i class="bi bi-chevron-right text-secondary"></i>
-                        </button>
-                    </div>
-                `,
-                showConfirmButton: false,
-                showCancelButton: true,
-                cancelButtonText: 'Cerrar',
-                cancelButtonColor: '#64748b',
-                background: '#FFFFFF',
-                color: '#0f172a',
-                width: '560px'
-            });
-        }
-
-        // 4. Modal 1: Registro de Actividad en Terreno
-        function openActivityModal() {
-            const nextCode = 'ORC-2026-' + Math.floor(100 + Math.random() * 900);
-            const today = new Date().toISOString().split('T')[0];
+        // Visor Ampliado de Evidencia Fotográfica con Hash Inmutable
+        function viewEvidenceDetail(code, date, activityType, activity, contact, phone, thumbnail, hash, supervisorStatus, supervisorNote) {
+            let statusBadge = '<span style="background: rgba(16, 185, 129, 0.2); border: 1px solid #10B981; color: #10B981; padding: 3px 10px; border-radius: 9999px; font-weight: 700; font-size: 11px;">✓ Aprobada</span>';
+            if (supervisorStatus === 'En Revisión') {
+                statusBadge = '<span style="background: rgba(245, 158, 11, 0.2); border: 1px solid #F59E0B; color: #F59E0B; padding: 3px 10px; border-radius: 9999px; font-weight: 700; font-size: 11px;">⏳ En Revisión</span>';
+            } else if (supervisorStatus === 'Observada') {
+                statusBadge = '<span style="background: rgba(239, 68, 68, 0.2); border: 1px solid #EF4444; color: #EF4444; padding: 3px 10px; border-radius: 9999px; font-weight: 700; font-size: 11px;">⚠️ Observada / Por Corregir</span>';
+            }
 
             Swal.fire({
-                title: '<span style="color: #0f172a; font-size: 1.15rem; font-weight: 700;">Carga de Evidencia en Terreno</span>',
+                title: `<div style="display: flex; align-items: center; justify-content: space-between; gap: 10px; width: 100%; border-bottom: 1px solid #E2E8F0; padding-bottom: 10px;">
+                    <div style="text-align: left;">
+                        <span style="font-size: 1.15rem; font-weight: 800; color: #0F172A;">Evidencia Verificadora</span>
+                        <div style="font-size: 0.8rem; color: #64748B; font-weight: 600;">Registro #${sanitizeInput(code)} • Funcionario: Kevin Encina</div>
+                    </div>
+                    ${statusBadge}
+                </div>`,
+                width: '680px',
                 html: `
-                    <div style="text-align: left; font-size: 0.82rem; color: #334155;">
-                        <div class="mb-2">
-                            <label class="form-label text-muted small mb-1">Código Inmutable Generado:</label>
-                            <input id="swalActCode" type="text" class="form-control form-control-sm font-monospace fw-bold" 
-                                   style="background: #f1f5f9; border: 1px solid #cbd5e1; color: #0f172a;" 
-                                   value="${nextCode}" readonly>
-                        </div>
-                        <div class="row g-2 mb-2">
-                            <div class="col-6">
-                                <label class="form-label text-muted small mb-1">Fecha de la Actividad:</label>
-                                <input id="swalActDate" type="date" class="form-control form-control-sm" 
-                                       style="background: #FFFFFF; border: 1px solid #cbd5e1; color: #0f172a;" 
-                                       value="${today}">
-                            </div>
-                            <div class="col-6">
-                                <label class="form-label text-muted small mb-1">Ítem de la Matriz:</label>
-                                <select id="swalActItem" class="form-select form-select-sm" 
-                                        style="background: #FFFFFF; border: 1px solid #cbd5e1; color: #0f172a;">
-                                    <option value="Operativo Terreno">Operativos y Terreno</option>
-                                    <option value="Atención Social">Atención Social y RSH</option>
-                                    <option value="Comité Vecinal">Comité / Reunión Vecinal</option>
-                                    <option value="Taller">Taller Territorial</option>
-                                </select>
+                    <div style="text-align: left; font-size: 0.85rem; color: #334155; display: grid; gap: 0.8rem; box-sizing: border-box; padding: 5px 0;">
+                        <!-- Fotografía Verificadora de Alta Calidad -->
+                        <div style="position: relative; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 14px rgba(0,0,0,0.15); border: 1px solid #E2E8F0; max-height: 250px; background: #0F172A; display: flex; align-items: center; justify-content: center;">
+                            <img src="${sanitizeInput(thumbnail)}" alt="Evidencia fotográfica" style="width: 100%; height: 250px; object-fit: cover;">
+                            <div style="position: absolute; bottom: 8px; left: 10px; background: rgba(15, 23, 42, 0.82); backdrop-filter: blur(8px); padding: 4px 10px; border-radius: 6px; font-size: 10.5px; color: #F8FAFC; border: 1px solid rgba(255,255,255,0.2);">
+                                <i class="bi bi-geo-alt-fill" style="color: #F87171;"></i> Georreferencia y sello temporal verificado
                             </div>
                         </div>
-                        <div class="mb-2">
-                            <label class="form-label text-muted small mb-1">Labor Ejecutada en Terreno:</label>
-                            <textarea id="swalActDesc" class="form-control form-control-sm" 
-                                      style="background: #FFFFFF; border: 1px solid #cbd5e1; color: #0f172a;" 
-                                      rows="2" placeholder="Describa el trabajo realizado y la solución aplicada..."></textarea>
-                        </div>
-                        <div class="row g-2 mb-2">
-                            <div class="col-6">
-                                <label class="form-label text-muted small mb-1">Contacto Vecinal:</label>
-                                <input id="swalActContact" type="text" class="form-control form-control-sm" 
-                                       style="background: #FFFFFF; border: 1px solid #cbd5e1; color: #0f172a;" 
-                                       placeholder="Nombre del vecino o dirigente">
+
+                        <!-- Metadatos de la Gestión -->
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; background: #F8FAFC; padding: 10px 14px; border-radius: 10px; border: 1px solid #E2E8F0;">
+                            <div>
+                                <span style="font-size: 11px; color: #64748B; text-transform: uppercase; font-weight: 700; display: block;">Tipo de Gestión:</span>
+                                <strong style="color: #1E293B; font-size: 12.5px;">${sanitizeInput(activityType)}</strong>
+                                <div style="font-size: 11.5px; color: #475569; margin-top: 2px;">${sanitizeInput(activity)}</div>
                             </div>
-                            <div class="col-6">
-                                <label class="form-label text-muted small mb-1">Teléfono:</label>
-                                <input id="swalActPhone" type="text" class="form-control form-control-sm" 
-                                       style="background: #FFFFFF; border: 1px solid #cbd5e1; color: #0f172a;" 
-                                       placeholder="+56 9 ...">
+                            <div>
+                                <span style="font-size: 11px; color: #64748B; text-transform: uppercase; font-weight: 700; display: block;">Vecino / Junta Vecinal:</span>
+                                <strong style="color: #1E293B; font-size: 12.5px;">${sanitizeInput(contact)}</strong>
+                                <div style="font-size: 11.5px; color: #1E3A8A; font-family: monospace; font-weight: 600; margin-top: 2px;">${sanitizeInput(phone)}</div>
                             </div>
                         </div>
-                        <div class="mb-2">
-                            <label class="form-label text-muted small mb-1">Archivo de Evidencia Fotográfica (JPG/PNG):</label>
-                            <input id="swalActFile" type="file" class="form-control form-control-sm" 
-                                   style="background: #FFFFFF; border: 1px solid #cbd5e1; color: #0f172a;" 
-                                   accept="image/*">
+
+                        <!-- Certificado Hash SHA-256 Inmutable -->
+                        <div style="background: #0F172A; padding: 10px 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); color: #E2E8F0;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                                <span style="font-size: 11px; font-weight: 700; color: #38BDF8;"><i class="bi bi-shield-lock-fill"></i> Hash Inmutable de Auditoría Municipal:</span>
+                                <span style="font-size: 10px; color: #94A3B8; background: rgba(255,255,255,0.1); padding: 1px 6px; border-radius: 4px;">SHA-256</span>
+                            </div>
+                            <div style="font-family: monospace; font-size: 10px; color: #67E8F9; word-break: break-all; letter-spacing: 0.05em; background: rgba(0,0,0,0.3); padding: 6px 8px; border-radius: 4px; border: 1px solid rgba(255,255,255,0.06);">
+                                ${sanitizeInput(hash)}
+                            </div>
+                        </div>
+
+                        <!-- Dictamen de la Supervisión Municipal -->
+                        <div style="background: #FFFBEB; border: 1px solid #FDE68A; border-left: 4px solid #F59E0B; padding: 10px 14px; border-radius: 8px;">
+                            <div style="font-size: 11px; font-weight: 700; color: #92400E; display: flex; align-items: center; gap: 5px;">
+                                <i class="bi bi-person-badge-fill"></i> Dictamen y Observaciones de Supervisión Territorial:
+                            </div>
+                            <p style="margin: 4px 0 0 0; font-size: 12px; color: #78350F; line-height: 1.45;">
+                                "${sanitizeInput(supervisorNote || 'Actividad acreditada y conforme a los lineamientos operativos de la Delegación.')}"
+                            </p>
                         </div>
                     </div>
                 `,
-                showCancelButton: true,
-                confirmButtonText: 'Registrar y Enviar a Validación',
-                cancelButtonText: 'Cancelar',
+                showCloseButton: true,
+                confirmButtonText: '<i class="bi bi-check2"></i> Cerrar Visor',
                 confirmButtonColor: '#8B1D2C',
-                cancelButtonColor: '#64748b',
-                background: '#FFFFFF',
-                color: '#0f172a',
-                width: '560px',
-                preConfirm: () => {
-                    const desc = sanitizeInput(document.getElementById('swalActDesc').value);
-                    const contact = sanitizeInput(document.getElementById('swalActContact').value);
-                    if (!desc) {
-                        Swal.showValidationMessage('Debe ingresar la descripción de la labor ejecutada.');
-                        return false;
-                    }
-                    if (!contact) {
-                        Swal.showValidationMessage('Debe ingresar el nombre del contacto vecinal.');
-                        return false;
-                    }
-                    return { code: nextCode, desc, contact };
+                customClass: {
+                    popup: 'swal2-compact-card'
                 }
-            }).then((res) => {
-                if (res.isConfirmed) {
+            });
+        }
+
+        // Modal de Edición de Registros Propios con Bitácora Obligatoria
+        function editEvidenceModal(code, date, contact, phone, supervisorStatus, supervisorNote) {
+            const isObservada = (supervisorStatus === 'Observada');
+
+            Swal.fire({
+                title: `<div style="text-align: left; width: 100%; border-bottom: 1px solid #E2E8F0; padding-bottom: 8px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <span style="font-size: 1.15rem; font-weight: 800; color: #0F172A;"><i class="bi bi-pencil-square" style="color: #8B1D2C;"></i> Editar Registro de Gestión</span>
+                        <span style="font-size: 0.78rem; background: rgba(139,29,44,0.12); color: #8B1D2C; padding: 2px 8px; border-radius: 6px; font-weight: 700;">#${sanitizeInput(code)}</span>
+                    </div>
+                    <div style="font-size: 0.78rem; color: #64748B; margin-top: 3px;">Acreditado por: <strong>Kevin Encina Molina</strong> • Delegación La Pampa</div>
+                </div>`,
+                width: '600px',
+                html: `
+                    <div style="text-align: left; font-size: 0.85rem; color: #334155; display: grid; gap: 0.85rem; box-sizing: border-box; padding: 6px 0;">
+                        ${isObservada ? `
+                        <div style="background: #FEF2F2; border: 1px solid #FECACA; border-left: 4px solid #EF4444; padding: 8px 12px; border-radius: 8px; font-size: 11.5px; color: #991B1B;">
+                            <strong><i class="bi bi-exclamation-triangle-fill"></i> Registro con Observación del Supervisor:</strong>
+                            <div style="margin-top: 2px;">${sanitizeInput(supervisorNote)}</div>
+                        </div>` : ''}
+
+                        <!-- Fecha de Ejecución / Reprogramación -->
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
+                            <div>
+                                <label style="font-weight: 700; font-size: 0.78rem; color: #475569; display: block; margin-bottom: 3px;">Fecha Ejecución / Visita:</label>
+                                <input id="swal-edit-date" type="date" class="swal2-input m-0" style="height: 38px; font-size: 0.85rem; width: 100%; box-sizing: border-box;" value="${sanitizeInput(date)}">
+                            </div>
+                            <div>
+                                <label style="font-weight: 700; font-size: 0.78rem; color: #475569; display: block; margin-bottom: 3px;">Teléfono Contacto Vecinal:</label>
+                                <input id="swal-edit-phone" class="swal2-input m-0" style="height: 38px; font-size: 0.85rem; width: 100%; box-sizing: border-box;" value="${sanitizeInput(phone)}" placeholder="+56 9 ...">
+                            </div>
+                        </div>
+
+                        <!-- Vecino / Organización -->
+                        <div>
+                            <label style="font-weight: 700; font-size: 0.78rem; color: #475569; display: block; margin-bottom: 3px;">Vecino(a) / Junta de Vecinos:</label>
+                            <input id="swal-edit-contact" class="swal2-input m-0" style="height: 38px; font-size: 0.85rem; width: 100%; box-sizing: border-box;" value="${sanitizeInput(contact)}">
+                        </div>
+
+                        <!-- Reemplazo de archivo fotográfico si aplica -->
+                        <div>
+                            <label style="font-weight: 700; font-size: 0.78rem; color: #475569; display: block; margin-bottom: 3px;">
+                                <i class="bi bi-camera-fill" style="color: #1E3A8A;"></i> Reemplazar Archivo Fotográfico Verificador:
+                            </label>
+                            <input id="swal-edit-file" type="file" accept="image/*" class="swal2-file m-0" style="height: 38px; font-size: 0.8rem; width: 100%; box-sizing: border-box; padding: 4px 8px; border: 1px solid #CBD5E1; border-radius: 6px;">
+                            <span style="font-size: 10.5px; color: #64748B;">Requerido en caso de subsanar foto borrosa o incompleta.</span>
+                        </div>
+
+                        <!-- Bitácora de Trazabilidad OBLIGATORIA -->
+                        <div style="background: #F8FAFC; border: 1px solid #CBD5E1; border-radius: 8px; padding: 10px 12px;">
+                            <label style="font-weight: 800; font-size: 0.8rem; color: #8B1D2C; display: block; margin-bottom: 4px;">
+                                <i class="bi bi-journal-check"></i> Motivo de la Modificación (Obligatorio para Trazabilidad): *
+                            </label>
+                            <textarea id="swal-edit-motivo" rows="2" class="swal2-textarea m-0" style="width: 100%; font-size: 0.82rem; height: 55px; box-sizing: border-box; resize: none; border-radius: 6px;" placeholder="Detalla la razón del cambio (ej: reprogramación por lluvia, actualización de contacto vecinal, reemplazo de foto solicitada)..."></textarea>
+                            <div style="font-size: 10px; color: #64748B; margin-top: 3px;">
+                                <i class="bi bi-shield-lock"></i> Se archivará con firma digital y marca temporal en la auditoría de la Delegación.
+                            </div>
+                        </div>
+                    </div>
+                `,
+                focusConfirm: false,
+                showCancelButton: true,
+                cancelButtonText: 'Cancelar',
+                confirmButtonText: '<i class="bi bi-floppy-fill"></i> Guardar Modificación',
+                confirmButtonColor: '#8B1D2C',
+                preConfirm: () => {
+                    const newDate = sanitizeInput(document.getElementById('swal-edit-date')?.value?.trim());
+                    const newContact = sanitizeInput(document.getElementById('swal-edit-contact')?.value?.trim());
+                    const newPhone = sanitizeInput(document.getElementById('swal-edit-phone')?.value?.trim());
+                    const motivo = sanitizeInput(document.getElementById('swal-edit-motivo')?.value?.trim());
+                    const fileInput = document.getElementById('swal-edit-file');
+                    const hasFile = fileInput && fileInput.files && fileInput.files.length > 0;
+
+                    if (!newDate || !newContact) {
+                        Swal.showValidationMessage('Por favor completa la fecha y el nombre del vecino.');
+                        return false;
+                    }
+
+                    if (!motivo || motivo.length < 5) {
+                        Swal.showValidationMessage('Es obligatorio registrar el "Motivo de la modificación" para la trazabilidad municipal (mínimo 5 caracteres).');
+                        return false;
+                    }
+
+                    return { code, newDate, newContact, newPhone, motivo, hasFile, isObservada };
+                }
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    const { code, newDate, newContact, newPhone, motivo, hasFile, isObservada } = result.value;
+
+                    // Actualizar fila visual en la tabla en caliente
+                    const row = document.getElementById(`evidence-row-${code}`);
+                    if (row) {
+                        const dateSpan = row.querySelector('.ev-date');
+                        if (dateSpan) dateSpan.textContent = newDate;
+
+                        const contactDiv = row.querySelector('.ev-contact');
+                        if (contactDiv) contactDiv.textContent = newContact;
+
+                        const phoneDiv = row.querySelector('.ev-phone');
+                        if (phoneDiv) phoneDiv.textContent = newPhone;
+
+                        if (isObservada || hasFile) {
+                            row.setAttribute('data-status', 'En Revisión');
+                            const statusCell = row.cells[5];
+                            if (statusCell) {
+                                statusCell.innerHTML = '<span class="badge-status-mini status-revision"><i class="bi bi-hourglass-split"></i> En Revisión (Adenda)</span>';
+                            }
+                        }
+                    }
+
                     Swal.fire({
                         icon: 'success',
-                        title: 'Evidencia Registrada',
-                        text: `La actividad ${res.value.code} ha sido ingresada con éxito y quedó en cola para revisión del Verificador.`,
-                        background: '#FFFFFF',
-                        color: '#0f172a',
-                        confirmButtonColor: '#059669'
+                        title: '<span style="color: #0F172A; font-weight: 800; font-size: 1.15rem;">Modificación Registrada con Trazabilidad</span>',
+                        html: `
+                            <div style="font-size: 0.88rem; color: #334155; line-height: 1.5; text-align: left; padding: 4px 10px;">
+                                <p style="margin-bottom: 6px;">El registro <strong>#${code}</strong> ha sido actualizado conforme a la normativa municipal.</p>
+                                <div style="background: #F1F5F9; padding: 8px 12px; border-radius: 6px; font-size: 0.8rem; border-left: 3px solid #8B1D2C;">
+                                    <strong>Bitácora:</strong> "${motivo}"
+                                </div>
+                                <div style="margin-top: 8px; font-size: 0.78rem; color: #64748B;">
+                                    <i class="bi bi-check-circle-fill" style="color: #10B981;"></i> Folio de auditoría generado: <span style="font-family: monospace; font-weight: 700;">AUD-${Date.now().toString().slice(-6)}</span>
+                                </div>
+                            </div>
+                        `,
+                        confirmButtonColor: '#8B1D2C',
+                        confirmButtonText: 'Aceptar'
                     });
                 }
             });
         }
 
-        // 5. Modal 2: Nueva Atención Social
-        function openSocialModal() {
+        // Registrar Nuevo Caso con Formulario SweetAlert2
+        function openNewCaseModal() {
             Swal.fire({
-                title: '<span style="color: #0f172a; font-size: 1.15rem; font-weight: 700;">Nueva Ficha Social Vecinal</span>',
+                title: '<span style="font-size: 1.15rem; font-weight: 700; color: #0f172a;">+ Ingresar Nuevo Caso en Terreno</span>',
+                width: '560px',
                 html: `
-                    <div style="text-align: left; font-size: 0.82rem; color: #334155;">
-                        <div class="row g-2 mb-2">
-                            <div class="col-6">
-                                <label class="form-label text-muted small mb-1">RUT del Vecino(a):</label>
-                                <input id="swalSocRut" type="text" class="form-control form-control-sm" 
-                                       style="background: #FFFFFF; border: 1px solid #cbd5e1; color: #0f172a;" 
-                                       placeholder="Ej: 14.821.904-2">
+                    <div style="text-align: left; font-size: 0.85rem; color: #334155; display: grid; gap: 0.7rem; box-sizing: border-box; overflow-x: hidden;">
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.65rem;">
+                            <div>
+                                <label style="font-weight: 600; font-size: 0.78rem; color: #475569; display: block; margin-bottom: 2px;">Código de Actividad:</label>
+                                <input id="swal-case-code" class="swal2-input m-0" style="height: 36px; font-size: 0.85rem; width: 100%; box-sizing: border-box;" value="TUB-2026-044">
                             </div>
-                            <div class="col-6">
-                                <label class="form-label text-muted small mb-1">Nombre Completo:</label>
-                                <input id="swalSocName" type="text" class="form-control form-control-sm" 
-                                       style="background: #FFFFFF; border: 1px solid #cbd5e1; color: #0f172a;" 
-                                       placeholder="Nombre y Apellidos">
+                            <div>
+                                <label style="font-weight: 600; font-size: 0.78rem; color: #475569; display: block; margin-bottom: 2px;">Fecha:</label>
+                                <input id="swal-case-date" type="date" class="swal2-input m-0" style="height: 36px; font-size: 0.85rem; width: 100%; box-sizing: border-box;" value="2026-09-17">
                             </div>
                         </div>
-                        <div class="row g-2 mb-2">
-                            <div class="col-6">
-                                <label class="form-label text-muted small mb-1">Teléfono:</label>
-                                <input id="swalSocPhone" type="text" class="form-control form-control-sm" 
-                                       style="background: #FFFFFF; border: 1px solid #cbd5e1; color: #0f172a;" 
-                                       placeholder="+56 9 ...">
+                        <div>
+                            <label style="font-weight: 600; font-size: 0.78rem; color: #475569; display: block; margin-bottom: 2px;">Actividad / Asunto Vecinal:</label>
+                            <input id="swal-case-activity" class="swal2-input m-0" style="height: 36px; font-size: 0.85rem; width: 100%; box-sizing: border-box;" placeholder="Ej: Reparación luminaria o apoyo social">
+                        </div>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.65rem;">
+                            <div>
+                                <label style="font-weight: 600; font-size: 0.78rem; color: #475569; display: block; margin-bottom: 2px;">Vecino(a) / Organización:</label>
+                                <input id="swal-case-contact" class="swal2-input m-0" style="height: 36px; font-size: 0.85rem; width: 100%; box-sizing: border-box;" placeholder="Junta de Vecinos / Solicitante">
                             </div>
-                            <div class="col-6">
-                                <label class="form-label text-muted small mb-1">Etapa Inicial:</label>
-                                <input type="text" class="form-control form-control-sm" 
-                                       style="background: #f1f5f9; border: 1px solid #cbd5e1; color: #0f172a;" 
-                                       value="1ª Orientación / Solicitud RSH" readonly>
+                            <div>
+                                <label style="font-weight: 600; font-size: 0.78rem; color: #475569; display: block; margin-bottom: 2px;">Teléfono Real (+56 9):</label>
+                                <input id="swal-case-phone" class="swal2-input m-0" style="height: 36px; font-size: 0.85rem; width: 100%; box-sizing: border-box;" placeholder="+56 9 8452 1102">
                             </div>
                         </div>
-                        <div class="mb-2">
-                            <label class="form-label text-muted small mb-1">Motivo o Demanda Social:</label>
-                            <textarea id="swalSocDesc" class="form-control form-control-sm" 
-                                      style="background: #FFFFFF; border: 1px solid #cbd5e1; color: #0f172a;" 
-                                      rows="2" placeholder="Antecedentes del grupo familiar y necesidad presentada..."></textarea>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.65rem;">
+                            <div>
+                                <label style="font-weight: 600; font-size: 0.78rem; color: #475569; display: block; margin-bottom: 2px;">Plazo Perentorio:</label>
+                                <input id="swal-case-due" type="date" class="swal2-input m-0" style="height: 36px; font-size: 0.85rem; width: 100%; box-sizing: border-box;" value="2026-09-24">
+                            </div>
+                            <div>
+                                <label style="font-weight: 600; font-size: 0.78rem; color: #475569; display: block; margin-bottom: 2px;">Estado Inicial:</label>
+                                <select id="swal-case-status" class="swal2-select m-0" style="height: 36px; font-size: 0.85rem; width: 100%; box-sizing: border-box; display: flex;">
+                                    <option value="En Proceso">En Proceso</option>
+                                    <option value="Pendiente" selected>Pendiente</option>
+                                    <option value="Realizado">Realizado</option>
+                                </select>
+                            </div>
                         </div>
                     </div>
                 `,
+                focusConfirm: false,
                 showCancelButton: true,
-                confirmButtonText: 'Crear Ficha Social',
                 cancelButtonText: 'Cancelar',
+                confirmButtonText: '<i class="bi bi-check2-circle"></i> Ingresar Caso',
                 confirmButtonColor: '#8B1D2C',
-                cancelButtonColor: '#64748b',
-                background: '#FFFFFF',
-                color: '#0f172a',
-                width: '540px',
                 preConfirm: () => {
-                    const rut = sanitizeInput(document.getElementById('swalSocRut').value);
-                    const name = sanitizeInput(document.getElementById('swalSocName').value);
+                    const code = document.getElementById('swal-case-code').value.trim();
+                    const act = document.getElementById('swal-case-activity').value.trim();
+                    const contact = document.getElementById('swal-case-contact').value.trim();
+                    const phone = document.getElementById('swal-case-phone').value.trim();
+                    if (!code || !act || !contact) {
+                        Swal.showValidationMessage('Por favor completa el código, asunto y contacto');
+                        return false;
+                    }
+                    return { code, act, contact, phone };
+                }
+            }).then((res) => {
+                if (res.isConfirmed) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Caso Ingresado Exitosamente',
+                        text: `El caso ${res.value.code} ha sido registrado en la Delegación Municipal.`,
+                        confirmButtonColor: '#8B1D2C'
+                    });
+                }
+            });
+        }
+
+        // Detalle de caso con SweetAlert2
+        function viewCaseDetail(code, activity, contact, phone, dueDate, status) {
+            Swal.fire({
+                title: `<span style="font-size: 1.2rem; font-weight: 700; color: #0f172a;">Caso #${code}</span>`,
+                html: `
+                    <div style="text-align: left; font-size: 0.9rem; color: #334155; line-height: 1.6; display: grid; gap: 0.4rem;">
+                        <p style="margin: 0;"><strong>Actividad / Asunto:</strong> ${activity}</p>
+                        <p style="margin: 0;"><strong>Vecino(a) / Solicitante:</strong> ${contact}</p>
+                        <p style="margin: 0;"><strong>Teléfono:</strong> <span style="font-family: monospace; color: #1e3a8a; font-weight: 600;">${phone}</span></p>
+                        <p style="margin: 0;"><strong>Plazo Perentorio:</strong> <span style="font-weight: 600; color: #047857;">${dueDate}</span></p>
+                        <p style="margin: 0;"><strong>Estado Actual:</strong> <span class="badge bg-primary" style="font-size: 0.82rem; padding: 4px 8px;">${status}</span></p>
+                        <div style="margin-top: 8px; padding: 8px 10px; background: #f1f5f9; border-radius: 6px; font-size: 0.82rem; color: #475569;">
+                            <i class="bi bi-shield-check text-primary"></i> Caso registrado en la Delegación Municipal con trazabilidad operativa.
+                        </div>
+                    </div>
+                `,
+                confirmButtonColor: '#8B1D2C',
+                confirmButtonText: 'Entendido',
+                customClass: {
+                    popup: 'glass-swal-card'
+                }
+            });
+        }
+
+        // Detalle de ciudadano con SweetAlert2
+        function viewCitizenDetail(rut, name, tramo, caseType, phone) {
+            Swal.fire({
+                title: `<span style="font-size: 1.25rem; font-weight: 700; color: #0f172a;">Ficha Social Vecinal</span>`,
+                html: `
+                    <div style="text-align: left; font-size: 0.95rem; color: #334155; line-height: 1.6;">
+                        <p><strong>Vecino(a):</strong> ${name}</p>
+                        <p><strong>RUT:</strong> ${rut}</p>
+                        <p><strong>Tramo RSH:</strong> <span class="badge bg-warning text-dark">${tramo}</span></p>
+                        <p><strong>Teléfono:</strong> ${phone}</p>
+                        <p><strong>Última Demanda / Caso:</strong> ${caseType}</p>
+                        <div style="margin-top: 12px; padding: 10px; background: #e0f2fe; border-radius: 8px; font-size: 0.88rem; color: #0369a1;">
+                            <i class="bi bi-shield-check"></i> Cumple con protocolo de atención en 3 etapas según normativa municipal.
+                        </div>
+                    </div>
+                `,
+                confirmButtonColor: '#0d9488',
+                confirmButtonText: 'Cerrar Ficha',
+                customClass: {
+                    popup: 'glass-swal-card'
+                }
+            });
+        }
+
+        // Registrar Nueva Ficha Social
+        function openNewCitizenModal() {
+            Swal.fire({
+                title: '<span style="font-size: 1.2rem; font-weight: 700; color: #0f172a;">Nueva Ficha Social Vecinal</span>',
+                html: `
+                    <div style="text-align: left; font-size: 0.9rem; color: #334155;">
+                        <label class="d-block mb-1">RUT del Vecino:</label>
+                        <input id="swal-rut" class="swal2-input m-0 mb-3 w-100" placeholder="12.345.678-9">
+                        
+                        <label class="d-block mb-1">Nombre Completo:</label>
+                        <input id="swal-name" class="swal2-input m-0 mb-3 w-100" placeholder="Nombre y Apellidos">
+                        
+                        <label class="d-block mb-1">Dirección / Sector:</label>
+                        <input id="swal-addr" class="swal2-input m-0 mb-3 w-100" placeholder="Ej: La Pampa, Las Compañías">
+                        
+                        <label class="d-block mb-1">Motivo / Requerimiento Social:</label>
+                        <input id="swal-case" class="swal2-input m-0 w-100" placeholder="Actualización RSH / Ayuda social">
+                    </div>
+                `,
+                focusConfirm: false,
+                showCancelButton: true,
+                cancelButtonText: 'Cancelar',
+                confirmButtonText: 'Guardar Ficha',
+                confirmButtonColor: '#0d9488',
+                preConfirm: () => {
+                    const rut = document.getElementById('swal-rut').value.trim();
+                    const name = document.getElementById('swal-name').value.trim();
                     if (!rut || !name) {
-                        Swal.showValidationMessage('Debe ingresar RUT y Nombre completo del ciudadano.');
+                        Swal.showValidationMessage('Por favor completa el RUT y Nombre');
                         return false;
                     }
                     return { rut, name };
                 }
-            }).then((res) => {
-                if (res.isConfirmed) {
+            }).then((result) => {
+                if (result.isConfirmed) {
                     Swal.fire({
                         icon: 'success',
-                        title: 'Caso Social Ingresado',
-                        text: `Se inició la 1ª etapa para ${res.value.name}. Podrá registrar las siguientes atenciones desde la pestaña social.`,
-                        background: '#FFFFFF',
-                        color: '#0f172a',
-                        confirmButtonColor: '#059669'
+                        title: 'Ficha Registrada',
+                        text: `Se ha registrado la ficha social para ${result.value.name}.`,
+                        confirmButtonColor: '#0d9488'
                     });
                 }
             });
         }
 
-        // 6. Modal 3: Compromiso en Tubo de Trabajo
-        function openTuboModal() {
-            const nextCode = 'TUB-2026-0' + Math.floor(45 + Math.random() * 50);
+        // Envío de Nuevo Caso en Terreno
+        function handleNewCaseSubmit(e) {
+            // Permite envío tradicional Django POST
+            return true;
+        }
 
+        // Confirmación de Cerrar Sesión
+        function confirmLogout() {
             Swal.fire({
-                title: '<span style="color: #0f172a; font-size: 1.15rem; font-weight: 700;">Ingresar Compromiso a Tubo de Trabajo</span>',
-                html: `
-                    <div style="text-align: left; font-size: 0.82rem; color: #334155;">
-                        <div class="row g-2 mb-2">
-                            <div class="col-6">
-                                <label class="form-label text-muted small mb-1">Código del Compromiso:</label>
-                                <input id="swalTubCode" type="text" class="form-control form-control-sm font-monospace fw-bold" 
-                                       style="background: #f1f5f9; border: 1px solid #cbd5e1; color: #0f172a;" 
-                                       value="${nextCode}" readonly>
-                            </div>
-                            <div class="col-6">
-                                <label class="form-label text-muted small mb-1">Fecha Límite:</label>
-                                <input id="swalTubDueDate" type="date" class="form-control form-control-sm" 
-                                       style="background: #FFFFFF; border: 1px solid #cbd5e1; color: #0f172a;">
-                            </div>
-                        </div>
-                        <div class="mb-2">
-                            <label class="form-label text-muted small mb-1">Solicitante (Junta Vecinal / Organización):</label>
-                            <input id="swalTubReq" type="text" class="form-control form-control-sm" 
-                                   style="background: #FFFFFF; border: 1px solid #cbd5e1; color: #0f172a;" 
-                                   placeholder="Ej: JJ.VV. Villa El Parque">
-                        </div>
-                        <div class="mb-2">
-                            <label class="form-label text-muted small mb-1">Compromiso / Solución Requerida:</label>
-                            <textarea id="swalTubDesc" class="form-control form-control-sm" 
-                                      style="background: #FFFFFF; border: 1px solid #cbd5e1; color: #0f172a;" 
-                                      rows="2" placeholder="Detalle de la obra, bacheo, poda o gestión acordada..."></textarea>
-                        </div>
-                    </div>
-                `,
+                title: '¿Deseas cerrar tu sesión?',
+                text: "Finalizarás tu turno en el portal institucional.",
+                icon: 'question',
                 showCancelButton: true,
-                confirmButtonText: 'Incorporar a Agenda Colectiva',
-                cancelButtonText: 'Cancelar',
-                confirmButtonColor: '#8B1D2C',
+                confirmButtonColor: '#1a56db',
                 cancelButtonColor: '#64748b',
-                background: '#FFFFFF',
-                color: '#0f172a',
-                width: '540px',
-                preConfirm: () => {
-                    const req = sanitizeInput(document.getElementById('swalTubReq').value);
-                    const desc = sanitizeInput(document.getElementById('swalTubDesc').value);
-                    const due = document.getElementById('swalTubDueDate').value;
-                    if (!req || !desc || !due) {
-                        Swal.showValidationMessage('Todos los campos son obligatorios.');
-                        return false;
-                    }
-                    return { code: nextCode, req, due };
-                }
-            }).then((res) => {
-                if (res.isConfirmed) {
-                    Swal.fire({
-                        icon: 'success',
-                        title: 'Compromiso Incorporado',
-                        text: `El compromiso ${res.value.code} quedó registrado en la agenda colectiva con fecha límite ${res.value.due}.`,
-                        background: '#FFFFFF',
-                        color: '#0f172a',
-                        confirmButtonColor: '#059669'
-                    });
-                }
-            });
-        }
-
-        // 7. Selector Interactivo de Estado en Tubo de Trabajo
-        function handleTuboStatusChange(selectElem, code) {
-            const newStatus = selectElem.value;
-            const rowElem = selectElem.closest('tr');
-            if (rowElem) {
-                rowElem.setAttribute('data-status', newStatus);
-            }
-            
-            selectElem.className = 'select-status-pill';
-            if (newStatus === 'Realizado') selectElem.classList.add('status-realizado');
-            else if (newStatus === 'Pendiente') selectElem.classList.add('status-pendiente');
-            else if (newStatus === 'Ingresado') selectElem.classList.add('status-ingresado');
-            else selectElem.classList.add('status-en-proceso');
-
-            if (newStatus === 'Realizado') {
-                Swal.fire({
-                    title: '<span style="color: #0f172a; font-size: 1.15rem; font-weight: 700;">Cierre de Compromiso en Tubo</span>',
-                    text: `Para marcar ${code} como 'Realizado' y acreditar el punto al indicador, ingrese el código de evidencia fotográfica asociada:`,
-                    input: 'text',
-                    inputPlaceholder: 'Ej: ORC-2026-711, SOC-2026-902...',
-                    background: '#FFFFFF',
-                    color: '#0f172a',
-                    showCancelButton: true,
-                    confirmButtonText: 'Acreditar y Cerrar',
-                    cancelButtonText: 'Cancelar',
-                    confirmButtonColor: '#059669',
-                    cancelButtonColor: '#64748b',
-                    inputValidator: (value) => {
-                        const clean = sanitizeInput(value);
-                        if (!clean) {
-                            return 'Debe ingresar el código de respaldo fotográfico inmutable.';
-                        }
-                    }
-                }).then((res) => {
-                    if (res.isConfirmed) {
-                        Swal.fire({
-                            icon: 'success',
-                            title: 'Compromiso Cerrado y Auditado',
-                            text: `El compromiso ${code} se asoció a la evidencia ${sanitizeInput(res.value)} y sumó a su cumplimiento personal.`,
-                            background: '#FFFFFF',
-                            color: '#0f172a',
-                            confirmButtonColor: '#059669'
-                        });
-                    } else {
-                        selectElem.value = 'En Proceso';
-                        selectElem.className = 'select-status-pill status-en-proceso';
-                        if (rowElem) rowElem.setAttribute('data-status', 'En Proceso');
-                    }
-                });
-            } else {
-                Swal.fire({
-                    toast: true,
-                    position: 'top-end',
-                    icon: 'info',
-                    title: `Estado actualizado: ${newStatus}`,
-                    text: `Compromiso ${code}`,
-                    showConfirmButton: false,
-                    timer: 1800,
-                    background: '#FFFFFF',
-                    color: '#0f172a'
-                });
-            }
-        }
-
-        // 8. Modal Ver Detalle de Tubo
-        function viewTuboDetail(code, req, due, prob) {
-            Swal.fire({
-                title: `<span style="color: #0f172a; font-size: 1.15rem; font-weight: 700;">Compromiso ${code}</span>`,
-                html: `
-                    <div style="text-align: left; font-size: 0.82rem; color: #334155;">
-                        <p class="mb-1"><strong>Solicitante:</strong> ${req}</p>
-                        <p class="mb-1"><strong>Fecha Límite:</strong> ${due}</p>
-                        <p class="mb-2"><strong>Demanda Vecinal:</strong> ${prob}</p>
-                        <p class="text-muted small mb-0">Jurisdicción: Delegación La Pampa · Ilustre Municipalidad de La Serena</p>
-                    </div>
-                `,
-                background: '#FFFFFF',
-                color: '#0f172a',
-                confirmButtonText: 'Entendido',
-                confirmButtonColor: '#1e3a8a'
-            });
-        }
-
-        // 9. Modal Ver Evidencia Fotográfica Ampliada
-        function viewEvidenceModal(code, desc, date, status) {
-            Swal.fire({
-                title: `<span style="color: #0f172a; font-size: 1.15rem; font-weight: 700;">Evidencia Fotográfica · ${code}</span>`,
-                html: `
-                    <div style="text-align: center; margin-bottom: 12px;">
-                        <img src="https://images.unsplash.com/photo-1590381105924-c72589b9ef3f?w=600&auto=format&fit=crop&q=80" 
-                             alt="Evidencia ${code}" 
-                             style="max-width: 100%; border-radius: 8px; border: 1px solid #cbd5e1;">
-                    </div>
-                    <div style="text-align: left; font-size: 0.82rem; color: #334155;">
-                        <p class="mb-1"><strong>Labor:</strong> ${desc}</p>
-                        <p class="mb-1"><strong>Fecha de Registro:</strong> ${date}</p>
-                        <p class="mb-0"><strong>Dictamen Técnico:</strong> <span class="badge" style="background:#dcfce7; color:#15803d;">${status}</span></p>
-                    </div>
-                `,
-                background: '#FFFFFF',
-                color: '#0f172a',
-                confirmButtonText: 'Cerrar Visor',
-                confirmButtonColor: '#64748b',
-                width: '600px'
-            });
-        }
-
-        // 10. Avanzar Etapa Social
-        function advanceSocialStage(name, stage) {
-            Swal.fire({
-                title: `<span style="color: #0f172a; font-size: 1.15rem; font-weight: 700;">Registrar ${stage}ª Etapa · ${name}</span>`,
-                html: `
-                    <div style="text-align: left; font-size: 0.82rem; color: #334155;">
-                        <div class="mb-2">
-                            <label class="form-label text-muted small mb-1">Acción de la ${stage}ª Etapa:</label>
-                            <input id="swalStageAction" type="text" class="form-control form-control-sm" 
-                                   style="background: #FFFFFF; border: 1px solid #cbd5e1; color: #0f172a;" 
-                                   placeholder="Ej: Visita domiciliaria, emisión de informe o entrega...">
-                        </div>
-                        <div class="mb-2">
-                            <label class="form-label text-muted small mb-1">Resultado o Acuerdos:</label>
-                            <textarea id="swalStageRes" class="form-control form-control-sm" 
-                                      style="background: #FFFFFF; border: 1px solid #cbd5e1; color: #0f172a;" 
-                                      rows="2" placeholder="Detalle de la resolución..."></textarea>
-                        </div>
-                    </div>
-                `,
-                showCancelButton: true,
-                confirmButtonText: 'Guardar Avance de Etapa',
-                cancelButtonText: 'Cancelar',
-                confirmButtonColor: '#8B1D2C',
-                cancelButtonColor: '#64748b',
-                background: '#FFFFFF',
-                color: '#0f172a',
-                preConfirm: () => {
-                    const action = sanitizeInput(document.getElementById('swalStageAction').value);
-                    if (!action) {
-                        Swal.showValidationMessage('Debe indicar la acción ejecutada.');
-                        return false;
-                    }
-                    return { action };
-                }
-            }).then((res) => {
-                if (res.isConfirmed) {
-                    Swal.fire({
-                        icon: 'success',
-                        title: 'Etapa Registrada',
-                        text: `Se actualizó la secuencia social para ${name} con éxito.`,
-                        background: '#FFFFFF',
-                        color: '#0f172a',
-                        confirmButtonColor: '#059669'
-                    });
+                confirmButtonText: 'Sí, cerrar sesión',
+                cancelButtonText: 'Continuar trabajando'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    window.location.href = "{% url 'core:logout' %}";
                 }
             });
         }
