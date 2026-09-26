@@ -1,5 +1,6 @@
 from django.contrib import admin, messages
 from django.utils import timezone
+from django.utils.html import format_html
 from organization.models import Delegation
 from .models import ServiceCatalog, Activity, Evidence, Validation
 
@@ -34,8 +35,8 @@ class ActivityAdmin(admin.ModelAdmin):
         'user',
         'delegation',
         'catalog',
-        'validation_status',
-        'is_collective_agenda',
+        'status_badge',
+        'agenda_display',
         'created_at',
         'deleted_at',
     )
@@ -51,6 +52,30 @@ class ActivityAdmin(admin.ModelAdmin):
     ordering = ('-activity_date', '-created_at')
     inlines = [EvidenceInline, ValidationInline]
     actions = ['approve_selected', 'mark_for_correction', 'soft_delete_selected', 'restore_selected']
+
+    @admin.display(description="Estado de validación", ordering='validation_status')
+    def status_badge(self, obj):
+        colors = {
+            'Approved': ('#dcfce7', '#15803d', 'Aprobado'),
+            'Pending': ('#fef3c7', '#b45309', 'Pendiente'),
+            'Rejected': ('#fee2e2', '#b91c1c', 'Rechazado'),
+            'Requires correction': ('#dbeafe', '#1d4ed8', 'Requiere corrección'),
+        }
+        bg, fg, label = colors.get(obj.validation_status, ('#f1f5f9', '#475569', obj.validation_status))
+        return format_html(
+            '<span style="background-color: {}; color: {}; padding: 3px 10px; border-radius: 9999px; font-weight: bold; font-size: 11px; display: inline-block;">{}</span>',
+            bg, fg, label
+        )
+
+    @admin.display(description="¿Agenda Colectiva?", ordering='is_collective_agenda')
+    def agenda_display(self, obj):
+        if obj.is_collective_agenda:
+            return format_html(
+                '<span style="color: #15803d; font-weight: bold;">✓ Sí (En agenda)</span>'
+            )
+        return format_html(
+            '<span style="color: #94a3b8;">— No</span>'
+        )
 
     @admin.action(description="✓ Aprobar actividades seleccionadas")
     def approve_selected(self, request, queryset):
