@@ -1,0 +1,1736 @@
+/* ==========================================================================
+   PORTAL FUNCIONARIO - ILUSTRE MUNICIPALIDAD DE LA SERENA, CHILE
+   Diseño Oficial Glassmorphism Municipal Institucional
+   Normas Gráficas (Decreto Alcaldicio N° 2115 / framework.laserena.cl)
+   ========================================================================== */
+
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap');
+
+:root {
+    /* Identidad Oficial Municipalidad de La Serena */
+    --serena-carmesi-base: #B80003;       /* Rojo Granate Colonial Oficial */
+    --serena-carmesi-hover: #9E0003;
+    --serena-carmesi-dark: #7A0000;
+    --serena-carmesi-deep: #4D0000;
+
+    /* Azul Marino Pizarra Institucional */
+    --serena-navy-action: #1E3A8A;
+    --serena-navy-dark: #0F172A;
+    --serena-navy-pizarra: #1E293B;
+    --serena-navy-light: #3B82F6;
+
+    /* Neutros y Acentos */
+    --serena-white: #FFFFFF;
+    --serena-gold: #D97706;
+    --serena-text-secondary: rgba(255, 255, 255, 0.88);
+    --serena-text-muted: rgba(255, 255, 255, 0.65);
+
+    /* Tokens Glassmorphism Institucionales */
+    --glass-surface-sidebar: linear-gradient(180deg, rgba(15, 23, 42, 0.65) 0%, rgba(15, 23, 42, 0.42) 60%, rgba(15, 23, 42, 0.72) 100%);
+    --glass-surface-hub: linear-gradient(135deg, rgba(255, 255, 255, 0.22) 0%, rgba(255, 255, 255, 0.08) 100%);
+    --glass-blur-hub: blur(24px) saturate(140%);
+    --glass-blur-card: blur(18px) saturate(135%);
+    --glass-blur-subtle: blur(12px);
+
+    --glass-border-hub: 1.2px solid rgba(255, 255, 255, 0.38);
+    --glass-border-subtle: 1px solid rgba(255, 255, 255, 0.2);
+
+    --glass-shadow-hub: 0 20px 50px rgba(0, 0, 0, 0.24), inset 0 1px 1.5px rgba(255, 255, 255, 0.55);
+    --glass-shadow-card: 0 14px 34px rgba(0, 0, 0, 0.22), inset 0 1px 1px rgba(255, 255, 255, 0.45);
+
+    /* Radios Proporcionales de la Primera Versión */
+    --radius-hub: 28px;
+    --radius-card: 22px;
+    --radius-pill: 9999px;
+    --radius-btn: 10px;
+
+    /* Tipografía */
+    --font-heading: 'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    --font-body: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+/* Reset Global */
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+html, body {
+    width: 100%;
+    min-height: 100vh;
+    font-family: var(--font-body);
+    color: var(--serena-white);
+    background-color: var(--serena-navy-dark);
+    overflow-x: hidden;
+    -webkit-font-smoothing: antialiased;
+}
+
+/* ==========================================================================
+   FONDO FOTOGRÁFICO: EL FARO MONUMENTAL Y COSTA DE LA SERENA
+   Fotografía real de La Serena visible y viva, con overlay de vidrio ambiental
+   ========================================================================== */
+.portal-backdrop {
+    position: relative;
+    width: 100%;
+    min-height: 100vh;
+    display: flex;
+    background: 
+        linear-gradient(135deg, rgba(15, 23, 42, 0.48) 0%, rgba(15, 23, 42, 0.22) 50%, rgba(15, 23, 42, 0.58) 100%),
+        url('/static/img/faro_laserena_daylight.jpg') no-repeat center center fixed;
+    background-size: cover;
+    background-attachment: fixed;
+}
+
+/* ==========================================================================
+   BARRA LATERAL (SIDEBAR) GLASSMORPHISM IZQUIERDA
+   ========================================================================== */
+.sidebar-glass {
+    width: 295px;
+    min-width: 290px;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 2rem 1.25rem 1.75rem 1.25rem;
+    position: relative;
+    z-index: 20;
+    border-right: 1px solid rgba(255, 255, 255, 0.2);
+    background: var(--glass-surface-sidebar);
+    backdrop-filter: var(--glass-blur-hub);
+    -webkit-backdrop-filter: var(--glass-blur-hub);
+}
+
+.brand-official-link {
+    display: inline-block;
+    text-decoration: none;
+    margin-bottom: 1.15rem;
+    padding: 0.25rem 0.2rem;
+    outline: none;
+    transition: transform 0.2s ease, opacity 0.2s ease;
+}
+
+.brand-official-link:hover {
+    transform: translateY(-1px);
+    opacity: 0.95;
+}
+
+.brand-official-link:focus-visible {
+    border-radius: 8px;
+    outline: 2px solid var(--serena-white);
+    outline-offset: 4px;
+}
+
+.brand-official-logo {
+    width: 195px;
+    height: auto;
+    max-width: 100%;
+    display: block;
+    filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.45));
+}
+
+/* 1. Tarjeta de Perfil Funcionario en Sidebar */
+.sidebar-profile-card {
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 12px;
+    padding: 10px;
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    backdrop-filter: var(--glass-blur-subtle);
+    -webkit-backdrop-filter: var(--glass-blur-subtle);
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.14), inset 0 1px 1px rgba(255, 255, 255, 0.25);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.sidebar-profile-card:hover {
+    background: rgba(255, 255, 255, 0.15);
+    border-color: rgba(255, 255, 255, 0.35);
+    transform: translateY(-1px);
+}
+
+.profile-avatar-container {
+    position: relative;
+    width: 36px;
+    height: 36px;
+    flex-shrink: 0;
+}
+
+.profile-avatar-circle {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #1E3A8A 0%, #2563EB 100%);
+    border: 1.5px solid #FFFFFF;
+    color: #FFFFFF;
+    font-size: 14px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+}
+
+.status-online-dot {
+    position: absolute;
+    bottom: -1px;
+    right: -1px;
+    width: 10px;
+    height: 10px;
+    background-color: #10B981;
+    border: 2px solid #0f172a;
+    border-radius: 50%;
+    box-shadow: 0 0 6px #10B981;
+}
+
+.profile-info-block {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    gap: 2px;
+}
+
+.profile-name {
+    font-size: 13px;
+    font-weight: 700;
+    color: #FFFFFF;
+    line-height: 1.2;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.profile-role {
+    font-size: 11px;
+    color: #CBD5E1;
+    line-height: 1.2;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.profile-delegation-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 10px;
+    background: rgba(30, 58, 138, 0.45);
+    color: #93C5FD;
+    padding: 2px 6px;
+    border-radius: 6px;
+    margin-top: 2px;
+    width: fit-content;
+    border: 1px solid rgba(147, 197, 253, 0.25);
+    line-height: 1;
+}
+
+/* 2. Menú de Navegación con Badges */
+.sidebar-nav-list {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    flex-grow: 1;
+}
+
+.nav-link-glass,
+.sidebar-nav-item {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+    padding: 8px 12px !important;
+    gap: 8px !important;
+    color: rgba(255, 255, 255, 0.88);
+    text-decoration: none;
+    font-weight: 500;
+    font-size: 0.88rem;
+    border-radius: var(--radius-pill);
+    border: 1px solid transparent;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    cursor: pointer;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.35);
+    outline: none;
+}
+
+.nav-link-text {
+    flex: 1 1 auto !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    text-align: left !important;
+    font-size: 13px !important;
+}
+
+.nav-icon-wrap {
+    width: 22px;
+    height: 22px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    font-size: 1.1rem;
+    transition: transform 0.2s ease;
+}
+
+.nav-link-glass:hover {
+    color: var(--serena-white);
+    background: rgba(255, 255, 255, 0.16);
+    border-color: rgba(255, 255, 255, 0.3);
+    backdrop-filter: var(--glass-blur-subtle);
+    transform: translateX(3px);
+}
+
+.nav-link-glass.active-pill {
+    background: rgba(255, 255, 255, 0.18);
+    border-color: rgba(255, 255, 255, 0.45);
+    color: var(--serena-white);
+    font-weight: 600;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.15), inset 0 1px 1px rgba(255, 255, 255, 0.45);
+    backdrop-filter: var(--glass-blur-subtle);
+}
+
+.sidebar-badge {
+    flex-shrink: 0 !important;
+    margin-left: auto !important;
+    font-size: 11px !important;
+    font-weight: 700 !important;
+    padding: 2px 8px !important;
+    border-radius: 9999px !important;
+    line-height: 1.2 !important;
+}
+
+.sidebar-badge.badge-amber {
+    background: #F59E0B;
+    color: #0f172a;
+    box-shadow: 0 0 8px rgba(245, 158, 11, 0.4);
+}
+
+.sidebar-badge.badge-green {
+    background: #10B981;
+    color: #FFFFFF;
+    box-shadow: 0 0 8px rgba(16, 185, 129, 0.4);
+}
+
+.nav-link-glass.nav-link-logout:hover {
+    color: #FCA5A5;
+    background: rgba(239, 68, 68, 0.2);
+    border-color: rgba(239, 68, 68, 0.4);
+}
+
+.nav-link-glass:focus-visible {
+    outline: 2px solid var(--serena-white);
+    outline-offset: 2px;
+}
+
+/* 3. Mini-Widget de Ritmo Operativo (Centro del Sidebar) */
+.sidebar-ritmo-widget {
+    background: rgba(255, 255, 255, 0.07);
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    border-radius: 12px;
+    padding: 10px 12px;
+    margin-top: 1.25rem;
+    backdrop-filter: var(--glass-blur-subtle);
+    -webkit-backdrop-filter: var(--glass-blur-subtle);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12), inset 0 1px 1px rgba(255, 255, 255, 0.2);
+}
+
+.ritmo-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 6px;
+}
+
+.ritmo-title {
+    font-size: 10px;
+    text-transform: uppercase;
+    color: #94A3B8;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+}
+
+.ritmo-status-pill {
+    font-size: 10.5px;
+    color: #34D399;
+    font-weight: 600;
+    background: rgba(52, 211, 153, 0.15);
+    padding: 1px 7px;
+    border-radius: 999px;
+    border: 1px solid rgba(52, 211, 153, 0.3);
+}
+
+.ritmo-meta-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 11px;
+    margin-bottom: 6px;
+}
+
+.ritmo-meta-label {
+    color: #CBD5E1;
+}
+
+.ritmo-meta-val {
+    color: #FFFFFF;
+    font-weight: 700;
+    font-family: monospace;
+}
+
+.ritmo-progress-track {
+    width: 100%;
+    height: 4px;
+    background: rgba(255, 255, 255, 0.12);
+    border-radius: 2px;
+    overflow: hidden;
+}
+
+.ritmo-progress-bar {
+    height: 100%;
+    background: linear-gradient(90deg, #10B981 0%, #34D399 100%);
+    border-radius: 2px;
+    box-shadow: 0 0 8px rgba(52, 211, 153, 0.7);
+}
+
+/* 4. Pie del Sidebar */
+.sidebar-footer {
+    padding-top: 1.25rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.12);
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.sidebar-system-version {
+    font-size: 10px;
+    font-weight: 600;
+    color: #94A3B8;
+    letter-spacing: 0.03em;
+}
+
+.sidebar-geo {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.88rem;
+    font-weight: 500;
+    color: rgba(255, 255, 255, 0.9);
+    text-shadow: 0 1px 4px rgba(0, 0, 0, 0.5);
+}
+
+.sidebar-geo i {
+    color: #F87171;
+    font-size: 0.95rem;
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.4));
+}
+
+/* ==========================================================================
+   ÁREA CENTRAL Y PANEL PRINCIPAL GLASSMORPHISM
+   ========================================================================== */
+.main-viewport {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2.5rem 3rem;
+    position: relative;
+    z-index: 10;
+}
+
+/* Gran Contenedor Glassmorphism Central */
+.portal-card-hub {
+    width: 100%;
+    max-width: 1120px;
+    background: var(--glass-surface-hub);
+    border: var(--glass-border-hub);
+    backdrop-filter: var(--glass-blur-hub);
+    -webkit-backdrop-filter: var(--glass-blur-hub);
+    box-shadow: var(--glass-shadow-hub);
+    border-radius: var(--radius-hub);
+    padding: 3.25rem 3.5rem;
+    position: relative;
+    overflow: hidden;
+    animation: hubFadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes hubFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(14px) scale(0.985);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+/* Línea de brillo specular superior */
+.portal-card-hub::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 12%;
+    right: 12%;
+    height: 1.5px;
+    background: linear-gradient(90deg, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0.7) 50%, rgba(255, 255, 255, 0) 100%);
+    pointer-events: none;
+}
+
+/* Encabezado del Panel Central */
+.hub-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 2.75rem;
+    position: relative;
+    z-index: 2;
+    gap: 1.5rem;
+}
+
+.hub-greeting-group {
+    display: flex;
+    align-items: center;
+    gap: 1.25rem;
+}
+
+/* Avatar / Glifo Cívico Frosted */
+.civic-badge-avatar {
+    width: 60px;
+    height: 60px;
+    border-radius: 18px;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.26) 0%, rgba(255, 255, 255, 0.1) 100%);
+    border: 1.2px solid rgba(255, 255, 255, 0.45);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.85rem;
+    color: var(--serena-white);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.18), inset 0 1px 1.5px rgba(255, 255, 255, 0.6);
+    backdrop-filter: var(--glass-blur-subtle);
+    -webkit-backdrop-filter: var(--glass-blur-subtle);
+    user-select: none;
+    transition: transform 0.25s ease;
+    flex-shrink: 0;
+}
+
+.hub-greeting-group:hover .civic-badge-avatar {
+    transform: scale(1.05);
+}
+
+.hub-text-block {
+    display: flex;
+    flex-direction: column;
+}
+
+.hub-pretag {
+    font-size: 0.78rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #FDE68A;
+    margin-bottom: 0.3rem;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+}
+
+.hub-main-title {
+    font-family: var(--font-heading);
+    font-size: 2.15rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    color: var(--serena-white);
+    line-height: 1.15;
+    text-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
+}
+
+.hub-subtitle {
+    font-size: 1rem;
+    color: rgba(255, 255, 255, 0.9);
+    font-weight: 400;
+    margin-top: 0.35rem;
+    text-shadow: 0 1px 4px rgba(0, 0, 0, 0.35);
+}
+
+/* Badge Superior Derecho "Perfil empleado" */
+.badge-employee-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.6rem 1.35rem;
+    background: rgba(255, 255, 255, 0.2);
+    border: 1.2px solid rgba(255, 255, 255, 0.42);
+    border-radius: var(--radius-pill);
+    color: var(--serena-white);
+    font-size: 0.92rem;
+    font-weight: 600;
+    backdrop-filter: var(--glass-blur-subtle);
+    -webkit-backdrop-filter: var(--glass-blur-subtle);
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.15), inset 0 1px 1px rgba(255, 255, 255, 0.45);
+    user-select: none;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    outline: none;
+    font-family: var(--font-body);
+}
+
+.badge-employee-pill:hover {
+    background: rgba(255, 255, 255, 0.32);
+    border-color: rgba(255, 255, 255, 0.6);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2), inset 0 1px 1px rgba(255, 255, 255, 0.65);
+}
+
+.badge-employee-pill:focus-visible {
+    outline: 2px solid var(--serena-white);
+    outline-offset: 3px;
+}
+
+.badge-employee-pill i {
+    font-size: 1.05rem;
+}
+
+/* ==========================================================================
+   LAS DOS TARJETAS PRINCIPALES GLASSMORPHISM
+   - Tarjeta 1: Agregar / Ver casos (Azul Marino Institucional Glass)
+   - Tarjeta 2: Revisar datos de la ciudadanía (Rojo Carmesí Colonial Glass)
+   ========================================================================== */
+.hub-cards-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 2.25rem;
+    position: relative;
+    z-index: 2;
+}
+
+.action-card {
+    position: relative;
+    border-radius: var(--radius-card);
+    padding: 2.5rem 2.25rem;
+    min-height: 350px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    text-decoration: none;
+    color: var(--serena-white);
+    overflow: hidden;
+    cursor: pointer;
+    transition: all 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+    backdrop-filter: var(--glass-blur-card);
+    -webkit-backdrop-filter: var(--glass-blur-card);
+    box-shadow: var(--glass-shadow-card);
+    outline: none;
+}
+
+/* Reflejo especular superior */
+.action-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 10%;
+    right: 10%;
+    height: 1.2px;
+    background: linear-gradient(90deg, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0.65) 50%, rgba(255, 255, 255, 0) 100%);
+    pointer-events: none;
+    z-index: 3;
+}
+
+/* TARJETA 1: Agregar / Ver Casos -> Azul Institucional Glass */
+.action-card.card-cases {
+    background: linear-gradient(145deg, rgba(30, 58, 138, 0.82) 0%, rgba(15, 33, 85, 0.86) 100%);
+    border: 1.2px solid rgba(147, 197, 253, 0.4);
+}
+
+/* TARJETA 2: Revisar Datos Ciudadanía -> Rojo/Burdeo Colonial (#B80003) Glass */
+.action-card.card-citizenship {
+    background: linear-gradient(145deg, rgba(165, 12, 22, 0.82) 0%, rgba(105, 5, 14, 0.86) 100%);
+    border: 1.2px solid rgba(254, 178, 178, 0.4);
+}
+
+/* Iconos Superiores en Círculo / Cápsula Frosted */
+.card-icon-bubble {
+    width: 64px;
+    height: 64px;
+    border-radius: 18px;
+    background: rgba(255, 255, 255, 0.22);
+    border: 1.2px solid rgba(255, 255, 255, 0.45);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.85rem;
+    color: var(--serena-white);
+    backdrop-filter: var(--glass-blur-subtle);
+    -webkit-backdrop-filter: var(--glass-blur-subtle);
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.15), inset 0 1px 1px rgba(255, 255, 255, 0.5);
+    transition: transform 0.25s ease, background 0.25s ease;
+    z-index: 2;
+    position: relative;
+}
+
+.action-card:hover .card-icon-bubble {
+    transform: scale(1.06);
+    background: rgba(255, 255, 255, 0.32);
+}
+
+/* Marca de agua vectorial de fondo */
+.card-watermark {
+    position: absolute;
+    right: -15px;
+    bottom: -15px;
+    width: 210px;
+    height: 210px;
+    pointer-events: none;
+    opacity: 0.14;
+    color: var(--serena-white);
+    transition: opacity 0.3s ease, transform 0.35s ease;
+    z-index: 1;
+}
+
+.action-card:hover .card-watermark {
+    opacity: 0.24;
+    transform: scale(1.06) rotate(-2deg);
+}
+
+/* Contenido de la Tarjeta */
+.card-content-wrap {
+    margin-top: 2rem;
+    flex-grow: 1;
+    z-index: 2;
+    position: relative;
+}
+
+.card-title {
+    font-family: var(--font-heading);
+    font-size: 1.65rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    color: var(--serena-white);
+    line-height: 1.25;
+    margin-bottom: 0.75rem;
+    text-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
+}
+
+.card-description {
+    font-size: 0.98rem;
+    color: rgba(255, 255, 255, 0.92);
+    line-height: 1.5;
+    font-weight: 400;
+    max-width: 92%;
+    text-shadow: 0 1px 4px rgba(0, 0, 0, 0.25);
+}
+
+/* Pie de Tarjeta y Botón Circular de Acción */
+.card-bottom-row {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    margin-top: 1.5rem;
+    z-index: 2;
+    position: relative;
+}
+
+.card-action-circle {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.22);
+    border: 1.2px solid rgba(255, 255, 255, 0.45);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.35rem;
+    color: var(--serena-white);
+    backdrop-filter: var(--glass-blur-subtle);
+    -webkit-backdrop-filter: var(--glass-blur-subtle);
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.18), inset 0 1px 1px rgba(255, 255, 255, 0.5);
+    transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Hover en Tarjetas */
+.action-card:hover {
+    transform: translateY(-5px);
+    color: var(--serena-white);
+}
+
+.action-card.card-cases:hover {
+    border-color: rgba(147, 197, 253, 0.65);
+    box-shadow: 0 22px 46px rgba(30, 58, 138, 0.45), inset 0 1.5px 2px rgba(255, 255, 255, 0.6);
+}
+
+.action-card.card-citizenship:hover {
+    border-color: rgba(252, 165, 165, 0.65);
+    box-shadow: 0 22px 46px rgba(184, 0, 3, 0.45), inset 0 1.5px 2px rgba(255, 255, 255, 0.6);
+}
+
+.action-card:hover .card-action-circle {
+    background: rgba(255, 255, 255, 0.38);
+    transform: translateX(4px) scale(1.06);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25), inset 0 1px 2px rgba(255, 255, 255, 0.7);
+}
+
+.action-card:focus-visible {
+    outline: 2.5px solid var(--serena-white);
+    outline-offset: 4px;
+}
+
+/* ==========================================================================
+   MODALES OPERATIVOS GLASSMORPHISM
+   ========================================================================== */
+.glass-overlay-panel {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(10, 18, 35, 0.72);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    z-index: 1000;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+    opacity: 0;
+    transition: opacity 0.25s ease;
+}
+
+.glass-overlay-panel.active {
+    display: flex;
+    opacity: 1;
+}
+
+.glass-modal-container {
+    width: 100%;
+    max-width: 1060px;
+    max-height: 90vh;
+    background: linear-gradient(135deg, rgba(15, 23, 42, 0.9) 0%, rgba(30, 41, 59, 0.85) 100%);
+    border: 1.5px solid rgba(255, 255, 255, 0.35);
+    border-radius: 24px;
+    box-shadow: 0 30px 80px rgba(0, 0, 0, 0.5), inset 0 1px 2px rgba(255, 255, 255, 0.4);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    animation: modalPop 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes modalPop {
+    from { transform: scale(0.96) translateY(12px); opacity: 0; }
+    to { transform: scale(1) translateY(0); opacity: 1; }
+}
+
+.glass-modal-header {
+    padding: 1.4rem 2.25rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+    background: rgba(255, 255, 255, 0.06);
+}
+
+.glass-modal-title {
+    font-family: var(--font-heading);
+    display: flex;
+    align-items: center;
+    gap: 0.85rem;
+    font-size: 1.35rem;
+    font-weight: 700;
+    color: var(--serena-white);
+}
+
+.glass-modal-close-btn {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.16);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    color: var(--serena-white);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.15rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    outline: none;
+}
+
+.glass-modal-close-btn:hover {
+    background: rgba(255, 255, 255, 0.3);
+    transform: rotate(90deg);
+}
+
+.glass-modal-close-btn:focus-visible {
+    outline: 2px solid var(--serena-white);
+    outline-offset: 2px;
+}
+
+.glass-modal-body {
+    padding: 2rem 2.25rem;
+    overflow-y: auto;
+    flex: 1;
+}
+
+/* Custom Scrollbar */
+.glass-modal-body::-webkit-scrollbar {
+    width: 6px;
+}
+
+.glass-modal-body::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 10px;
+}
+
+.glass-modal-body::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.25);
+    border-radius: 10px;
+}
+
+.glass-modal-body::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.4);
+}
+
+/* Tablas Institucionales */
+.glass-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0 0.6rem;
+}
+
+.glass-table th {
+    color: rgba(255, 255, 255, 0.85);
+    font-size: 0.82rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding: 0.75rem 1.25rem;
+    border: none;
+}
+
+.glass-table tr td {
+    background: rgba(255, 255, 255, 0.12);
+    border-top: 1px solid rgba(255, 255, 255, 0.18);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.18);
+    padding: 1rem 1.25rem;
+    color: var(--serena-white);
+    font-size: 0.94rem;
+}
+
+.glass-table tr td:first-child {
+    border-left: 1px solid rgba(255, 255, 255, 0.18);
+    border-top-left-radius: 12px;
+    border-bottom-left-radius: 12px;
+}
+
+.glass-table tr td:last-child {
+    border-right: 1px solid rgba(255, 255, 255, 0.18);
+    border-top-right-radius: 12px;
+    border-bottom-right-radius: 12px;
+}
+
+/* Badges de Estado */
+.status-badge-glass {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.35rem 0.85rem;
+    border-radius: var(--radius-pill);
+    font-size: 0.82rem;
+    font-weight: 600;
+    backdrop-filter: var(--glass-blur-subtle);
+}
+
+.status-badge-glass.success {
+    background: rgba(16, 185, 129, 0.25);
+    border: 1px solid rgba(52, 211, 153, 0.5);
+    color: #6ee7b7;
+}
+
+.status-badge-glass.warning {
+    background: rgba(245, 158, 11, 0.25);
+    border: 1px solid rgba(251, 191, 36, 0.5);
+    color: #fde68a;
+}
+
+.status-badge-glass.danger {
+    background: rgba(239, 68, 68, 0.25);
+    border: 1px solid rgba(248, 113, 113, 0.5);
+    color: #fca5a5;
+}
+
+/* Inputs de Búsqueda */
+.glass-input-group {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.glass-input-icon {
+    position: absolute;
+    left: 1.15rem;
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 1.1rem;
+    pointer-events: none;
+}
+
+.glass-input {
+    width: 100%;
+    padding: 0.75rem 1.25rem 0.75rem 2.85rem;
+    background: rgba(255, 255, 255, 0.14);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: var(--radius-pill);
+    color: var(--serena-white);
+    font-size: 0.95rem;
+    font-family: var(--font-body);
+    outline: none;
+    transition: all 0.2s ease;
+    backdrop-filter: var(--glass-blur-subtle);
+}
+
+.glass-input:focus {
+    background: rgba(255, 255, 255, 0.22);
+    border-color: rgba(255, 255, 255, 0.6);
+    box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.2);
+}
+
+.glass-input::placeholder {
+    color: rgba(255, 255, 255, 0.65);
+}
+
+/* Botones de Modales */
+.btn-glass-primary {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.75rem 1.5rem;
+    background: linear-gradient(135deg, var(--serena-carmesi-base) 0%, var(--serena-carmesi-hover) 100%);
+    border: 1px solid rgba(255, 255, 255, 0.35);
+    border-radius: var(--radius-pill);
+    color: var(--serena-white);
+    font-size: 0.92rem;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: 0 4px 14px rgba(184, 0, 3, 0.35);
+    transition: all 0.2s ease;
+    outline: none;
+    font-family: var(--font-body);
+}
+
+.btn-glass-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 18px rgba(184, 0, 3, 0.5);
+    filter: brightness(1.1);
+}
+
+.btn-glass-secondary {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.75rem 1.4rem;
+    background: rgba(255, 255, 255, 0.16);
+    border: 1px solid rgba(255, 255, 255, 0.35);
+    border-radius: var(--radius-pill);
+    color: var(--serena-white);
+    font-size: 0.92rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    backdrop-filter: var(--glass-blur-subtle);
+    outline: none;
+    font-family: var(--font-body);
+}
+
+.btn-glass-secondary:hover {
+    background: rgba(255, 255, 255, 0.26);
+    border-color: rgba(255, 255, 255, 0.55);
+    transform: translateY(-1px);
+}
+
+/* Modal de Perfil */
+#modal-profile .glass-modal-container {
+    max-width: 540px;
+    max-height: 92vh;
+}
+
+#modal-profile .glass-modal-body {
+    overflow-y: visible;
+    padding: 2rem 2.25rem;
+}
+
+/* ==========================================================================
+   MODAL GESTIÓN DE CASOS EN TERRENO: HIGH DENSITY DESKTOP UI
+   ========================================================================== */
+.cases-modal-compact {
+    max-width: 1200px !important;
+    width: 92vw !important;
+    max-height: 88vh !important;
+    height: auto !important;
+    margin: auto !important;
+    padding: 1.25rem !important;
+    background: rgba(15, 23, 42, 0.85) !important;
+    backdrop-filter: blur(24px) !important;
+    -webkit-backdrop-filter: blur(24px) !important;
+    border: 1px solid rgba(255, 255, 255, 0.15) !important;
+    border-top: 1.5px solid rgba(255, 255, 255, 0.3) !important;
+    border-radius: 18px !important;
+    box-shadow: 0 24px 70px rgba(0, 0, 0, 0.6), inset 0 1px 1.5px rgba(255, 255, 255, 0.45) !important;
+    display: flex !important;
+    flex-direction: column !important;
+    overflow: hidden !important;
+}
+
+/* Fila 1: Título + Tira de Micro-KPIs + Botón Volver y Cerrar */
+.cases-top-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+    margin-bottom: 0.75rem;
+    flex-shrink: 0;
+}
+
+.cases-title-group {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    font-size: 16px;
+    font-weight: 700;
+    color: #F8FAFC;
+    font-family: var(--font-heading);
+    white-space: nowrap;
+}
+
+.cases-delegation-pill {
+    font-size: 11px;
+    font-weight: 600;
+    padding: 3px 10px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.12);
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    color: #93C5FD;
+}
+
+.cases-kpi-strip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    height: 32px;
+    padding: 2px 6px;
+    background: rgba(0, 0, 0, 0.25);
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    border-radius: 999px;
+    flex-shrink: 0;
+}
+
+.cases-kpi-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 2px 10px;
+    height: 26px;
+    border-radius: 999px;
+    font-size: 11.5px;
+    font-weight: 600;
+    color: #E2E8F0;
+    background: rgba(255, 255, 255, 0.08);
+    white-space: nowrap;
+}
+
+.cases-kpi-pill.pill-active {
+    color: #93C5FD;
+    background: rgba(59, 130, 246, 0.22);
+    border: 1px solid rgba(147, 197, 253, 0.35);
+}
+
+.cases-kpi-pill.pill-validated {
+    color: #86EFAC;
+    background: rgba(34, 197, 94, 0.22);
+    border: 1px solid rgba(134, 239, 172, 0.35);
+}
+
+.cases-kpi-pill.pill-goal {
+    color: #7DD3FC;
+    background: rgba(14, 165, 233, 0.22);
+    border: 1px solid rgba(125, 211, 252, 0.35);
+}
+
+.cases-top-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-shrink: 0;
+}
+
+.btn-cases-back {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    height: 32px;
+    padding: 0 12px;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.12);
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    color: #F1F5F9;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.18s ease;
+}
+
+.btn-cases-back:hover {
+    background: rgba(255, 255, 255, 0.22);
+    border-color: rgba(255, 255, 255, 0.5);
+    color: #FFFFFF;
+}
+
+.btn-cases-close {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.12);
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    color: #F1F5F9;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.18s ease;
+}
+
+.btn-cases-close:hover {
+    background: rgba(239, 68, 68, 0.35);
+    border-color: rgba(248, 113, 113, 0.6);
+    color: #FFFFFF;
+    transform: rotate(90deg);
+}
+
+/* Fila 2: Botón Ingreso + Input Búsqueda + Micro-filtros en pastilla */
+.cases-toolbar-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    margin-bottom: 0.75rem;
+    flex-shrink: 0;
+}
+
+.btn-case-new {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    height: 36px;
+    padding: 0 15px;
+    background: linear-gradient(135deg, #8B1D2C 0%, #A51D24 100%);
+    border: 1px solid rgba(255, 255, 255, 0.35);
+    border-radius: 8px;
+    color: #FFFFFF;
+    font-size: 12.5px;
+    font-weight: 700;
+    cursor: pointer;
+    box-shadow: 0 3px 10px rgba(139, 29, 44, 0.4);
+    transition: all 0.18s ease;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.btn-case-new:hover {
+    background: linear-gradient(135deg, #9F2133 0%, #B8222B 100%);
+    transform: translateY(-1px);
+    box-shadow: 0 5px 14px rgba(139, 29, 44, 0.55);
+}
+
+.cases-search-box {
+    position: relative;
+    flex: 1;
+    max-width: 440px;
+    min-width: 200px;
+    height: 36px;
+}
+
+.cases-search-box input {
+    width: 100%;
+    height: 36px;
+    padding: 0 12px 0 34px;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.22);
+    color: #F8FAFC;
+    font-size: 12.5px;
+    outline: none;
+    transition: all 0.18s ease;
+}
+
+.cases-search-box input:focus {
+    background: rgba(255, 255, 255, 0.18);
+    border-color: rgba(147, 197, 253, 0.7);
+    box-shadow: 0 0 0 2px rgba(147, 197, 253, 0.25);
+}
+
+.cases-search-box i {
+    position: absolute;
+    left: 11px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 13px;
+    color: rgba(255, 255, 255, 0.65);
+    pointer-events: none;
+}
+
+.cases-filters-pills {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    background: rgba(0, 0, 0, 0.22);
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    padding: 3px;
+    border-radius: 8px;
+    flex-shrink: 0;
+}
+
+.cases-filter-btn {
+    height: 30px;
+    padding: 0 11px;
+    border-radius: 6px;
+    border: none;
+    background: transparent;
+    color: #94A3B8;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.18s ease;
+    white-space: nowrap;
+}
+
+.cases-filter-btn:hover {
+    color: #FFFFFF;
+    background: rgba(255, 255, 255, 0.08);
+}
+
+.cases-filter-btn.active {
+    background: rgba(255, 255, 255, 0.22);
+    color: #FFFFFF;
+    font-weight: 700;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+}
+
+/* Tabla de Alta Densidad (High Density Data Table) */
+.cases-table-container {
+    flex: 1;
+    max-height: calc(88vh - 145px);
+    overflow-y: auto;
+    overflow-x: auto;
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    border-radius: 10px;
+    background: rgba(13, 20, 36, 0.65);
+}
+
+.cases-table-container::-webkit-scrollbar {
+    width: 4px;
+    height: 4px;
+}
+
+.cases-table-container::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.15);
+}
+
+.cases-table-container::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.25);
+    border-radius: 4px;
+}
+
+.cases-table-container::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.45);
+}
+
+.cases-hd-table {
+    width: 100%;
+    border-collapse: collapse;
+    text-align: left;
+}
+
+.cases-hd-table thead th {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    background: #0B1426;
+    color: #94A3B8;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding: 8px 12px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.18);
+    white-space: nowrap;
+}
+
+.cases-hd-table tbody tr,
+.evidencias-hd-table tbody tr {
+    transition: background 0.15s ease !important;
+}
+
+.cases-hd-table tbody td,
+.evidencias-hd-table tbody td,
+.table-institutional-striped tbody td {
+    padding: 8px 12px;
+    font-size: 12px !important;
+    color: #FFFFFF !important;
+    vertical-align: middle !important;
+}
+
+/* ==========================================================================
+   PATRÓN CROMÁTICO ALTERNADO OBLIGATORIO (ROJO COLONIAL / AZUL MARINO)
+   ========================================================================== */
+
+/* A. FILAS IMPARES (Fila 1, 3, 5, 7... -> Patrón Rojo Colonial Serena #8B1D2C) */
+.cases-hd-table tbody tr:nth-child(odd),
+.evidencias-hd-table tbody tr:nth-child(odd),
+.table-institutional-striped tbody tr:nth-child(odd) {
+    background: rgba(139, 29, 44, 0.10) !important;
+    border-left: 3.5px solid #8B1D2C !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05) !important;
+}
+
+.cases-hd-table tbody tr:nth-child(odd) .badge-case-code,
+.evidencias-hd-table tbody tr:nth-child(odd) .badge-case-code,
+.evidencias-hd-table tbody tr:nth-child(odd) .badge-evidence-code {
+    background: rgba(139, 29, 44, 0.35) !important;
+    border: 1px solid rgba(248, 113, 113, 0.6) !important;
+    color: #FECACA !important;
+    font-weight: 700 !important;
+}
+
+.cases-hd-table tbody tr:nth-child(odd) .btn-case-view-mini:hover,
+.evidencias-hd-table tbody tr:nth-child(odd) .btn-evidence-view:hover,
+.evidencias-hd-table tbody tr:nth-child(odd) .btn-evidence-edit:hover {
+    background: #8B1D2C !important;
+    border-color: #f87171 !important;
+    color: #FFFFFF !important;
+}
+
+/* B. FILAS PARES (Fila 2, 4, 6, 8... -> Patrón Azul Marino Institucional #1E3A8A) */
+.cases-hd-table tbody tr:nth-child(even),
+.evidencias-hd-table tbody tr:nth-child(even),
+.table-institutional-striped tbody tr:nth-child(even) {
+    background: rgba(30, 58, 138, 0.12) !important;
+    border-left: 3.5px solid #1E3A8A !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05) !important;
+}
+
+.cases-hd-table tbody tr:nth-child(even) .badge-case-code,
+.evidencias-hd-table tbody tr:nth-child(even) .badge-case-code,
+.evidencias-hd-table tbody tr:nth-child(even) .badge-evidence-code {
+    background: rgba(30, 58, 138, 0.35) !important;
+    border: 1px solid rgba(96, 165, 250, 0.6) !important;
+    color: #BFDBFE !important;
+    font-weight: 700 !important;
+}
+
+.cases-hd-table tbody tr:nth-child(even) .btn-case-view-mini:hover,
+.evidencias-hd-table tbody tr:nth-child(even) .btn-evidence-view:hover,
+.evidencias-hd-table tbody tr:nth-child(even) .btn-evidence-edit:hover {
+    background: #1E3A8A !important;
+    border-color: #60a5fa !important;
+    color: #FFFFFF !important;
+}
+
+/* C. EFECTO HOVER (tr:hover) */
+.cases-hd-table tbody tr:hover,
+.evidencias-hd-table tbody tr:hover,
+.table-institutional-striped tbody tr:hover {
+    background: rgba(255, 255, 255, 0.12) !important;
+    transition: background 0.15s ease !important;
+}
+
+.badge-case-code,
+.badge-evidence-code {
+    display: inline-block;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 2px 7px;
+    border-radius: 5px;
+    white-space: nowrap;
+    font-family: monospace, sans-serif;
+}
+
+.badge-case-due {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 11.5px;
+    color: #E2E8F0;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    padding: 2px 8px;
+    border-radius: 6px;
+    white-space: nowrap;
+}
+
+.badge-status-mini {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    height: 24px;
+    padding: 0 8px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.badge-status-mini.status-in-progress,
+.badge-status-mini.status-revision {
+    background: rgba(59, 130, 246, 0.22) !important;
+    border: 1px solid rgba(147, 197, 253, 0.5) !important;
+    color: #BFDBFE !important;
+}
+
+.badge-status-mini.status-pending,
+.badge-status-mini.status-observada {
+    background: rgba(245, 158, 11, 0.22) !important;
+    border: 1px solid rgba(251, 191, 36, 0.5) !important;
+    color: #FDE68A !important;
+}
+
+.badge-status-mini.status-completed,
+.badge-status-mini.status-aprobada {
+    background: rgba(16, 185, 129, 0.22) !important;
+    border: 1px solid rgba(110, 231, 183, 0.5) !important;
+    color: #A7F3D0 !important;
+}
+
+.btn-case-view-mini {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    height: 30px;
+    padding: 0 12px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.12);
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    color: #FFFFFF !important;
+    font-size: 11.5px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.16s ease;
+    white-space: nowrap;
+}
+
+/* ==========================================================================
+   ESTILOS EXCLUSIVOS: MODAL MIS EVIDENCIAS Y GESTIONES
+   ========================================================================== */
+.evidencias-modal-compact {
+    max-width: 1240px !important;
+    width: 93vw !important;
+    max-height: 88vh !important;
+    height: auto !important;
+    margin: auto !important;
+    padding: 1.25rem !important;
+    background: rgba(15, 23, 42, 0.85) !important;
+    backdrop-filter: blur(24px) !important;
+    -webkit-backdrop-filter: blur(24px) !important;
+    border: 1px solid rgba(255, 255, 255, 0.15) !important;
+    border-top: 1.5px solid rgba(255, 255, 255, 0.3) !important;
+    border-radius: 18px !important;
+    box-shadow: 0 24px 70px rgba(0, 0, 0, 0.65), inset 0 1px 1.5px rgba(255, 255, 255, 0.45) !important;
+    display: flex !important;
+    flex-direction: column !important;
+    overflow: hidden !important;
+}
+
+.evidence-thumbnail-btn {
+    width: 38px;
+    height: 38px;
+    border-radius: 8px;
+    overflow: hidden;
+    border: 1.5px solid rgba(255, 255, 255, 0.35);
+    background: rgba(0, 0, 0, 0.3);
+    padding: 0;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
+    transition: transform 0.15s ease, border-color 0.15s ease;
+    position: relative;
+}
+
+.evidence-thumbnail-btn:hover {
+    transform: scale(1.12);
+    border-color: #60a5fa;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+}
+
+.evidence-thumbnail-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.evidence-thumbnail-icon {
+    font-size: 1.15rem;
+    color: #93C5FD;
+}
+
+.badge-evidence-type {
+    display: inline-block;
+    font-size: 11px;
+    font-weight: 500;
+    padding: 2px 8px;
+    border-radius: 5px;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    color: #F1F5F9;
+    white-space: nowrap;
+}
+
+.btn-evidence-view {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    height: 28px;
+    padding: 0 10px;
+    border-radius: 6px;
+    background: rgba(255, 255, 255, 0.14);
+    border: 1px solid rgba(255, 255, 255, 0.28);
+    color: #FFFFFF !important;
+    font-size: 11.5px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    white-space: nowrap;
+}
+
+.btn-evidence-edit {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    height: 28px;
+    padding: 0 10px;
+    border-radius: 6px;
+    background: rgba(139, 29, 44, 0.45);
+    border: 1px solid rgba(248, 113, 113, 0.5);
+    color: #FECACA !important;
+    font-size: 11.5px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    white-space: nowrap;
+}
+
+.btn-evidence-edit:hover {
+    background: #8B1D2C !important;
+    border-color: #f87171 !important;
+    color: #FFFFFF !important;
+    transform: translateY(-1px);
+    box-shadow: 0 3px 10px rgba(139, 29, 44, 0.5);
+}
+
+/* ==========================================================================
+   ESTILOS EXCLUSIVOS: MODAL MI RENDIMIENTO SGR
+   ========================================================================== */
+.rendimiento-modal-compact {
+    max-width: 980px !important;
+    width: 90vw !important;
+    max-height: 88vh !important;
+    margin: auto !important;
+    padding: 1.5rem !important;
+    background: rgba(15, 23, 42, 0.85) !important;
+    backdrop-filter: blur(24px) !important;
+    -webkit-backdrop-filter: blur(24px) !important;
+    border: 1px solid rgba(255, 255, 255, 0.15) !important;
+    border-top: 1.5px solid rgba(255, 255, 255, 0.3) !important;
+    border-radius: 20px !important;
+    box-shadow: 0 24px 70px rgba(0, 0, 0, 0.65), inset 0 1px 1.5px rgba(255, 255, 255, 0.45) !important;
+    display: flex !important;
+    flex-direction: column !important;
+    overflow-y: auto !important;
+}
+
+.rendimiento-kpis-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+    margin-bottom: 1.25rem;
+}
+
+.rendimiento-kpi-card {
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    border-radius: 14px;
+    padding: 1rem 1.25rem;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.rendimiento-kpi-val {
+    font-size: 1.75rem;
+    font-weight: 800;
+    color: #FFFFFF;
+    line-height: 1.1;
+    font-family: var(--font-heading);
+}
+
+.rendimiento-metas-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+}
+
+.rendimiento-meta-card {
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    border-radius: 12px;
+    padding: 1rem 1.2rem;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+/* ==========================================================================
+   RESPONSIVE
+   ========================================================================== */
+@media (max-width: 1024px) {
+    .hub-cards-grid {
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
+    }
+
+    .main-viewport {
+        padding: 2rem 1.5rem;
+    }
+
+    .portal-card-hub {
+        padding: 2.5rem 2rem;
+    }
+}
+
+@media (max-width: 768px) {
+    .portal-backdrop {
+        flex-direction: column;
+    }
+
+    .sidebar-glass {
+        width: 100%;
+        min-width: 100%;
+        min-height: auto;
+        padding: 1.5rem;
+    }
+
+    .sidebar-nav-list {
+        flex-direction: row;
+        overflow-x: auto;
+    }
+
+    .hub-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1rem;
+    }
+}

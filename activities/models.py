@@ -1,5 +1,7 @@
 from django.db import models
 from django.conf import settings
+from django.core.exceptions import ValidationError
+from django.utils import timezone
 from core.models import BaseModel
 from organization.models import Delegation
 from metrics.models import MeasurementPeriod, MeasurementItem
@@ -116,6 +118,18 @@ class Activity(BaseModel):
         verbose_name = "Actividad"
         verbose_name_plural = "Actividades"
         ordering = ['-activity_date', '-created_at']
+
+
+    def clean(self):
+        super().clean()
+        if self.activity_date and self.activity_date > timezone.now().date():
+            raise ValidationError({
+                'activity_date': 'La fecha de la actividad no puede ser posterior a la fecha actual.'
+            })
+        if self.is_collective_agenda and not self.contact_name:
+            raise ValidationError({
+                'contact_name': 'Debe ingresar el nombre de contacto cuando la actividad deriva a la agenda colectiva.'
+            })
 
     def __str__(self):
         return f"{self.activity_code} - {self.activity_date}"

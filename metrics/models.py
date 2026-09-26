@@ -1,5 +1,6 @@
 from django.db import models
 from django.conf import settings
+from django.core.exceptions import ValidationError
 from core.models import BaseModel
 from organization.models import Position
 
@@ -36,6 +37,13 @@ class MeasurementPeriod(BaseModel):
         verbose_name = "Período de Medición"
         verbose_name_plural = "Períodos de Medición"
         ordering = ['-start_date']
+
+    def clean(self):
+        super().clean()
+        if self.start_date and self.end_date and self.end_date < self.start_date:
+            raise ValidationError({
+                'end_date': 'La fecha de término no puede ser anterior a la fecha de inicio del período.'
+            })
 
     def __str__(self):
         return f"{self.name} ({self.status})"
@@ -101,6 +109,13 @@ class Goal(BaseModel):
         verbose_name_plural = "Metas de Gestión"
         unique_together = ('period', 'position', 'item')
         ordering = ['period', 'position', 'item']
+
+    def clean(self):
+        super().clean()
+        if self.weight is not None and (self.weight <= 0 or self.weight > 100):
+            raise ValidationError({
+                'weight': 'La ponderación de la meta debe ser un porcentaje positivo entre 1% y 100%.'
+            })
 
     def __str__(self):
         return f"{self.position} | {self.item}: {self.target_value} ({self.weight}%)"

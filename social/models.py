@@ -1,4 +1,6 @@
 from django.db import models
+from django.core.exceptions import ValidationError
+from django.utils import timezone
 from core.models import BaseModel
 from organization.models import Delegation
 from activities.models import ServiceCatalog
@@ -23,6 +25,13 @@ class SocialCase(BaseModel):
         verbose_name = "Caso Social"
         verbose_name_plural = "Casos Sociales"
         ordering = ['-entry_date']
+
+    def clean(self):
+        super().clean()
+        if self.entry_date and self.entry_date > timezone.now().date():
+            raise ValidationError({
+                'entry_date': 'La fecha de ingreso del caso no puede ser una fecha futura.'
+            })
 
     def __str__(self):
         return f"{self.user_name} ({self.user_rut})"
@@ -57,6 +66,13 @@ class SocialManagement(BaseModel):
         verbose_name_plural = "Gestiones Sociales"
         ordering = ['case', 'stage']
         unique_together = ('case', 'stage')
+
+    def clean(self):
+        super().clean()
+        if self.stage and (self.stage < 1 or self.stage > 3):
+            raise ValidationError({
+                'stage': 'Por normativa comunal (RN-012), cada caso social permite un máximo de 3 etapas consecutivas (valores 1 a 3).'
+            })
 
     def __str__(self):
         return f"{self.case.user_name} - Etapa {self.stage}"
