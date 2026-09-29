@@ -568,50 +568,21 @@
 
         if (form && usernameInput && pwd) {
             form.addEventListener('submit', function(e) {
-                e.preventDefault();
-                const rut = usernameInput.value.trim();
-                const password = pwd.value.trim();
+                const userVal = usernameInput.value.trim();
+                const passwordVal = pwd.value.trim();
 
-                if (!rut || !password) {
+                if (!userVal || !passwordVal) {
+                    e.preventDefault();
                     Swal.fire({
                         icon: 'warning',
                         title: 'Campos requeridos',
-                        text: 'Por favor, ingrese su RUT y contraseña institucional.',
+                        text: 'Por favor, ingrese su usuario o RUT y contraseña institucional.',
                         confirmButtonColor: '#e11d48',
                         background: '#0f172a',
                         color: '#ffffff'
                     });
                     return;
                 }
-
-                const rutPattern = /^[0-9kK\.\-]+$/;
-                const suspiciousPattern = /[<>'";`]|--|\/\*|\*\/|\b(script|union|select|insert|update|delete|drop|alert)\b/i;
-
-                if (!rutPattern.test(rut) || suspiciousPattern.test(rut) || suspiciousPattern.test(password)) {
-                    Swal.fire({
-                        icon: 'warning',
-                        title: 'Carácter no permitido',
-                        text: 'Se detectaron caracteres inválidos o código malicioso. Ingrese un formato válido.',
-                        confirmButtonColor: '#e11d48',
-                        background: '#0f172a',
-                        color: '#ffffff'
-                    });
-                    return;
-                }
-
-                Swal.fire({
-                    icon: 'success',
-                    title: 'Autenticación exitosa',
-                    text: 'Redirigiendo al panel...',
-                    showConfirmButton: false,
-                    timer: 1000,
-                    background: '#0f172a',
-                    color: '#ffffff'
-                });
-
-                setTimeout(function() {
-                    form.submit();
-                }, 1000);
             });
         }
 

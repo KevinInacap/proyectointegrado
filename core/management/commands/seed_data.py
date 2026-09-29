@@ -5,7 +5,7 @@ from django.contrib.contenttypes.models import ContentType
 from django.utils import timezone
 
 from core.models import AuditLog
-from organization.models import Delegation, Position, Role, UserProfile
+from organization.models import Delegation, Position, UserProfile
 from activities.models import ServiceCatalog, Activity, Evidence, Validation
 from metrics.models import MeasurementPeriod, MeasurementItem, Goal, DailyIndicator, PerformanceAdjustment
 from agenda.models import CollectiveAgenda, CommitmentHistory
@@ -40,7 +40,7 @@ class Command(BaseCommand):
         self.stdout.write(self.style.SUCCESS("[OK] Delegaciones maestras cargadas."))
 
         # -------------------------------------------------------------
-        # 2. TABLAS MAESTRAS: CARGOS Y ROLES
+        # 2. TABLAS MAESTRAS: CARGOS
         # -------------------------------------------------------------
         pos_gestor, _ = Position.objects.get_or_create(
             name="Gestor Territorial",
@@ -54,146 +54,139 @@ class Command(BaseCommand):
             name="Director de Delegación",
             defaults={"description": "Supervisión global de operaciones y cumplimiento de metas.", "status": "Activo"}
         )
-
-        role_admin, _ = Role.objects.get_or_create(
-            name="Administrador General",
-            defaults={"description": "Control de usuarios, configuración y auditoría transversal."}
+        pos_control, _ = Position.objects.get_or_create(
+            name="Jefatura de Control y Gestión",
+            defaults={"description": "Auditoría institucional y seguimiento de metas comunales.", "status": "Activo"}
         )
-        role_gestor, _ = Role.objects.get_or_create(
-            name="Gestor Territorial",
-            defaults={"description": "Registro operativo de actividades y agenda colectiva."}
-        )
-        role_verificador, _ = Role.objects.get_or_create(
-            name="Verificador",
-            defaults={"description": "Aprobación y rechazo formal de actividades."}
-        )
-        self.stdout.write(self.style.SUCCESS("[OK] Cargos y Roles maestros creados."))
+        self.stdout.write(self.style.SUCCESS("[OK] Cargos maestros creados."))
 
         # -------------------------------------------------------------
-        # 3. GRUPOS Y PERMISOS DJANGO
+        # 3. GRUPOS Y PERMISOS DJANGO (ROLES ESTÁNDAR)
         # -------------------------------------------------------------
-        group_operadores, _ = Group.objects.get_or_create(name="Operadores Territoriales")
-        operational_models = [Activity, Evidence, Validation, CollectiveAgenda, CommitmentHistory, SocialCase, SocialManagement]
-        
-        for model in operational_models:
-            ct = ContentType.objects.get_for_model(model)
-            perms = Permission.objects.filter(content_type=ct)
-            for perm in perms:
-                group_operadores.permissions.add(perm)
+        # 3.1 Grupo Administradores (Acceso total)
+        group_admin, _ = Group.objects.get_or_create(name="Administradores")
+        all_permissions = Permission.objects.all()
+        group_admin.permissions.set(all_permissions)
 
-        self.stdout.write(self.style.SUCCESS("[OK] Grupos y permisos de Django configurados."))
+        # 3.2 Grupo Verificadores (Revisión y Validación)
+        group_verificador, _ = Group.objects.get_or_create(name="Verificadores")
+        verif_codenames = [
+            'view_activity', 'change_activity',
+            'add_validation', 'change_validation', 'view_validation',
+            'view_evidence', 'view_servicecatalog',
+            'view_delegation', 'view_position', 'view_userprofile',
+            'view_measurementperiod', 'view_measurementitem', 'view_goal', 'view_dailyindicator',
+            'view_collectiveagenda', 'view_commitmenthistory',
+            'view_socialcase', 'view_socialmanagement',
+            'view_auditlog'
+        ]
+        verif_perms = Permission.objects.filter(codename__in=verif_codenames)
+        group_verificador.permissions.set(verif_perms)
+
+        # 3.3 Grupo Gestores Territoriales (Operación en terreno)
+        group_gestor, _ = Group.objects.get_or_create(name="Gestores Territoriales")
+        gestor_codenames = [
+            'add_activity', 'change_activity', 'view_activity', 'delete_activity',
+            'add_evidence', 'change_evidence', 'view_evidence', 'delete_evidence',
+            'view_servicecatalog', 'view_delegation',
+            'add_collectiveagenda', 'change_collectiveagenda', 'view_collectiveagenda',
+            'add_commitmenthistory', 'change_commitmenthistory', 'view_commitmenthistory',
+            'add_socialcase', 'change_socialcase', 'view_socialcase',
+            'add_socialmanagement', 'change_socialmanagement', 'view_socialmanagement',
+            'view_measurementperiod', 'view_goal', 'view_dailyindicator'
+        ]
+        gestor_perms = Permission.objects.filter(codename__in=gestor_codenames)
+        group_gestor.permissions.set(gestor_perms)
+
+        self.stdout.write(self.style.SUCCESS("[OK] Grupos y permisos de Django configurados (Administradores, Verificadores, Gestores Territoriales)."))
 
         # -------------------------------------------------------------
-        # 4. USUARIOS DE PRUEBA Y PERFILES (Mínimo 2 contextos diferenciados)
+        # 4. USUARIOS DE PRUEBA Y PERFILES (Múltiples contextos y delegaciones)
         # -------------------------------------------------------------
-        # 4.1 Administrador Global
-        user_admin, created = User.objects.get_or_create(
-            username="admin",
-            defaults={
-                "email": "admin@laserena.cl",
-                "first_name": "Administrador",
-                "last_name": "General",
-                "is_staff": True,
-                "is_superuser": True,
-            }
-        )
-        user_admin.set_password("Admin1234!")
-        user_admin.save()
-        profile_admin, _ = UserProfile.objects.get_or_create(
-            user=user_admin,
-            defaults={
-                "rut": "11.111.111-1",
-                "full_name": "Administrador General del Sistema",
-                "email": "admin@laserena.cl",
-                "delegation": del_centro,
-                "position": pos_director,
-                "status": "Activo"
-            }
-        )
-        profile_admin.roles.add(role_admin)
+        def create_test_user(username, email, first_name, last_name, password, group, delegation, position, rut, is_staff=True, is_superuser=False):
+            user, _ = User.objects.get_or_create(
+                username=username,
+                defaults={
+                    "email": email,
+                    "first_name": first_name,
+                    "last_name": last_name,
+                    "is_staff": is_staff,
+                    "is_superuser": is_superuser,
+                }
+            )
+            user.set_password(password)
+            user.is_staff = is_staff
+            user.is_superuser = is_superuser
+            user.groups.clear()
+            user.groups.add(group)
+            user.save()
 
-        # 4.2 Funcionario Limitado 1 (Contexto: Delegación Las Compañías)
-        user_companias, created = User.objects.get_or_create(
-            username="funcionario_companias",
-            defaults={
-                "email": "gestor.companias@laserena.cl",
-                "first_name": "Rodrigo",
-                "last_name": "Tapia",
-                "is_staff": True,
-                "is_superuser": False,
-            }
-        )
-        user_companias.set_password("Funcionario1234!")
-        user_companias.groups.add(group_operadores)
-        user_companias.save()
-        profile_companias, _ = UserProfile.objects.get_or_create(
-            user=user_companias,
-            defaults={
-                "rut": "17.892.456-3",
-                "full_name": "Rodrigo Tapia Gallardo",
-                "email": "gestor.companias@laserena.cl",
-                "delegation": del_companias,
-                "position": pos_gestor,
-                "status": "Activo"
-            }
-        )
-        profile_companias.roles.add(role_gestor)
+            full_name = f"{first_name} {last_name}"
+            profile, _ = UserProfile.objects.get_or_create(
+                user=user,
+                defaults={
+                    "rut": rut,
+                    "full_name": full_name,
+                    "email": email,
+                    "delegation": delegation,
+                    "position": position,
+                    "status": "Activo"
+                }
+            )
+            profile.rut = rut
+            profile.full_name = full_name
+            profile.email = email
+            profile.delegation = delegation
+            profile.position = position
+            profile.status = "Activo"
+            profile.save()
+            return user
 
-        # 4.3 Funcionario Limitado 2 (Contexto: Delegación Centro Histórico)
-        user_centro, created = User.objects.get_or_create(
-            username="funcionario_centro",
-            defaults={
-                "email": "gestora.centro@laserena.cl",
-                "first_name": "Camila",
-                "last_name": "Araya",
-                "is_staff": True,
-                "is_superuser": False,
-            }
+        # Administradores
+        user_admin = create_test_user(
+            "admin", "admin@laserena.cl", "Administrador", "General",
+            "Admin1234!", group_admin, del_centro, pos_director, "11.111.111-1",
+            is_staff=True, is_superuser=True
         )
-        user_centro.set_password("Funcionario1234!")
-        user_centro.groups.add(group_operadores)
-        user_centro.save()
-        profile_centro, _ = UserProfile.objects.get_or_create(
-            user=user_centro,
-            defaults={
-                "rut": "18.345.678-K",
-                "full_name": "Camila Araya Miranda",
-                "email": "gestora.centro@laserena.cl",
-                "delegation": del_centro,
-                "position": pos_gestor,
-                "status": "Activo"
-            }
+        user_control = create_test_user(
+            "admin_control", "control@laserena.cl", "Beatriz", "Cisternas Alarcón",
+            "Admin1234!", group_admin, del_centro, pos_control, "13.444.555-6",
+            is_staff=True, is_superuser=False
         )
-        profile_centro.roles.add(role_gestor)
 
-        # 4.4 Verificador Municipal
-        user_verificador, created = User.objects.get_or_create(
-            username="verificador",
-            defaults={
-                "email": "verificador@laserena.cl",
-                "first_name": "Esteban",
-                "last_name": "Morales",
-                "is_staff": True,
-                "is_superuser": False,
-            }
+        # Verificadores
+        user_verificador = create_test_user(
+            "verificador", "verificador@laserena.cl", "Esteban", "Morales Vega",
+            "Verificador1234!", group_verificador, del_companias, pos_verificador, "15.678.901-2"
         )
-        user_verificador.set_password("Verificador1234!")
-        user_verificador.groups.add(group_operadores)
-        user_verificador.save()
-        profile_verificador, _ = UserProfile.objects.get_or_create(
-            user=user_verificador,
-            defaults={
-                "rut": "15.678.901-2",
-                "full_name": "Esteban Morales Vega",
-                "email": "verificador@laserena.cl",
-                "delegation": del_companias,
-                "position": pos_verificador,
-                "status": "Activo"
-            }
+        user_verif_centro = create_test_user(
+            "verificador_centro", "verif.centro@laserena.cl", "Sofía", "Valenzuela Peña",
+            "Verificador1234!", group_verificador, del_centro, pos_verificador, "16.789.012-3"
         )
-        profile_verificador.roles.add(role_verificador)
+        user_verif_rural = create_test_user(
+            "verificador_rural", "verif.rural@laserena.cl", "Andrea", "Godoy Silva",
+            "Verificador1234!", group_verificador, del_rural, pos_verificador, "14.567.890-1"
+        )
 
-        self.stdout.write(self.style.SUCCESS("[OK] Cuentas de prueba creadas (admin, funcionario_companias, funcionario_centro, verificador)."))
+        # Gestores Territoriales
+        user_companias = create_test_user(
+            "funcionario_companias", "gestor.companias@laserena.cl", "Rodrigo", "Tapia Gallardo",
+            "Funcionario1234!", group_gestor, del_companias, pos_gestor, "17.892.456-3"
+        )
+        user_centro = create_test_user(
+            "funcionario_centro", "gestora.centro@laserena.cl", "Camila", "Araya Miranda",
+            "Funcionario1234!", group_gestor, del_centro, pos_gestor, "18.345.678-K"
+        )
+        user_pampa = create_test_user(
+            "funcionario_pampa", "gestor.pampa@laserena.cl", "Kevin", "Encina Molina",
+            "Funcionario1234!", group_gestor, del_pampa, pos_gestor, "12.345.678-K"
+        )
+        user_rural = create_test_user(
+            "funcionario_rural", "gestor.rural@laserena.cl", "Manuel", "Barraza Díaz",
+            "Funcionario1234!", group_gestor, del_rural, pos_gestor, "19.876.543-2"
+        )
+
+        self.stdout.write(self.style.SUCCESS("[OK] 9 Cuentas de prueba creadas y asociadas a Grupos y Delegaciones."))
 
         # -------------------------------------------------------------
         # 5. TABLAS MAESTRAS: CATÁLOGO DE SERVICIOS
@@ -549,12 +542,20 @@ class Command(BaseCommand):
 
         self.stdout.write(self.style.SUCCESS(
             "\n=======================================================\n"
-            " CARGA REPRODUCIBLE DE DATOS COMPLETADA CON EXITO \n"
+            " CARGA REPRODUCIBLE DE DATOS COMPLETADA CON ÉXITO \n"
             "=======================================================\n"
-            "Cuentas de prueba listas para la demostracion:\n"
-            " - Administrador:       admin / Admin1234!\n"
-            " - Gestor Las Companias: funcionario_companias / Funcionario1234!\n"
-            " - Gestora Centro:       funcionario_centro / Funcionario1234!\n"
-            " - Verificador:          verificador / Verificador1234!\n"
+            "GRUPOS Y CUENTAS CONFIGURADAS (Django RBAC):\n\n"
+            " [GRUPO: Administradores - Acceso Total]\n"
+            "  * admin / Admin1234! (RUT: 11.111.111-1) - Centro Histórico [Superuser]\n"
+            "  * admin_control / Admin1234! (RUT: 13.444.555-6) - Control Comunal\n\n"
+            " [GRUPO: Verificadores - Revisión y Validación]\n"
+            "  * verificador / Verificador1234! (RUT: 15.678.901-2) - Las Compañías\n"
+            "  * verificador_centro / Verificador1234! (RUT: 16.789.012-3) - Centro Histórico\n"
+            "  * verificador_rural / Verificador1234! (RUT: 14.567.890-1) - Sector Rural\n\n"
+            " [GRUPO: Gestores Territoriales - Operación y Registro]\n"
+            "  * funcionario_companias / Funcionario1234! (RUT: 17.892.456-3) - Las Compañías\n"
+            "  * funcionario_centro / Funcionario1234! (RUT: 18.345.678-K) - Centro Histórico\n"
+            "  * funcionario_pampa / Funcionario1234! (RUT: 12.345.678-K) - La Pampa\n"
+            "  * funcionario_rural / Funcionario1234! (RUT: 19.876.543-2) - Sector Rural\n"
             "======================================================="
         ))

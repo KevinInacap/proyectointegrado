@@ -48,27 +48,11 @@ class Position(BaseModel):
         return self.name
 
 
-class Role(BaseModel):
-    """
-    Roles del sistema municipal (RF-002, RNF-005).
-    Tabla: rol
-    """
-    name = models.CharField(max_length=50, unique=True, verbose_name="Nombre del rol")
-    description = models.CharField(max_length=255, blank=True, default='', verbose_name="Descripción del rol")
-
-    class Meta:
-        verbose_name = "Rol"
-        verbose_name_plural = "Roles"
-        ordering = ['name']
-
-    def __str__(self):
-        return self.name
-
-
 class UserProfile(BaseModel):
     """
     Perfil institucional del funcionario municipal (RF-002).
     Tabla: usuario
+    Los roles y permisos se gestionan a través de los Grupos estándar de Django (user.groups).
     """
     STATUS_CHOICES = [
         ('Activo', 'Activo'),
@@ -101,12 +85,6 @@ class UserProfile(BaseModel):
         related_name='users',
         verbose_name="Cargo asignado"
     )
-    roles = models.ManyToManyField(
-        Role,
-        blank=True,
-        related_name='users',
-        verbose_name="Roles autorizados"
-    )
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='Activo', verbose_name="Estado")
 
     class Meta:
@@ -116,3 +94,19 @@ class UserProfile(BaseModel):
 
     def __str__(self):
         return f"{self.full_name} ({self.rut})"
+
+    @property
+    def group_names(self):
+        """Retorna los nombres de los grupos de Django a los que pertenece el usuario."""
+        return list(self.user.groups.values_list('name', flat=True))
+
+    @property
+    def primary_role(self):
+        """Rol legible derivado de los grupos de Django."""
+        if self.user.is_superuser or 'Administradores' in self.group_names:
+            return 'Administrador General'
+        if 'Verificadores' in self.group_names:
+            return 'Verificador de Evidencias'
+        if 'Gestores Territoriales' in self.group_names:
+            return 'Gestor Territorial'
+        return self.group_names[0] if self.group_names else 'Sin Grupo'

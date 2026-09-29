@@ -1,6 +1,7 @@
 import datetime
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
+from django.contrib.auth.decorators import login_required
 from .models import Activity, Evidence, Validation
 
 def get_or_create_initial_sample_data():
@@ -75,16 +76,23 @@ def get_or_create_initial_sample_data():
                 observations='Validación técnica conforme en terreno por jefatura de delegación.'
             )
 
+@login_required(login_url='core:login')
 def dashboard_view(request):
-    role = request.session.get('user_role', '')
-    if 'Administrador' in role or 'Alcaldía' in role:
+    user_groups = list(request.user.groups.values_list('name', flat=True))
+    if request.user.is_superuser or 'Administradores' in user_groups:
         return redirect('activities:dashboard_admin')
-    elif 'Supervisor' in role or 'Verificador' in role:
+    elif 'Verificadores' in user_groups:
         return redirect('activities:dashboard_verificador')
     else:
         return redirect('activities:dashboard_gestor')
 
+@login_required(login_url='core:login')
 def dashboard_admin_view(request):
+    user_groups = list(request.user.groups.values_list('name', flat=True))
+    if not (request.user.is_superuser or 'Administradores' in user_groups):
+        messages.warning(request, "Acceso restringido: Se requieren permisos del grupo Administradores.")
+        return redirect('activities:dashboard')
+
     get_or_create_initial_sample_data()
 
     delegations = [
@@ -165,10 +173,11 @@ def dashboard_admin_view(request):
         },
     ]
 
-    user_name = request.session.get('user_name') if request.session.get('user_role') == 'Administrador General' else 'Alcaldía La Serena'
+    profile = getattr(request.user, 'profile', None)
+    user_name = (profile.full_name if profile and profile.full_name else None) or request.session.get('user_name') or request.user.get_full_name() or request.user.username
     context = {
         'user_name': user_name,
-        'user_role': 'Alcaldía / Control Central',
+        'user_role': 'Administrador General',
         'current_delegation': request.GET.get('delegacion', 'Consolidado Comunal'),
         'current_period': 'T3 - Septiembre 2026',
         'kpi': {
@@ -267,11 +276,20 @@ def dashboard_verificador_view(request):
         },
     ]
 
-    user_name = request.session.get('user_name') if request.session.get('user_role') == 'Supervisor Territorial' else 'Jorge Cortés Pavez'
+@login_required(login_url='core:login')
+def dashboard_verificador_view(request):
+    user_groups = list(request.user.groups.values_list('name', flat=True))
+    if not (request.user.is_superuser or 'Administradores' in user_groups or 'Verificadores' in user_groups):
+        messages.warning(request, "Acceso restringido: Se requieren permisos del grupo Verificadores.")
+        return redirect('activities:dashboard')
+
+    profile = getattr(request.user, 'profile', None)
+    user_name = (profile.full_name if profile and profile.full_name else None) or request.session.get('user_name') or request.user.get_full_name() or request.user.username
+    current_delegation = (profile.delegation.name if profile and profile.delegation else None) or request.session.get('user_delegation', 'Delegación Las Compañías')
     context = {
         'user_name': user_name,
-        'user_role': 'Supervisor Territorial',
-        'current_delegation': 'Delegación Las Compañías',
+        'user_role': 'Verificador de Evidencias',
+        'current_delegation': current_delegation,
         'current_period': 'T3 - Septiembre 2026',
         'kpi': {
             'pending_reviews': 14,
@@ -285,6 +303,7 @@ def dashboard_verificador_view(request):
     }
     return render(request, 'activities/dashboard_verificador.html', context)
 
+@login_required(login_url='core:login')
 def dashboard_gestor_view(request):
     get_or_create_initial_sample_data()
 
@@ -427,10 +446,11 @@ def dashboard_gestor_view(request):
 
     historial_personal = mis_evidencias
 
-    user_name = request.session.get('user_name') or (request.user.get_full_name() if request.user.is_authenticated else 'Kevin Encina Molina')
-    user_rut = request.session.get('user_rut', '12.345.678-K')
-    user_role = request.session.get('user_role', 'Territorial OO.CC.')
-    user_delegation = request.session.get('user_delegation', 'Delegación La Pampa')
+    profile = getattr(request.user, 'profile', None)
+    user_name = (profile.full_name if profile and profile.full_name else None) or request.session.get('user_name') or (request.user.get_full_name() if request.user.is_authenticated else 'Kevin Encina Molina')
+    user_rut = (profile.rut if profile else None) or request.session.get('user_rut', '12.345.678-K')
+    user_role = (profile.primary_role if profile else None) or request.session.get('user_role', 'Gestor Territorial')
+    user_delegation = (profile.delegation.name if profile and profile.delegation else None) or request.session.get('user_delegation', 'Delegación La Pampa')
     first_name = user_name.split()[0] if user_name else 'Funcionario'
 
     ciudadania_records = [
@@ -561,6 +581,7 @@ def dashboard_gestor_view(request):
     }
     return render(request, 'activities/dashboard_gestor.html', context)
 
+@login_required(login_url='core:login')
 def activity_create_view(request):
     if request.method == 'POST':
         activity_code = request.POST.get('activity_code', '').strip()
@@ -578,8 +599,13 @@ def activity_create_view(request):
         if not activity_date:
             activity_date = datetime.date.today()
 
+        profile = getattr(request.user, 'profile', None)
+        user_delegation = profile.delegation if profile else None
+
         activity = Activity.objects.create(
             activity_code=activity_code,
+            user=request.user,
+            delegation=user_delegation,
             activity_date=activity_date,
             problem_description=problem_description,
             executed_action=executed_action,
@@ -596,7 +622,8 @@ def activity_create_view(request):
             activity=activity,
             evidence_code=f"EVI-{activity_code}",
             file_path=f"evidencias/{file_name}",
-            file_name=file_name
+            file_name=file_name,
+            uploaded_by=request.user
         )
 
         messages.success(
@@ -615,7 +642,13 @@ def activity_create_view(request):
     }
     return render(request, 'activities/activity_form.html', context)
 
+@login_required(login_url='core:login')
 def activity_validate_view(request, pk):
+    user_groups = list(request.user.groups.values_list('name', flat=True))
+    if not (request.user.is_superuser or 'Administradores' in user_groups or 'Verificadores' in user_groups):
+        messages.error(request, "Acceso denegado: Solo el grupo Verificadores o Administradores pueden validar actividades.")
+        return redirect('activities:dashboard')
+
     activity = get_object_or_404(Activity, pk=pk)
 
     if request.method == 'POST':
@@ -627,6 +660,7 @@ def activity_validate_view(request, pk):
 
         Validation.objects.create(
             activity=activity,
+            verifier=request.user,
             decision=decision,
             observations=observations or 'Revisión técnica registrada por el verificador.'
         )
