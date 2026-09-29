@@ -2,6 +2,7 @@ from django.contrib import admin, messages
 from django.utils import timezone
 from organization.models import Delegation
 from .models import CollectiveAgenda, CommitmentHistory
+from .forms import CollectiveAgendaForm
 
 
 class CommitmentHistoryInline(admin.TabularInline):
@@ -14,6 +15,7 @@ class CommitmentHistoryInline(admin.TabularInline):
 
 @admin.register(CollectiveAgenda)
 class CollectiveAgendaAdmin(admin.ModelAdmin):
+    form = CollectiveAgendaForm
     list_display = (
         'requester', 
         'territory', 

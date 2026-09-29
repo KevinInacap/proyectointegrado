@@ -83,11 +83,11 @@ class Command(BaseCommand):
         verif_perms = Permission.objects.filter(codename__in=verif_codenames)
         group_verificador.permissions.set(verif_perms)
 
-        # 3.3 Grupo Gestores Territoriales (Operación en terreno)
+        # 3.3 Grupo Gestores Territoriales (Operación en terreno - Sin permisos de eliminación física)
         group_gestor, _ = Group.objects.get_or_create(name="Gestores Territoriales")
         gestor_codenames = [
-            'add_activity', 'change_activity', 'view_activity', 'delete_activity',
-            'add_evidence', 'change_evidence', 'view_evidence', 'delete_evidence',
+            'add_activity', 'change_activity', 'view_activity',
+            'add_evidence', 'change_evidence', 'view_evidence',
             'view_servicecatalog', 'view_delegation',
             'add_collectiveagenda', 'change_collectiveagenda', 'view_collectiveagenda',
             'add_commitmenthistory', 'change_commitmenthistory', 'view_commitmenthistory',

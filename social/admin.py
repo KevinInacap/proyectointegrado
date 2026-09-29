@@ -2,6 +2,7 @@ from django.contrib import admin, messages
 from django.utils import timezone
 from organization.models import Delegation
 from .models import SocialCase, SocialManagement
+from .forms import SocialCaseForm
 
 
 class SocialManagementInline(admin.TabularInline):
@@ -13,6 +14,7 @@ class SocialManagementInline(admin.TabularInline):
 
 @admin.register(SocialCase)
 class SocialCaseAdmin(admin.ModelAdmin):
+    form = SocialCaseForm
     list_display = (
         'user_name', 
         'user_rut', 

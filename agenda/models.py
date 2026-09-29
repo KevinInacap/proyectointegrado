@@ -62,6 +62,14 @@ class CollectiveAgenda(BaseModel):
         verbose_name_plural = "Agenda Colectiva (Tubo de Trabajo)"
         ordering = ['committed_date']
 
+    def clean(self):
+        super().clean()
+        from django.core.exceptions import ValidationError
+        if self.closing_date and self.committed_date and self.closing_date < self.committed_date:
+            raise ValidationError({
+                'closing_date': 'La fecha de cierre no puede ser anterior a la fecha comprometida.'
+            })
+
     def __str__(self):
         return f"{self.requester} ({self.committed_date}) - {self.status}"
 

@@ -2,6 +2,10 @@ from django.contrib import admin
 from .models import MeasurementPeriod, MeasurementItem, Goal, DailyIndicator, PerformanceAdjustment
 
 
+def is_admin(user):
+    return user.is_superuser or user.groups.filter(name="Administradores").exists()
+
+
 class GoalInline(admin.TabularInline):
     model = Goal
     extra = 1
@@ -26,6 +30,15 @@ class MeasurementPeriodAdmin(admin.ModelAdmin):
     ordering = ('-start_date',)
     inlines = [GoalInline]
 
+    def has_add_permission(self, request):
+        return is_admin(request.user)
+
+    def has_change_permission(self, request, obj=None):
+        return is_admin(request.user)
+
+    def has_delete_permission(self, request, obj=None):
+        return is_admin(request.user)
+
 
 @admin.register(MeasurementItem)
 class MeasurementItemAdmin(admin.ModelAdmin):
@@ -33,6 +46,15 @@ class MeasurementItemAdmin(admin.ModelAdmin):
     list_filter = ('item_type', 'status')
     search_fields = ('name', 'description')
     ordering = ('name',)
+
+    def has_add_permission(self, request):
+        return is_admin(request.user)
+
+    def has_change_permission(self, request, obj=None):
+        return is_admin(request.user)
+
+    def has_delete_permission(self, request, obj=None):
+        return is_admin(request.user)
 
 
 @admin.register(Goal)
@@ -42,6 +64,15 @@ class GoalAdmin(admin.ModelAdmin):
     list_filter = ('period', 'position', 'item')
     search_fields = ('item__name', 'position__name')
     ordering = ('period', 'position')
+
+    def has_add_permission(self, request):
+        return is_admin(request.user)
+
+    def has_change_permission(self, request, obj=None):
+        return is_admin(request.user)
+
+    def has_delete_permission(self, request, obj=None):
+        return is_admin(request.user)
 
 
 @admin.register(DailyIndicator)
@@ -59,6 +90,22 @@ class DailyIndicatorAdmin(admin.ModelAdmin):
     search_fields = ('user__username', 'user__first_name', 'user__last_name')
     ordering = ('-calculation_date', 'user')
 
+    # Scoping de seguridad: el usuario limitado solo ve sus propios indicadores
+    def get_queryset(self, request):
+        qs = super().get_queryset(request)
+        if is_admin(request.user):
+            return qs
+        return qs.filter(user=request.user)
+
+    def has_add_permission(self, request):
+        return is_admin(request.user)
+
+    def has_change_permission(self, request, obj=None):
+        return is_admin(request.user)
+
+    def has_delete_permission(self, request, obj=None):
+        return is_admin(request.user)
+
 
 @admin.register(PerformanceAdjustment)
 class PerformanceAdjustmentAdmin(admin.ModelAdmin):
@@ -67,3 +114,20 @@ class PerformanceAdjustmentAdmin(admin.ModelAdmin):
     list_filter = ('adjustment_type', 'period')
     search_fields = ('user__username', 'reason')
     ordering = ('-created_at',)
+
+    # Scoping de seguridad: el funcionario solo ve sus propios ajustes
+    def get_queryset(self, request):
+        qs = super().get_queryset(request)
+        if is_admin(request.user):
+            return qs
+        return qs.filter(user=request.user)
+
+    def has_add_permission(self, request):
+        return is_admin(request.user)
+
+    def has_change_permission(self, request, obj=None):
+        return is_admin(request.user)
+
+    def has_delete_permission(self, request, obj=None):
+        return is_admin(request.user)
+

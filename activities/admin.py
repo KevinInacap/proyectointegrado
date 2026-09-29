@@ -4,6 +4,7 @@ from django.utils.html import format_html
 from django.utils.safestring import mark_safe
 from organization.models import Delegation
 from .models import ServiceCatalog, Activity, Evidence, Validation
+from .forms import ActivityForm
 
 
 class EvidenceInline(admin.TabularInline):
@@ -30,6 +31,7 @@ class ServiceCatalogAdmin(admin.ModelAdmin):
 
 @admin.register(Activity)
 class ActivityAdmin(admin.ModelAdmin):
+    form = ActivityForm
     list_display = (
         'activity_code',
         'activity_date',
@@ -60,7 +62,7 @@ class ActivityAdmin(admin.ModelAdmin):
         allowed = super().has_change_permission(request, obj)
         if not allowed:
             return False
-        if obj is None or request.user.is_superuser:
+        if obj is None or request.user.is_superuser or request.user.groups.filter(name="Administradores").exists():
             return True
         if hasattr(request.user, 'profile') and request.user.profile.delegation:
             return obj.delegation_id == request.user.profile.delegation_id
@@ -68,7 +70,7 @@ class ActivityAdmin(admin.ModelAdmin):
 
     def has_delete_permission(self, request, obj=None):
         # Evitar eliminación física accidental para usuarios no administradores (Clase 3 y 5)
-        if not request.user.is_superuser:
+        if not (request.user.is_superuser or request.user.groups.filter(name="Administradores").exists()):
             return False
         return super().has_delete_permission(request, obj)
 
@@ -131,21 +133,22 @@ class ActivityAdmin(admin.ModelAdmin):
     # Scoping de seguridad por Delegación
     def get_queryset(self, request):
         qs = super().get_queryset(request)
-        if request.user.is_superuser:
+        if request.user.is_superuser or request.user.groups.filter(name="Administradores").exists():
             return qs
         if hasattr(request.user, 'profile') and request.user.profile.delegation:
             return qs.filter(delegation=request.user.profile.delegation)
         return qs.filter(user=request.user)
 
     def save_model(self, request, obj, form, change):
-        if not request.user.is_superuser and hasattr(request.user, 'profile') and request.user.profile.delegation:
-            obj.delegation = request.user.profile.delegation
+        if not (request.user.is_superuser or request.user.groups.filter(name="Administradores").exists()):
+            if hasattr(request.user, 'profile') and request.user.profile.delegation:
+                obj.delegation = request.user.profile.delegation
             if not obj.user_id:
                 obj.user = request.user
         super().save_model(request, obj, form, change)
 
     def formfield_for_foreignkey(self, db_field, request, **kwargs):
-        if not request.user.is_superuser and db_field.name == "delegation":
+        if not (request.user.is_superuser or request.user.groups.filter(name="Administradores").exists()) and db_field.name == "delegation":
             if hasattr(request.user, 'profile') and request.user.profile.delegation:
                 kwargs["queryset"] = Delegation.objects.filter(id=request.user.profile.delegation_id)
         return super().formfield_for_foreignkey(db_field, request, **kwargs)
@@ -155,6 +158,7 @@ class ActivityAdmin(admin.ModelAdmin):
 class EvidenceAdmin(admin.ModelAdmin):
     list_display = ('evidence_code', 'activity', 'file_name', 'uploaded_by', 'created_at')
     list_select_related = ('activity', 'uploaded_by')
+    list_filter = ('created_at', 'uploaded_by')
     search_fields = ('evidence_code', 'file_name', 'activity__activity_code')
     ordering = ('-created_at',)
 

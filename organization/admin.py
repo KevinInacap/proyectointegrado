@@ -2,6 +2,7 @@ from django.contrib import admin, messages
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from django.contrib.auth.models import User, Group
 from .models import Delegation, Position, UserProfile
+from .forms import DelegationForm, UserProfileForm
 
 
 class UserProfileStackedInline(admin.StackedInline):
@@ -188,6 +189,7 @@ class UserProfileDelegationInline(admin.TabularInline):
 
 @admin.register(Delegation)
 class DelegationAdmin(admin.ModelAdmin):
+    form = DelegationForm
     list_display = ('name', 'scope', 'status', 'created_at')
     list_filter = ('status', 'scope')
     search_fields = ('name', 'scope')
@@ -224,6 +226,7 @@ class PositionAdmin(admin.ModelAdmin):
 
 @admin.register(UserProfile)
 class UserProfileAdmin(admin.ModelAdmin):
+    form = UserProfileForm
     list_display = ('full_name', 'rut', 'email', 'delegation', 'position', 'get_user_groups', 'status', 'created_at')
     list_select_related = ('user', 'delegation', 'position')
     list_filter = ('status', 'delegation', 'position', 'user__groups')

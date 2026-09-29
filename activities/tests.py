@@ -106,3 +106,50 @@ class ActivityModelTests(TestCase):
         self.assertFalse(self.user_gestor.is_superuser)
         self.assertEqual(self.user_gestor.profile.delegation.name, "Delegación Las Compañías")
         self.assertIn("Gestores Territoriales", [g.name for g in self.user_gestor.groups.all()])
+
+    def test_social_case_future_date_rejected(self):
+        """Verifica que clean() rechace casos sociales con fecha futura."""
+        from social.models import SocialCase
+        future_date = date.today() + timedelta(days=2)
+        case = SocialCase(
+            user_rut="11.222.333-4",
+            user_name="Vecino Test",
+            delegation=self.del_companias,
+            entry_date=future_date
+        )
+        with self.assertRaises(ValidationError):
+            case.clean()
+
+    def test_social_management_stage_boundary(self):
+        """Verifica que clean() restrinja etapas de gestión entre 1 y 3 (RN-012)."""
+        from social.models import SocialCase, SocialManagement
+        case = SocialCase.objects.create(
+            user_rut="12.333.444-5",
+            user_name="Caso Test",
+            delegation=self.del_companias,
+            entry_date=date.today()
+        )
+        invalid_mgmt = SocialManagement(
+            case=case,
+            stage=4,  # Mayor a 3
+            management_type="Derivación",
+            management_date=date.today(),
+            result="Prueba inválida"
+        )
+        with self.assertRaises(ValidationError):
+            invalid_mgmt.clean()
+
+    def test_collective_agenda_closing_date_validation(self):
+        """Verifica que clean() rechace fecha de cierre anterior a fecha comprometida."""
+        from agenda.models import CollectiveAgenda
+        agenda = CollectiveAgenda(
+            requester="JJVV Test",
+            territory="Sector 1",
+            delegation=self.del_companias,
+            committed_date=date(2026, 4, 15),
+            closing_date=date(2026, 4, 10),  # Anterior a committed_date
+            description="Compromiso de prueba"
+        )
+        with self.assertRaises(ValidationError):
+            agenda.clean()
+
