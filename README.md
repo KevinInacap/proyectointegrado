@@ -113,4 +113,47 @@ Abre en el navegador:
 
 ---
 
-**Ilustre Municipalidad de La Serena · Proyecto Integrado**
+## 👥 Cuentas de Prueba Documentadas (Evaluación Sumativa II)
+
+El sistema implementa control de acceso basado en roles con **Grupos de Django (`django.contrib.auth.models.Group`)** y **Scoping Territorial**:
+
+| Usuario | Contraseña | RUT | Grupo / Rol | Contexto / Delegación | Alcance y Permisos |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| **`admin`** | `Admin1234!` | `11.111.111-1` | **Administradores** | Centro Histórico | **Superusuario:** Acceso total, gestión transversal de usuarios, delegaciones, eliminación física y auditoría. |
+| **`admin_control`** | `Admin1234!` | `13.444.555-6` | **Administradores** | Centro Histórico | Control comunal, auditoría y parametrización de metas. |
+| **`verificador`** | `Verificador1234!` | `15.678.901-2` | **Verificadores** | Las Compañías | Auditoría técnica y validación formal de evidencias; no puede crear registros operacionales. |
+| **`verificador_centro`**| `Verificador1234!` | `16.789.012-3` | **Verificadores** | Centro Histórico | Revisión y validación sector centro. |
+| **`funcionario_companias`**| `Funcionario1234!` | `17.892.456-3` | **Gestores Territoriales**| Las Compañías | **Usuario limitado:** Solo visualiza y opera datos de la Delegación Las Compañías (Scoping). Sin permiso de borrado. |
+| **`funcionario_centro`** | `Funcionario1234!` | `18.345.678-K` | **Gestores Territoriales**| Centro Histórico | **Usuario limitado:** Solo opera en Centro Histórico. No visualiza Las Compañías. |
+| **`funcionario_pampa`** | `Funcionario1234!` | `12.345.678-K` | **Gestores Territoriales**| La Pampa | Operación territorial en La Pampa. |
+| **`funcionario_rural`** | `Funcionario1234!` | `19.876.543-2` | **Gestores Territoriales**| Sector Rural | Operación territorial en Sector Rural. |
+
+---
+
+## 🏛️ Estructura de Aplicaciones y Arquitectura Django
+
+El proyecto divide responsabilidades en 6 aplicaciones modulares del dominio:
+
+* **`core/`**: Configuración transversal, vistas de autenticación (`login_view`, `logout_view`), modelo base abstracto de auditoría (`BaseModel`: `created_at`, `updated_at`, `deleted_at`), registro de auditoría (`AuditLog`) y comando de semillas reproducible (`seed_data.py`).
+* **`organization/`**: Entidades maestras territoriales e institucionales (`Delegation`, `Position`, `UserProfile`), extensión de `CustomUserAdmin` con acciones de asignación masiva de grupos y delegaciones, y `UserProfileStackedInline`.
+* **`activities/`**: Módulo operativo central (`Activity`, `Evidence`, `Validation`, `ServiceCatalog`), formularios con validación controlada (`ActivityForm`), vistas de dashboard y acciones de validación/borrado lógico en Django Admin.
+* **`agenda/`**: Tubo de trabajo y compromisos vecinales (`CollectiveAgenda`, `CommitmentHistory`) con acciones masivas e historial inline.
+* **`social/`**: Casos sociales y gestiones encadenadas (`SocialCase`, `SocialManagement`) con scoping territorial y validación controlada en `clean()`.
+* **`metrics/`**: Metas de gestión y cálculo de avance (`MeasurementPeriod`, `MeasurementItem`, `Goal`, `DailyIndicator`, `PerformanceAdjustment`).
+
+---
+
+## 🛡️ Evidencias para la Defensa en Laboratorio
+
+1. **Admin Básico:** Registro de más de 8 tablas maestras y operativas con `list_display`, `search_fields`, `list_filter`, `ordering` y `list_select_related`.
+2. **Admin Pro:**
+   - **Inlines:** `UserProfileStackedInline` en Usuarios, `EvidenceInline` en Actividades, `SocialManagementInline` en Casos Sociales, `CommitmentHistoryInline` en Agenda.
+   - **Acciones Personalizadas:** En Usuarios (asignar grupos y delegaciones), en Actividades (aprobar, corrección, borrado lógico), en Casos Sociales (derivar a evaluación, restaurar) y en Agenda (marcar en proceso, marcar cumplido).
+   - **Validación Controlada `clean()`:** Bloqueo de fechas futuras en actividades y casos sociales; obligatoriedad de dirigente de contacto si deriva a agenda colectiva.
+3. **Seguridad y Scoping:**
+   - Ingresar con `admin`: Visibilidad comunal completa, capacidad de editar y eliminar cualquier registro.
+   - Ingresar con `funcionario_companias`: Solo visualiza registros de su delegación ("Delegación Las Compañías"), sin acceso a registros de otras delegaciones y sin permisos de borrado físico (`has_delete_permission = False`).
+
+---
+
+**Ilustre Municipalidad de La Serena · Proyecto Integrado Backend**
