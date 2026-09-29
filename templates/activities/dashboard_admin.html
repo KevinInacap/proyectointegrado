@@ -726,11 +726,15 @@
 
             <!-- Identificación de Usuario y Salida -->
             <div class="header-user-zone">
+                <a href="/admin/auth/user/" target="_blank" class="btn-admin-manage" title="Gestionar Usuarios, Grupos y Delegaciones" style="background: rgba(30, 58, 138, 0.45); color: #93c5fd; border: 1px solid rgba(147, 197, 253, 0.35); padding: 7px 14px; border-radius: 9999px; font-size: 0.82rem; font-weight: 600; text-decoration: none; display: inline-flex; align-items: center; gap: 7px; transition: all 0.2s ease;">
+                    <i class="bi bi-people-fill text-warning"></i>
+                    <span>Gestionar Usuarios y Grupos (Admin)</span>
+                </a>
                 <div class="user-pill">
                     <div class="user-pill-avatar">
                         <i class="bi bi-person-fill"></i>
                     </div>
-                    <span class="user-pill-text">Alcaldía La Serena | Nivel Estratégico</span>
+                    <span class="user-pill-text">{{ user_name|default:"Alcaldía La Serena | Nivel Estratégico" }}</span>
                 </div>
                 <a href="{% url 'core:logout' %}" class="btn-exit-outline" title="Cerrar sesión">
                     <i class="bi bi-box-arrow-right"></i>
