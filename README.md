@@ -37,110 +37,103 @@ La pantalla de acceso institucional fue concebida para combinar rigor técnico, 
 
 ## 🛠️ Stack Tecnológico
 
-* **Backend:** Python 3 / Django
-* **Frontend:** HTML5, CSS3, JavaScript Vanilla
-* **Framework UI & Efectos:** Bootstrap 5.3, Bootstrap Icons, Vanilla Tilt
-* **Base de Datos:** SQLite / MySQL compatible
-* **Control de Versiones:** Git / GitHub
+* **Backend:** Python 3 / Django 6.1.1
+* **Base de Datos:** SQLite (por defecto, lista para usar) y compatible con MySQL
+* **Frontend y Estilos:** HTML5, CSS3 Glassmorphism, Bootstrap 5.3 y Vanilla Tilt
+* **Control de Versiones:** Git y GitHub (rama `Prueba_2_Back_End` / `main`)
 
 ---
 
-## 🚀 Instalación y Puesta en Marcha
+## 🚀 Guía Rápida: Cómo Levantar el Proyecto desde Cero (en Git Bash)
 
-### 1. Crear el entorno virtual
+Todo el proyecto se levanta de manera sencilla utilizando tu terminal de **Git Bash**. Sigue estos pasos en orden:
+
+### Paso 1: Crear el entorno virtual
+En la terminal de Git Bash, parado en la carpeta del proyecto, ejecuta:
 ```bash
 python -m venv .venv
 ```
 
-### 2. Activar el entorno virtual
+### Paso 2: Activar el entorno virtual
+```bash
+source .venv/Scripts/activate
+```
+*(Verás que al inicio de la línea en tu terminal aparece `(.venv)`, eso indica que ya estás dentro).*
 
-* **En Git Bash:**
-  ```bash
-  source .venv/Scripts/activate
-  ```
-
-* **En Windows (PowerShell):**
-  ```powershell
-  .\.venv\Scripts\Activate.ps1
-  ```
-
-* **En Windows (CMD):**
-  ```cmd
-  .venv\Scripts\activate.bat
-  ```
-
-* **En Linux / macOS:**
-  ```bash
-  source .venv/bin/activate
-  ```
-
-### 3. Instalar dependencias
+### Paso 3: Instalar las dependencias
 ```bash
 pip install -r requirements.txt
 ```
 
-### 4. Configurar variables de entorno
-Crea tu archivo local `.env` a partir de la plantilla:
-* En Git Bash / Linux:
-  ```bash
-  cp .env.example .env
-  ```
-* En Windows (PowerShell):
-  ```powershell
-  Copy-Item .env.example .env
-  ```
+### Paso 4: Crear tu archivo de configuración (.env)
+Copia la plantilla `.env.example` para crear tu `.env` de desarrollo:
+```bash
+cp .env.example .env
+```
 
-### 5. Verificar y aplicar migraciones
+### Paso 5: Preparar la base de datos
+Ejecuta la verificación del sistema y aplica todas las migraciones:
 ```bash
 python manage.py check
 python manage.py migrate
 ```
 
-### 6. Cargar datos reproducibles (Seed)
-Ejecuta el comando para poblar la base de datos con usuarios y datos operativos:
+### Paso 6: Cargar los datos de prueba (Semilla / Seed)
+Carga automáticamente todas las delegaciones, cargos, los 6 roles institucionales, permisos y usuarios de prueba:
 ```bash
 python manage.py seed_data
 ```
 
-### 7. Ejecutar el servidor de desarrollo
+### Paso 7: Iniciar el servidor
 ```bash
 python manage.py runserver
 ```
 
-Abre en el navegador:  
-* **Portal de Acceso:** `http://127.0.0.1:8000/`  
-* **Django Admin:** `http://127.0.0.1:8000/admin/`  
+¡Listo! Abre tu navegador en:
+* **Portal Web / Login Institucional:** [http://127.0.0.1:8000/](http://127.0.0.1:8000/)
+* **Panel de Administración (Django Admin):** [http://127.0.0.1:8000/admin/](http://127.0.0.1:8000/admin/)
 
 ---
 
-## 📋 Resumen de Cumplimiento: Evaluación Sumativa II (Backend)
+## 👥 Cuentas de Prueba Oficiales para la Evaluación
 
-| Criterio Rúbrica | Puntaje | Implementación y Evidencia en el Código |
-|---|:---:|---|
-| **1. Conexión BD + Migraciones** | **10 pts** | Conexión configurada en [settings.py](file:///c:/Users/kevii/OneDrive/Desktop/proyectointegrado/config/settings.py) mediante `.env` (compatible SQLite y MySQL). Se incluye [.env.example](file:///c:/Users/kevii/OneDrive/Desktop/proyectointegrado/.env.example) y [requirements.txt](file:///c:/Users/kevii/OneDrive/Desktop/proyectointegrado/requirements.txt). Migraciones 100% versionadas y aplicadas sin errores. |
-| **2. Arquitectura, Modelado y Auditoría** | **15 pts** | Arquitectura modular distribuida en 6 apps: `core`, `organization`, `metrics`, `activities`, `agenda`, `social`. Todos los modelos y atributos en inglés técnico, con `verbose_name` en español. Clase abstracta [BaseModel](file:///c:/Users/kevii/OneDrive/Desktop/proyectointegrado/core/models.py) con `created_at`, `updated_at` y `deleted_at`. Tabla `AuditLog` para auditoría transversal. |
-| **3. Admin Básico** | **10 pts** | **6 tablas maestras registradas:** `Delegation`, `Position`, `Role`, `MeasurementPeriod`, `MeasurementItem`, `ServiceCatalog`.<br>**6 tablas operativas registradas:** `UserProfile`, `Goal`, `Activity`, `Evidence`, `Validation`, `CollectiveAgenda`, `SocialCase`.<br>Uso riguroso de `list_display`, `search_fields`, `list_filter`, `ordering` y `list_select_related` para optimización de consultas. |
-| **4. Admin Pro** | **15 pts** | **Inlines:** `EvidenceInline` y `ValidationInline` en [ActivityAdmin](file:///c:/Users/kevii/OneDrive/Desktop/proyectointegrado/activities/admin.py); `GoalInline` en Periodo; `CommitmentHistoryInline` en Agenda.<br>**Acciones Personalizadas:** `approve_selected`, `mark_for_correction`, `soft_delete_selected`, `restore_selected`.<br>**Validación Controlada:** Método [clean()](file:///c:/Users/kevii/OneDrive/Desktop/proyectointegrado/activities/models.py) en `Activity` (bloquea fechas futuras y exige contacto si deriva a agenda colectiva). |
-| **5. Seguridad: Scoping por Delegación** | **15 pts** | En [ActivityAdmin](file:///c:/Users/kevii/OneDrive/Desktop/proyectointegrado/activities/admin.py), [CollectiveAgendaAdmin](file:///c:/Users/kevii/OneDrive/Desktop/proyectointegrado/agenda/admin.py) y [SocialCaseAdmin](file:///c:/Users/kevii/OneDrive/Desktop/proyectointegrado/social/admin.py):<br>• `get_queryset()`: Filtra registros por la delegación asignada al perfil del usuario.<br>• `has_change_permission()` y `has_delete_permission()`: Bloquea edición/eliminación fuera de su territorio.<br>• `save_model()` y `formfield_for_foreignkey()`: Autovincula la delegación autorizada. |
-| **6. Documentación y Reproducibilidad** | **10 pts** | Comando `python manage.py seed_data` idempotente y reproducible con datos territoriales reales. README con guía paso a paso y cuentas de prueba documentadas. |
-| **7. Revisión y Defensa en Vivo** | **15 pts** | Despliegue limpio verificado con `check` y `migrate`. Demostración en Django Admin con perfiles diferenciados sin fallos. |
-| **8. Gestión Git** | **10 pts** | Trabajo en ramas descriptivas (`Prueba_2_Back_End`), historial de commits ordenado y [.gitignore](file:///c:/Users/kevii/OneDrive/Desktop/proyectointegrado/.gitignore) que excluye `.env`, `.venv` y archivos de base de datos. |
+Todas las cuentas vienen creadas al ejecutar `python manage.py seed_data`. Puedes usarlas para entrar tanto al Login web como a **Django Admin**:
 
----
-
-## 👥 Matriz de Cuentas de Prueba para Demostración
-
-| Usuario | Contraseña | Rol Institucional | Delegación Asignada | Alcance y Comportamiento en Django Admin |
+| Usuario | Contraseña | Rol que representa | Delegación | ¿Qué puede hacer en el sistema? |
 |---|---|---|---|---|
-| **`admin`** | `Admin1234!` | Administrador General (Superusuario) | Consolidado Comunal | **Acceso total:** Visualiza, edita y audita todas las delegaciones y modelos. |
-| **`coordinador`** | `Coordinador1234!` | Coordinador del Sistema SGR | Supervisión Comunal | Supervisión global de indicadores, periodos y metas comunales. |
-| **`delegado_companias`** | `Delegado1234!` | Delegado Municipal | Las Compañías | Jefatura territorial; gestiona la Agenda Colectiva de su sector. |
-| **`funcionario_companias`** | `Funcionario1234!` | Gestor Territorial (Limitado) | Las Compañías | **Scoping activo:** Solo visualiza y crea actividades de *Las Compañías*. Sin permiso para validar. |
-| **`funcionario_centro`** | `Funcionario1234!` | Gestor Territorial (Limitado) | Centro Histórico | **Scoping activo:** Solo visualiza actividades del *Centro Histórico*. Aislado de *Las Compañías*. |
-| **`verificador`** | `Verificador1234!` | Verificador Técnico | Las Compañías | Revisa y aprueba evidencias. No puede crear ni eliminar actividades. |
-| **`consulta`** | `Consulta1234!` | Auditor / Consulta Externa | Centro Histórico | **Solo lectura:** Visualiza tableros e indicadores sin facultades de modificación. |
+| **`admin`** | `Admin1234!` | Administrador General (Superuser) | Todas (Comunal) | **Control total:** Ve y modifica absolutamente todo, crea usuarios, asigna roles y ve la auditoría completa. |
+| **`coordinador`** | `Coordinador1234!` | Coordinador del Sistema SGR | Supervisión Comunal | Monitorea metas comunales, indicadores y períodos de medición. |
+| **`delegado_companias`** | `Delegado1234!` | Delegado Municipal | Las Compañías | Jefatura de sector: gestiona y revisa la Agenda Colectiva (tubo de trabajo) de su delegación. |
+| **`funcionario_companias`** | `Funcionario1234!` | Gestor Territorial (Limitado) | Las Compañías | **Scoping activo:** Solo puede ver y crear actividades de *Las Compañías*. **No puede ver otras delegaciones ni autoaprobarse actividades**. |
+| **`funcionario_centro`** | `Funcionario1234!` | Gestora Territorial (Limitada) | Centro Histórico | **Scoping activo:** Solo ve y crea actividades del *Centro Histórico*. Está totalmente aislada de Las Compañías. |
+| **`verificador`** | `Verificador1234!` | Verificador Técnico | Las Compañías | Revisa evidencias y aprueba o rechaza. No tiene permiso para crear ni borrar actividades operativas. |
+| **`consulta`** | `Consulta1234!` | Auditor / Usuario de Consulta | Centro Histórico | **Solo lectura:** Puede mirar tableros e indicadores para informes, sin poder editar nada. |
+
+---
+
+## 🎯 Pruebas Rápidas para Mostrarle al Profesor (Puntos del 7.0)
+
+Durante la defensa, puedes demostrar los requisitos clave del curso en menos de 2 minutos:
+
+1. **Demostración de Scoping Territorial (Aislamiento de datos):**
+   * Inicia sesión en Django Admin con `funcionario_companias` (clave: `Funcionario1234!`).
+   * Anda a **Actividades**: verás que **solamente aparecen registros de Las Compañías**.
+   * Cierra sesión y entra con `funcionario_centro` (clave: `Funcionario1234!`): verás que **solo aparecen las del Centro Histórico**. Nunca se mezclan datos entre delegaciones ajenas.
+
+2. **Demostración de Seguridad por URL (Prueba negativa de la Clase 5):**
+   * Estando conectado como `funcionario_companias`, intenta entrar directamente en la URL a editar una actividad de otra delegación (ej: `http://127.0.0.1:8000/admin/activities/activity/1/change/`).
+   * El sistema bloquea el acceso en el servidor gracias a `has_change_permission`.
+
+3. **Demostración de Validación Controlada (`clean()`):**
+   * Intenta crear una Actividad con **fecha de mañana**: el sistema te dirá que la fecha no puede ser futura.
+   * Marca la casilla *"¿Ingresa a agenda colectiva?"* y deja el contacto en blanco: el sistema te exigirá el nombre de contacto obligatorio.
+
+4. **Demostración de Inlines y Acciones del Admin:**
+   * Al entrar al detalle de cualquier actividad, verás abajo sus **Evidencias y Validaciones integradas (Inlines)**.
+   * En la lista de actividades, puedes seleccionar varias y usar la acción *"Archivar actividades seleccionadas"* para hacer borrado lógico con `deleted_at`.
 
 ---
 
 **Ilustre Municipalidad de La Serena · Proyecto Integrado**
+
 
