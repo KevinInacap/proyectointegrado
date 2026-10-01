@@ -394,11 +394,52 @@ INSERT INTO `cargo` (`id_cargo`, `nombre`, `descripcion`, `estado`) VALUES
 (5, 'Asistente Social Territorial', 'Atención de casos sociales, subsidios y Registro Social de Hogares', 'Activo');
 
 INSERT INTO `rol` (`id_rol`, `nombre_rol`, `descripcion`) VALUES
-(1, 'Administrador', 'Configuración integral, parámetros, usuarios y auditoría'),
-(2, 'Coordinador', 'Supervisión institucional, metas y reportes consolidados'),
+(1, 'Administrador', 'Configuración integral, parámetros, usuarios y auditoría transversal'),
+(2, 'Coordinador', 'Supervisión institucional, metas y reportes consolidados comunales'),
 (3, 'Delegado', 'Jefatura de delegación y gestión del tubo de trabajo colectivo'),
-(4, 'Funcionario', 'Registro operativo de actividades, atenciones y evidencias'),
-(5, 'Verificador', 'Revisión técnica, aprobación o rechazo de evidencias');
+(4, 'Funcionario', 'Registro operativo de actividades, atenciones, compromisos y evidencias'),
+(5, 'Verificador', 'Revisión técnica, aprobación o rechazo de evidencias registradas'),
+(6, 'Usuario de Consulta', 'Visualización de tableros, reportes e indicadores sin facultades de edición');
 
 INSERT INTO `periodo` (`id_periodo`, `nombre`, `fecha_inicio`, `fecha_termino`, `dias_computables`, `umbral_minimo`, `tope_cumplimiento`, `estado`) VALUES
 (1, 'Segundo Semestre 2026', '2026-07-01', '2026-12-31', 91, 80.00, 150.00, 'Abierto');
+
+-- Inserción de Usuarios de Prueba Institucionales (Matriz de Acceso Diferenciada)
+INSERT INTO `usuario` (`id_usuario`, `rut`, `nombre_completo`, `email`, `password_hash`, `id_delegacion`, `id_cargo`, `estado`) VALUES
+(1, '11.111.111-1', 'Administrador General del Sistema', 'admin@laserena.cl', 'pbkdf2_sha256$1000000$AdminHash2026$X9k2...', 2, 1, 'Activo'),
+(2, '13.456.789-0', 'Marcelo Salazar Peña (Coordinador)', 'coordinacion.sgr@laserena.cl', 'pbkdf2_sha256$1000000$CoordHash2026$Y8m1...', 2, 1, 'Activo'),
+(3, '14.234.567-8', 'Gonzalo Pizarro Rojas (Delegado)', 'delegado.companias@laserena.cl', 'pbkdf2_sha256$1000000$DelegHash2026$Z7n4...', 4, 2, 'Activo'),
+(4, '17.892.456-3', 'Rodrigo Tapia Gallardo (Gestor)', 'gestor.companias@laserena.cl', 'pbkdf2_sha256$1000000$GestorHash2026$W6p5...', 4, 3, 'Activo'),
+(5, '18.345.678-K', 'Camila Araya Miranda (Gestora)', 'gestora.centro@laserena.cl', 'pbkdf2_sha256$1000000$GestoraHash2026$V5q6...', 2, 3, 'Activo'),
+(6, '15.678.901-2', 'Esteban Morales Vega (Verificador)', 'verificador@laserena.cl', 'pbkdf2_sha256$1000000$VerifHash2026$U4r7...', 4, 4, 'Activo'),
+(7, '16.789.012-3', 'Valeria Cáceres Soto (Auditora/Consulta)', 'auditoria.externa@laserena.cl', 'pbkdf2_sha256$1000000$ConsulHash2026$T3s8...', 2, 1, 'Activo');
+
+-- Asignación de Roles (Tabla N:M usuario_rol)
+INSERT INTO `usuario_rol` (`id_usuario`, `id_rol`) VALUES
+(1, 1), -- Administrador General -> Rol Administrador
+(2, 2), -- Marcelo Salazar -> Rol Coordinador
+(3, 3), -- Gonzalo Pizarro -> Rol Delegado
+(4, 4), -- Rodrigo Tapia -> Rol Funcionario
+(5, 4), -- Camila Araya -> Rol Funcionario
+(6, 5), -- Esteban Morales -> Rol Verificador
+(7, 6); -- Valeria Cáceres -> Rol Usuario de Consulta
+
+-- =============================================================================
+-- SEGURIDAD A NIVEL DE MOTOR MYSQL: ROLES Y PRIVILEGIOS DE BASE DE DATOS (DCL)
+-- =============================================================================
+-- Creación de usuarios de BD y asignación de permisos según principio de menor privilegio:
+
+-- 1. Rol / Usuario Administrador DB (Mantenimiento total del esquema SGR)
+CREATE USER IF NOT EXISTS 'sgr_admin'@'%' IDENTIFIED BY 'AdminSGR2026!';
+GRANT ALL PRIVILEGES ON `sgr_laserena_db`.* TO 'sgr_admin'@'%';
+
+-- 2. Rol / Usuario Operador de Aplicación (Lectura/Escritura transaccional)
+CREATE USER IF NOT EXISTS 'sgr_app'@'%' IDENTIFIED BY 'AppTransaccional2026!';
+GRANT SELECT, INSERT, UPDATE, DELETE ON `sgr_laserena_db`.* TO 'sgr_app'@'%';
+
+-- 3. Rol / Usuario de Auditoría y Consulta (Solo lectura estricta para reportes)
+CREATE USER IF NOT EXISTS 'sgr_readonly'@'%' IDENTIFIED BY 'ReadOnlySGR2026!';
+GRANT SELECT ON `sgr_laserena_db`.* TO 'sgr_readonly'@'%';
+
+FLUSH PRIVILEGES;
+

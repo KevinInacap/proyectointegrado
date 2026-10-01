@@ -28,6 +28,21 @@ class ServiceCatalogAdmin(admin.ModelAdmin):
     ordering = ('area', 'service')
 
 
+from core.admin_utils import get_user_delegation
+
+@admin.action(
+    description="Archivar actividades seleccionadas (Borrado lógico)",
+    permissions=["change"],
+)
+def archive_activities(modeladmin, request, queryset):
+    updated = queryset.filter(deleted_at__isnull=True).update(deleted_at=timezone.now())
+    modeladmin.message_user(
+        request,
+        f"{updated} actividad(es) archivada(s) correctamente.",
+        level=messages.SUCCESS,
+    )
+
+
 @admin.register(Activity)
 class ActivityAdmin(admin.ModelAdmin):
     list_display = (
@@ -39,7 +54,6 @@ class ActivityAdmin(admin.ModelAdmin):
         'status_badge',
         'agenda_display',
         'created_at',
-        'deleted_at',
     )
     list_select_related = ('user', 'delegation', 'period', 'item', 'catalog')
     list_filter = (
@@ -47,30 +61,52 @@ class ActivityAdmin(admin.ModelAdmin):
         'delegation', 
         'is_collective_agenda', 
         'activity_date',
-        ('deleted_at', admin.EmptyFieldListFilter),
     )
     search_fields = ('activity_code', 'problem_description', 'contact_name', 'executed_action')
     ordering = ('-activity_date', '-created_at')
     date_hierarchy = 'activity_date'
     inlines = [EvidenceInline, ValidationInline]
-    actions = ['approve_selected', 'mark_for_correction', 'soft_delete_selected', 'restore_selected']
+    actions = [archive_activities, 'approve_selected', 'mark_for_correction', 'restore_selected']
 
-    # Seguridad Clase 5: Proteger acceso y modificación directa por URL a nivel de objeto
+    # 1. Scoping en get_queryset (Lámina 7 de Clase 5): excluye archivados y acota a delegación del usuario
+    def get_queryset(self, request):
+        qs = super().get_queryset(request)
+        qs = qs.filter(deleted_at__isnull=True)
+        if request.user.is_superuser:
+            return qs
+        delegation = get_user_delegation(request)
+        return qs.filter(delegation=delegation)
+
+    # 2. Seguridad en modificación por objeto (Lámina 12 de Clase 5): protege accesos directos por URL
     def has_change_permission(self, request, obj=None):
         allowed = super().has_change_permission(request, obj)
         if not allowed:
             return False
         if obj is None or request.user.is_superuser:
             return True
-        if hasattr(request.user, 'profile') and request.user.profile.delegation:
-            return obj.delegation_id == request.user.profile.delegation_id
-        return False
+        delegation = get_user_delegation(request)
+        return obj.delegation_id == delegation.id
 
+    # 3. Restricción de eliminación física (Lámina 14 de Clase 5): solo superusuarios pueden borrar físicamente
     def has_delete_permission(self, request, obj=None):
-        # Evitar eliminación física accidental para usuarios no administradores (Clase 3 y 5)
         if not request.user.is_superuser:
             return False
         return super().has_delete_permission(request, obj)
+
+    # 4. Limitación de ForeignKey al ámbito autorizado (Láminas 9 y 10 de Clase 5)
+    def formfield_for_foreignkey(self, db_field, request, **kwargs):
+        if db_field.name == "delegation" and not request.user.is_superuser:
+            delegation = get_user_delegation(request)
+            kwargs["queryset"] = Delegation.objects.filter(id=delegation.id)
+        return super().formfield_for_foreignkey(db_field, request, **kwargs)
+
+    # 5. Asignación automática del ámbito (Lámina 11 de Clase 5)
+    def save_model(self, request, obj, form, change):
+        if not request.user.is_superuser:
+            obj.delegation = get_user_delegation(request)
+            if not obj.user_id:
+                obj.user = request.user
+        super().save_model(request, obj, form, change)
 
     @admin.display(description="Estado de validación", ordering='validation_status')
     def status_badge(self, obj):
@@ -110,16 +146,7 @@ class ActivityAdmin(admin.ModelAdmin):
             messages.WARNING
         )
 
-    @admin.action(description="🗑️ Aplicar borrado lógico (Soft delete)")
-    def soft_delete_selected(self, request, queryset):
-        count = queryset.update(deleted_at=timezone.now())
-        self.message_user(
-            request, 
-            f"Se aplicó borrado lógico a {count} actividades (registrado en deleted_at).", 
-            messages.INFO
-        )
-
-    @admin.action(description="♻️ Restaurar registros eliminados")
+    @admin.action(description="♻️ Restaurar registros archivados")
     def restore_selected(self, request, queryset):
         count = queryset.update(deleted_at=None)
         self.message_user(
@@ -128,27 +155,6 @@ class ActivityAdmin(admin.ModelAdmin):
             messages.SUCCESS
         )
 
-    # Scoping de seguridad por Delegación
-    def get_queryset(self, request):
-        qs = super().get_queryset(request)
-        if request.user.is_superuser:
-            return qs
-        if hasattr(request.user, 'profile') and request.user.profile.delegation:
-            return qs.filter(delegation=request.user.profile.delegation)
-        return qs.filter(user=request.user)
-
-    def save_model(self, request, obj, form, change):
-        if not request.user.is_superuser and hasattr(request.user, 'profile') and request.user.profile.delegation:
-            obj.delegation = request.user.profile.delegation
-            if not obj.user_id:
-                obj.user = request.user
-        super().save_model(request, obj, form, change)
-
-    def formfield_for_foreignkey(self, db_field, request, **kwargs):
-        if not request.user.is_superuser and db_field.name == "delegation":
-            if hasattr(request.user, 'profile') and request.user.profile.delegation:
-                kwargs["queryset"] = Delegation.objects.filter(id=request.user.profile.delegation_id)
-        return super().formfield_for_foreignkey(db_field, request, **kwargs)
 
 
 @admin.register(Evidence)

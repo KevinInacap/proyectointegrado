@@ -70,21 +70,122 @@ class Command(BaseCommand):
         self.stdout.write(self.style.SUCCESS("[OK] Cargos y Roles maestros creados."))
 
         # -------------------------------------------------------------
-        # 3. GRUPOS Y PERMISOS DJANGO
+        # 2. TABLAS MAESTRAS: CARGOS Y ROLES INSTITUCIONALES
         # -------------------------------------------------------------
-        group_operadores, _ = Group.objects.get_or_create(name="Operadores Territoriales")
-        operational_models = [Activity, Evidence, Validation, CollectiveAgenda, CommitmentHistory, SocialCase, SocialManagement]
-        
-        for model in operational_models:
+        pos_coordinador, _ = Position.objects.get_or_create(
+            name="Coordinador General SGR",
+            defaults={"description": "Supervisión transversal de indicadores, metas comunales y auditoría.", "status": "Activo"}
+        )
+        pos_delegado, _ = Position.objects.get_or_create(
+            name="Delegado Municipal",
+            defaults={"description": "Jefatura territorial a cargo de la gestión y tubo de trabajo de la delegación.", "status": "Activo"}
+        )
+        pos_gestor, _ = Position.objects.get_or_create(
+            name="Gestor Territorial",
+            defaults={"description": "Atención ciudadana en terreno, registro de actividades y requerimientos.", "status": "Activo"}
+        )
+        pos_asistente_social, _ = Position.objects.get_or_create(
+            name="Asistente Social Territorial",
+            defaults={"description": "Atención de casos sociales, subsidios, RSH y derivaciones.", "status": "Activo"}
+        )
+        pos_verificador, _ = Position.objects.get_or_create(
+            name="Verificador Técnico",
+            defaults={"description": "Revisión técnica, auditoría y validación documental de evidencias.", "status": "Activo"}
+        )
+        pos_director, _ = Position.objects.get_or_create(
+            name="Director de Delegación",
+            defaults={"description": "Supervisión global de operaciones y cumplimiento de metas.", "status": "Activo"}
+        )
+
+        role_admin, _ = Role.objects.get_or_create(
+            name="Administrador",
+            defaults={"description": "Configuración integral, parámetros, usuarios y auditoría transversal."}
+        )
+        role_coordinador, _ = Role.objects.get_or_create(
+            name="Coordinador",
+            defaults={"description": "Supervisión institucional, metas y reportes consolidados comunales."}
+        )
+        role_delegado, _ = Role.objects.get_or_create(
+            name="Delegado",
+            defaults={"description": "Jefatura de delegación y gestión del tubo de trabajo colectivo."}
+        )
+        role_funcionario, _ = Role.objects.get_or_create(
+            name="Funcionario",
+            defaults={"description": "Registro operativo de actividades, atenciones, compromisos y evidencias."}
+        )
+        role_verificador, _ = Role.objects.get_or_create(
+            name="Verificador",
+            defaults={"description": "Revisión técnica, aprobación o rechazo de evidencias registradas."}
+        )
+        role_consulta, _ = Role.objects.get_or_create(
+            name="Usuario de Consulta",
+            defaults={"description": "Visualización de tableros, reportes e indicadores sin facultades de edición."}
+        )
+        self.stdout.write(self.style.SUCCESS("[OK] Cargos y 6 Roles maestros institucionales creados."))
+
+        # -------------------------------------------------------------
+        # 3. GRUPOS Y PERMISOS GRANULARES DJANGO (RBAC MATRIZ SGR)
+        # -------------------------------------------------------------
+        all_models = [
+            AuditLog, Delegation, Position, Role, UserProfile,
+            ServiceCatalog, Activity, Evidence, Validation,
+            MeasurementPeriod, MeasurementItem, Goal, DailyIndicator, PerformanceAdjustment,
+            CollectiveAgenda, CommitmentHistory, SocialCase, SocialManagement
+        ]
+
+        def get_model_perms(model, actions=None):
             ct = ContentType.objects.get_for_model(model)
-            perms = Permission.objects.filter(content_type=ct)
-            for perm in perms:
-                group_operadores.permissions.add(perm)
+            if actions is None:
+                return Permission.objects.filter(content_type=ct)
+            codename_suffixes = [f"{action}_{model._meta.model_name}" for action in actions]
+            return Permission.objects.filter(content_type=ct, codename__in=codename_suffixes)
 
-        self.stdout.write(self.style.SUCCESS("[OK] Grupos y permisos de Django configurados."))
+        # 3.1 Grupo Administradores (Control total)
+        group_admin, _ = Group.objects.get_or_create(name="Administradores")
+        for m in all_models:
+            group_admin.permissions.add(*get_model_perms(m))
+
+        # 3.2 Grupo Coordinadores (Supervisión transversal y parametrización de metas)
+        group_coordinador, _ = Group.objects.get_or_create(name="Coordinadores del Sistema")
+        group_coordinador.permissions.clear()
+        for m in [MeasurementPeriod, MeasurementItem, Goal, DailyIndicator, PerformanceAdjustment]:
+            group_coordinador.permissions.add(*get_model_perms(m))
+        for m in [Delegation, Position, Role, UserProfile, ServiceCatalog, Activity, Evidence, Validation, CollectiveAgenda, CommitmentHistory, SocialCase, SocialManagement, AuditLog]:
+            group_coordinador.permissions.add(*get_model_perms(m, ['view']))
+
+        # 3.3 Grupo Delegados (Jefatura de delegación y tubo de trabajo)
+        group_delegado, _ = Group.objects.get_or_create(name="Delegados Municipales")
+        group_delegado.permissions.clear()
+        for m in [CollectiveAgenda, CommitmentHistory]:
+            group_delegado.permissions.add(*get_model_perms(m, ['view', 'add', 'change']))
+        for m in [Activity, Evidence, Validation, DailyIndicator, Goal, MeasurementPeriod, Delegation, UserProfile]:
+            group_delegado.permissions.add(*get_model_perms(m, ['view']))
+
+        # 3.4 Grupo Funcionarios Territoriales (Operación en terreno - Sin validación propia)
+        group_funcionario, _ = Group.objects.get_or_create(name="Funcionarios Territoriales")
+        group_funcionario.permissions.clear()
+        for m in [Activity, Evidence, CollectiveAgenda, CommitmentHistory, SocialCase, SocialManagement]:
+            group_funcionario.permissions.add(*get_model_perms(m, ['view', 'add', 'change']))
+        for m in [ServiceCatalog, MeasurementItem, Goal, DailyIndicator]:
+            group_funcionario.permissions.add(*get_model_perms(m, ['view']))
+
+        # 3.5 Grupo Verificadores Técnicos (Validación y auditoría de evidencias)
+        group_verificador, _ = Group.objects.get_or_create(name="Verificadores Técnicos")
+        group_verificador.permissions.clear()
+        group_verificador.permissions.add(*get_model_perms(Validation, ['view', 'add', 'change']))
+        for m in [Activity, Evidence, ServiceCatalog, DailyIndicator]:
+            group_verificador.permissions.add(*get_model_perms(m, ['view']))
+
+        # 3.6 Grupo Consulta (Solo lectura de indicadores y tableros)
+        group_consulta, _ = Group.objects.get_or_create(name="Usuarios de Consulta")
+        group_consulta.permissions.clear()
+        for m in [Activity, DailyIndicator, Goal, MeasurementPeriod, ServiceCatalog, CollectiveAgenda]:
+            group_consulta.permissions.add(*get_model_perms(m, ['view']))
+
+        self.stdout.write(self.style.SUCCESS("[OK] 6 Grupos y permisos granulares de Django configurados (RBAC institucional)."))
 
         # -------------------------------------------------------------
-        # 4. USUARIOS DE PRUEBA Y PERFILES (Mínimo 2 contextos diferenciados)
+        # 4. USUARIOS DE PRUEBA Y PERFILES (Matriz SGR Completa)
         # -------------------------------------------------------------
         # 4.1 Administrador Global
         user_admin, created = User.objects.get_or_create(
@@ -98,6 +199,7 @@ class Command(BaseCommand):
             }
         )
         user_admin.set_password("Admin1234!")
+        user_admin.groups.add(group_admin)
         user_admin.save()
         profile_admin, _ = UserProfile.objects.get_or_create(
             user=user_admin,
@@ -112,7 +214,61 @@ class Command(BaseCommand):
         )
         profile_admin.roles.add(role_admin)
 
-        # 4.2 Funcionario Limitado 1 (Contexto: Delegación Las Compañías)
+        # 4.2 Coordinador del Sistema
+        user_coordinador, _ = User.objects.get_or_create(
+            username="coordinador",
+            defaults={
+                "email": "coordinacion.sgr@laserena.cl",
+                "first_name": "Marcelo",
+                "last_name": "Salazar",
+                "is_staff": True,
+                "is_superuser": False,
+            }
+        )
+        user_coordinador.set_password("Coordinador1234!")
+        user_coordinador.groups.add(group_coordinador)
+        user_coordinador.save()
+        profile_coord, _ = UserProfile.objects.get_or_create(
+            user=user_coordinador,
+            defaults={
+                "rut": "13.456.789-0",
+                "full_name": "Marcelo Salazar Peña",
+                "email": "coordinacion.sgr@laserena.cl",
+                "delegation": del_centro,
+                "position": pos_coordinador,
+                "status": "Activo"
+            }
+        )
+        profile_coord.roles.add(role_coordinador)
+
+        # 4.3 Delegado Municipal (Jefatura Las Compañías)
+        user_delegado, _ = User.objects.get_or_create(
+            username="delegado_companias",
+            defaults={
+                "email": "delegado.companias@laserena.cl",
+                "first_name": "Gonzalo",
+                "last_name": "Pizarro",
+                "is_staff": True,
+                "is_superuser": False,
+            }
+        )
+        user_delegado.set_password("Delegado1234!")
+        user_delegado.groups.add(group_delegado)
+        user_delegado.save()
+        profile_delegado, _ = UserProfile.objects.get_or_create(
+            user=user_delegado,
+            defaults={
+                "rut": "14.234.567-8",
+                "full_name": "Gonzalo Pizarro Rojas",
+                "email": "delegado.companias@laserena.cl",
+                "delegation": del_companias,
+                "position": pos_delegado,
+                "status": "Activo"
+            }
+        )
+        profile_delegado.roles.add(role_delegado)
+
+        # 4.4 Funcionario Territorial 1 (Contexto: Delegación Las Compañías)
         user_companias, created = User.objects.get_or_create(
             username="funcionario_companias",
             defaults={
@@ -124,7 +280,7 @@ class Command(BaseCommand):
             }
         )
         user_companias.set_password("Funcionario1234!")
-        user_companias.groups.add(group_operadores)
+        user_companias.groups.add(group_funcionario)
         user_companias.save()
         profile_companias, _ = UserProfile.objects.get_or_create(
             user=user_companias,
@@ -137,9 +293,9 @@ class Command(BaseCommand):
                 "status": "Activo"
             }
         )
-        profile_companias.roles.add(role_gestor)
+        profile_companias.roles.add(role_funcionario)
 
-        # 4.3 Funcionario Limitado 2 (Contexto: Delegación Centro Histórico)
+        # 4.5 Funcionario Territorial 2 (Contexto: Delegación Centro Histórico)
         user_centro, created = User.objects.get_or_create(
             username="funcionario_centro",
             defaults={
@@ -151,7 +307,7 @@ class Command(BaseCommand):
             }
         )
         user_centro.set_password("Funcionario1234!")
-        user_centro.groups.add(group_operadores)
+        user_centro.groups.add(group_funcionario)
         user_centro.save()
         profile_centro, _ = UserProfile.objects.get_or_create(
             user=user_centro,
@@ -164,9 +320,9 @@ class Command(BaseCommand):
                 "status": "Activo"
             }
         )
-        profile_centro.roles.add(role_gestor)
+        profile_centro.roles.add(role_funcionario)
 
-        # 4.4 Verificador Municipal
+        # 4.6 Verificador Municipal
         user_verificador, created = User.objects.get_or_create(
             username="verificador",
             defaults={
@@ -178,7 +334,7 @@ class Command(BaseCommand):
             }
         )
         user_verificador.set_password("Verificador1234!")
-        user_verificador.groups.add(group_operadores)
+        user_verificador.groups.add(group_verificador)
         user_verificador.save()
         profile_verificador, _ = UserProfile.objects.get_or_create(
             user=user_verificador,
@@ -193,7 +349,34 @@ class Command(BaseCommand):
         )
         profile_verificador.roles.add(role_verificador)
 
-        self.stdout.write(self.style.SUCCESS("[OK] Cuentas de prueba creadas (admin, funcionario_companias, funcionario_centro, verificador)."))
+        # 4.7 Usuario de Consulta / Auditoría
+        user_consulta, _ = User.objects.get_or_create(
+            username="consulta",
+            defaults={
+                "email": "auditoria.externa@laserena.cl",
+                "first_name": "Valeria",
+                "last_name": "Cáceres",
+                "is_staff": True,
+                "is_superuser": False,
+            }
+        )
+        user_consulta.set_password("Consulta1234!")
+        user_consulta.groups.add(group_consulta)
+        user_consulta.save()
+        profile_consulta, _ = UserProfile.objects.get_or_create(
+            user=user_consulta,
+            defaults={
+                "rut": "16.789.012-3",
+                "full_name": "Valeria Cáceres Soto",
+                "email": "auditoria.externa@laserena.cl",
+                "delegation": del_centro,
+                "position": pos_director,
+                "status": "Activo"
+            }
+        )
+        profile_consulta.roles.add(role_consulta)
+
+        self.stdout.write(self.style.SUCCESS("[OK] Cuentas y perfiles creados para todos los roles (admin, coordinador, delegado, gestores, verificador, consulta)."))
 
         # -------------------------------------------------------------
         # 5. TABLAS MAESTRAS: CATÁLOGO DE SERVICIOS

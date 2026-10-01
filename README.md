@@ -113,4 +113,34 @@ Abre en el navegador:
 
 ---
 
+## 📋 Resumen de Cumplimiento: Evaluación Sumativa II (Backend)
+
+| Criterio Rúbrica | Puntaje | Implementación y Evidencia en el Código |
+|---|:---:|---|
+| **1. Conexión BD + Migraciones** | **10 pts** | Conexión configurada en [settings.py](file:///c:/Users/kevii/OneDrive/Desktop/proyectointegrado/config/settings.py) mediante `.env` (compatible SQLite y MySQL). Se incluye [.env.example](file:///c:/Users/kevii/OneDrive/Desktop/proyectointegrado/.env.example) y [requirements.txt](file:///c:/Users/kevii/OneDrive/Desktop/proyectointegrado/requirements.txt). Migraciones 100% versionadas y aplicadas sin errores. |
+| **2. Arquitectura, Modelado y Auditoría** | **15 pts** | Arquitectura modular distribuida en 6 apps: `core`, `organization`, `metrics`, `activities`, `agenda`, `social`. Todos los modelos y atributos en inglés técnico, con `verbose_name` en español. Clase abstracta [BaseModel](file:///c:/Users/kevii/OneDrive/Desktop/proyectointegrado/core/models.py) con `created_at`, `updated_at` y `deleted_at`. Tabla `AuditLog` para auditoría transversal. |
+| **3. Admin Básico** | **10 pts** | **6 tablas maestras registradas:** `Delegation`, `Position`, `Role`, `MeasurementPeriod`, `MeasurementItem`, `ServiceCatalog`.<br>**6 tablas operativas registradas:** `UserProfile`, `Goal`, `Activity`, `Evidence`, `Validation`, `CollectiveAgenda`, `SocialCase`.<br>Uso riguroso de `list_display`, `search_fields`, `list_filter`, `ordering` y `list_select_related` para optimización de consultas. |
+| **4. Admin Pro** | **15 pts** | **Inlines:** `EvidenceInline` y `ValidationInline` en [ActivityAdmin](file:///c:/Users/kevii/OneDrive/Desktop/proyectointegrado/activities/admin.py); `GoalInline` en Periodo; `CommitmentHistoryInline` en Agenda.<br>**Acciones Personalizadas:** `approve_selected`, `mark_for_correction`, `soft_delete_selected`, `restore_selected`.<br>**Validación Controlada:** Método [clean()](file:///c:/Users/kevii/OneDrive/Desktop/proyectointegrado/activities/models.py) en `Activity` (bloquea fechas futuras y exige contacto si deriva a agenda colectiva). |
+| **5. Seguridad: Scoping por Delegación** | **15 pts** | En [ActivityAdmin](file:///c:/Users/kevii/OneDrive/Desktop/proyectointegrado/activities/admin.py), [CollectiveAgendaAdmin](file:///c:/Users/kevii/OneDrive/Desktop/proyectointegrado/agenda/admin.py) y [SocialCaseAdmin](file:///c:/Users/kevii/OneDrive/Desktop/proyectointegrado/social/admin.py):<br>• `get_queryset()`: Filtra registros por la delegación asignada al perfil del usuario.<br>• `has_change_permission()` y `has_delete_permission()`: Bloquea edición/eliminación fuera de su territorio.<br>• `save_model()` y `formfield_for_foreignkey()`: Autovincula la delegación autorizada. |
+| **6. Documentación y Reproducibilidad** | **10 pts** | Comando `python manage.py seed_data` idempotente y reproducible con datos territoriales reales. README con guía paso a paso y cuentas de prueba documentadas. |
+| **7. Revisión y Defensa en Vivo** | **15 pts** | Despliegue limpio verificado con `check` y `migrate`. Demostración en Django Admin con perfiles diferenciados sin fallos. |
+| **8. Gestión Git** | **10 pts** | Trabajo en ramas descriptivas (`Prueba_2_Back_End`), historial de commits ordenado y [.gitignore](file:///c:/Users/kevii/OneDrive/Desktop/proyectointegrado/.gitignore) que excluye `.env`, `.venv` y archivos de base de datos. |
+
+---
+
+## 👥 Matriz de Cuentas de Prueba para Demostración
+
+| Usuario | Contraseña | Rol Institucional | Delegación Asignada | Alcance y Comportamiento en Django Admin |
+|---|---|---|---|---|
+| **`admin`** | `Admin1234!` | Administrador General (Superusuario) | Consolidado Comunal | **Acceso total:** Visualiza, edita y audita todas las delegaciones y modelos. |
+| **`coordinador`** | `Coordinador1234!` | Coordinador del Sistema SGR | Supervisión Comunal | Supervisión global de indicadores, periodos y metas comunales. |
+| **`delegado_companias`** | `Delegado1234!` | Delegado Municipal | Las Compañías | Jefatura territorial; gestiona la Agenda Colectiva de su sector. |
+| **`funcionario_companias`** | `Funcionario1234!` | Gestor Territorial (Limitado) | Las Compañías | **Scoping activo:** Solo visualiza y crea actividades de *Las Compañías*. Sin permiso para validar. |
+| **`funcionario_centro`** | `Funcionario1234!` | Gestor Territorial (Limitado) | Centro Histórico | **Scoping activo:** Solo visualiza actividades del *Centro Histórico*. Aislado de *Las Compañías*. |
+| **`verificador`** | `Verificador1234!` | Verificador Técnico | Las Compañías | Revisa y aprueba evidencias. No puede crear ni eliminar actividades. |
+| **`consulta`** | `Consulta1234!` | Auditor / Consulta Externa | Centro Histórico | **Solo lectura:** Visualiza tableros e indicadores sin facultades de modificación. |
+
+---
+
 **Ilustre Municipalidad de La Serena · Proyecto Integrado**
+

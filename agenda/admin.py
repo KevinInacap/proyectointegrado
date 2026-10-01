@@ -11,6 +11,8 @@ class CommitmentHistoryInline(admin.TabularInline):
     show_change_link = True
 
 
+from core.admin_utils import get_user_delegation
+
 @admin.register(CollectiveAgenda)
 class CollectiveAgendaAdmin(admin.ModelAdmin):
     list_display = (
@@ -21,32 +23,46 @@ class CollectiveAgendaAdmin(admin.ModelAdmin):
         'committed_date', 
         'status',
         'created_at',
-        'deleted_at',
     )
     list_select_related = ('delegation', 'assigned_to', 'source_activity')
-    list_filter = ('status', 'delegation', 'request_source', ('deleted_at', admin.EmptyFieldListFilter))
+    list_filter = ('status', 'delegation', 'request_source')
     search_fields = ('requester', 'territory', 'description', 'support_area')
     ordering = ('committed_date',)
     inlines = [CommitmentHistoryInline]
 
-    # Scoping de seguridad por delegación
+    # Scoping de seguridad por delegación (Clase 5)
     def get_queryset(self, request):
-        qs = super().get_queryset(request)
+        qs = super().get_queryset(request).filter(deleted_at__isnull=True)
         if request.user.is_superuser:
             return qs
-        if hasattr(request.user, 'profile') and request.user.profile.delegation:
-            return qs.filter(delegation=request.user.profile.delegation)
-        return qs.filter(assigned_to=request.user)
+        delegation = get_user_delegation(request)
+        return qs.filter(delegation=delegation)
+
+    def has_change_permission(self, request, obj=None):
+        allowed = super().has_change_permission(request, obj)
+        if not allowed:
+            return False
+        if obj is None or request.user.is_superuser:
+            return True
+        delegation = get_user_delegation(request)
+        return obj.delegation_id == delegation.id
+
+    def has_delete_permission(self, request, obj=None):
+        if not request.user.is_superuser:
+            return False
+        return super().has_delete_permission(request, obj)
 
     def save_model(self, request, obj, form, change):
-        if not request.user.is_superuser and hasattr(request.user, 'profile') and request.user.profile.delegation:
-            obj.delegation = request.user.profile.delegation
+        if not request.user.is_superuser:
+            obj.delegation = get_user_delegation(request)
+            if not obj.assigned_to_id:
+                obj.assigned_to = request.user
         super().save_model(request, obj, form, change)
 
     def formfield_for_foreignkey(self, db_field, request, **kwargs):
         if not request.user.is_superuser and db_field.name == "delegation":
-            if hasattr(request.user, 'profile') and request.user.profile.delegation:
-                kwargs["queryset"] = Delegation.objects.filter(id=request.user.profile.delegation_id)
+            delegation = get_user_delegation(request)
+            kwargs["queryset"] = Delegation.objects.filter(id=delegation.id)
         return super().formfield_for_foreignkey(db_field, request, **kwargs)
 
 

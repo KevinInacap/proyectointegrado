@@ -1,5 +1,6 @@
 from django.db import models
 from django.conf import settings
+from django.core.exceptions import ValidationError
 from core.models import BaseModel
 
 class Delegation(BaseModel):
@@ -109,6 +110,17 @@ class UserProfile(BaseModel):
     )
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='Activo', verbose_name="Estado")
 
+    def clean(self):
+        super().clean()
+        if self.delegation and getattr(self.delegation, 'status', None) == 'Inactivo':
+            raise ValidationError({
+                'delegation': 'No se puede asignar un funcionario a una delegación en estado Inactivo.'
+            })
+        if self.position and getattr(self.position, 'status', None) == 'Inactivo':
+            raise ValidationError({
+                'position': 'No se puede asignar un cargo que se encuentra en estado Inactivo.'
+            })
+
     class Meta:
         verbose_name = "Perfil de Funcionario"
         verbose_name_plural = "Perfiles de Funcionarios"
@@ -116,3 +128,4 @@ class UserProfile(BaseModel):
 
     def __str__(self):
         return f"{self.full_name} ({self.rut})"
+
