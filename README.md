@@ -64,27 +64,20 @@ source .venv/Scripts/activate
 ```bash
 pip install -r requirements.txt
 ```
-
-### Paso 4: Crear tu archivo de configuración (.env)
-Copia la plantilla `.env.example` para crear tu `.env` de desarrollo:
-```bash
-cp .env.example .env
-```
-
-### Paso 5: Preparar la base de datos
+### Paso 4: Preparar la base de datos
 Ejecuta la verificación del sistema y aplica todas las migraciones:
 ```bash
 python manage.py check
 python manage.py migrate
 ```
 
-### Paso 6: Cargar los datos de prueba (Semilla / Seed)
+### Paso 5: Cargar los datos de prueba (Semilla / Seed)
 Carga automáticamente todas las delegaciones, cargos, los 6 roles institucionales, permisos y usuarios de prueba:
 ```bash
 python manage.py seed_data
 ```
 
-### Paso 7: Iniciar el servidor
+### Paso 6: Iniciar el servidor
 ```bash
 python manage.py runserver
 ```
@@ -111,29 +104,7 @@ Todas las cuentas vienen creadas al ejecutar `python manage.py seed_data`. Puede
 
 ---
 
-## 🎯 Pruebas Rápidas para Mostrarle al Profesor (Puntos del 7.0)
-
-Durante la defensa, puedes demostrar los requisitos clave del curso en menos de 2 minutos:
-
-1. **Demostración de Scoping Territorial (Aislamiento de datos):**
-   * Inicia sesión en Django Admin con `funcionario_companias` (clave: `Funcionario1234!`).
-   * Anda a **Actividades**: verás que **solamente aparecen registros de Las Compañías**.
-   * Cierra sesión y entra con `funcionario_centro` (clave: `Funcionario1234!`): verás que **solo aparecen las del Centro Histórico**. Nunca se mezclan datos entre delegaciones ajenas.
-
-2. **Demostración de Seguridad por URL (Prueba negativa de la Clase 5):**
-   * Estando conectado como `funcionario_companias`, intenta entrar directamente en la URL a editar una actividad de otra delegación (ej: `http://127.0.0.1:8000/admin/activities/activity/1/change/`).
-   * El sistema bloquea el acceso en el servidor gracias a `has_change_permission`.
-
-3. **Demostración de Validación Controlada (`clean()`):**
-   * Intenta crear una Actividad con **fecha de mañana**: el sistema te dirá que la fecha no puede ser futura.
-   * Marca la casilla *"¿Ingresa a agenda colectiva?"* y deja el contacto en blanco: el sistema te exigirá el nombre de contacto obligatorio.
-
-4. **Demostración de Inlines y Acciones del Admin:**
-   * Al entrar al detalle de cualquier actividad, verás abajo sus **Evidencias y Validaciones integradas (Inlines)**.
-   * En la lista de actividades, puedes seleccionar varias y usar la acción *"Archivar actividades seleccionadas"* para hacer borrado lógico con `deleted_at`.
-
----
-
 **Ilustre Municipalidad de La Serena · Proyecto Integrado**
+
 
 
