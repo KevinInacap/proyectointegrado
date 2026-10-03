@@ -439,3 +439,457 @@ def api_audit_logs(request):
         'logs': logs_data
     })
 
+
+# ==============================================================================
+# CATÁLOGO Y GESTIÓN DE ROLES Y MATRIZ DE PERMISOS (RBAC MYADMIN)
+# ==============================================================================
+
+SYSTEM_PERMISSIONS_CATALOG = [
+    {
+        'module_id': 'delegaciones',
+        'module_name': 'Delegaciones Municipales',
+        'icon': 'bi-building',
+        'description': 'Gestión de recintos y ámbito territorial comunal',
+        'permissions': [
+            {'code': 'delegaciones.view', 'name': 'Ver Delegaciones', 'desc': 'Consultar información y listado de delegaciones'},
+            {'code': 'delegaciones.create', 'name': 'Crear Delegación', 'desc': 'Registrar nuevas unidades territoriales'},
+            {'code': 'delegaciones.edit', 'name': 'Editar Delegación', 'desc': 'Modificar dirección, ámbito y datos'},
+            {'code': 'delegaciones.delete', 'name': 'Inactivar / Borrar', 'desc': 'Suspender o dar de baja una delegación'},
+        ]
+    },
+    {
+        'module_id': 'usuarios',
+        'module_name': 'Gestión de Usuarios y Personal',
+        'icon': 'bi-people',
+        'description': 'Control de cuentas de funcionarios municipales y perfiles',
+        'permissions': [
+            {'code': 'usuarios.view', 'name': 'Ver Funcionarios', 'desc': 'Listar funcionarios y consultar perfiles'},
+            {'code': 'usuarios.create', 'name': 'Crear Funcionarios', 'desc': 'Registrar nuevas cuentas de usuario'},
+            {'code': 'usuarios.edit', 'name': 'Modificar Cuentas', 'desc': 'Editar datos, delegación, cargo y roles'},
+            {'code': 'usuarios.toggle_status', 'name': 'Activar/Desactivar', 'desc': 'Habilitar o suspender acceso al sistema'},
+            {'code': 'usuarios.reset_password', 'name': 'Resetear Contraseñas', 'desc': 'Asignar nueva contraseña de acceso'},
+            {'code': 'usuarios.delete', 'name': 'Eliminar Usuarios', 'desc': 'Borrado lógico o permanente de cuentas'},
+        ]
+    },
+    {
+        'module_id': 'roles',
+        'module_name': 'Roles y Matriz de Permisos',
+        'icon': 'bi-shield-check',
+        'description': 'Gestión de perfiles y asignación de permisos del sistema',
+        'permissions': [
+            {'code': 'roles.view', 'name': 'Ver Roles y Privilegios', 'desc': 'Visualizar roles configurados y permisos'},
+            {'code': 'roles.create', 'name': 'Crear Nuevos Roles', 'desc': 'Definir nuevos perfiles con permisos personalizados'},
+            {'code': 'roles.edit', 'name': 'Editar Matriz y Permisos', 'desc': 'Modificar asignación de privilegios a roles'},
+            {'code': 'roles.delete', 'name': 'Eliminar Roles', 'desc': 'Dar de baja roles no protegidos'},
+            {'code': 'roles.manage_features', 'name': 'Administrar Funciones', 'desc': 'Registrar nuevas funciones y privilegios al sistema'},
+        ]
+    },
+    {
+        'module_id': 'metas',
+        'module_name': 'Metas e Indicadores SGR',
+        'icon': 'bi-bullseye',
+        'description': 'Medición de metas de atención ciudadana y desempeño',
+        'permissions': [
+            {'code': 'metas.view', 'name': 'Ver Metas e Indicadores', 'desc': 'Consultar cumplimiento y metas asignadas'},
+            {'code': 'metas.create', 'name': 'Crear Metas Mensuales', 'desc': 'Definir nuevas metas territoriales'},
+            {'code': 'metas.edit', 'name': 'Actualizar Indicadores', 'desc': 'Registrar avances y mediciones diarias'},
+            {'code': 'metas.delete', 'name': 'Anular Metas', 'desc': 'Eliminar o recalibrar metas fijadas'},
+        ]
+    },
+    {
+        'module_id': 'tipo_atencion',
+        'module_name': 'Catálogo de Atención Municipal',
+        'icon': 'bi-tags',
+        'description': 'Tipos de atención, sub-atenciones y servicios',
+        'permissions': [
+            {'code': 'tipo_atencion.view', 'name': 'Ver Catálogo de Servicios', 'desc': 'Consultar tipos y sub-tipos vigentes'},
+            {'code': 'tipo_atencion.create', 'name': 'Agregar Nuevos Servicios', 'desc': 'Crear tipos y sub-atenciones'},
+            {'code': 'tipo_atencion.edit', 'name': 'Editar Servicios', 'desc': 'Modificar descripciones y clasificaciones'},
+            {'code': 'tipo_atencion.delete', 'name': 'Desactivar Servicios', 'desc': 'Inactivar servicios obsoletos'},
+        ]
+    },
+    {
+        'module_id': 'atenciones',
+        'module_name': 'Atenciones y Trámites Ciudadanos',
+        'icon': 'bi-headset',
+        'description': 'Registro operativo, tickets y atención en terreno',
+        'permissions': [
+            {'code': 'atenciones.view', 'name': 'Ver Registro de Atenciones', 'desc': 'Consultar bitácora general de atenciones'},
+            {'code': 'atenciones.create', 'name': 'Registrar Nueva Atención', 'desc': 'Ingresar solicitud ciudadana o trámite'},
+            {'code': 'atenciones.edit', 'name': 'Editar Atenciones', 'desc': 'Modificar estado, evidencia y notas'},
+            {'code': 'atenciones.validate', 'name': 'Validar / Aprobar', 'desc': 'Rol Verificador: autorizar atenciones con evidencia'},
+            {'code': 'atenciones.reject', 'name': 'Observar / Rechazar', 'desc': 'Devolver trámites incompletos o sin respaldo'},
+            {'code': 'atenciones.export', 'name': 'Exportar Registros', 'desc': 'Descargar atenciones en Excel y PDF'},
+        ]
+    },
+    {
+        'module_id': 'vecinos',
+        'module_name': 'Vecinos y Casos Sociales',
+        'icon': 'bi-person-vcard',
+        'description': 'Padrón de vecinos, ayudas sociales y compromisos',
+        'permissions': [
+            {'code': 'vecinos.view', 'name': 'Ver Padrón de Vecinos', 'desc': 'Consultar ficha de vecinos y antecedentes'},
+            {'code': 'vecinos.create', 'name': 'Registrar Nuevo Vecino', 'desc': 'Ingresar vecino con RUT y domicilio'},
+            {'code': 'vecinos.edit', 'name': 'Modificar Datos de Vecinos', 'desc': 'Actualizar teléfono, dirección y sector'},
+            {'code': 'vecinos.social_aid', 'name': 'Gestionar Casos Sociales', 'desc': 'Vincular subsidios, ayudas y asistencias'},
+            {'code': 'vecinos.delete', 'name': 'Eliminar Vecino', 'desc': 'Dar de baja registros duplicados o erróneos'},
+            {'code': 'vecinos.export', 'name': 'Exportar Padrón Comunal', 'desc': 'Descarga oficial de registros a Excel'},
+        ]
+    },
+    {
+        'module_id': 'reportes',
+        'module_name': 'Reportes y Estadísticas Oficiales',
+        'icon': 'bi-bar-chart-line',
+        'description': 'Generación de informes gerenciales e indicadores',
+        'permissions': [
+            {'code': 'reportes.view', 'name': 'Visualizar Dashboard y Métricas', 'desc': 'Acceso a gráficos y tableros interactivos'},
+            {'code': 'reportes.export_excel', 'name': 'Descargar Excel Oficial', 'desc': 'Generación de planillas consolidadas'},
+            {'code': 'reportes.export_pdf', 'name': 'Generar PDF Institucional', 'desc': 'Informes formales con timbre municipal'},
+        ]
+    },
+    {
+        'module_id': 'auditoria',
+        'module_name': 'Auditoría Transversal y Sistema',
+        'icon': 'bi-clock-history',
+        'description': 'Trazabilidad de cambios, seguridad y administración',
+        'permissions': [
+            {'code': 'auditoria.view', 'name': 'Ver Log de Auditoría', 'desc': 'Rastrear quién, cuándo y qué se modificó'},
+            {'code': 'auditoria.config', 'name': 'Parámetros del Sistema', 'desc': 'Configuración global y seguridad avanzada'},
+        ]
+    }
+]
+
+def _all_system_perm_codes():
+    codes = []
+    for mod in SYSTEM_PERMISSIONS_CATALOG:
+        for p in mod['permissions']:
+            codes.append(p['code'])
+    return codes
+
+def api_permissions_catalog(request):
+    """
+    Retorna el catálogo completo estructurado de módulos, permisos y funciones del sistema.
+    """
+    total_perms = sum(len(m['permissions']) for m in SYSTEM_PERMISSIONS_CATALOG)
+    return JsonResponse({
+        'success': True,
+        'catalog': SYSTEM_PERMISSIONS_CATALOG,
+        'total_permissions': total_perms,
+        'modules_count': len(SYSTEM_PERMISSIONS_CATALOG)
+    })
+
+def api_roles_list(request):
+    """
+    Retorna la lista completa de roles con sus permisos asignados, contador de usuarios,
+    indicadores de sistema y el catálogo de funciones disponibles (MyAdmin).
+    """
+    roles_qs = Role.objects.filter(deleted_at__isnull=True).order_by('id')
+    roles_data = []
+
+    for r in roles_qs:
+        perms = r.permissions_data or []
+        users_qs = r.users.filter(deleted_at__isnull=True)
+        users_count = users_qs.count()
+        users_sample = list(users_qs.values_list('full_name', flat=True)[:5])
+
+        roles_data.append({
+            'id': r.id,
+            'name': r.name,
+            'description': r.description or 'Sin descripción',
+            'is_system': r.is_system,
+            'permissions': perms,
+            'permissions_count': len(perms),
+            'users_count': users_count,
+            'users_sample': users_sample,
+            'created_at': r.created_at.strftime('%d/%m/%Y %H:%M') if r.created_at else '',
+            'updated_at': r.updated_at.strftime('%d/%m/%Y %H:%M') if r.updated_at else '',
+        })
+
+    all_codes = _all_system_perm_codes()
+    total_system_roles = sum(1 for r in roles_data if r['is_system'])
+    total_custom_roles = len(roles_data) - total_system_roles
+
+    return JsonResponse({
+        'success': True,
+        'roles': roles_data,
+        'catalog': SYSTEM_PERMISSIONS_CATALOG,
+        'summary': {
+            'total_roles': len(roles_data),
+            'system_roles': total_system_roles,
+            'custom_roles': total_custom_roles,
+            'total_permissions_available': len(all_codes),
+        }
+    })
+
+@csrf_exempt
+def api_role_create(request):
+    """
+    Crea un nuevo rol en la base de datos con su matriz de permisos asignada y auditoría (MyAdmin).
+    """
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'message': 'Método no permitido'}, status=405)
+
+    data = _get_request_data(request)
+    name = data.get('name', '').strip()
+    description = data.get('description', '').strip()
+    permissions = data.get('permissions', [])
+    is_system = bool(data.get('is_system', False))
+
+    if not name:
+        return JsonResponse({'success': False, 'message': 'El nombre del rol es obligatorio.'}, status=400)
+
+    if Role.objects.filter(name__iexact=name, deleted_at__isnull=True).exists():
+        return JsonResponse({'success': False, 'message': f"Ya existe un rol activo con el nombre '{name}'."}, status=400)
+
+    try:
+        with transaction.atomic():
+            role = Role.objects.create(
+                name=name,
+                description=description,
+                is_system=is_system,
+                permissions_data=permissions
+            )
+
+            current_admin = request.user if request.user.is_authenticated else None
+            AuditLog.objects.create(
+                user=current_admin,
+                affected_table='rol',
+                affected_record_id=str(role.id),
+                action='CREATE',
+                new_value={
+                    'name': name,
+                    'description': description,
+                    'permissions_count': len(permissions),
+                    'permissions': permissions,
+                    'is_system': is_system,
+                }
+            )
+
+        return JsonResponse({
+            'success': True,
+            'message': f"Rol '{name}' creado exitosamente con {len(permissions)} permisos.",
+            'role': {
+                'id': role.id,
+                'name': role.name,
+                'description': role.description,
+                'is_system': role.is_system,
+                'permissions': role.permissions_data,
+                'permissions_count': len(role.permissions_data or []),
+                'users_count': 0,
+            }
+        })
+    except Exception as e:
+        return JsonResponse({'success': False, 'message': f"Error al crear el rol: {str(e)}"}, status=500)
+
+@csrf_exempt
+def api_role_update(request, pk):
+    """
+    Modifica un rol existente, su descripción y su matriz de funciones/permisos (MyAdmin).
+    """
+    if request.method not in ['POST', 'PUT']:
+        return JsonResponse({'success': False, 'message': 'Método no permitido'}, status=405)
+
+    role = get_object_or_404(Role, id=pk)
+    data = _get_request_data(request)
+
+    new_name = data.get('name', '').strip() or role.name
+    new_description = data.get('description', '').strip()
+    if 'description' not in data:
+        new_description = role.description
+
+    new_permissions = data.get('permissions')
+    if new_permissions is None:
+        new_permissions = role.permissions_data
+
+    # Validar duplicados si se cambia el nombre
+    if new_name != role.name and Role.objects.filter(name__iexact=new_name, deleted_at__isnull=True).exclude(id=role.id).exists():
+        return JsonResponse({'success': False, 'message': f"El nombre '{new_name}' ya se encuentra en uso por otro rol."}, status=400)
+
+    try:
+        with transaction.atomic():
+            prev_perms_count = len(role.permissions_data or [])
+            prev_name = role.name
+
+            role.name = new_name
+            role.description = new_description
+            role.permissions_data = new_permissions
+            role.save()
+
+            current_admin = request.user if request.user.is_authenticated else None
+            AuditLog.objects.create(
+                user=current_admin,
+                affected_table='rol',
+                affected_record_id=str(role.id),
+                action='UPDATE',
+                previous_value={'name': prev_name, 'permissions_count': prev_perms_count},
+                new_value={
+                    'name': new_name,
+                    'description': new_description,
+                    'permissions_count': len(new_permissions),
+                    'permissions': new_permissions,
+                }
+            )
+
+        return JsonResponse({
+            'success': True,
+            'message': f"Rol '{role.name}' actualizado correctamente con {len(new_permissions)} permisos.",
+            'role': {
+                'id': role.id,
+                'name': role.name,
+                'description': role.description,
+                'is_system': role.is_system,
+                'permissions': role.permissions_data,
+                'permissions_count': len(role.permissions_data or []),
+                'users_count': role.users.filter(deleted_at__isnull=True).count(),
+            }
+        })
+    except Exception as e:
+        return JsonResponse({'success': False, 'message': f"Error al actualizar el rol: {str(e)}"}, status=500)
+
+@csrf_exempt
+def api_role_delete(request, pk):
+    """
+    Elimina un rol de la base de datos (con verificación de protección de sistema y usuarios).
+    """
+    if request.method not in ['POST', 'DELETE']:
+        return JsonResponse({'success': False, 'message': 'Método no permitido'}, status=405)
+
+    role = get_object_or_404(Role, id=pk)
+
+    # Protección de roles base del sistema
+    protected_roles = ['Administrador', 'Operador', 'Consultor', 'Verificador']
+    if role.name in protected_roles or (role.is_system and role.name == 'Administrador'):
+        return JsonResponse({
+            'success': False,
+            'message': f"El rol '{role.name}' es un rol protegido fundamental de la plataforma municipal y no puede ser eliminado."
+        }, status=403)
+
+    assigned_users = role.users.filter(deleted_at__isnull=True).count()
+    if assigned_users > 0:
+        return JsonResponse({
+            'success': False,
+            'message': f"No se puede eliminar el rol '{role.name}' porque actualmente tiene {assigned_users} funcionario(s) asignado(s). Reasigne a los usuarios antes de borrarlo."
+        }, status=400)
+
+    try:
+        with transaction.atomic():
+            current_admin = request.user if request.user.is_authenticated else None
+            role_name = role.name
+            role_id = role.id
+
+            AuditLog.objects.create(
+                user=current_admin,
+                affected_table='rol',
+                affected_record_id=str(role_id),
+                action='DELETE',
+                previous_value={
+                    'name': role_name,
+                    'description': role.description,
+                    'permissions_count': len(role.permissions_data or []),
+                }
+            )
+
+            role.delete()
+
+        return JsonResponse({
+            'success': True,
+            'message': f"El rol '{role_name}' ha sido eliminado exitosamente del sistema."
+        })
+    except Exception as e:
+        return JsonResponse({'success': False, 'message': f"Error al eliminar el rol: {str(e)}"}, status=500)
+
+@csrf_exempt
+def api_role_duplicate(request, pk):
+    """
+    Duplica un rol existente junto con toda su matriz de permisos (función phpMyAdmin).
+    """
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'message': 'Método no permitido'}, status=405)
+
+    origin_role = get_object_or_404(Role, id=pk)
+    data = _get_request_data(request)
+
+    base_name = data.get('name', '').strip() or f"{origin_role.name} (Copia)"
+    candidate_name = base_name
+    counter = 1
+    while Role.objects.filter(name__iexact=candidate_name, deleted_at__isnull=True).exists():
+        counter += 1
+        candidate_name = f"{base_name} {counter}"
+
+    try:
+        with transaction.atomic():
+            new_role = Role.objects.create(
+                name=candidate_name,
+                description=f"Copia basada en {origin_role.name}: {origin_role.description}",
+                is_system=False,
+                permissions_data=list(origin_role.permissions_data or [])
+            )
+
+            current_admin = request.user if request.user.is_authenticated else None
+            AuditLog.objects.create(
+                user=current_admin,
+                affected_table='rol',
+                affected_record_id=str(new_role.id),
+                action='CREATE',
+                new_value={
+                    'name': candidate_name,
+                    'cloned_from': origin_role.name,
+                    'permissions_count': len(new_role.permissions_data),
+                }
+            )
+
+        return JsonResponse({
+            'success': True,
+            'message': f"Rol clonado exitosamente como '{candidate_name}'.",
+            'role': {
+                'id': new_role.id,
+                'name': new_role.name,
+                'description': new_role.description,
+                'is_system': False,
+                'permissions': new_role.permissions_data,
+                'permissions_count': len(new_role.permissions_data),
+                'users_count': 0,
+            }
+        })
+    except Exception as e:
+        return JsonResponse({'success': False, 'message': f"Error al clonar rol: {str(e)}"}, status=500)
+
+@csrf_exempt
+def api_add_custom_permission(request):
+    """
+    Permite al Super Administrador registrar una nueva función/privilegio dinámico en el catálogo.
+    """
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'message': 'Método no permitido'}, status=405)
+
+    data = _get_request_data(request)
+    module_id = data.get('module_id', '').strip()
+    code = data.get('code', '').strip()
+    name = data.get('name', '').strip()
+    desc = data.get('desc', '').strip()
+
+    if not code or not name:
+        return JsonResponse({'success': False, 'message': 'Código y Nombre de la función son requeridos.'}, status=400)
+
+    # Buscar módulo o agregar a existente
+    target_mod = next((m for m in SYSTEM_PERMISSIONS_CATALOG if m['module_id'] == module_id), None)
+    if not target_mod:
+        target_mod = SYSTEM_PERMISSIONS_CATALOG[0]
+
+    # Verificar si ya existe
+    if any(p['code'] == code for p in target_mod['permissions']):
+        return JsonResponse({'success': False, 'message': f"La función con código '{code}' ya existe."}, status=400)
+
+    target_mod['permissions'].append({
+        'code': code,
+        'name': name,
+        'desc': desc
+    })
+
+    return JsonResponse({
+        'success': True,
+        'message': f"Nueva función '{name}' agregada al catálogo de privilegios.",
+        'catalog': SYSTEM_PERMISSIONS_CATALOG
+    })
+
+

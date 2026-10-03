@@ -56,6 +56,8 @@ class Role(BaseModel):
     """
     name = models.CharField(max_length=50, unique=True, verbose_name="Nombre del rol")
     description = models.CharField(max_length=255, blank=True, default='', verbose_name="Descripción del rol")
+    is_system = models.BooleanField(default=False, verbose_name="Rol de sistema protegido")
+    permissions_data = models.JSONField(default=list, blank=True, verbose_name="Permisos y funciones asignadas")
 
     class Meta:
         verbose_name = "Rol"

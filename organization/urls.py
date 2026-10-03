@@ -11,4 +11,13 @@ urlpatterns = [
     path('users/<int:pk>/delete/', views.api_user_delete, name='api_user_delete'),
     path('users/<int:pk>/reset-password/', views.api_user_reset_password, name='api_user_reset_password'),
     path('audit-logs/', views.api_audit_logs, name='api_audit_logs'),
+    
+    # Roles & Permisos (RBAC MyAdmin)
+    path('roles/', views.api_roles_list, name='api_roles_list'),
+    path('roles/create/', views.api_role_create, name='api_role_create'),
+    path('roles/<int:pk>/update/', views.api_role_update, name='api_role_update'),
+    path('roles/<int:pk>/delete/', views.api_role_delete, name='api_role_delete'),
+    path('roles/<int:pk>/duplicate/', views.api_role_duplicate, name='api_role_duplicate'),
+    path('roles/permissions/catalog/', views.api_permissions_catalog, name='api_permissions_catalog'),
+    path('roles/permissions/add-custom/', views.api_add_custom_permission, name='api_add_custom_permission'),
 ]
