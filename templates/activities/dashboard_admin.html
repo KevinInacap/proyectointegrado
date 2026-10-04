@@ -86,7 +86,7 @@
         body {
             font-family: var(--font-body);
             background-color: #f1f5f9;
-            background-image: 
+            background-image:
                 radial-gradient(at 15% 20%, rgba(139, 29, 44, 0.15) 0px, transparent 40%),
                 radial-gradient(at 85% 15%, rgba(30, 58, 138, 0.18) 0px, transparent 45%),
                 radial-gradient(at 50% 80%, rgba(13, 148, 136, 0.10) 0px, transparent 45%),
@@ -650,7 +650,484 @@
             font-size: 0.95rem;
         }
 
-        /* 4 KPI Cards */
+        /* ==========================================================================
+           ANIMACIONES FLUIDAS Y MICRO-INTERACCIONES DINÁMICAS (GOVTECH PREMIUM)
+           ========================================================================== */
+        @keyframes cockpitFadeIn {
+            0% {
+                opacity: 0;
+                transform: translateY(14px);
+            }
+
+            100% {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes livePulseHalo {
+            0% {
+                box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+            }
+
+            70% {
+                box-shadow: 0 0 0 7px rgba(16, 185, 129, 0);
+            }
+
+            100% {
+                box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
+            }
+        }
+
+        @keyframes progressFillAnim {
+            from {
+                width: 0%;
+            }
+
+            to {
+                width: 87%;
+            }
+        }
+
+        /* CONSOLA DE MANDO CÍVICO (ASIMÉTRICA & LIQUID GLASS) */
+        .civic-cockpit-grid {
+            display: grid;
+            grid-template-columns: minmax(0, 4.4fr) minmax(0, 5.6fr);
+            gap: 1.25rem;
+            margin-bottom: 1.5rem;
+            width: 100%;
+        }
+
+        @media (max-width: 992px) {
+            .civic-cockpit-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* 1. Flagship Card (Consola Central de Mando) */
+        .flagship-glass-card {
+            position: relative;
+            background: linear-gradient(145deg, rgba(255, 255, 255, 0.88) 0%, rgba(248, 250, 252, 0.75) 100%);
+            backdrop-filter: blur(24px) saturate(200%);
+            -webkit-backdrop-filter: blur(24px) saturate(200%);
+            border-radius: 22px;
+            border: 1px solid rgba(255, 255, 255, 0.95);
+            border-top: 3.5px solid var(--muni-red);
+            padding: 1.45rem 1.6rem;
+            box-shadow: 0 16px 36px -10px rgba(27, 54, 93, 0.08), 0 2px 8px -2px rgba(27, 54, 93, 0.04);
+            cursor: pointer;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            transition: all 0.32s cubic-bezier(0.16, 1, 0.3, 1);
+            animation: cockpitFadeIn 0.45s cubic-bezier(0.16, 1, 0.3, 1) both;
+        }
+
+        .flagship-glass-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -120%;
+            width: 80%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.5), transparent);
+            transform: skewX(-20deg);
+            pointer-events: none;
+            transition: left 0.75s ease;
+        }
+
+        .flagship-glass-card:hover::before {
+            left: 140%;
+        }
+
+        .flagship-glass-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 24px 48px -12px rgba(27, 54, 93, 0.14), 0 4px 12px rgba(27, 54, 93, 0.06);
+            border-color: rgba(196, 18, 48, 0.35);
+        }
+
+        .flagship-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 0.95rem;
+        }
+
+        .live-pulse-dot {
+            width: 9px;
+            height: 9px;
+            border-radius: 50%;
+            background: #10B981;
+            display: inline-block;
+            animation: livePulseHalo 2s infinite ease-in-out;
+        }
+
+        .flagship-badge-label {
+            font-size: 0.72rem;
+            font-weight: 800;
+            color: #065F46;
+            background: rgba(16, 185, 129, 0.14);
+            padding: 3px 9px;
+            border-radius: 50px;
+            letter-spacing: 0.6px;
+        }
+
+        .flagship-tag-month {
+            font-size: 0.76rem;
+            font-weight: 600;
+            color: var(--muni-text-sec);
+            background: rgba(241, 245, 249, 0.85);
+            padding: 3px 10px;
+            border-radius: 50px;
+        }
+
+        .flagship-metric-intro {
+            font-size: 0.8rem;
+            font-weight: 700;
+            color: var(--muni-text-sec);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 0.25rem;
+        }
+
+        .flagship-metric-val-row {
+            display: flex;
+            align-items: baseline;
+            gap: 12px;
+            margin-bottom: 0.45rem;
+        }
+
+        .flagship-metric-number {
+            font-family: var(--font-heading);
+            font-size: 2.85rem;
+            font-weight: 800;
+            color: var(--muni-navy);
+            line-height: 1;
+            letter-spacing: -1.2px;
+        }
+
+        .flagship-trend-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 0.82rem;
+            font-weight: 700;
+            padding: 4px 10px;
+            border-radius: 50px;
+        }
+
+        .flagship-trend-chip.positive {
+            background: rgba(22, 163, 74, 0.12);
+            color: #15803D;
+        }
+
+        .flagship-desc {
+            font-size: 0.83rem;
+            color: var(--muni-text-sec);
+            margin-bottom: 1.15rem;
+            line-height: 1.4;
+        }
+
+        .channel-distribution-box {
+            background: rgba(248, 250, 252, 0.75);
+            border: 1px solid rgba(226, 232, 240, 0.8);
+            border-radius: 14px;
+            padding: 0.85rem 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .channel-dist-header {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.78rem;
+            font-weight: 600;
+            color: var(--muni-navy);
+            margin-bottom: 0.45rem;
+        }
+
+        .channel-multi-bar {
+            height: 7px;
+            border-radius: 8px;
+            overflow: hidden;
+            display: flex;
+            background: #E2E8F0;
+            margin-bottom: 0.55rem;
+        }
+
+        .ch-segment.ch-presencial {
+            background: #1B365D;
+            transition: width 0.8s ease;
+        }
+
+        .ch-segment.ch-telefonica {
+            background: #0D9488;
+            transition: width 0.8s ease;
+        }
+
+        .ch-segment.ch-online {
+            background: #8B1D2C;
+            transition: width 0.8s ease;
+        }
+
+        .channel-dist-legend {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            font-size: 0.72rem;
+            font-weight: 600;
+            color: var(--muni-text-sec);
+        }
+
+        .ch-legend-item {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .ch-dot {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+        }
+
+        .dot-presencial {
+            background: #1B365D;
+        }
+
+        .dot-telefonica {
+            background: #0D9488;
+        }
+
+        .dot-online {
+            background: #8B1D2C;
+        }
+
+        .flagship-footer {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding-top: 0.8rem;
+            border-top: 1px solid rgba(226, 232, 240, 0.7);
+        }
+
+        .flagship-action-text {
+            font-size: 0.82rem;
+            font-weight: 700;
+            color: var(--muni-navy);
+            transition: color 0.2s ease;
+        }
+
+        .flagship-glass-card:hover .flagship-action-text {
+            color: var(--muni-red);
+        }
+
+        .flagship-action-btn {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: #FFFFFF;
+            border: 1px solid rgba(226, 232, 240, 0.9);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.9rem;
+            color: var(--muni-navy);
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+            transition: all 0.25s ease;
+        }
+
+        .flagship-glass-card:hover .flagship-action-btn {
+            transform: translateX(4px);
+            background: var(--muni-red);
+            color: #FFFFFF;
+            border-color: var(--muni-red);
+        }
+
+        /* 2. Trilogía de Indicadores Cívicos */
+        .civic-indicators-stack {
+            display: flex;
+            flex-direction: column;
+            gap: 0.9rem;
+            justify-content: space-between;
+        }
+
+        .support-glass-card {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.85) 0%, rgba(248, 250, 252, 0.65) 100%);
+            backdrop-filter: blur(20px) saturate(190%);
+            -webkit-backdrop-filter: blur(20px) saturate(190%);
+            border-radius: 18px;
+            border: 1px solid rgba(255, 255, 255, 0.95);
+            padding: 1.05rem 1.25rem;
+            box-shadow: 0 10px 24px -6px rgba(27, 54, 93, 0.06), 0 1px 4px rgba(27, 54, 93, 0.03);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            transition: all 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+            animation: cockpitFadeIn 0.45s cubic-bezier(0.16, 1, 0.3, 1) both;
+        }
+
+        .support-blue {
+            border-left: 3.5px solid #1B365D;
+            animation-delay: 0.08s;
+        }
+
+        .support-purple {
+            border-left: 3.5px solid #7C3AED;
+            animation-delay: 0.16s;
+        }
+
+        .support-amber {
+            border-left: 3.5px solid #D97706;
+            animation-delay: 0.24s;
+        }
+
+        .support-glass-card:hover {
+            transform: translateX(4px) translateY(-2px);
+            box-shadow: 0 16px 32px -8px rgba(27, 54, 93, 0.11), 0 2px 6px rgba(27, 54, 93, 0.04);
+            border-color: rgba(255, 255, 255, 1);
+        }
+
+        .support-card-content {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            flex-grow: 1;
+            min-width: 0;
+        }
+
+        .support-icon-wrap {
+            width: 44px;
+            height: 44px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.35rem;
+            flex-shrink: 0;
+            transition: transform 0.25s ease;
+        }
+
+        .support-glass-card:hover .support-icon-wrap {
+            transform: scale(1.08) rotate(3deg);
+        }
+
+        .icon-blue {
+            background: linear-gradient(135deg, #EFF6FF 0%, #DBEAFE 100%);
+            color: #1D4ED8;
+        }
+
+        .icon-purple {
+            background: linear-gradient(135deg, #F5F3FF 0%, #EDE9FE 100%);
+            color: #7C3AED;
+        }
+
+        .icon-amber {
+            background: linear-gradient(135deg, #FFFBEB 0%, #FEF3C7 100%);
+            color: #D97706;
+        }
+
+        .support-text-wrap {
+            flex-grow: 1;
+            min-width: 0;
+        }
+
+        .support-label {
+            font-size: 0.78rem;
+            font-weight: 700;
+            color: var(--muni-text-sec);
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+            margin-bottom: 2px;
+        }
+
+        .support-number-row {
+            display: flex;
+            align-items: baseline;
+            gap: 10px;
+        }
+
+        .support-number {
+            font-family: var(--font-heading);
+            font-size: 1.65rem;
+            font-weight: 800;
+            color: var(--muni-navy);
+            line-height: 1.1;
+            letter-spacing: -0.5px;
+        }
+
+        .support-number-sub {
+            font-size: 1.05rem;
+            font-weight: 600;
+            color: var(--muni-text-sec);
+        }
+
+        .support-trend {
+            font-size: 0.78rem;
+            font-weight: 700;
+            padding: 2px 7px;
+            border-radius: 50px;
+        }
+
+        .support-trend.positive {
+            background: rgba(22, 163, 74, 0.1);
+            color: #16A34A;
+        }
+
+        .support-status-chip {
+            font-size: 0.74rem;
+            font-weight: 700;
+            color: #059669;
+            background: rgba(16, 185, 129, 0.12);
+            padding: 2px 8px;
+            border-radius: 50px;
+        }
+
+        .support-subtext {
+            font-size: 0.75rem;
+            color: var(--muni-text-sec);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            margin-top: 1px;
+        }
+
+        .glass-progress-wrap {
+            width: 100%;
+            height: 6px;
+            background: #E2E8F0;
+            border-radius: 50px;
+            overflow: hidden;
+            margin-top: 4px;
+        }
+
+        .glass-progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #D97706 0%, #F59E0B 100%);
+            border-radius: 50px;
+            animation: progressFillAnim 1.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        .support-card-action {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #94A3B8;
+            transition: all 0.25s ease;
+            flex-shrink: 0;
+        }
+
+        .support-glass-card:hover .support-card-action {
+            transform: translateX(3px);
+            color: var(--muni-navy);
+        }
+
+        /* 4 KPI Cards (Fallback) */
         .kpi-grid {
             display: grid;
             grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -1354,7 +1831,8 @@
             .usuarios-toolbar {
                 flex-wrap: nowrap !important;
             }
-            .usuarios-toolbar > div:first-child {
+
+            .usuarios-toolbar>div:first-child {
                 flex-wrap: nowrap !important;
             }
         }
@@ -1513,10 +1991,12 @@
                 transform: scale(0.95);
                 box-shadow: 0 0 0 0 rgba(22, 163, 74, 0.7);
             }
+
             70% {
                 transform: scale(1.15);
                 box-shadow: 0 0 0 8px rgba(22, 163, 74, 0);
             }
+
             100% {
                 transform: scale(0.95);
                 box-shadow: 0 0 0 0 rgba(22, 163, 74, 0);
@@ -1871,9 +2351,9 @@
             -webkit-backdrop-filter: blur(18px) saturate(180%);
             border: 1px solid rgba(255, 255, 255, 0.75);
             border-radius: 20px;
-            box-shadow: 0 12px 36px -4px rgba(27, 54, 93, 0.08), 
-                        0 4px 16px -2px rgba(196, 18, 48, 0.04),
-                        inset 0 1px 1px 0 rgba(255, 255, 255, 0.95);
+            box-shadow: 0 12px 36px -4px rgba(27, 54, 93, 0.08),
+                0 4px 16px -2px rgba(196, 18, 48, 0.04),
+                inset 0 1px 1px 0 rgba(255, 255, 255, 0.95);
             padding: 1.6rem;
             position: relative;
             overflow: hidden;
@@ -2248,7 +2728,7 @@
             border: 1px solid rgba(255, 255, 255, 0.8) !important;
             border-top: 1.5px solid rgba(255, 255, 255, 1) !important;
             border-left: 1.5px solid rgba(255, 255, 255, 0.9) !important;
-            box-shadow: 
+            box-shadow:
                 0 20px 40px -15px rgba(15, 23, 42, 0.07),
                 0 1px 3px 0 rgba(0, 0, 0, 0.02),
                 inset 0 1px 1px 0 rgba(255, 255, 255, 0.9),
@@ -2263,7 +2743,7 @@
         .quick-card:hover,
         .report-kpi-card:hover {
             transform: translateY(-4px) scale(1.005) !important;
-            box-shadow: 
+            box-shadow:
                 0 25px 50px -12px rgba(15, 23, 42, 0.12),
                 inset 0 1px 2px 0 rgba(255, 255, 255, 1) !important;
         }
@@ -2459,11 +2939,8 @@
                         <li><span class="dropdown-header text-uppercase small fw-bold text-danger">Municipalidad La
                                 Serena</span></li>
                         <li><a class="dropdown-item py-2 fw-semibold text-secondary" href="javascript:void(0)"
-                                onclick="mostrarToast('Perfil del Administrador')"><i
-                                    class="bi bi-person me-2 text-primary"></i> Mi Perfil</a></li>
-                        <li><a class="dropdown-item py-2 fw-semibold text-secondary" href="javascript:void(0)"
-                                onclick="mostrarToast('Configuración institucional')"><i
-                                    class="bi bi-gear me-2 text-primary"></i> Configuración</a></li>
+                                onclick="abrirModalPerfil()"><i class="bi bi-person-badge-fill me-2 text-primary"></i>
+                                Mi Perfil</a></li>
                         <li><a class="dropdown-item py-2 fw-semibold text-secondary" href="javascript:void(0)"
                                 onclick="abrirModalAuditoria()"><i class="bi bi-clock-history me-2 text-primary"></i>
                                 Auditoría de Cambios</a></li>
@@ -2481,8 +2958,8 @@
         <main class="content-body">
 
             <!-- ==================================================================
-                 VISTA 1: DASHBOARD PRINCIPAL (INICIO)
-                 ================================================================== -->
+                VISTA 1: DASHBOARD PRINCIPAL (INICIO)
+                ================================================================== -->
             <section id="view-dashboard" class="maintainer-view active">
                 <div class="dashboard-header-row">
                     <div class="dashboard-title-box">
@@ -2500,56 +2977,126 @@
                     </div>
                 </div>
 
-                <!-- 4 KPI Cards -->
-                <div class="kpi-grid">
-                    <div class="kpi-card kpi-blue" onclick="switchView('vecinos')">
-                        <div class="kpi-header">
-                            <div class="kpi-icon-box"><i class="bi bi-people-fill"></i></div>
-                            <span class="kpi-header-title">Total Vecinos Registrados</span>
+                <!-- CONSOLA EJECUTIVA DE MANDO CÍVICO (DISEÑO ASIMÉTRICO & LIQUID GLASS) -->
+                <div class="civic-cockpit-grid">
+                    <!-- Tarjeta Rectora (Flagship): Pulso Operativo Comunal -->
+                    <div class="flagship-glass-card" onclick="switchView('atenciones')" role="button" tabindex="0">
+                        <div class="flagship-header">
+                            <div class="d-flex align-items-center gap-2">
+                                <span class="live-pulse-dot" title="Monitoreo en tiempo real"></span>
+                                <span class="flagship-badge-label">MONITOREO EN TIEMPO REAL</span>
+                            </div>
+                            <span class="flagship-tag-month"><i class="bi bi-clock-history me-1"></i> Mes Activo</span>
                         </div>
-                        <div class="kpi-number">12.458</div>
-                        <div class="kpi-footer">
-                            <span class="kpi-trend positive"><i class="bi bi-arrow-up-short"></i> 12% respecto al mes
-                                anterior</span>
-                            <i class="bi bi-arrow-right kpi-arrow"></i>
+                        <div class="flagship-body">
+                            <div class="flagship-metric-intro">Ritmo de Atención Ciudadana</div>
+                            <div class="flagship-metric-val-row">
+                                <div class="flagship-metric-number">3.421</div>
+                                <span class="flagship-trend-chip positive">
+                                    <i class="bi bi-graph-up-arrow"></i> +18% vs mes anterior
+                                </span>
+                            </div>
+                            <p class="flagship-desc">Atenciones registradas en la red de delegaciones municipales y
+                                canales digitales.</p>
+
+                            <!-- Desglose de Canales con Barra Multi-Segmento -->
+                            <div class="channel-distribution-box">
+                                <div class="channel-dist-header">
+                                    <span>Distribución por Canal</span>
+                                    <span class="text-primary fw-bold">94.8% Resueltas</span>
+                                </div>
+                                <div class="channel-multi-bar">
+                                    <div class="ch-segment ch-presencial" style="width: 54%;" title="Presencial: 54%">
+                                    </div>
+                                    <div class="ch-segment ch-telefonica" style="width: 32%;" title="Telefónica: 32%">
+                                    </div>
+                                    <div class="ch-segment ch-online" style="width: 14%;" title="Online: 14%"></div>
+                                </div>
+                                <div class="channel-dist-legend">
+                                    <span class="ch-legend-item"><span class="ch-dot dot-presencial"></span> Presencial
+                                        (54%)</span>
+                                    <span class="ch-legend-item"><span class="ch-dot dot-telefonica"></span> Telefónica
+                                        (32%)</span>
+                                    <span class="ch-legend-item"><span class="ch-dot dot-online"></span> Online
+                                        (14%)</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="flagship-footer">
+                            <span class="flagship-action-text">Explorar Bitácora Completa de Atenciones</span>
+                            <span class="flagship-action-btn"><i class="bi bi-arrow-right"></i></span>
                         </div>
                     </div>
 
-                    <div class="kpi-card kpi-green" onclick="switchView('atenciones')">
-                        <div class="kpi-header">
-                            <div class="kpi-icon-box"><i class="bi bi-headset"></i></div>
-                            <span class="kpi-header-title">Atenciones del Mes</span>
+                    <!-- Trilogía de Indicadores Cívicos -->
+                    <div class="civic-indicators-stack">
+                        <!-- Indicador 1: Padrón Comunal -->
+                        <div class="support-glass-card support-blue" onclick="switchView('vecinos')" role="button"
+                            tabindex="0">
+                            <div class="support-card-content">
+                                <div class="support-icon-wrap icon-blue">
+                                    <i class="bi bi-people-fill"></i>
+                                </div>
+                                <div class="support-text-wrap">
+                                    <div class="support-label">Padrón Comunal de Vecinos</div>
+                                    <div class="support-number-row">
+                                        <div class="support-number">12.458</div>
+                                        <span class="support-trend positive"><i class="bi bi-arrow-up-short"></i>
+                                            +12%</span>
+                                    </div>
+                                    <div class="support-subtext">Vecinos verificados en la comuna de La Serena</div>
+                                </div>
+                            </div>
+                            <div class="support-card-action">
+                                <i class="bi bi-arrow-right"></i>
+                            </div>
                         </div>
-                        <div class="kpi-number">3.421</div>
-                        <div class="kpi-footer">
-                            <span class="kpi-trend positive"><i class="bi bi-arrow-up-short"></i> 18% respecto al mes
-                                anterior</span>
-                            <i class="bi bi-arrow-right kpi-arrow"></i>
-                        </div>
-                    </div>
 
-                    <div class="kpi-card kpi-purple" onclick="switchView('delegaciones')">
-                        <div class="kpi-header">
-                            <div class="kpi-icon-box"><i class="bi bi-geo-alt-fill"></i></div>
-                            <span class="kpi-header-title">Delegaciones Operativas</span>
+                        <!-- Indicador 2: Red Territorial de Delegaciones -->
+                        <div class="support-glass-card support-purple" onclick="switchView('delegaciones')"
+                            role="button" tabindex="0">
+                            <div class="support-card-content">
+                                <div class="support-icon-wrap icon-purple">
+                                    <i class="bi bi-geo-alt-fill"></i>
+                                </div>
+                                <div class="support-text-wrap">
+                                    <div class="support-label">Red Territorial de Delegaciones</div>
+                                    <div class="support-number-row">
+                                        <div class="support-number">6 <span class="support-number-sub">/ 6</span></div>
+                                        <span class="support-status-chip"><i class="bi bi-check-circle-fill me-1"></i>
+                                            100% Operativa</span>
+                                    </div>
+                                    <div class="support-subtext">La Pampa, Las Compañías, Centro, Rural, etc.</div>
+                                </div>
+                            </div>
+                            <div class="support-card-action">
+                                <i class="bi bi-arrow-right"></i>
+                            </div>
                         </div>
-                        <div class="kpi-number">6</div>
-                        <div class="kpi-footer">
-                            <span class="kpi-trend neutral">de 6 delegaciones</span>
-                            <i class="bi bi-arrow-right kpi-arrow"></i>
-                        </div>
-                    </div>
 
-                    <div class="kpi-card kpi-red" onclick="switchView('metas')">
-                        <div class="kpi-header">
-                            <div class="kpi-icon-box"><i class="bi bi-bullseye"></i></div>
-                            <span class="kpi-header-title">% Cumplimiento de Metas</span>
-                        </div>
-                        <div class="kpi-number">87%</div>
-                        <div class="kpi-footer">
-                            <span class="kpi-trend positive"><i class="bi bi-arrow-up-short"></i> 5% respecto al mes
-                                anterior</span>
-                            <i class="bi bi-arrow-right kpi-arrow"></i>
+                        <!-- Indicador 3: Metas Municipales -->
+                        <div class="support-glass-card support-amber" onclick="switchView('metas')" role="button"
+                            tabindex="0">
+                            <div class="support-card-content">
+                                <div class="support-icon-wrap icon-amber">
+                                    <i class="bi bi-bullseye"></i>
+                                </div>
+                                <div class="support-text-wrap">
+                                    <div class="support-label">Cumplimiento de Metas Municipales</div>
+                                    <div class="support-number-row">
+                                        <div class="support-number">87%</div>
+                                        <span class="support-trend positive"><i class="bi bi-arrow-up-short"></i> +5%
+                                            trimestral</span>
+                                    </div>
+                                    <!-- Micro-barra de progreso animada -->
+                                    <div class="glass-progress-wrap mt-1">
+                                        <div class="glass-progress-bar" style="width: 87%;"></div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="support-card-action">
+                                <i class="bi bi-arrow-right"></i>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -2945,9 +3492,12 @@
             <section id="view-usuarios" class="maintainer-view">
                 <div class="maintainer-card">
                     <!-- Header Oficial de Usuarios -->
-                    <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3 pb-2 border-bottom">
+                    <div
+                        class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3 pb-2 border-bottom">
                         <div>
-                            <h2 class="m-0 fw-bold" style="color: var(--muni-navy); font-size: 1.65rem; letter-spacing: -0.3px;">Usuarios</h2>
+                            <h2 class="m-0 fw-bold"
+                                style="color: var(--muni-navy); font-size: 1.65rem; letter-spacing: -0.3px;">Usuarios
+                            </h2>
                             <p class="text-secondary m-0" style="font-size: 0.85rem;">
                                 Administración y control de cuentas, funcionarios y perfiles de acceso
                             </p>
@@ -2966,60 +3516,80 @@
                     <!-- Indicadores KPI de Usuarios -->
                     <div class="table-meta-indicators py-2 px-3 mb-3">
                         <div class="meta-stat-group d-flex align-items-center gap-3 flex-wrap">
-                            <span class="meta-stat-item"><i class="bi bi-people-fill me-1 text-primary"></i> <strong id="lblTotalUsuarios">0</strong> usuarios</span>
+                            <span class="meta-stat-item"><i class="bi bi-people-fill me-1 text-primary"></i> <strong
+                                    id="lblTotalUsuarios">0</strong> usuarios</span>
                             <span class="text-muted">•</span>
-                            <span class="meta-stat-item"><i class="bi bi-check-circle-fill me-1 text-success"></i> <strong id="lblActivosUsuarios">0</strong> activos</span>
+                            <span class="meta-stat-item"><i class="bi bi-check-circle-fill me-1 text-success"></i>
+                                <strong id="lblActivosUsuarios">0</strong> activos</span>
                             <span class="text-muted">•</span>
-                            <span class="meta-stat-item"><i class="bi bi-x-circle-fill me-1 text-danger"></i> <strong id="lblInactivosUsuarios">0</strong> inactivos</span>
+                            <span class="meta-stat-item"><i class="bi bi-x-circle-fill me-1 text-danger"></i> <strong
+                                    id="lblInactivosUsuarios">0</strong> inactivos</span>
                             <span class="text-muted">•</span>
-                            <span class="meta-stat-item"><i class="bi bi-shield-shaded me-1" style="color: #C41230;"></i> <strong id="lblAdminsUsuarios">0</strong> administradores</span>
+                            <span class="meta-stat-item"><i class="bi bi-shield-shaded me-1"
+                                    style="color: #C41230;"></i> <strong id="lblAdminsUsuarios">0</strong>
+                                administradores</span>
                         </div>
                     </div>
 
                     <!-- Barra de Búsqueda, Filtros y Acciones (Unificada y Ordenada en 1 sola fila) -->
-                    <div class="usuarios-toolbar d-flex align-items-center justify-content-between gap-3 mb-3 p-2 bg-white border rounded-3 flex-wrap">
+                    <div
+                        class="usuarios-toolbar d-flex align-items-center justify-content-between gap-3 mb-3 p-2 bg-white border rounded-3 flex-wrap">
                         <div class="d-flex align-items-center gap-2 flex-grow-1 flex-wrap">
-                            <div class="search-input-wrapper position-relative" style="min-width: 200px; max-width: 260px; flex: 1;">
-                                <i class="bi bi-search position-absolute top-50 start-0 translate-middle-y ms-3 text-secondary" style="font-size: 0.85rem;"></i>
-                                <input type="text" class="form-control form-control-sm ps-5 bg-light border-0" id="searchUsuariosInput"
-                                    onkeyup="filtrarUsuarios()" placeholder="Buscar funcionario, RUT o correo..." style="border-radius: 8px; font-size: 0.84rem; height: 35px;">
+                            <div class="search-input-wrapper position-relative"
+                                style="min-width: 200px; max-width: 260px; flex: 1;">
+                                <i class="bi bi-search position-absolute top-50 start-0 translate-middle-y ms-3 text-secondary"
+                                    style="font-size: 0.85rem;"></i>
+                                <input type="text" class="form-control form-control-sm ps-5 bg-light border-0"
+                                    id="searchUsuariosInput" onkeyup="filtrarUsuarios()"
+                                    placeholder="Buscar funcionario, RUT o correo..."
+                                    style="border-radius: 8px; font-size: 0.84rem; height: 35px;">
                             </div>
 
                             <select class="form-select form-select-sm bg-light border-0" id="filtroDelegacionUsuario"
-                                onchange="filtrarUsuarios()" style="width: auto; height: 35px; border-radius: 8px; font-size: 0.82rem; font-weight: 500;">
+                                onchange="filtrarUsuarios()"
+                                style="width: auto; height: 35px; border-radius: 8px; font-size: 0.82rem; font-weight: 500;">
                                 <option value="">Todas las Delegaciones</option>
                             </select>
 
                             <select class="form-select form-select-sm bg-light border-0" id="filtroRolUsuario"
-                                onchange="filtrarUsuarios()" style="width: auto; height: 35px; border-radius: 8px; font-size: 0.82rem; font-weight: 500;">
+                                onchange="filtrarUsuarios()"
+                                style="width: auto; height: 35px; border-radius: 8px; font-size: 0.82rem; font-weight: 500;">
                                 <option value="">Todos los Roles</option>
                             </select>
 
                             <select class="form-select form-select-sm bg-light border-0" id="filtroEstadoUsuario"
-                                onchange="filtrarUsuarios()" style="width: auto; height: 35px; border-radius: 8px; font-size: 0.82rem; font-weight: 500;">
+                                onchange="filtrarUsuarios()"
+                                style="width: auto; height: 35px; border-radius: 8px; font-size: 0.82rem; font-weight: 500;">
                                 <option value="">Todos los Estados</option>
                                 <option value="Activo">Solo Activos</option>
                                 <option value="Inactivo">Solo Inactivos</option>
                             </select>
 
-                            <button class="btn btn-sm btn-light border-0 text-secondary" onclick="limpiarFiltrosUsuarios()"
-                                title="Restablecer filtros" style="height: 35px; width: 35px; border-radius: 8px; display: flex; align-items: center; justify-content: center;">
+                            <button class="btn btn-sm btn-light border-0 text-secondary"
+                                onclick="limpiarFiltrosUsuarios()" title="Restablecer filtros"
+                                style="height: 35px; width: 35px; border-radius: 8px; display: flex; align-items: center; justify-content: center;">
                                 <i class="bi bi-arrow-counterclockwise"></i>
                             </button>
                         </div>
 
                         <div class="d-flex align-items-center gap-1 flex-shrink-0">
                             <div class="btn-group btn-group-sm bg-light p-1 rounded-3">
-                                <button class="btn btn-sm border-0 text-dark fw-semibold px-3 d-flex align-items-center gap-1"
-                                    onclick="exportarExcelUsuarios()" title="Exportar reporte a Excel" style="border-radius: 6px; font-size: 0.80rem; background: #FFFFFF; box-shadow: 0 1px 3px rgba(0,0,0,0.06);">
+                                <button
+                                    class="btn btn-sm border-0 text-dark fw-semibold px-3 d-flex align-items-center gap-1"
+                                    onclick="exportarExcelUsuarios()" title="Exportar reporte a Excel"
+                                    style="border-radius: 6px; font-size: 0.80rem; background: #FFFFFF; box-shadow: 0 1px 3px rgba(0,0,0,0.06);">
                                     <i class="bi bi-file-earmark-excel text-success"></i> Excel
                                 </button>
-                                <button class="btn btn-sm border-0 text-dark fw-semibold px-3 d-flex align-items-center gap-1"
-                                    onclick="exportarPDFUsuarios()" title="Exportar reporte a PDF" style="border-radius: 6px; font-size: 0.80rem; background: #FFFFFF; box-shadow: 0 1px 3px rgba(0,0,0,0.06);">
+                                <button
+                                    class="btn btn-sm border-0 text-dark fw-semibold px-3 d-flex align-items-center gap-1"
+                                    onclick="exportarPDFUsuarios()" title="Exportar reporte a PDF"
+                                    style="border-radius: 6px; font-size: 0.80rem; background: #FFFFFF; box-shadow: 0 1px 3px rgba(0,0,0,0.06);">
                                     <i class="bi bi-file-earmark-pdf text-danger"></i> PDF
                                 </button>
-                                <button class="btn btn-sm border-0 text-dark fw-semibold px-3 d-flex align-items-center gap-1"
-                                    onclick="window.print()" title="Imprimir listado" style="border-radius: 6px; font-size: 0.80rem; background: #FFFFFF; box-shadow: 0 1px 3px rgba(0,0,0,0.06);">
+                                <button
+                                    class="btn btn-sm border-0 text-dark fw-semibold px-3 d-flex align-items-center gap-1"
+                                    onclick="window.print()" title="Imprimir listado"
+                                    style="border-radius: 6px; font-size: 0.80rem; background: #FFFFFF; box-shadow: 0 1px 3px rgba(0,0,0,0.06);">
                                     <i class="bi bi-printer text-primary"></i> Imprimir
                                 </button>
                             </div>
@@ -3033,11 +3603,14 @@
                                 <thead>
                                     <tr>
                                         <th style="width: 45px; text-align: center;">#</th>
-                                        <th class="sortable" onclick="ordenarUsuarios('full_name')">Funcionario / RUT <i class="bi bi-arrow-down-up sort-icon"></i></th>
+                                        <th class="sortable" onclick="ordenarUsuarios('full_name')">Funcionario / RUT <i
+                                                class="bi bi-arrow-down-up sort-icon"></i></th>
                                         <th>Correo Institucional</th>
-                                        <th class="sortable" onclick="ordenarUsuarios('delegation_name')">Delegación / Cargo <i class="bi bi-arrow-down-up sort-icon"></i></th>
+                                        <th class="sortable" onclick="ordenarUsuarios('delegation_name')">Delegación /
+                                            Cargo <i class="bi bi-arrow-down-up sort-icon"></i></th>
                                         <th>Rol Asignado</th>
-                                        <th class="text-center sortable" onclick="ordenarUsuarios('status')" style="width: 100px;">Estado</th>
+                                        <th class="text-center sortable" onclick="ordenarUsuarios('status')"
+                                            style="width: 100px;">Estado</th>
                                         <th class="text-end" style="width: 105px;">Acciones</th>
                                     </tr>
                                 </thead>
@@ -3176,12 +3749,15 @@
             <section id="view-roles" class="maintainer-view">
                 <div class="liquid-glass-card">
                     <!-- Header Oficial (Fiel al PDF) -->
-                    <div class="d-flex align-items-center justify-content-between flex-wrap gap-3 mb-4 pb-2 border-bottom">
+                    <div
+                        class="d-flex align-items-center justify-content-between flex-wrap gap-3 mb-4 pb-2 border-bottom">
                         <div>
-                            <h2 class="m-0 fw-bold" style="color: var(--muni-navy); font-size: 1.65rem; letter-spacing: -0.3px;">Roles</h2>
+                            <h2 class="m-0 fw-bold"
+                                style="color: var(--muni-navy); font-size: 1.65rem; letter-spacing: -0.3px;">Roles</h2>
                         </div>
                         <div class="d-flex align-items-center gap-2">
-                            <button class="btn btn-outline-secondary rounded-pill px-3 py-1 fw-semibold small" onclick="abrirModalMatrizMyAdmin()" title="Ver matriz completa de permisos">
+                            <button class="btn btn-outline-secondary rounded-pill px-3 py-1 fw-semibold small"
+                                onclick="abrirModalMatrizMyAdmin()" title="Ver matriz completa de permisos">
                                 <i class="bi bi-grid-3x3 me-1"></i> Matriz de Permisos
                             </button>
                             <button class="liquid-glass-btn-primary" onclick="abrirModalRol('nuevo')">
@@ -3194,11 +3770,13 @@
                     <div class="d-flex align-items-center justify-content-between flex-wrap gap-3 mb-3">
                         <div class="d-flex align-items-center gap-2" style="flex-grow: 1; max-width: 480px;">
                             <div class="input-group input-group-sm">
-                                <span class="input-group-text bg-white border-end-0 text-muted"><i class="bi bi-search"></i></span>
+                                <span class="input-group-text bg-white border-end-0 text-muted"><i
+                                        class="bi bi-search"></i></span>
                                 <input type="text" class="form-control border-start-0" id="searchRolesInput"
                                     onkeyup="filtrarRoles()" placeholder="Buscar...">
                             </div>
-                            <select class="form-select form-select-sm" id="filtroTipoRol" onchange="filtrarRoles()" style="width: auto;">
+                            <select class="form-select form-select-sm" id="filtroTipoRol" onchange="filtrarRoles()"
+                                style="width: auto;">
                                 <option value="">Todos los roles</option>
                                 <option value="sistema">Roles de sistema</option>
                                 <option value="personalizado">Roles personalizados</option>
@@ -3225,7 +3803,8 @@
                             <tbody id="tablaRolesBody">
                                 <tr>
                                     <td colspan="6" class="text-center py-4 text-muted">
-                                        <div class="spinner-border spinner-border-sm text-primary me-2" role="status"></div>
+                                        <div class="spinner-border spinner-border-sm text-primary me-2" role="status">
+                                        </div>
                                         Cargando roles...
                                     </td>
                                 </tr>
@@ -3237,7 +3816,8 @@
                     <div class="table-pagination-footer mt-3">
                         <div class="d-flex align-items-center gap-2">
                             <span>Mostrar</span>
-                            <select class="form-select form-select-sm" style="width: 70px;" id="selectFilasPorPaginaRoles" onchange="cambiarFilasPorPaginaRoles(this.value)">
+                            <select class="form-select form-select-sm" style="width: 70px;"
+                                id="selectFilasPorPaginaRoles" onchange="cambiarFilasPorPaginaRoles(this.value)">
                                 <option value="10">10</option>
                                 <option value="25">25</option>
                                 <option value="50">50</option>
@@ -3274,14 +3854,16 @@
             <section id="view-reportes" class="maintainer-view">
                 <div class="maintainer-card p-4">
                     <!-- Header Oficial del Módulo de Reportes -->
-                    <div class="d-flex justify-content-between align-items-start flex-wrap gap-3 mb-4 pb-3 border-bottom">
+                    <div
+                        class="d-flex justify-content-between align-items-start flex-wrap gap-3 mb-4 pb-3 border-bottom">
                         <div class="d-flex align-items-center gap-3">
                             <div class="dashboard-title-icon"
                                 style="background: var(--muni-red); width: 48px; height: 48px; border-radius: 12px; display: flex; align-items: center; justify-content: center; color: #FFF; font-size: 1.4rem; box-shadow: 0 4px 12px rgba(196,18,48,0.25);">
                                 <i class="bi bi-bar-chart-line-fill"></i>
                             </div>
                             <div>
-                                <h1 class="h3 fw-bold mb-1" style="color: var(--muni-navy); font-family: var(--font-heading);">
+                                <h1 class="h3 fw-bold mb-1"
+                                    style="color: var(--muni-navy); font-family: var(--font-heading);">
                                     Reportes y Estadísticas Institucionales
                                 </h1>
                                 <p class="text-secondary small mb-0 fw-medium">
@@ -3290,15 +3872,19 @@
                             </div>
                         </div>
                         <div class="d-flex align-items-center gap-2 flex-wrap">
-                            <button class="btn btn-outline-danger btn-sm fw-bold d-flex align-items-center gap-2 px-3 py-2 rounded-3 shadow-sm"
-                                onclick="generarReportePDFOficial()" style="border-color: var(--muni-red); color: var(--muni-red);">
+                            <button
+                                class="btn btn-outline-danger btn-sm fw-bold d-flex align-items-center gap-2 px-3 py-2 rounded-3 shadow-sm"
+                                onclick="generarReportePDFOficial()"
+                                style="border-color: var(--muni-red); color: var(--muni-red);">
                                 <i class="bi bi-file-earmark-pdf-fill"></i> Descargar Informe PDF
                             </button>
-                            <button class="btn btn-success btn-sm fw-bold d-flex align-items-center gap-2 px-3 py-2 rounded-3 shadow-sm"
+                            <button
+                                class="btn btn-success btn-sm fw-bold d-flex align-items-center gap-2 px-3 py-2 rounded-3 shadow-sm"
                                 onclick="exportarReportesExcel()">
                                 <i class="bi bi-file-earmark-excel-fill"></i> Exportar a Excel
                             </button>
-                            <button class="btn btn-outline-secondary btn-sm fw-bold d-flex align-items-center gap-1 px-3 py-2 rounded-3 shadow-sm"
+                            <button
+                                class="btn btn-outline-secondary btn-sm fw-bold d-flex align-items-center gap-1 px-3 py-2 rounded-3 shadow-sm"
                                 onclick="window.print()">
                                 <i class="bi bi-printer"></i> Imprimir
                             </button>
@@ -3310,7 +3896,8 @@
                         <div class="row g-2 align-items-end">
                             <div class="col-md-3">
                                 <label class="form-label small fw-bold text-secondary mb-1">Período de Análisis</label>
-                                <select class="form-select form-select-sm" id="filtroPeriodoReporte" onchange="actualizarReportesDatos()">
+                                <select class="form-select form-select-sm" id="filtroPeriodoReporte"
+                                    onchange="actualizarReportesDatos()">
                                     <option value="mes">Últimos 30 Días</option>
                                     <option value="trimestre" selected>Tercer Trimestre 2026</option>
                                     <option value="ano">Año Completo 2026</option>
@@ -3318,8 +3905,10 @@
                                 </select>
                             </div>
                             <div class="col-md-3">
-                                <label class="form-label small fw-bold text-secondary mb-1">Delegación Territorial</label>
-                                <select class="form-select form-select-sm" id="filtroDelegacionReporte" onchange="actualizarReportesDatos()">
+                                <label class="form-label small fw-bold text-secondary mb-1">Delegación
+                                    Territorial</label>
+                                <select class="form-select form-select-sm" id="filtroDelegacionReporte"
+                                    onchange="actualizarReportesDatos()">
                                     <option value="">Todas las Delegaciones (6)</option>
                                     <option value="centro">La Serena Centro</option>
                                     <option value="companias">Norte (Las Compañías)</option>
@@ -3331,7 +3920,8 @@
                             </div>
                             <div class="col-md-3">
                                 <label class="form-label small fw-bold text-secondary mb-1">Canal de Atención</label>
-                                <select class="form-select form-select-sm" id="filtroCanalReporte" onchange="actualizarReportesDatos()">
+                                <select class="form-select form-select-sm" id="filtroCanalReporte"
+                                    onchange="actualizarReportesDatos()">
                                     <option value="">Todos los Canales</option>
                                     <option value="Presencial">Presencial (Ventanilla)</option>
                                     <option value="Telefonico">Telefónico</option>
@@ -3344,7 +3934,8 @@
                                     style="background: var(--muni-navy); border-color: var(--muni-navy);">
                                     <i class="bi bi-funnel-fill me-1"></i> Filtrar Datos
                                 </button>
-                                <button class="btn btn-outline-secondary btn-sm" onclick="restablecerFiltrosReportes()" title="Restablecer filtros">
+                                <button class="btn btn-outline-secondary btn-sm" onclick="restablecerFiltrosReportes()"
+                                    title="Restablecer filtros">
                                     <i class="bi bi-arrow-counterclockwise"></i>
                                 </button>
                             </div>
@@ -3352,18 +3943,21 @@
                     </div>
 
                     <!-- Pestañas de Navegación de Reportes + Control de Tiempo Real -->
-                    <div class="d-flex align-items-center justify-content-between flex-wrap gap-3 mb-4 p-2 bg-white rounded-3 border">
+                    <div
+                        class="d-flex align-items-center justify-content-between flex-wrap gap-3 mb-4 p-2 bg-white rounded-3 border">
                         <div class="btn-group btn-group-sm p-1 bg-light rounded-3">
-                            <button class="btn btn-sm btn-white border-0 fw-bold px-3 py-2 shadow-sm" id="tabReporteGeneral"
-                                onclick="cambiarSubvistaReporte('general')" style="background: #FFFFFF; color: var(--muni-navy); border-radius: 6px;">
+                            <button class="btn btn-sm btn-white border-0 fw-bold px-3 py-2 shadow-sm"
+                                id="tabReporteGeneral" onclick="cambiarSubvistaReporte('general')"
+                                style="background: #FFFFFF; color: var(--muni-navy); border-radius: 6px;">
                                 <i class="bi bi-graph-up text-primary me-1"></i> 1. Visión General
                             </button>
                             <button class="btn btn-sm border-0 fw-semibold text-secondary px-3 py-2" id="tabReporte1vs1"
                                 onclick="cambiarSubvistaReporte('1vs1')" style="border-radius: 6px;">
                                 <i class="bi bi-arrow-left-right text-danger me-1"></i> 2. Comparativa 1 vs 1
                             </button>
-                            <button class="btn btn-sm border-0 fw-semibold text-secondary px-3 py-2" id="tabReporteMulti"
-                                onclick="cambiarSubvistaReporte('multi')" style="border-radius: 6px;">
+                            <button class="btn btn-sm border-0 fw-semibold text-secondary px-3 py-2"
+                                id="tabReporteMulti" onclick="cambiarSubvistaReporte('multi')"
+                                style="border-radius: 6px;">
                                 <i class="bi bi-grid-3x3-gap-fill text-success me-1"></i> 3. Todas contra Todas
                             </button>
                         </div>
@@ -3373,12 +3967,17 @@
                             <div class="d-flex align-items-center gap-2 px-3 py-1 rounded-pill bg-light border">
                                 <span class="live-dot" id="liveDotIndicator"></span>
                                 <span class="small fw-bold text-dark" id="liveTextIndicator">Tiempo Real: ACTIVO</span>
-                                <span class="badge bg-success-subtle text-success border border-success-subtle small py-0 px-2" id="liveCounterSec">5s</span>
+                                <span
+                                    class="badge bg-success-subtle text-success border border-success-subtle small py-0 px-2"
+                                    id="liveCounterSec">5s</span>
                             </div>
-                            <button class="btn btn-sm btn-light border text-secondary px-2" id="btnToggleLive" onclick="toggleTiempoRealReportes()" title="Pausar / Reanudar monitoreo en vivo">
-                                <i class="bi bi-pause-fill" id="btnToggleLiveIcon"></i> <span id="btnToggleLiveText" class="d-none d-sm-inline">Pausar</span>
+                            <button class="btn btn-sm btn-light border text-secondary px-2" id="btnToggleLive"
+                                onclick="toggleTiempoRealReportes()" title="Pausar / Reanudar monitoreo en vivo">
+                                <i class="bi bi-pause-fill" id="btnToggleLiveIcon"></i> <span id="btnToggleLiveText"
+                                    class="d-none d-sm-inline">Pausar</span>
                             </button>
-                            <button class="btn btn-sm btn-outline-primary fw-semibold px-2" onclick="forzarActualizacionEnVivo()" title="Actualizar datos ahora">
+                            <button class="btn btn-sm btn-outline-primary fw-semibold px-2"
+                                onclick="forzarActualizacionEnVivo()" title="Actualizar datos ahora">
                                 <i class="bi bi-arrow-repeat"></i> <span class="d-none d-sm-inline">Actualizar</span>
                             </button>
                         </div>
@@ -3387,65 +3986,81 @@
                     <!-- 4 Tarjetas KPI Ejecutivas y Simétricas (Equilibradas y legibles) -->
                     <div class="row g-3 mb-4">
                         <div class="col-sm-6 col-xl-3">
-                            <div class="report-kpi-card shadow-sm p-3 rounded-4 bg-white border h-100 position-relative overflow-hidden">
+                            <div
+                                class="report-kpi-card shadow-sm p-3 rounded-4 bg-white border h-100 position-relative overflow-hidden">
                                 <div class="report-kpi-bar" style="background: var(--muni-red);"></div>
                                 <div class="d-flex align-items-center justify-content-between mb-2">
                                     <span class="report-kpi-title text-secondary fw-semibold">Atenciones Totales</span>
-                                    <div class="report-kpi-icon" style="background: rgba(196, 18, 48, 0.1); color: var(--muni-red);">
+                                    <div class="report-kpi-icon"
+                                        style="background: rgba(196, 18, 48, 0.1); color: var(--muni-red);">
                                         <i class="bi bi-people-fill"></i>
                                     </div>
                                 </div>
                                 <div class="report-kpi-value text-dark fw-bold" id="kpiRepTotal">15.842</div>
                                 <div class="d-flex align-items-center gap-1 mt-2 text-success small fw-semibold">
-                                    <i class="bi bi-arrow-up-right"></i> +14.2% <span class="text-muted fw-normal ms-1">vs mes anterior</span>
+                                    <i class="bi bi-arrow-up-right"></i> +14.2% <span
+                                        class="text-muted fw-normal ms-1">vs mes anterior</span>
                                 </div>
                             </div>
                         </div>
 
                         <div class="col-sm-6 col-xl-3">
-                            <div class="report-kpi-card shadow-sm p-3 rounded-4 bg-white border h-100 position-relative overflow-hidden">
+                            <div
+                                class="report-kpi-card shadow-sm p-3 rounded-4 bg-white border h-100 position-relative overflow-hidden">
                                 <div class="report-kpi-bar" style="background: #16A34A;"></div>
                                 <div class="d-flex align-items-center justify-content-between mb-2">
-                                    <span class="report-kpi-title text-secondary fw-semibold">Resolución 1er Contacto</span>
-                                    <div class="report-kpi-icon" style="background: rgba(22, 163, 74, 0.1); color: #16A34A;">
+                                    <span class="report-kpi-title text-secondary fw-semibold">Resolución 1er
+                                        Contacto</span>
+                                    <div class="report-kpi-icon"
+                                        style="background: rgba(22, 163, 74, 0.1); color: #16A34A;">
                                         <i class="bi bi-check-circle-fill"></i>
                                     </div>
                                 </div>
                                 <div class="report-kpi-value text-dark fw-bold" id="kpiRepResolucion">94.8%</div>
                                 <div class="d-flex align-items-center gap-1 mt-2 text-success small fw-semibold">
-                                    <i class="bi bi-arrow-up-right"></i> +4.8% <span class="text-muted fw-normal ms-1">meta: 90%</span>
+                                    <i class="bi bi-arrow-up-right"></i> +4.8% <span
+                                        class="text-muted fw-normal ms-1">meta: 90%</span>
                                 </div>
                             </div>
                         </div>
 
                         <div class="col-sm-6 col-xl-3">
-                            <div class="report-kpi-card shadow-sm p-3 rounded-4 bg-white border h-100 position-relative overflow-hidden">
+                            <div
+                                class="report-kpi-card shadow-sm p-3 rounded-4 bg-white border h-100 position-relative overflow-hidden">
                                 <div class="report-kpi-bar" style="background: #0284C7;"></div>
                                 <div class="d-flex align-items-center justify-content-between mb-2">
                                     <span class="report-kpi-title text-secondary fw-semibold">Tiempo Medio Espera</span>
-                                    <div class="report-kpi-icon" style="background: rgba(2, 132, 199, 0.1); color: #0284C7;">
+                                    <div class="report-kpi-icon"
+                                        style="background: rgba(2, 132, 199, 0.1); color: #0284C7;">
                                         <i class="bi bi-clock-history"></i>
                                     </div>
                                 </div>
                                 <div class="report-kpi-value text-dark fw-bold" id="kpiRepTiempo">12.4 min</div>
                                 <div class="d-flex align-items-center gap-1 mt-2 text-success small fw-semibold">
-                                    <i class="bi bi-arrow-down-right"></i> -3.1 min <span class="text-muted fw-normal ms-1">meta: &lt; 18 min</span>
+                                    <i class="bi bi-arrow-down-right"></i> -3.1 min <span
+                                        class="text-muted fw-normal ms-1">meta: &lt; 18 min</span>
                                 </div>
                             </div>
                         </div>
 
                         <div class="col-sm-6 col-xl-3">
-                            <div class="report-kpi-card shadow-sm p-3 rounded-4 bg-white border h-100 position-relative overflow-hidden">
+                            <div
+                                class="report-kpi-card shadow-sm p-3 rounded-4 bg-white border h-100 position-relative overflow-hidden">
                                 <div class="report-kpi-bar" style="background: #F59E0B;"></div>
                                 <div class="d-flex align-items-center justify-content-between mb-2">
-                                    <span class="report-kpi-title text-secondary fw-semibold">Satisfacción Vecinal</span>
-                                    <div class="report-kpi-icon" style="background: rgba(245, 158, 11, 0.1); color: #F59E0B;">
+                                    <span class="report-kpi-title text-secondary fw-semibold">Satisfacción
+                                        Vecinal</span>
+                                    <div class="report-kpi-icon"
+                                        style="background: rgba(245, 158, 11, 0.1); color: #F59E0B;">
                                         <i class="bi bi-star-fill"></i>
                                     </div>
                                 </div>
-                                <div class="report-kpi-value text-dark fw-bold" id="kpiRepCSAT">4.85 <span class="fs-6 text-muted fw-normal">/ 5.0</span></div>
-                                <div class="d-flex align-items-center gap-1 mt-2 text-warning-emphasis small fw-semibold">
-                                    <i class="bi bi-award-fill text-warning"></i> Excelente <span class="text-muted fw-normal ms-1">(3.420 encuestas)</span>
+                                <div class="report-kpi-value text-dark fw-bold" id="kpiRepCSAT">4.85 <span
+                                        class="fs-6 text-muted fw-normal">/ 5.0</span></div>
+                                <div
+                                    class="d-flex align-items-center gap-1 mt-2 text-warning-emphasis small fw-semibold">
+                                    <i class="bi bi-award-fill text-warning"></i> Excelente <span
+                                        class="text-muted fw-normal ms-1">(3.420 encuestas)</span>
                                 </div>
                             </div>
                         </div>
@@ -3460,7 +4075,9 @@
                             <div class="col-lg-7">
                                 <div class="card border p-3 h-100 shadow-sm rounded-3 bg-white">
                                     <div class="d-flex justify-content-between align-items-center mb-3">
-                                        <h6 class="fw-bold mb-0 text-dark"><i class="bi bi-geo-alt-fill text-danger me-2"></i>Volumen de Atenciones por Delegación Municipal</h6>
+                                        <h6 class="fw-bold mb-0 text-dark"><i
+                                                class="bi bi-geo-alt-fill text-danger me-2"></i>Volumen de Atenciones
+                                            por Delegación Municipal</h6>
                                         <span class="badge bg-light text-secondary border">Territorial</span>
                                     </div>
                                     <div style="height: 270px; position: relative;">
@@ -3471,7 +4088,9 @@
                             <div class="col-lg-5">
                                 <div class="card border p-3 h-100 shadow-sm rounded-3 bg-white">
                                     <div class="d-flex justify-content-between align-items-center mb-3">
-                                        <h6 class="fw-bold mb-0 text-dark"><i class="bi bi-pie-chart-fill text-primary me-2"></i>Distribución por Canal de Atención</h6>
+                                        <h6 class="fw-bold mb-0 text-dark"><i
+                                                class="bi bi-pie-chart-fill text-primary me-2"></i>Distribución por
+                                            Canal de Atención</h6>
                                         <span class="badge bg-light text-secondary border">Canales</span>
                                     </div>
                                     <div style="height: 270px; position: relative;">
@@ -3486,7 +4105,9 @@
                             <div class="col-lg-6">
                                 <div class="card border p-3 h-100 shadow-sm rounded-3 bg-white">
                                     <div class="d-flex justify-content-between align-items-center mb-3">
-                                        <h6 class="fw-bold mb-0 text-dark"><i class="bi bi-graph-up text-success me-2"></i>Evolución Mensual: Atenciones vs Metas Institucionales</h6>
+                                        <h6 class="fw-bold mb-0 text-dark"><i
+                                                class="bi bi-graph-up text-success me-2"></i>Evolución Mensual:
+                                            Atenciones vs Metas Institucionales</h6>
                                         <span class="badge bg-light text-secondary border">Tendencia</span>
                                     </div>
                                     <div style="height: 260px; position: relative;">
@@ -3497,7 +4118,9 @@
                             <div class="col-lg-6">
                                 <div class="card border p-3 h-100 shadow-sm rounded-3 bg-white">
                                     <div class="d-flex justify-content-between align-items-center mb-3">
-                                        <h6 class="fw-bold mb-0 text-dark"><i class="bi bi-list-stars text-warning me-2"></i>Top Trámites con Mayor Demanda Ciudadana</h6>
+                                        <h6 class="fw-bold mb-0 text-dark"><i
+                                                class="bi bi-list-stars text-warning me-2"></i>Top Trámites con Mayor
+                                            Demanda Ciudadana</h6>
                                         <span class="badge bg-light text-secondary border">Ranking</span>
                                     </div>
                                     <div style="height: 260px; position: relative;">
@@ -3511,10 +4134,14 @@
                         <div class="card border shadow-sm rounded-3 p-3 bg-white">
                             <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
                                 <div>
-                                    <h6 class="fw-bold mb-0 text-dark"><i class="bi bi-table text-secondary me-2"></i>Matriz de Rendimiento y Metas por Delegación</h6>
-                                    <small class="text-muted">Desglose de atenciones, tiempos de respuesta y porcentaje de cumplimiento</small>
+                                    <h6 class="fw-bold mb-0 text-dark"><i
+                                            class="bi bi-table text-secondary me-2"></i>Matriz de Rendimiento y Metas
+                                        por Delegación</h6>
+                                    <small class="text-muted">Desglose de atenciones, tiempos de respuesta y porcentaje
+                                        de cumplimiento</small>
                                 </div>
-                                <button class="btn btn-sm btn-outline-success fw-bold" onclick="exportarReportesExcel()">
+                                <button class="btn btn-sm btn-outline-success fw-bold"
+                                    onclick="exportarReportesExcel()">
                                     <i class="bi bi-download me-1"></i> Descargar Datos CSV/Excel
                                 </button>
                             </div>
@@ -3534,7 +4161,8 @@
                                     </thead>
                                     <tbody class="small" id="tablaReportesBody">
                                         <tr>
-                                            <td class="fw-bold text-dark"><i class="bi bi-building me-1 text-primary"></i> La Serena Centro</td>
+                                            <td class="fw-bold text-dark"><i
+                                                    class="bi bi-building me-1 text-primary"></i> La Serena Centro</td>
                                             <td class="text-center fw-bold">5.420</td>
                                             <td class="text-center text-success fw-bold">5.180</td>
                                             <td class="text-center text-warning fw-bold">240</td>
@@ -3544,7 +4172,9 @@
                                             <td class="text-center text-warning fw-bold">★ 4.9</td>
                                         </tr>
                                         <tr>
-                                            <td class="fw-bold text-dark"><i class="bi bi-building me-1 text-primary"></i> Norte (Las Compañías)</td>
+                                            <td class="fw-bold text-dark"><i
+                                                    class="bi bi-building me-1 text-primary"></i> Norte (Las Compañías)
+                                            </td>
                                             <td class="text-center fw-bold">4.890</td>
                                             <td class="text-center text-success fw-bold">4.610</td>
                                             <td class="text-center text-warning fw-bold">280</td>
@@ -3554,7 +4184,8 @@
                                             <td class="text-center text-warning fw-bold">★ 4.8</td>
                                         </tr>
                                         <tr>
-                                            <td class="fw-bold text-dark"><i class="bi bi-building me-1 text-primary"></i> Sur (La Pampa)</td>
+                                            <td class="fw-bold text-dark"><i
+                                                    class="bi bi-building me-1 text-primary"></i> Sur (La Pampa)</td>
                                             <td class="text-center fw-bold">2.310</td>
                                             <td class="text-center text-success fw-bold">2.190</td>
                                             <td class="text-center text-warning fw-bold">120</td>
@@ -3564,7 +4195,9 @@
                                             <td class="text-center text-warning fw-bold">★ 4.9</td>
                                         </tr>
                                         <tr>
-                                            <td class="fw-bold text-dark"><i class="bi bi-building me-1 text-primary"></i> Oriente (San Joaquín / La Antena)</td>
+                                            <td class="fw-bold text-dark"><i
+                                                    class="bi bi-building me-1 text-primary"></i> Oriente (San Joaquín /
+                                                La Antena)</td>
                                             <td class="text-center fw-bold">1.840</td>
                                             <td class="text-center text-success fw-bold">1.750</td>
                                             <td class="text-center text-warning fw-bold">90</td>
@@ -3574,7 +4207,8 @@
                                             <td class="text-center text-warning fw-bold">★ 4.9</td>
                                         </tr>
                                         <tr>
-                                            <td class="fw-bold text-dark"><i class="bi bi-tree me-1 text-success"></i> Sector Rural (Algarrobito / Lambert)</td>
+                                            <td class="fw-bold text-dark"><i class="bi bi-tree me-1 text-success"></i>
+                                                Sector Rural (Algarrobito / Lambert)</td>
                                             <td class="text-center fw-bold">1.382</td>
                                             <td class="text-center text-success fw-bold">1.290</td>
                                             <td class="text-center text-warning fw-bold">92</td>
@@ -3584,7 +4218,8 @@
                                             <td class="text-center text-warning fw-bold">★ 4.7</td>
                                         </tr>
                                         <tr>
-                                            <td class="fw-bold text-dark"><i class="bi bi-water me-1 text-info"></i> Avenida del Mar / Costanera</td>
+                                            <td class="fw-bold text-dark"><i class="bi bi-water me-1 text-info"></i>
+                                                Avenida del Mar / Costanera</td>
                                             <td class="text-center fw-bold">850</td>
                                             <td class="text-center text-success fw-bold">774</td>
                                             <td class="text-center text-warning fw-bold">76</td>
@@ -3609,10 +4244,12 @@
                                 <div class="col-md-5">
                                     <div class="delegacion-compare-box team-a">
                                         <div class="d-flex align-items-center justify-content-between mb-2">
-                                            <span class="badge bg-danger text-white px-2 py-1 small fw-bold">DELEGACIÓN A</span>
+                                            <span class="badge bg-danger text-white px-2 py-1 small fw-bold">DELEGACIÓN
+                                                A</span>
                                             <span class="text-muted small" id="compareSubA">Casco Urbano</span>
                                         </div>
-                                        <select class="form-select form-select-lg fw-bold text-dark border-0 bg-light" id="selectCompareDelA" onchange="actualizarComparativa1vs1()">
+                                        <select class="form-select form-select-lg fw-bold text-dark border-0 bg-light"
+                                            id="selectCompareDelA" onchange="actualizarComparativa1vs1()">
                                             <option value="centro" selected>Delegación Centro Histórico</option>
                                             <option value="companias">Delegación Las Compañías</option>
                                             <option value="pampa">Delegación La Pampa</option>
@@ -3626,17 +4263,20 @@
                                 <div class="col-md-2 text-center">
                                     <div class="d-flex flex-column align-items-center justify-content-center">
                                         <div class="vs-badge-circle mb-1">VS</div>
-                                        <span class="text-secondary small fw-bold text-uppercase" style="letter-spacing: 0.5px;">Comparación Directa</span>
+                                        <span class="text-secondary small fw-bold text-uppercase"
+                                            style="letter-spacing: 0.5px;">Comparación Directa</span>
                                     </div>
                                 </div>
 
                                 <div class="col-md-5">
                                     <div class="delegacion-compare-box team-b">
                                         <div class="d-flex align-items-center justify-content-between mb-2">
-                                            <span class="badge bg-primary text-white px-2 py-1 small fw-bold" style="background: var(--muni-navy) !important;">DELEGACIÓN B</span>
+                                            <span class="badge bg-primary text-white px-2 py-1 small fw-bold"
+                                                style="background: var(--muni-navy) !important;">DELEGACIÓN B</span>
                                             <span class="text-muted small" id="compareSubB">Zona Norte</span>
                                         </div>
-                                        <select class="form-select form-select-lg fw-bold text-dark border-0 bg-light" id="selectCompareDelB" onchange="actualizarComparativa1vs1()">
+                                        <select class="form-select form-select-lg fw-bold text-dark border-0 bg-light"
+                                            id="selectCompareDelB" onchange="actualizarComparativa1vs1()">
                                             <option value="centro">Delegación Centro Histórico</option>
                                             <option value="companias" selected>Delegación Las Compañías</option>
                                             <option value="pampa">Delegación La Pampa</option>
@@ -3659,7 +4299,9 @@
                             <div class="col-lg-6">
                                 <div class="card border p-3 h-100 shadow-sm rounded-3 bg-white">
                                     <div class="d-flex justify-content-between align-items-center mb-3">
-                                        <h6 class="fw-bold mb-0 text-dark"><i class="bi bi-radar text-primary me-2"></i>Radar de Rendimiento Multidimensional</h6>
+                                        <h6 class="fw-bold mb-0 text-dark"><i
+                                                class="bi bi-radar text-primary me-2"></i>Radar de Rendimiento
+                                            Multidimensional</h6>
                                         <span class="badge bg-light text-secondary border">5 Ejes Clave</span>
                                     </div>
                                     <div style="height: 320px; position: relative;">
@@ -3670,7 +4312,9 @@
                             <div class="col-lg-6">
                                 <div class="card border p-3 h-100 shadow-sm rounded-3 bg-white">
                                     <div class="d-flex justify-content-between align-items-center mb-3">
-                                        <h6 class="fw-bold mb-0 text-dark"><i class="bi bi-bar-chart-steps text-danger me-2"></i>Comparativa de Trámites Solicitados</h6>
+                                        <h6 class="fw-bold mb-0 text-dark"><i
+                                                class="bi bi-bar-chart-steps text-danger me-2"></i>Comparativa de
+                                            Trámites Solicitados</h6>
                                         <span class="badge bg-light text-secondary border">Demanda por Delegación</span>
                                     </div>
                                     <div style="height: 320px; position: relative;">
@@ -3681,12 +4325,15 @@
                         </div>
 
                         <!-- Cuadro de Diagnóstico Ejecutivo en Lenguaje Claro -->
-                        <div class="p-3 rounded-3 border bg-white shadow-sm mb-4" style="border-left: 5px solid var(--muni-navy) !important;">
+                        <div class="p-3 rounded-3 border bg-white shadow-sm mb-4"
+                            style="border-left: 5px solid var(--muni-navy) !important;">
                             <div class="d-flex align-items-center gap-2 mb-2">
                                 <i class="bi bi-lightbulb-fill text-warning fs-5"></i>
-                                <h6 class="fw-bold mb-0 text-dark">Diagnóstico Ejecutivo Automatizado (Para Toma de Decisiones)</h6>
+                                <h6 class="fw-bold mb-0 text-dark">Diagnóstico Ejecutivo Automatizado (Para Toma de
+                                    Decisiones)</h6>
                             </div>
-                            <p class="text-secondary mb-0 small" id="conclusion1vs1" style="line-height: 1.6; font-size: 0.90rem;">
+                            <p class="text-secondary mb-0 small" id="conclusion1vs1"
+                                style="line-height: 1.6; font-size: 0.90rem;">
                                 Cargando análisis comparativo...
                             </p>
                         </div>
@@ -3699,8 +4346,11 @@
                         <!-- Podio Municipal de Honor (Rendimiento Destacado) -->
                         <div class="row g-3 mb-4">
                             <div class="col-md-3">
-                                <div class="p-3 rounded-4 bg-white border shadow-sm text-center position-relative overflow-hidden">
-                                    <div style="height: 4px; background: #EAB308; position: absolute; top:0; left:0; right:0;"></div>
+                                <div
+                                    class="p-3 rounded-4 bg-white border shadow-sm text-center position-relative overflow-hidden">
+                                    <div
+                                        style="height: 4px; background: #EAB308; position: absolute; top:0; left:0; right:0;">
+                                    </div>
                                     <div class="fs-3 text-warning mb-1">🥇</div>
                                     <div class="small text-muted fw-semibold">Mayor Satisfacción</div>
                                     <div class="fw-bold text-dark fs-5">San Joaquín</div>
@@ -3708,8 +4358,11 @@
                                 </div>
                             </div>
                             <div class="col-md-3">
-                                <div class="p-3 rounded-4 bg-white border shadow-sm text-center position-relative overflow-hidden">
-                                    <div style="height: 4px; background: #0D6EFD; position: absolute; top:0; left:0; right:0;"></div>
+                                <div
+                                    class="p-3 rounded-4 bg-white border shadow-sm text-center position-relative overflow-hidden">
+                                    <div
+                                        style="height: 4px; background: #0D6EFD; position: absolute; top:0; left:0; right:0;">
+                                    </div>
                                     <div class="fs-3 text-primary mb-1">⚡</div>
                                     <div class="small text-muted fw-semibold">Atención Más Rápida</div>
                                     <div class="fw-bold text-dark fs-5">La Serena Centro</div>
@@ -3717,17 +4370,24 @@
                                 </div>
                             </div>
                             <div class="col-md-3">
-                                <div class="p-3 rounded-4 bg-white border shadow-sm text-center position-relative overflow-hidden">
-                                    <div style="height: 4px; background: #16A34A; position: absolute; top:0; left:0; right:0;"></div>
+                                <div
+                                    class="p-3 rounded-4 bg-white border shadow-sm text-center position-relative overflow-hidden">
+                                    <div
+                                        style="height: 4px; background: #16A34A; position: absolute; top:0; left:0; right:0;">
+                                    </div>
                                     <div class="fs-3 text-success mb-1">🏆</div>
                                     <div class="small text-muted fw-semibold">Mayor Cumplimiento</div>
                                     <div class="fw-bold text-dark fs-5">Las Compañías</div>
-                                    <div class="badge bg-success-subtle text-success border mt-1">108.6% de la Meta</div>
+                                    <div class="badge bg-success-subtle text-success border mt-1">108.6% de la Meta
+                                    </div>
                                 </div>
                             </div>
                             <div class="col-md-3">
-                                <div class="p-3 rounded-4 bg-white border shadow-sm text-center position-relative overflow-hidden">
-                                    <div style="height: 4px; background: #C41230; position: absolute; top:0; left:0; right:0;"></div>
+                                <div
+                                    class="p-3 rounded-4 bg-white border shadow-sm text-center position-relative overflow-hidden">
+                                    <div
+                                        style="height: 4px; background: #C41230; position: absolute; top:0; left:0; right:0;">
+                                    </div>
                                     <div class="fs-3 text-danger mb-1">👥</div>
                                     <div class="small text-muted fw-semibold">Mayor Cobertura Vecinal</div>
                                     <div class="fw-bold text-dark fs-5">Las Compañías</div>
@@ -3741,7 +4401,9 @@
                             <div class="col-lg-7">
                                 <div class="card border p-3 h-100 shadow-sm rounded-3 bg-white">
                                     <div class="d-flex justify-content-between align-items-center mb-3">
-                                        <h6 class="fw-bold mb-0 text-dark"><i class="bi bi-bar-chart-fill text-primary me-2"></i>Ranking de Cumplimiento de Metas (Las 6 Delegaciones)</h6>
+                                        <h6 class="fw-bold mb-0 text-dark"><i
+                                                class="bi bi-bar-chart-fill text-primary me-2"></i>Ranking de
+                                            Cumplimiento de Metas (Las 6 Delegaciones)</h6>
                                         <span class="badge bg-light text-secondary border">Meta vs Real</span>
                                     </div>
                                     <div style="height: 290px; position: relative;">
@@ -3752,7 +4414,9 @@
                             <div class="col-lg-5">
                                 <div class="card border p-3 h-100 shadow-sm rounded-3 bg-white">
                                     <div class="d-flex justify-content-between align-items-center mb-3">
-                                        <h6 class="fw-bold mb-0 text-dark"><i class="bi bi-clock-fill text-warning me-2"></i>Tiempos de Espera Comunal Comparados</h6>
+                                        <h6 class="fw-bold mb-0 text-dark"><i
+                                                class="bi bi-clock-fill text-warning me-2"></i>Tiempos de Espera Comunal
+                                            Comparados</h6>
                                         <span class="badge bg-light text-secondary border">Minutos promedio</span>
                                     </div>
                                     <div style="height: 290px; position: relative;">
@@ -3765,7 +4429,9 @@
                         <!-- Gráficos de Satisfacción Global -->
                         <div class="card border p-3 mb-4 shadow-sm rounded-3 bg-white">
                             <div class="d-flex justify-content-between align-items-center mb-3">
-                                <h6 class="fw-bold mb-0 text-dark"><i class="bi bi-star-fill text-warning me-2"></i>Índice de Satisfacción Ciudadana por Delegación (Escala 1 a 5)</h6>
+                                <h6 class="fw-bold mb-0 text-dark"><i
+                                        class="bi bi-star-fill text-warning me-2"></i>Índice de Satisfacción Ciudadana
+                                    por Delegación (Escala 1 a 5)</h6>
                                 <span class="badge bg-light text-secondary border">Evaluación Vecinal</span>
                             </div>
                             <div style="height: 250px; position: relative;">
@@ -3781,7 +4447,8 @@
                         <div class="d-flex justify-content-between align-items-center mb-2 flex-wrap gap-2">
                             <div class="d-flex align-items-center gap-2">
                                 <span class="live-dot"></span>
-                                <h6 class="fw-bold mb-0 text-dark" style="font-size: 0.90rem;">Feed en Vivo de Atenciones Ciudadanas (Red Territorial La Serena)</h6>
+                                <h6 class="fw-bold mb-0 text-dark" style="font-size: 0.90rem;">Feed en Vivo de
+                                    Atenciones Ciudadanas (Red Territorial La Serena)</h6>
                             </div>
                             <span class="text-muted small" id="liveFeedCount">Actualizaciones automáticas cada 5s</span>
                         </div>
@@ -3789,22 +4456,28 @@
                             <!-- Items inyectados dinámicamente con la hora actual -->
                             <div class="live-feed-item">
                                 <div class="d-flex align-items-center gap-2">
-                                    <span class="badge bg-primary-subtle text-primary border" style="font-size: 0.75rem;">Centro Histórico</span>
-                                    <span class="text-dark fw-medium">Trámite de Registro Social de Hogares resuelto satisfactoriamente</span>
+                                    <span class="badge bg-primary-subtle text-primary border"
+                                        style="font-size: 0.75rem;">Centro Histórico</span>
+                                    <span class="text-dark fw-medium">Trámite de Registro Social de Hogares resuelto
+                                        satisfactoriamente</span>
                                 </div>
                                 <span class="text-muted small font-monospace">Hace unos momentos</span>
                             </div>
                             <div class="live-feed-item">
                                 <div class="d-flex align-items-center gap-2">
-                                    <span class="badge bg-danger-subtle text-danger border" style="font-size: 0.75rem;">Las Compañías</span>
-                                    <span class="text-dark fw-medium">Operativo en terreno: Atención a comités vecinales y retiro de escombros</span>
+                                    <span class="badge bg-danger-subtle text-danger border"
+                                        style="font-size: 0.75rem;">Las Compañías</span>
+                                    <span class="text-dark fw-medium">Operativo en terreno: Atención a comités vecinales
+                                        y retiro de escombros</span>
                                 </div>
                                 <span class="text-muted small font-monospace">Hace 1 min</span>
                             </div>
                             <div class="live-feed-item">
                                 <div class="d-flex align-items-center gap-2">
-                                    <span class="badge bg-success-subtle text-success border" style="font-size: 0.75rem;">La Pampa</span>
-                                    <span class="text-dark fw-medium">Solicitud de mantención de luminarias públicas canalizada a cuadrilla técnica</span>
+                                    <span class="badge bg-success-subtle text-success border"
+                                        style="font-size: 0.75rem;">La Pampa</span>
+                                    <span class="text-dark fw-medium">Solicitud de mantención de luminarias públicas
+                                        canalizada a cuadrilla técnica</span>
                                 </div>
                                 <span class="text-muted small font-monospace">Hace 2 min</span>
                             </div>
@@ -4275,21 +4948,259 @@
     </div>
 
     <!-- ==========================================================================
+         MODAL: MI PERFIL INSTITUCIONAL (ACTUALIZACIÓN DE FOTO Y DATOS OFICIALES)
+         ========================================================================== -->
+    <div class="modal fade" id="modalPerfilUsuario" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable">
+            <div class="modal-content shadow-lg border-0"
+                style="border-radius: 20px; overflow: hidden; background: #FFFFFF;">
+                <!-- Header Institucional -->
+                <div class="modal-header text-white py-3 px-4"
+                    style="background: linear-gradient(135deg, #1B365D 0%, #0F172A 100%); border-top: 4px solid #C41230;">
+                    <div>
+                        <div class="d-flex align-items-center gap-2 mb-1">
+                            <span class="badge"
+                                style="background: rgba(196, 18, 48, 0.3); color: #FFD2D8; font-weight: 700; font-size: 0.72rem; letter-spacing: 0.5px;">
+                                <i class="bi bi-shield-fill-check me-1"></i> CREDENCIAL INSTITUCIONAL
+                            </span>
+                            <span class="badge bg-white text-dark fw-bold" style="font-size: 0.72rem;">SGR v1.0</span>
+                        </div>
+                        <h5 class="modal-title fw-bold m-0 text-white" style="color: #FFFFFF !important;">
+                            <i class="bi bi-person-badge-fill me-2 text-warning"></i> Mi Perfil de Funcionario
+                        </h5>
+                        <p class="m-0 text-white-50 small mt-1">Gestión de fotografía de perfil e identificación
+                            institucional en el sistema.</p>
+                    </div>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                        aria-label="Cerrar"></button>
+                </div>
+
+                <div class="modal-body p-4 bg-light">
+                    <!-- Tarjeta de Fotografía de Perfil Interactiva -->
+                    <div class="card border-0 shadow-sm rounded-4 p-4 mb-3 bg-white">
+                        <div class="d-flex flex-column flex-sm-row align-items-center gap-4">
+                            <!-- Contenedor del Avatar con botón de cambio -->
+                            <div class="position-relative">
+                                <img id="perfilModalAvatarPreview"
+                                    src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=120&q=80"
+                                    alt="Foto de Perfil" class="shadow-sm"
+                                    style="width: 104px; height: 104px; border-radius: 50%; object-fit: cover; border: 4px solid #F1F5F9; background: #E2E8F0;">
+                                <button type="button"
+                                    class="btn btn-sm btn-primary rounded-circle position-absolute bottom-0 end-0 shadow"
+                                    style="width: 34px; height: 34px; padding: 0; display: flex; align-items: center; justify-content: center; border: 2px solid #FFFFFF;"
+                                    onclick="document.getElementById('inputFotoPerfil').click()"
+                                    title="Seleccionar foto desde tu equipo">
+                                    <i class="bi bi-camera-fill"></i>
+                                </button>
+                                <input type="file" id="inputFotoPerfil" accept="image/png, image/jpeg, image/webp"
+                                    onchange="manejarCambioFotoPerfil(event)" style="display: none;">
+                            </div>
+
+                            <!-- Botones de Acción de Fotografía -->
+                            <div class="flex-grow-1 text-center text-sm-start">
+                                <h6 class="fw-bold mb-1" style="color: #1B365D;">Fotografía de Perfil Activa</h6>
+                                <p class="text-muted small mb-2">Formato recomendado: JPG, PNG o WEBP cuadrado (máx. 3
+                                    MB). Se actualizará en todo el portal al guardar.</p>
+                                <div class="d-flex flex-wrap gap-2 justify-content-center justify-content-sm-start">
+                                    <button type="button"
+                                        class="btn btn-outline-primary btn-sm rounded-pill px-3 fw-semibold"
+                                        onclick="document.getElementById('inputFotoPerfil').click()">
+                                        <i class="bi bi-upload me-1"></i> Subir Nueva Foto
+                                    </button>
+                                    <button type="button" class="btn btn-outline-secondary btn-sm rounded-pill px-3"
+                                        onclick="restablecerFotoPerfil()">
+                                        <i class="bi bi-arrow-counterclockwise me-1"></i> Restablecer por Defecto
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Aviso de Protección de Datos Institucionales -->
+                    <div class="alert border-0 shadow-sm rounded-3 p-3 mb-3 d-flex align-items-start gap-3"
+                        style="background: #EFF6FF; border-left: 4px solid #1D4ED8 !important;">
+                        <i class="bi bi-shield-lock-fill fs-4 text-primary mt-1"></i>
+                        <div class="small">
+                            <strong class="text-dark d-block mb-1" style="color: #1E3A8A !important;">Datos Oficiales
+                                Protegidos — Solo Lectura</strong>
+                            Por políticas municipales de seguridad, trazabilidad y control de identidades
+                            institucionales, los funcionarios no pueden alterar libremente sus nombres, RUT, correos
+                            corporativos ni fechas oficiales. Solo la Administración Central y RR.HH. tienen facultades
+                            para actualizar el padrón de identidades.
+                        </div>
+                    </div>
+
+                    <!-- Ficha de Datos Personales Institucionales (Solo Lectura) -->
+                    <div class="card border-0 shadow-sm rounded-4 p-4 bg-white">
+                        <div class="d-flex align-items-center justify-content-between mb-3 border-bottom pb-2">
+                            <h6 class="fw-bold m-0" style="color: #1B365D;">
+                                <i class="bi bi-file-earmark-person-fill text-primary me-2"></i> Identificación del
+                                Funcionario
+                            </h6>
+                            <span class="badge bg-light text-secondary border small">
+                                <i class="bi bi-lock-fill text-muted me-1"></i> Solo Lectura
+                            </span>
+                        </div>
+
+                        <div class="row g-3">
+                            <!-- Nombre Completo -->
+                            <div class="col-md-6">
+                                <label class="form-label small fw-bold text-secondary mb-1">Nombre Completo</label>
+                                <div class="input-group input-group-sm">
+                                    <span class="input-group-text bg-light text-muted border-end-0"><i
+                                            class="bi bi-person-fill"></i></span>
+                                    <input type="text"
+                                        class="form-control bg-light border-start-0 text-dark fw-semibold"
+                                        value="{{ request.user.get_full_name|default:'Administrador Municipal' }}"
+                                        readonly>
+                                    <span class="input-group-text bg-light border-start-0" title="Dato protegido"><i
+                                            class="bi bi-lock-fill text-muted" style="font-size: 0.75rem;"></i></span>
+                                </div>
+                            </div>
+
+                            <!-- Correo Institucional -->
+                            <div class="col-md-6">
+                                <label class="form-label small fw-bold text-secondary mb-1">Correo Electrónico
+                                    Institucional</label>
+                                <div class="input-group input-group-sm">
+                                    <span class="input-group-text bg-light text-muted border-end-0"><i
+                                            class="bi bi-envelope-fill"></i></span>
+                                    <input type="email"
+                                        class="form-control bg-light border-start-0 text-dark fw-semibold"
+                                        value="{{ request.user.email|default:'admin.municipal@laserena.cl' }}" readonly>
+                                    <span class="input-group-text bg-light border-start-0" title="Dato protegido"><i
+                                            class="bi bi-lock-fill text-muted" style="font-size: 0.75rem;"></i></span>
+                                </div>
+                            </div>
+
+                            <!-- RUT -->
+                            <div class="col-md-6">
+                                <label class="form-label small fw-bold text-secondary mb-1">RUT Funcionario</label>
+                                <div class="input-group input-group-sm">
+                                    <span class="input-group-text bg-light text-muted border-end-0"><i
+                                            class="bi bi-card-heading"></i></span>
+                                    <input type="text"
+                                        class="form-control bg-light border-start-0 text-dark fw-semibold"
+                                        value="18.492.301-4" readonly>
+                                    <span class="input-group-text bg-light border-start-0"
+                                        title="Verificado Registro Civil"><i class="bi bi-patch-check-fill text-success"
+                                            style="font-size: 0.8rem;"></i></span>
+                                </div>
+                            </div>
+
+                            <!-- Fecha de Nacimiento -->
+                            <div class="col-md-6">
+                                <label class="form-label small fw-bold text-secondary mb-1">Fecha de Nacimiento</label>
+                                <div class="input-group input-group-sm">
+                                    <span class="input-group-text bg-light text-muted border-end-0"><i
+                                            class="bi bi-calendar-event-fill"></i></span>
+                                    <input type="text"
+                                        class="form-control bg-light border-start-0 text-dark fw-semibold"
+                                        value="14 de Agosto de 1994" readonly>
+                                    <span class="input-group-text bg-light border-start-0" title="Dato protegido"><i
+                                            class="bi bi-lock-fill text-muted" style="font-size: 0.75rem;"></i></span>
+                                </div>
+                            </div>
+
+                            <!-- Fecha de Ingreso -->
+                            <div class="col-md-6">
+                                <label class="form-label small fw-bold text-secondary mb-1">Fecha de Ingreso a la
+                                    Municipalidad</label>
+                                <div class="input-group input-group-sm">
+                                    <span class="input-group-text bg-light text-muted border-end-0"><i
+                                            class="bi bi-calendar-check-fill"></i></span>
+                                    <input type="text"
+                                        class="form-control bg-light border-start-0 text-dark fw-semibold"
+                                        value="02 de Enero de 2021" readonly>
+                                    <span class="input-group-text bg-light border-start-0" title="Dato protegido"><i
+                                            class="bi bi-lock-fill text-muted" style="font-size: 0.75rem;"></i></span>
+                                </div>
+                            </div>
+
+                            <!-- Cargo Institucional -->
+                            <div class="col-md-6">
+                                <label class="form-label small fw-bold text-secondary mb-1">Cargo / Función</label>
+                                <div class="input-group input-group-sm">
+                                    <span class="input-group-text bg-light text-muted border-end-0"><i
+                                            class="bi bi-briefcase-fill"></i></span>
+                                    <input type="text"
+                                        class="form-control bg-light border-start-0 text-dark fw-semibold"
+                                        value="Administrador General del Sistema SGR" readonly>
+                                    <span class="input-group-text bg-light border-start-0" title="Dato protegido"><i
+                                            class="bi bi-lock-fill text-muted" style="font-size: 0.75rem;"></i></span>
+                                </div>
+                            </div>
+
+                            <!-- Dependencia / Delegación -->
+                            <div class="col-md-6">
+                                <label class="form-label small fw-bold text-secondary mb-1">Dependencia Asignada</label>
+                                <div class="input-group input-group-sm">
+                                    <span class="input-group-text bg-light text-muted border-end-0"><i
+                                            class="bi bi-geo-alt-fill"></i></span>
+                                    <input type="text"
+                                        class="form-control bg-light border-start-0 text-dark fw-semibold"
+                                        value="Edificio Consistorial — La Serena Centro" readonly>
+                                    <span class="input-group-text bg-light border-start-0" title="Dato protegido"><i
+                                            class="bi bi-lock-fill text-muted" style="font-size: 0.75rem;"></i></span>
+                                </div>
+                            </div>
+
+                            <!-- Nivel de Privilegios -->
+                            <div class="col-md-6">
+                                <label class="form-label small fw-bold text-secondary mb-1">Rol de Acceso y
+                                    Privilegios</label>
+                                <div class="input-group input-group-sm">
+                                    <span class="input-group-text bg-light text-muted border-end-0"><i
+                                            class="bi bi-key-fill"></i></span>
+                                    <input type="text" class="form-control bg-light border-start-0 text-danger fw-bold"
+                                        value="Super Administrador (Nivel 1 - Control Total)" readonly>
+                                    <span class="input-group-text bg-light border-start-0"
+                                        title="Máximo nivel de seguridad"><i class="bi bi-shield-shaded text-danger"
+                                            style="font-size: 0.8rem;"></i></span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div
+                    class="modal-footer bg-white py-2 px-4 border-top d-flex justify-content-between align-items-center">
+                    <span class="small text-muted"><i class="bi bi-info-circle me-1"></i> Sesión iniciada como
+                        Administrador</span>
+                    <div class="d-flex gap-2">
+                        <button type="button" class="btn btn-secondary btn-sm rounded-pill px-4"
+                            data-bs-dismiss="modal">Cerrar</button>
+                        <button type="button" class="btn btn-primary btn-sm rounded-pill px-4 fw-semibold"
+                            id="btnGuardarFotoPerfil" onclick="guardarFotoPerfil()">
+                            <i class="bi bi-check-lg me-1"></i> Guardar Nueva Foto
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==========================================================================
          MODALES DE ROLES Y PRIVILEGIOS (LIQUID GLASS & MYADMIN POWER)
          ========================================================================== -->
 
     <!-- MODAL 1: CREAR / EDITAR ROL Y MATRIZ DE PERMISOS -->
     <div class="modal fade" id="modalRol" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered modal-xl modal-dialog-scrollable">
-            <div class="modal-content shadow-lg border-0" style="border-radius: 20px; overflow: hidden; background: rgba(255, 255, 255, 0.96); backdrop-filter: blur(20px);">
-                <div class="modal-header text-white py-3 px-4" style="background: linear-gradient(135deg, var(--muni-navy) 0%, #0F172A 100%); border-bottom: 3px solid var(--muni-red);">
+            <div class="modal-content shadow-lg border-0"
+                style="border-radius: 20px; overflow: hidden; background: rgba(255, 255, 255, 0.96); backdrop-filter: blur(20px);">
+                <div class="modal-header text-white py-3 px-4"
+                    style="background: linear-gradient(135deg, var(--muni-navy) 0%, #0F172A 100%); border-bottom: 3px solid var(--muni-red);">
                     <div>
-                        <h5 class="modal-title fw-bold m-0 text-white" id="modalRolTitle" style="color: #FFFFFF !important;">
+                        <h5 class="modal-title fw-bold m-0 text-white" id="modalRolTitle"
+                            style="color: #FFFFFF !important;">
                             <i class="bi bi-sliders me-2"></i> Configuración de Rol
                         </h5>
-                        <p class="text-white-50 m-0" style="font-size: 0.82rem;">Asignación de permisos y facultades para funcionarios municipales</p>
+                        <p class="text-white-50 m-0" style="font-size: 0.82rem;">Asignación de permisos y facultades
+                            para funcionarios municipales</p>
                     </div>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                        aria-label="Cerrar"></button>
                 </div>
                 <div class="modal-body p-4 bg-light">
                     <form id="formRol" onsubmit="guardarRolSubmit(event)">
@@ -4302,12 +5213,16 @@
                             </h6>
                             <div class="row g-3">
                                 <div class="col-md-5">
-                                    <label class="form-label small fw-bold text-secondary">Nombre del Rol <span class="text-danger">*</span></label>
-                                    <input type="text" class="form-control" id="rolFormNombre" required placeholder="Ej: Operador de Terreno, Coordinador Social">
+                                    <label class="form-label small fw-bold text-secondary">Nombre del Rol <span
+                                            class="text-danger">*</span></label>
+                                    <input type="text" class="form-control" id="rolFormNombre" required
+                                        placeholder="Ej: Operador de Terreno, Coordinador Social">
                                 </div>
                                 <div class="col-md-7">
-                                    <label class="form-label small fw-bold text-secondary">Descripción Institucional <span class="text-danger">*</span></label>
-                                    <input type="text" class="form-control" id="rolFormDescripcion" required placeholder="Ej: Gestión de atenciones ciudadanas y derivaciones territoriales">
+                                    <label class="form-label small fw-bold text-secondary">Descripción Institucional
+                                        <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control" id="rolFormDescripcion" required
+                                        placeholder="Ej: Gestión de atenciones ciudadanas y derivaciones territoriales">
                                 </div>
                             </div>
                         </div>
@@ -4317,24 +5232,36 @@
                             <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
                                 <div>
                                     <h6 class="fw-bold m-0" style="color: var(--muni-navy);">
-                                        <i class="bi bi-toggles text-primary me-2"></i> Matriz de Privilegios & Funciones
+                                        <i class="bi bi-toggles text-primary me-2"></i> Matriz de Privilegios &
+                                        Funciones
                                     </h6>
-                                    <span class="text-muted small">Seleccione los permisos autorizados para este perfil o aplique una plantilla:</span>
+                                    <span class="text-muted small">Seleccione los permisos autorizados para este perfil
+                                        o aplique una plantilla:</span>
                                 </div>
                                 <div class="d-flex align-items-center flex-wrap gap-1">
-                                    <button type="button" class="btn btn-sm btn-outline-dark fw-semibold rounded-pill px-3" onclick="aplicarPlantillaPermisos('admin')">
+                                    <button type="button"
+                                        class="btn btn-sm btn-outline-dark fw-semibold rounded-pill px-3"
+                                        onclick="aplicarPlantillaPermisos('admin')">
                                         Acceso Total
                                     </button>
-                                    <button type="button" class="btn btn-sm btn-outline-primary fw-semibold rounded-pill px-3" onclick="aplicarPlantillaPermisos('operador')">
+                                    <button type="button"
+                                        class="btn btn-sm btn-outline-primary fw-semibold rounded-pill px-3"
+                                        onclick="aplicarPlantillaPermisos('operador')">
                                         Operador
                                     </button>
-                                    <button type="button" class="btn btn-sm btn-outline-secondary fw-semibold rounded-pill px-3" onclick="aplicarPlantillaPermisos('consultor')">
+                                    <button type="button"
+                                        class="btn btn-sm btn-outline-secondary fw-semibold rounded-pill px-3"
+                                        onclick="aplicarPlantillaPermisos('consultor')">
                                         Solo Lectura
                                     </button>
-                                    <button type="button" class="btn btn-sm btn-outline-secondary fw-semibold rounded-pill px-2" onclick="invertirSeleccionPermisos()" title="Invertir selección">
+                                    <button type="button"
+                                        class="btn btn-sm btn-outline-secondary fw-semibold rounded-pill px-2"
+                                        onclick="invertirSeleccionPermisos()" title="Invertir selección">
                                         Invertir
                                     </button>
-                                    <button type="button" class="btn btn-sm btn-outline-secondary fw-semibold rounded-pill px-2" onclick="desmarcarTodosPermisos()" title="Desmarcar todos">
+                                    <button type="button"
+                                        class="btn btn-sm btn-outline-secondary fw-semibold rounded-pill px-2"
+                                        onclick="desmarcarTodosPermisos()" title="Desmarcar todos">
                                         Limpiar
                                     </button>
                                 </div>
@@ -4351,15 +5278,20 @@
                         </div>
                     </form>
                 </div>
-                <div class="modal-footer bg-white py-3 px-4 border-top d-flex justify-content-between align-items-center">
+                <div
+                    class="modal-footer bg-white py-3 px-4 border-top d-flex justify-content-between align-items-center">
                     <div class="d-flex align-items-center gap-2">
-                        <span class="badge bg-primary-subtle text-primary border border-primary-subtle px-3 py-2 fs-7 fw-bold" id="lblModalPermsCount">
+                        <span
+                            class="badge bg-primary-subtle text-primary border border-primary-subtle px-3 py-2 fs-7 fw-bold"
+                            id="lblModalPermsCount">
                             0 permisos seleccionados
                         </span>
-                        <span class="text-muted small d-none d-sm-inline">Los cambios se auditan formalmente en la base de datos</span>
+                        <span class="text-muted small d-none d-sm-inline">Los cambios se auditan formalmente en la base
+                            de datos</span>
                     </div>
                     <div class="d-flex align-items-center gap-2">
-                        <button type="button" class="btn btn-secondary rounded-pill px-4 fw-semibold" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="button" class="btn btn-secondary rounded-pill px-4 fw-semibold"
+                            data-bs-dismiss="modal">Cancelar</button>
                         <button type="button" class="liquid-glass-btn-primary" onclick="ejecutarGuardarRol()">
                             <i class="bi bi-check-lg"></i> Guardar Rol & Permisos
                         </button>
@@ -4373,16 +5305,19 @@
     <div class="modal fade" id="modalNuevaFuncion" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content shadow-lg border-0" style="border-radius: 18px; overflow: hidden;">
-                <div class="modal-header text-white py-3 px-4" style="background: linear-gradient(135deg, var(--muni-navy) 0%, #0F172A 100%); border-bottom: 3px solid var(--muni-red);">
+                <div class="modal-header text-white py-3 px-4"
+                    style="background: linear-gradient(135deg, var(--muni-navy) 0%, #0F172A 100%); border-bottom: 3px solid var(--muni-red);">
                     <h5 class="modal-title fw-bold m-0 text-white" style="color: #FFFFFF !important;">
                         <i class="bi bi-plus-circle me-2"></i> Registrar Nueva Función
                     </h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                        aria-label="Cerrar"></button>
                 </div>
                 <div class="modal-body p-4 bg-light">
                     <form id="formNuevaFuncion" onsubmit="guardarNuevaFuncionSubmit(event)">
                         <div class="mb-3">
-                            <label class="form-label small fw-bold text-secondary">Módulo Institucional <span class="text-danger">*</span></label>
+                            <label class="form-label small fw-bold text-secondary">Módulo Institucional <span
+                                    class="text-danger">*</span></label>
                             <select class="form-select" id="nuevaFuncionModulo" required>
                                 <option value="atenciones">Atenciones y Trámites Ciudadanos</option>
                                 <option value="vecinos">Vecinos y Casos Sociales</option>
@@ -4396,22 +5331,29 @@
                             </select>
                         </div>
                         <div class="mb-3">
-                            <label class="form-label small fw-bold text-secondary">Código del Privilegio (Identificador Técnico) <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control font-monospace" id="nuevaFuncionCodigo" required placeholder="ej: atenciones.aprobar_urgencia">
+                            <label class="form-label small fw-bold text-secondary">Código del Privilegio (Identificador
+                                Técnico) <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control font-monospace" id="nuevaFuncionCodigo" required
+                                placeholder="ej: atenciones.aprobar_urgencia">
                             <div class="form-text small">Formato estándar: <code>modulo.accion_especifica</code></div>
                         </div>
                         <div class="mb-3">
-                            <label class="form-label small fw-bold text-secondary">Nombre de la Función <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control" id="nuevaFuncionNombre" required placeholder="ej: Aprobar Ayudas de Emergencia">
+                            <label class="form-label small fw-bold text-secondary">Nombre de la Función <span
+                                    class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="nuevaFuncionNombre" required
+                                placeholder="ej: Aprobar Ayudas de Emergencia">
                         </div>
                         <div class="mb-3">
-                            <label class="form-label small fw-bold text-secondary">Descripción y Alcance de la Función</label>
-                            <textarea class="form-control" id="nuevaFuncionDesc" rows="2" placeholder="Explique qué permite realizar este privilegio..."></textarea>
+                            <label class="form-label small fw-bold text-secondary">Descripción y Alcance de la
+                                Función</label>
+                            <textarea class="form-control" id="nuevaFuncionDesc" rows="2"
+                                placeholder="Explique qué permite realizar este privilegio..."></textarea>
                         </div>
                     </form>
                 </div>
                 <div class="modal-footer bg-white py-2 px-4 border-top d-flex justify-content-end gap-2">
-                    <button type="button" class="btn btn-secondary rounded-pill px-3" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-secondary rounded-pill px-3"
+                        data-bs-dismiss="modal">Cancelar</button>
                     <button type="button" class="liquid-glass-btn-primary" onclick="ejecutarGuardarNuevaFuncion()">
                         <i class="bi bi-check-lg me-1"></i> Guardar Función
                     </button>
@@ -4424,23 +5366,29 @@
     <div class="modal fade" id="modalMatrizMyAdmin" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered modal-fullscreen-lg-down modal-xl modal-dialog-scrollable">
             <div class="modal-content shadow-lg border-0" style="border-radius: 20px; overflow: hidden;">
-                <div class="modal-header text-white py-3 px-4" style="background: linear-gradient(135deg, var(--muni-navy) 0%, #0F172A 100%); border-bottom: 3px solid var(--muni-red);">
+                <div class="modal-header text-white py-3 px-4"
+                    style="background: linear-gradient(135deg, var(--muni-navy) 0%, #0F172A 100%); border-bottom: 3px solid var(--muni-red);">
                     <div class="d-flex align-items-center gap-3">
-                        <div style="background: rgba(255, 255, 255, 0.12); width: 44px; height: 44px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.4rem;">
+                        <div
+                            style="background: rgba(255, 255, 255, 0.12); width: 44px; height: 44px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.4rem;">
                             <i class="bi bi-grid-3x3-gap text-white"></i>
                         </div>
                         <div>
                             <h5 class="modal-title fw-bold m-0 text-white" style="color: #FFFFFF !important;">
                                 Matriz de Permisos
                             </h5>
-                            <p class="text-white-50 m-0" style="font-size: 0.82rem;">Supervisión y control cruzado entre funciones y roles activos</p>
+                            <p class="text-white-50 m-0" style="font-size: 0.82rem;">Supervisión y control cruzado entre
+                                funciones y roles activos</p>
                         </div>
                     </div>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                        aria-label="Cerrar"></button>
                 </div>
                 <div class="modal-body p-4 bg-light">
-                    <div class="alert alert-info py-2 px-3 small d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
-                        <span><i class="bi bi-info-circle me-1"></i> Active o desactive los privilegios directamente sobre la cuadrícula. Al finalizar presione <strong>Guardar Matriz</strong>.</span>
+                    <div
+                        class="alert alert-info py-2 px-3 small d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
+                        <span><i class="bi bi-info-circle me-1"></i> Active o desactive los privilegios directamente
+                            sobre la cuadrícula. Al finalizar presione <strong>Guardar Matriz</strong>.</span>
                     </div>
                     <div class="myadmin-matrix-wrap shadow-sm">
                         <table class="myadmin-matrix-table table-hover" id="tablaMatrizTransversal">
@@ -4453,11 +5401,15 @@
                         </table>
                     </div>
                 </div>
-                <div class="modal-footer bg-white py-3 px-4 border-top d-flex justify-content-between align-items-center">
-                    <span class="text-muted small" id="lblMatrizStatusInfo">Todos los cambios se persisten de manera inmediata</span>
+                <div
+                    class="modal-footer bg-white py-3 px-4 border-top d-flex justify-content-between align-items-center">
+                    <span class="text-muted small" id="lblMatrizStatusInfo">Todos los cambios se persisten de manera
+                        inmediata</span>
                     <div class="d-flex gap-2">
-                        <button type="button" class="btn btn-secondary rounded-pill px-4 fw-semibold" data-bs-dismiss="modal">Cerrar</button>
-                        <button type="button" class="liquid-glass-btn-primary" onclick="guardarMatrizTransversalGlobal()">
+                        <button type="button" class="btn btn-secondary rounded-pill px-4 fw-semibold"
+                            data-bs-dismiss="modal">Cerrar</button>
+                        <button type="button" class="liquid-glass-btn-primary"
+                            onclick="guardarMatrizTransversalGlobal()">
                             <i class="bi bi-check-lg me-1"></i> Guardar Matriz
                         </button>
                     </div>
@@ -4474,23 +5426,29 @@
                     <h5 class="modal-title fw-bold fs-6 text-white m-0" style="color: #FFFFFF !important;">
                         <i class="bi bi-exclamation-triangle-fill me-2 text-warning"></i> Confirmar Eliminación de Rol
                     </h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                        aria-label="Cerrar"></button>
                 </div>
                 <div class="modal-body p-4 text-center">
                     <div class="mb-3">
                         <i class="bi bi-shield-x text-danger" style="font-size: 3.5rem;"></i>
                     </div>
-                    <h5 class="fw-bold mb-2" id="lblEliminarRolNombre" style="color: var(--muni-navy);">¿Eliminar este Rol?</h5>
+                    <h5 class="fw-bold mb-2" id="lblEliminarRolNombre" style="color: var(--muni-navy);">¿Eliminar este
+                        Rol?</h5>
                     <p class="text-secondary small mb-3" id="lblEliminarRolAviso">
                         Esta acción dará de baja el rol de forma permanente en la base de datos municipal.
                     </p>
                     <div class="alert alert-warning py-2 text-start small mb-0" id="boxEliminarRolDetalle">
-                        <i class="bi bi-shield-lock-fill me-1"></i> Los roles fundamentales como <strong>Administrador</strong>, <strong>Operador</strong> y <strong>Consultor</strong> están protegidos y no pueden eliminarse.
+                        <i class="bi bi-shield-lock-fill me-1"></i> Los roles fundamentales como
+                        <strong>Administrador</strong>, <strong>Operador</strong> y <strong>Consultor</strong> están
+                        protegidos y no pueden eliminarse.
                     </div>
                 </div>
                 <div class="modal-footer bg-light py-2 px-4 d-flex justify-content-end gap-2">
-                    <button type="button" class="btn btn-secondary rounded-pill px-3" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="button" class="btn btn-danger rounded-pill px-4 fw-bold" id="btnConfirmarEliminarRol" onclick="ejecutarEliminarRolConfirmado()">
+                    <button type="button" class="btn btn-secondary rounded-pill px-3"
+                        data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-danger rounded-pill px-4 fw-bold" id="btnConfirmarEliminarRol"
+                        onclick="ejecutarEliminarRolConfirmado()">
                         Eliminar Definitivamente
                     </button>
                 </div>
@@ -4502,14 +5460,18 @@
     <div class="modal fade" id="modalVerPermisosRol" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable">
             <div class="modal-content shadow-lg border-0" style="border-radius: 18px; overflow: hidden;">
-                <div class="modal-header text-white py-3 px-4" style="background: linear-gradient(135deg, var(--muni-navy) 0%, #0F172A 100%); border-bottom: 3px solid var(--muni-red);">
+                <div class="modal-header text-white py-3 px-4"
+                    style="background: linear-gradient(135deg, var(--muni-navy) 0%, #0F172A 100%); border-bottom: 3px solid var(--muni-red);">
                     <div>
-                        <h5 class="modal-title fw-bold m-0 text-white" id="modalVerPermisosTitle" style="color: #FFFFFF !important;">
+                        <h5 class="modal-title fw-bold m-0 text-white" id="modalVerPermisosTitle"
+                            style="color: #FFFFFF !important;">
                             <i class="bi bi-person-check me-2"></i> Ficha de Permisos del Rol
                         </h5>
-                        <p class="text-white-50 m-0" id="modalVerPermisosSubtitle" style="font-size: 0.82rem;">Detalle de facultades autorizadas</p>
+                        <p class="text-white-50 m-0" id="modalVerPermisosSubtitle" style="font-size: 0.82rem;">Detalle
+                            de facultades autorizadas</p>
                     </div>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                        aria-label="Cerrar"></button>
                 </div>
                 <div class="modal-body p-4 bg-light">
                     <!-- Resumen del Rol -->
@@ -4517,7 +5479,8 @@
                         <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
                             <div>
                                 <span class="badge bg-danger mb-1" id="lblVerRolNivel">Rol de Sistema</span>
-                                <h4 class="fw-bold m-0" id="lblVerRolNombre" style="color: var(--muni-navy);">Administrador</h4>
+                                <h4 class="fw-bold m-0" id="lblVerRolNombre" style="color: var(--muni-navy);">
+                                    Administrador</h4>
                                 <p class="text-secondary small m-0 mt-1" id="lblVerRolDesc">Acceso total al sistema</p>
                             </div>
                             <div class="text-end">
@@ -4532,9 +5495,11 @@
                         <!-- Inyectado dinámicamente -->
                     </div>
                 </div>
-                <div class="modal-footer bg-white py-2 px-4 border-top d-flex justify-content-between align-items-center">
+                <div
+                    class="modal-footer bg-white py-2 px-4 border-top d-flex justify-content-between align-items-center">
                     <span class="small text-muted" id="lblVerRolUsuariosInfo">1 funcionario asignado</span>
-                    <button type="button" class="btn btn-secondary btn-sm rounded-pill px-4" data-bs-dismiss="modal">Cerrar</button>
+                    <button type="button" class="btn btn-secondary btn-sm rounded-pill px-4"
+                        data-bs-dismiss="modal">Cerrar</button>
                 </div>
             </div>
         </div>
@@ -4564,7 +5529,7 @@
         let filasPorPagina = 10;
         let paginaActual = 1;
         let ordenAsc = true;
-        let bsModalVecino, bsModalFicha, bsModalImportar, bsModalAuditoria, chartInstance;
+        let bsModalVecino, bsModalFicha, bsModalImportar, bsModalAuditoria, bsModalPerfil, chartInstance;
 
         /* Variables Globales de Gestión de Usuarios */
         let bsModalUsuario, bsModalEliminarUsuario, bsModalPasswordUsuario;
@@ -4594,6 +5559,11 @@
             if (elImp && window.bootstrap) bsModalImportar = new bootstrap.Modal(elImp);
             const elAud = document.getElementById('modalAuditoria');
             if (elAud && window.bootstrap) bsModalAuditoria = new bootstrap.Modal(elAud);
+            const elPerfil = document.getElementById('modalPerfilUsuario');
+            if (elPerfil && window.bootstrap) bsModalPerfil = new bootstrap.Modal(elPerfil);
+
+            // Cargar foto de perfil persistente si existe
+            cargarFotoPerfilGuardada();
 
             /* Modales de Gestión de Usuarios */
             const elModalUsr = document.getElementById('modalUsuario');
@@ -5105,6 +6075,91 @@
             });
 
             renderTablaAuditoria();
+        }
+
+        /* ==========================================================================
+           GESTIÓN DE PERFIL INSTITUCIONAL (ACTUALIZACIÓN DE FOTO Y PERSISTENCIA)
+           ========================================================================== */
+        let fotoPerfilTemporal = null;
+
+        function abrirModalPerfil() {
+            if (!bsModalPerfil) {
+                const el = document.getElementById('modalPerfilUsuario');
+                if (el && window.bootstrap) bsModalPerfil = new bootstrap.Modal(el);
+            }
+            // Sincronizar foto actual con el preview del modal
+            const avatarActual = document.querySelector('.user-avatar-img');
+            const previewModal = document.getElementById('perfilModalAvatarPreview');
+            if (avatarActual && previewModal) {
+                previewModal.src = avatarActual.src;
+            }
+            fotoPerfilTemporal = null;
+            if (bsModalPerfil) bsModalPerfil.show();
+        }
+
+        function manejarCambioFotoPerfil(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            if (!file.type.startsWith('image/')) {
+                mostrarToast('Por favor seleccione un archivo de imagen válido (JPG, PNG o WEBP).');
+                return;
+            }
+            if (file.size > 3 * 1024 * 1024) {
+                mostrarToast('La imagen es demasiado grande. El límite institucional es de 3 MB.');
+                return;
+            }
+            const reader = new FileReader();
+            reader.onload = function (e) {
+                fotoPerfilTemporal = e.target.result;
+                const previewModal = document.getElementById('perfilModalAvatarPreview');
+                if (previewModal) previewModal.src = fotoPerfilTemporal;
+                mostrarToast('Vista previa cargada. Haga clic en "Guardar Nueva Foto" para confirmar.');
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function guardarFotoPerfil() {
+            if (!fotoPerfilTemporal) {
+                mostrarToast('No ha seleccionado ninguna imagen nueva para guardar.');
+                return;
+            }
+            try {
+                localStorage.setItem('sgr_admin_avatar_custom', fotoPerfilTemporal);
+                // Actualizar todas las fotos de avatar en el encabezado y navegación
+                document.querySelectorAll('.user-avatar-img').forEach(img => {
+                    img.src = fotoPerfilTemporal;
+                });
+                mostrarToast('✓ Foto de perfil institucional actualizada y guardada con éxito.');
+                if (bsModalPerfil) bsModalPerfil.hide();
+            } catch (err) {
+                console.error('Error guardando en localStorage:', err);
+                mostrarToast('Aviso: La foto se actualizó en la sesión actual.');
+                document.querySelectorAll('.user-avatar-img').forEach(img => {
+                    img.src = fotoPerfilTemporal;
+                });
+                if (bsModalPerfil) bsModalPerfil.hide();
+            }
+        }
+
+        function restablecerFotoPerfil() {
+            const defaultAvatar = "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=120&q=80";
+            localStorage.removeItem('sgr_admin_avatar_custom');
+            document.querySelectorAll('.user-avatar-img').forEach(img => {
+                img.src = defaultAvatar;
+            });
+            const previewModal = document.getElementById('perfilModalAvatarPreview');
+            if (previewModal) previewModal.src = defaultAvatar;
+            fotoPerfilTemporal = null;
+            mostrarToast('Foto de perfil restablecida al avatar municipal oficial.');
+        }
+
+        function cargarFotoPerfilGuardada() {
+            const avatarGuardado = localStorage.getItem('sgr_admin_avatar_custom');
+            if (avatarGuardado) {
+                document.querySelectorAll('.user-avatar-img').forEach(img => {
+                    img.src = avatarGuardado;
+                });
+            }
         }
 
         function abrirModalAuditoria() {
