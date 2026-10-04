@@ -6,16 +6,63 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Portal Institucional | Ilustre Municipalidad de La Serena</title>
 
+    <!-- Tipografía: Montserrat para identidad institucional y Plus Jakarta Sans para UI refinada -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 
+    <!-- Bootstrap 5.3 & Icons -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/vanilla-tilt/1.8.0/vanilla-tilt.min.js"></script>
+    
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
     <style>
+        /* ==========================================================================
+           DIRECCIÓN DE DISEÑO: LIQUID GLASS EDITORIAL — LA SERENA
+           - La fotografía del Faro Monumental es el Hero absoluto.
+           - El panel es una lámina de vidrio óptico transparente, no una tarjeta SaaS.
+           - Borde imperceptible, reflejos ópticos sutiles, sin neones ni halos.
+           ========================================================================== */
+        :root {
+            /* Identidad Institucional Oficial */
+            --muni-red: #B80003;
+            --muni-red-hover: #9E0003;
+            --muni-red-active: #800002;
+            
+            /* Tipografías */
+            --font-display: 'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            --font-ui: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+
+            /* Vidrio Óptico Translúcido (Editorial Liquid Glass) con control de contraste */
+            --glass-optical-bg: linear-gradient(
+                175deg, 
+                rgba(255, 255, 255, 0.14) 0%, 
+                rgba(255, 255, 255, 0.04) 30%, 
+                rgba(8, 16, 28, 0.42) 65%, 
+                rgba(5, 11, 20, 0.68) 100%
+            );
+            --glass-optical-border: rgba(255, 255, 255, 0.12);
+            --glass-optical-border-top: rgba(255, 255, 255, 0.28);
+            --glass-optical-blur: blur(28px) saturate(150%);
+            --glass-optical-shadow: 
+                0 28px 56px -12px rgba(0, 0, 0, 0.45),
+                0 10px 20px -6px rgba(0, 0, 0, 0.30),
+                inset 0 1px 1px 0 rgba(255, 255, 255, 0.35),
+                inset 0 0 20px 0 rgba(255, 255, 255, 0.02);
+
+            /* Inputs: Vidrio dentro de Vidrio con alta legibilidad */
+            --input-glass-bg: rgba(255, 255, 255, 0.09);
+            --input-glass-bg-hover: rgba(255, 255, 255, 0.13);
+            --input-glass-bg-focus: rgba(8, 16, 28, 0.55);
+            --input-glass-border: rgba(255, 255, 255, 0.16);
+            --input-glass-border-focus: rgba(255, 255, 255, 0.40);
+
+            /* Timing y Curva de Movimiento (Emil Kowalski) */
+            --motion-duration: 200ms;
+            --motion-ease: cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
         * {
             box-sizing: border-box;
             margin: 0;
@@ -28,11 +75,17 @@
             margin: 0;
             padding: 0;
             overflow: hidden;
-            font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
-            background-color: #071326;
+            font-family: var(--font-ui);
+            background-color: #0c1524;
             color: #FFFFFF;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
         }
 
+        /* ==========================================================================
+           1. FOTOGRAFÍA HERO: VIVA, LUMINOSA Y NATURAL
+           Overlay ultra-sutil que preserva el atardecer, el cielo y el faro.
+           ========================================================================== */
         .portal-fullscreen {
             position: relative;
             width: 100vw;
@@ -40,146 +93,154 @@
             display: flex;
             justify-content: flex-end;
             align-items: center;
-            padding-right: 8vw;
+            padding-right: 9vw;
             overflow: hidden;
-            background: linear-gradient(
-                to right, 
-                rgba(7, 19, 38, 0.25) 0%, 
-                rgba(7, 19, 38, 0.75) 100%
-            ), 
-            url("{% static 'img/faro_laserena_bg.jpg' %}") no-repeat center left / cover;
+            background: 
+                linear-gradient(to right, rgba(0, 0, 0, 0.02) 0%, rgba(3, 8, 16, 0.10) 45%, rgba(4, 10, 18, 0.38) 100%),
+                url("{% static 'img/faro_laserena_bg.jpg' %}") no-repeat center left / cover;
         }
 
-        .brand-top-left {
+        /* ==========================================================================
+           2. LOGO INSTITUCIONAL: INTEGRADO DIRECTAMENTE SOBRE EL CIELO
+           Sin cajas, sin docks pesados. Puro y legible.
+           ========================================================================== */
+        .brand-header-link {
             position: absolute;
-            top: 2.25rem;
-            left: 2.75rem;
-            z-index: 20;
-            display: inline-flex;
-            align-items: center;
+            top: 2.5rem;
+            left: 3rem;
+            z-index: 10;
+            display: inline-block;
             text-decoration: none;
-            background: rgba(0, 0, 0, 0.25);
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
-            padding: 8px 16px;
-            border-radius: 12px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            transition: all 0.25s ease;
+            transition: opacity var(--motion-duration) var(--motion-ease);
         }
 
-        .brand-top-left:hover {
-            background: rgba(0, 0, 0, 0.35);
-            border-color: rgba(255, 255, 255, 0.2);
-            transform: translateY(-1px);
+        .brand-header-link:hover {
+            opacity: 0.9;
+        }
+
+        .brand-header-link:focus-visible {
+            outline: 2px solid rgba(255, 255, 255, 0.6);
+            outline-offset: 4px;
+            border-radius: 4px;
         }
 
         .brand-logo-img {
             height: 38px;
             width: auto;
             object-fit: contain;
-            filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.45));
+            filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.45));
         }
 
-        .credit-bottom-left {
+        /* ==========================================================================
+           3. CRÉDITOS FOTOGRÁFICOS: CAPTION EDITORIAL DISCRETO
+           Tipografía fotográfica que pertenece a la obra, no un widget pegado.
+           ========================================================================== */
+        .photo-editorial-caption {
             position: absolute;
-            bottom: 2rem;
-            left: 2.75rem;
-            z-index: 20;
-            pointer-events: auto;
-        }
-
-        .creator-capsule {
-            display: inline-flex;
+            bottom: 2.25rem;
+            left: 3rem;
+            z-index: 10;
+            display: flex;
             align-items: center;
             gap: 8px;
-            background: rgba(0, 0, 0, 0.45);
-            backdrop-filter: blur(8px);
-            -webkit-backdrop-filter: blur(8px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 100px;
-            padding: 5px 15px;
-            font-size: 11px;
+            color: rgba(255, 255, 255, 0.78);
+            font-size: 11.5px;
+            letter-spacing: 0.25px;
             font-weight: 500;
-            letter-spacing: 0.2px;
-            color: rgba(255, 255, 255, 0.82);
-            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
+            text-shadow: 0 1px 4px rgba(0, 0, 0, 0.75);
             user-select: none;
+            pointer-events: none;
         }
 
-        .creator-capsule i {
-            font-size: 11px;
-            color: rgba(255, 255, 255, 0.9);
+        .photo-editorial-caption i {
+            font-size: 11.5px;
+            opacity: 0.85;
         }
 
+        /* ==========================================================================
+           4. PANEL DE LOGIN: VIDRIO ÓPTICO SUSPENDIDO
+           Lámina transparente, ligera y sofisticada. Borde casi invisible.
+           ========================================================================== */
         .glass-card-wrapper {
             position: relative;
-            z-index: 15;
-            perspective: 1000px;
+            z-index: 20;
         }
 
         .glass-card {
-            max-width: 410px;
-            width: 100%;
-            padding: 2.75rem 2.25rem;
+            width: 400px;
+            max-width: 100%;
+            padding: 2.75rem 2.35rem 2.25rem 2.35rem;
             border-radius: 24px;
-            background: linear-gradient(135deg, rgba(255, 255, 255, 0.16) 0%, rgba(255, 255, 255, 0.04) 100%);
-            backdrop-filter: blur(28px) saturate(200%);
-            -webkit-backdrop-filter: blur(28px) saturate(200%);
-            border: 1px solid rgba(255, 255, 255, 0.25);
-            border-top: 1px solid rgba(255, 255, 255, 0.5);
-            border-left: 1px solid rgba(255, 255, 255, 0.4);
-            box-shadow: 0 30px 60px -15px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.4);
-            position: relative;
-            transform-style: preserve-3d;
-            animation: cardAppear 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+            background: var(--glass-optical-bg);
+            backdrop-filter: var(--glass-optical-blur);
+            -webkit-backdrop-filter: var(--glass-optical-blur);
+            
+            /* Borde tenue de vidrio óptico */
+            border: 1px solid var(--glass-optical-border);
+            border-top: 1px solid var(--glass-optical-border-top);
+            
+            /* Sombra suave y reflejo interno apenas perceptible */
+            box-shadow: var(--glass-optical-shadow);
+
+            animation: glassSettle 280ms var(--motion-ease) forwards;
         }
 
-        @keyframes cardAppear {
+        @keyframes glassSettle {
             from {
                 opacity: 0;
-                transform: translateY(16px) scale(0.98);
+                transform: translateY(8px);
             }
             to {
                 opacity: 1;
-                transform: translateY(0) scale(1);
+                transform: translateY(0);
             }
         }
 
+        /* Cabecera del formulario */
         .auth-card-header {
-            margin-bottom: 1.5rem;
+            margin-bottom: 1.75rem;
+            text-align: left;
         }
 
         .auth-card-title {
-            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-family: var(--font-display);
             font-size: 1.65rem;
-            font-weight: 800;
-            letter-spacing: -0.4px;
+            font-weight: 700;
+            letter-spacing: -0.015em;
             color: #FFFFFF;
             margin-bottom: 0.35rem;
             line-height: 1.25;
+            text-shadow: 0 1px 3px rgba(0, 0, 0, 0.35);
         }
 
         .auth-card-subtitle {
-            font-size: 13.5px;
-            color: rgba(255, 255, 255, 0.78);
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.82);
             line-height: 1.45;
+            font-weight: 400;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.30);
         }
 
+        /* ==========================================================================
+           5. CAMPOS: VIDRIO DENTRO DE VIDRIO (GLASS WITHIN GLASS)
+           Superficies suaves translúcidas, sin cajas oscuras sólidas.
+           ========================================================================== */
         .form-field-group {
-            margin-bottom: 1.15rem;
+            margin-bottom: 1.2rem;
             text-align: left;
         }
 
         .form-field-label {
             display: block;
-            font-size: 0.8rem;
+            font-size: 0.81rem;
             font-weight: 600;
-            color: rgba(255, 255, 255, 0.92);
+            color: rgba(255, 255, 255, 0.95);
             margin-bottom: 0.45rem;
-            letter-spacing: 0.2px;
+            letter-spacing: 0.1px;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.30);
         }
 
-        .input-glass-wrapper {
+        .input-glass-container {
             position: relative;
             display: flex;
             align-items: center;
@@ -188,151 +249,228 @@
         .input-prefix-icon {
             position: absolute;
             left: 14px;
-            color: rgba(255, 255, 255, 0.6);
+            color: rgba(255, 255, 255, 0.65);
             font-size: 1rem;
             pointer-events: none;
-            transition: color 0.25s ease;
+            transition: color var(--motion-duration) var(--motion-ease);
             z-index: 2;
         }
 
         .form-control-glass {
             width: 100%;
-            height: 48px;
-            background: rgba(0, 0, 0, 0.28);
-            border: 1px solid rgba(255, 255, 255, 0.18);
+            height: 46px;
+            background: var(--input-glass-bg);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid var(--input-glass-border);
+            border-top: 1px solid rgba(255, 255, 255, 0.25);
             border-radius: 12px;
-            padding: 0.85rem 2.85rem 0.85rem 2.75rem;
-            font-size: 14px;
-            letter-spacing: 0.3px;
-            font-family: 'Plus Jakarta Sans', sans-serif;
-            color: #ffffff;
-            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            padding: 0.75rem 2.85rem 0.75rem 2.75rem;
+            font-size: 13.5px;
+            font-family: var(--font-ui);
+            color: #FFFFFF;
+            box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.18);
+            transition: 
+                background-color var(--motion-duration) var(--motion-ease),
+                border-color var(--motion-duration) var(--motion-ease),
+                box-shadow var(--motion-duration) var(--motion-ease);
         }
 
         .form-control-glass::placeholder {
-            color: rgba(255, 255, 255, 0.4);
-            font-size: 13.5px;
-            letter-spacing: 0.2px;
+            color: rgba(255, 255, 255, 0.52);
+            font-size: 13px;
+            font-weight: 400;
         }
 
+        .form-control-glass:hover {
+            background: var(--input-glass-bg-hover);
+            border-color: rgba(255, 255, 255, 0.24);
+        }
+
+        /* Focus refinado: elevación de luminosidad limpia, sin halo azul */
         .form-control-glass:focus {
-            background: rgba(0, 0, 0, 0.45);
-            border-color: #38bdf8;
-            box-shadow: 0 0 0 4px rgba(56, 189, 248, 0.2), inset 0 1px 2px rgba(0, 0, 0, 0.3);
+            background: var(--input-glass-bg-focus);
+            border-color: var(--input-glass-border-focus);
+            border-top-color: rgba(255, 255, 255, 0.50);
+            box-shadow: 
+                0 0 0 2px rgba(255, 255, 255, 0.20),
+                inset 0 1px 2px rgba(0, 0, 0, 0.25);
             outline: none;
-            color: #ffffff;
+            color: #FFFFFF;
         }
 
-        .input-glass-wrapper:focus-within .input-prefix-icon {
-            color: #38bdf8;
+        .input-glass-container:focus-within .input-prefix-icon {
+            color: #FFFFFF;
         }
 
         .btn-toggle-pwd {
             position: absolute;
-            right: 12px;
-            background: none;
+            right: 10px;
+            background: transparent;
             border: none;
-            color: rgba(255, 255, 255, 0.6);
-            font-size: 1.05rem;
+            color: rgba(255, 255, 255, 0.65);
+            font-size: 1rem;
             cursor: pointer;
-            padding: 0.25rem;
+            width: 30px;
+            height: 30px;
             display: flex;
             align-items: center;
             justify-content: center;
             border-radius: 6px;
-            transition: color 0.2s ease;
+            transition: color var(--motion-duration) var(--motion-ease);
             z-index: 2;
         }
 
         .btn-toggle-pwd:hover {
-            color: #38bdf8;
+            color: #FFFFFF;
         }
 
+        .btn-toggle-pwd:focus-visible {
+            outline: 2px solid rgba(255, 255, 255, 0.5);
+            color: #FFFFFF;
+        }
+
+        /* ==========================================================================
+           OPCIONES: RECORDARME Y RECUPERACIÓN
+           ========================================================================== */
         .form-options-row {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            font-size: 0.8rem;
-            margin-bottom: 1.25rem;
+            font-size: 0.81rem;
+            margin-bottom: 1.35rem;
         }
 
         .remember-checkbox {
             display: flex;
             align-items: center;
             gap: 0.5rem;
-            color: rgba(255, 255, 255, 0.85);
+            color: rgba(255, 255, 255, 0.88);
             cursor: pointer;
             user-select: none;
-            font-size: 12px;
+            font-size: 12.5px;
+            font-weight: 500;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
         }
 
         .remember-checkbox input {
-            accent-color: #e11d48;
-            cursor: pointer;
+            appearance: none;
+            -webkit-appearance: none;
             width: 15px;
             height: 15px;
+            border-radius: 4px;
+            background: rgba(255, 255, 255, 0.10);
+            border: 1px solid rgba(255, 255, 255, 0.25);
+            cursor: pointer;
+            position: relative;
+            transition: all var(--motion-duration) var(--motion-ease);
+        }
+
+        .remember-checkbox input:checked {
+            background-color: var(--muni-red);
+            border-color: var(--muni-red);
+        }
+
+        .remember-checkbox input:checked::after {
+            content: '✓';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 10px;
+            color: #FFFFFF;
+            font-weight: 700;
+        }
+
+        .remember-checkbox input:focus-visible {
+            outline: 2px solid rgba(255, 255, 255, 0.5);
+            outline-offset: 2px;
         }
 
         .forgot-pwd-link {
-            color: rgba(255, 255, 255, 0.85);
-            font-size: 12px;
+            color: rgba(255, 255, 255, 0.88);
+            font-size: 12.5px;
             font-weight: 500;
             text-decoration: none;
-            transition: all 0.2s ease;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
+            transition: color var(--motion-duration) var(--motion-ease);
         }
 
         .forgot-pwd-link:hover {
-            color: #38bdf8;
-            text-shadow: 0 0 10px rgba(56, 189, 248, 0.6);
-            text-decoration: none;
+            color: #FFFFFF;
+            text-decoration: underline;
         }
 
-        .btn-submit-glass {
+        .forgot-pwd-link:focus-visible {
+            outline: 2px solid rgba(255, 255, 255, 0.5);
+            outline-offset: 2px;
+            border-radius: 3px;
+        }
+
+        /* ==========================================================================
+           6. BOTÓN PRINCIPAL: ROJO INSTITUCIONAL PURO Y REFINADO
+           Rojo carmesí sólido con highlight tenue. Sin gradientes extraños.
+           ========================================================================== */
+        .btn-submit-muni {
             width: 100%;
-            height: 48px;
-            background: linear-gradient(135deg, #e11d48 0%, #be123c 50%, #9f1239 100%);
-            border: 1px solid rgba(255, 255, 255, 0.3);
-            border-top: 1px solid rgba(255, 255, 255, 0.5);
+            height: 46px;
+            background: linear-gradient(180deg, #C41230 0%, #A80003 100%);
+            border: 1px solid rgba(255, 255, 255, 0.20);
+            border-top: 1px solid rgba(255, 255, 255, 0.42);
             border-radius: 12px;
-            box-shadow: 0 10px 25px -4px rgba(225, 29, 72, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.35);
+            box-shadow: 
+                0 6px 18px -2px rgba(184, 0, 3, 0.45),
+                inset 0 1px 0 rgba(255, 255, 255, 0.30);
+            font-family: var(--font-display);
             font-weight: 600;
-            font-size: 15px;
-            letter-spacing: 0.4px;
-            padding: 0.85rem;
-            color: #ffffff;
-            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-size: 14px;
+            letter-spacing: 0.2px;
+            color: #FFFFFF;
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 0.6rem;
+            gap: 0.5rem;
             cursor: pointer;
-            transition: all 0.25s ease;
+            transition: 
+                background-color var(--motion-duration) var(--motion-ease),
+                box-shadow var(--motion-duration) var(--motion-ease),
+                transform var(--motion-duration) var(--motion-ease);
         }
 
-        .btn-submit-glass:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 14px 30px -4px rgba(225, 29, 72, 0.75), inset 0 1px 0 rgba(255, 255, 255, 0.5);
-            color: #ffffff;
-            border-color: rgba(255, 255, 255, 0.45);
+        .btn-submit-muni:hover {
+            background: linear-gradient(180deg, #D11435 0%, #B80003 100%);
+            box-shadow: 
+                0 8px 22px -2px rgba(184, 0, 3, 0.58),
+                inset 0 1px 0 rgba(255, 255, 255, 0.42);
+            transform: translateY(-1px);
+            color: #FFFFFF;
         }
 
-        .btn-submit-glass:active {
+        .btn-submit-muni:active {
             transform: translateY(0);
-            box-shadow: 0 6px 18px -3px rgba(225, 29, 72, 0.65);
+            box-shadow: 0 3px 10px -1px rgba(184, 0, 3, 0.50);
         }
 
-        .btn-submit-glass i {
-            font-size: 1rem;
-            transition: transform 0.2s ease;
+        .btn-submit-muni:focus-visible {
+            outline: 2px solid #FFFFFF;
+            outline-offset: 3px;
         }
 
-        .btn-submit-glass:hover i {
-            transform: translateX(4px);
+        .btn-submit-muni i {
+            font-size: 0.95rem;
+            transition: transform var(--motion-duration) var(--motion-ease);
         }
 
-        /* Botones de Acceso Rápido Demo (RBAC) */
+        .btn-submit-muni:hover i {
+            transform: translateX(3px);
+        }
+
+        /* ==========================================================================
+           7. ACCESOS RBAC: MICRO-CÁPSULAS DE VIDRIO SECUNDARIAS
+           Subordinadas al CTA, elegantes, legibles y sobrias.
+           ========================================================================== */
         .demo-quick-access {
-            margin-top: 1.25rem;
+            margin-top: 1.35rem;
             display: flex;
             flex-direction: column;
             gap: 0.45rem;
@@ -340,11 +478,12 @@
         }
 
         .demo-label {
-            font-size: 11px;
-            font-weight: 700;
-            color: rgba(255, 255, 255, 0.55);
+            font-size: 10px;
+            font-weight: 600;
+            color: rgba(255, 255, 255, 0.65);
             text-transform: uppercase;
-            letter-spacing: 0.6px;
+            letter-spacing: 0.7px;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
         }
 
         .demo-chips-group {
@@ -355,83 +494,125 @@
         }
 
         .demo-chip {
-            background: rgba(255, 255, 255, 0.08);
-            border: 1px solid rgba(255, 255, 255, 0.16);
-            color: #cbd5e1;
+            background: rgba(10, 18, 30, 0.35);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 255, 255, 0.14);
+            border-top: 1px solid rgba(255, 255, 255, 0.22);
+            color: rgba(255, 255, 255, 0.88);
             font-size: 11px;
-            font-weight: 600;
-            padding: 5px 10px;
+            font-weight: 500;
+            padding: 4px 10px;
             border-radius: 8px;
             cursor: pointer;
-            transition: all 0.2s ease;
+            transition: all var(--motion-duration) var(--motion-ease);
             user-select: none;
             display: inline-flex;
             align-items: center;
             gap: 5px;
             text-decoration: none;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
         }
 
         .demo-chip:hover {
-            background: rgba(255, 255, 255, 0.18);
-            border-color: #38bdf8;
-            color: #ffffff;
+            background: rgba(10, 18, 30, 0.55);
+            border-color: rgba(255, 255, 255, 0.28);
+            color: #FFFFFF;
             transform: translateY(-1px);
         }
 
+        .demo-chip:focus-visible {
+            outline: 2px solid rgba(255, 255, 255, 0.5);
+            outline-offset: 2px;
+            color: #FFFFFF;
+        }
+
+        .demo-chip i {
+            font-size: 10px;
+            opacity: 0.80;
+        }
+
+        /* Pie del panel */
         .auth-card-footer {
-            margin-top: 1.35rem;
-            padding-top: 1rem;
-            border-top: 1px solid rgba(255, 255, 255, 0.12);
+            margin-top: 1.4rem;
+            padding-top: 1.15rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.10);
             text-align: center;
             font-size: 0.75rem;
-            color: rgba(255, 255, 255, 0.68);
+            color: rgba(255, 255, 255, 0.70);
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
         }
 
         .auth-card-footer a {
-            color: rgba(255, 255, 255, 0.9);
+            color: rgba(255, 255, 255, 0.90);
             text-decoration: none;
             font-weight: 500;
-            transition: color 0.2s ease;
+            transition: color var(--motion-duration) var(--motion-ease);
         }
 
         .auth-card-footer a:hover {
-            color: #38bdf8;
+            color: #FFFFFF;
             text-decoration: underline;
         }
 
+        .auth-card-footer a:focus-visible {
+            outline: 2px solid rgba(255, 255, 255, 0.5);
+            outline-offset: 2px;
+            border-radius: 2px;
+        }
+
+        /* ==========================================================================
+           RESPONSIVIDAD SIN COLISIONES
+           ========================================================================== */
+        @media (prefers-reduced-motion: reduce) {
+            * {
+                animation-duration: 0.01ms !important;
+                transition-duration: 0.01ms !important;
+            }
+        }
+
         @media (max-width: 991px) {
-            .portal-fullscreen {
-                justify-content: center;
-                align-items: center;
-                padding: 1.5rem;
+            html, body {
                 overflow-y: auto;
+                height: auto;
+                min-height: 100vh;
             }
 
-            .brand-top-left {
-                top: 1.25rem;
-                left: 1.25rem;
-                padding: 6px 12px;
+            .portal-fullscreen {
+                justify-content: flex-start;
+                align-items: center;
+                flex-direction: column;
+                padding: 2rem 1.25rem 2.5rem 1.25rem;
+                min-height: 100vh;
+                height: auto;
+                overflow-y: visible;
+            }
+
+            .brand-header-link {
+                position: static;
+                margin-bottom: 1.5rem;
             }
 
             .brand-logo-img {
                 height: 32px;
             }
 
-            .credit-bottom-left {
-                bottom: 1rem;
-                left: 50%;
-                transform: translateX(-50%);
-                white-space: nowrap;
-            }
-
             .glass-card-wrapper {
                 width: 100%;
-                max-width: 390px;
-                margin: 5rem auto 3.5rem auto;
+                max-width: 395px;
+                margin: 0 0 1.75rem 0;
             }
 
             .glass-card {
-                padding: 2rem 1.65rem;
+                padding: 2.25rem 1.65rem 1.85rem 1.65rem;
+            }
+
+            .photo-editorial-caption {
+                position: static;
+                margin-top: 0.75rem;
+                font-size: 11px;
+                text-align: center;
+                justify-content: center;
             }
         }
     </style>
@@ -440,30 +621,25 @@
 
 <div class="portal-fullscreen">
 
+    <!-- LOGO INSTITUCIONAL: LIMPIO SOBRE LA FOTOGRAFÍA -->
     <header>
-        <a href="{% url 'core:login' %}" class="brand-top-left" title="Ilustre Municipalidad de La Serena">
+        <a href="{% url 'core:login' %}" class="brand-header-link" title="Ilustre Municipalidad de La Serena">
             <img src="{% static 'images/laserena_horizontal_blanco.svg' %}" alt="La Serena - Ilustre Municipalidad" class="brand-logo-img">
         </a>
     </header>
 
-    <footer class="credit-bottom-left">
-        <div class="creator-capsule">
-            <i class="bi bi-camera-fill"></i>
-            <span>Fotografía por Kevin Encina Molina y Scarlett Williams Medalla</span>
-        </div>
-    </footer>
-
+    <!-- PANEL PRINCIPAL: VIDRIO ÓPTICO SUSPENDIDO -->
     <main class="glass-card-wrapper">
-        <div class="glass-card">
+        <section class="glass-card" aria-labelledby="loginTitle">
             
             <div class="auth-card-header">
-                <h1 class="auth-card-title">Iniciar Sesión</h1>
+                <h1 class="auth-card-title" id="loginTitle">Iniciar Sesión</h1>
                 <p class="auth-card-subtitle">Ingresa tus credenciales institucionales para acceder a la plataforma.</p>
             </div>
 
             {% if messages %}
                 {% for message in messages %}
-                    <div class="alert alert-danger alert-dismissible fade show small py-2 px-3 mb-3 border-0" role="alert" style="background-color: rgba(225, 29, 72, 0.9); color: #ffffff; border-radius: 10px;">
+                    <div class="alert alert-danger alert-dismissible fade show small py-2 px-3 mb-3 border-0" role="alert" style="background-color: rgba(184, 0, 3, 0.88); backdrop-filter: blur(8px); color: #ffffff; border-radius: 8px;">
                         <i class="bi bi-exclamation-circle me-1"></i> {{ message }}
                         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="alert" aria-label="Cerrar"></button>
                     </div>
@@ -473,10 +649,11 @@
             <form method="post" action="{% url 'core:login' %}" id="loginForm" novalidate>
                 {% csrf_token %}
 
+                <!-- Campo RUT / Usuario -->
                 <div class="form-field-group">
                     <label class="form-field-label" for="username">Usuario o RUT</label>
-                    <div class="input-glass-wrapper">
-                        <i class="bi bi-person input-prefix-icon"></i>
+                    <div class="input-glass-container">
+                        <i class="bi bi-person input-prefix-icon" aria-hidden="true"></i>
                         <input type="text" 
                                id="username" 
                                name="username" 
@@ -487,10 +664,11 @@
                     </div>
                 </div>
 
+                <!-- Campo Contraseña -->
                 <div class="form-field-group">
                     <label class="form-field-label" for="password">Contraseña</label>
-                    <div class="input-glass-wrapper">
-                        <i class="bi bi-lock input-prefix-icon"></i>
+                    <div class="input-glass-container">
+                        <i class="bi bi-lock input-prefix-icon" aria-hidden="true"></i>
                         <input type="password" 
                                id="password" 
                                name="password" 
@@ -502,39 +680,42 @@
                                 id="togglePassword" 
                                 class="btn-toggle-pwd" 
                                 title="Mostrar u ocultar contraseña" 
-                                tabindex="-1">
-                            <i class="bi bi-eye" id="eyeIcon"></i>
+                                aria-label="Mostrar u ocultar contraseña"
+                                tabindex="0">
+                            <i class="bi bi-eye" id="eyeIcon" aria-hidden="true"></i>
                         </button>
                     </div>
                 </div>
 
+                <!-- Opciones: Recordarme & Recuperación -->
                 <div class="form-options-row">
                     <label class="remember-checkbox" for="rememberMe">
                         <input type="checkbox" id="rememberMe" name="remember_me">
                         <span>Recordarme</span>
                     </label>
-                    <a href="#" class="forgot-pwd-link" onclick="Swal.fire({icon: 'info', title: 'Recuperación de Acceso', text: 'Contacta al Departamento de Tecnologías de la Información (DTI): soporte@laserena.cl', confirmButtonColor: '#e11d48', background: '#0f172a', color: '#ffffff'}); return false;">
+                    <a href="#" class="forgot-pwd-link" onclick="Swal.fire({icon: 'info', title: 'Recuperación de Acceso', text: 'Contacta al Departamento de Tecnologías de la Información (DTI): soporte@laserena.cl', confirmButtonColor: '#B80003', background: '#0F172A', color: '#ffffff'}); return false;">
                         ¿Olvidaste tu contraseña?
                     </a>
                 </div>
 
-                <button type="submit" class="btn-submit-glass" id="btnSubmit">
+                <!-- Botón Principal CTA Carmesí -->
+                <button type="submit" class="btn-submit-muni" id="btnSubmit">
                     <span>Acceder al Portal</span>
-                    <i class="bi bi-arrow-right"></i>
+                    <i class="bi bi-arrow-right" aria-hidden="true"></i>
                 </button>
 
-                <!-- Botones Demo RBAC para Acceso Directo a Vistas Especializadas -->
+                <!-- Accesos Rápidos Demo (RBAC) -->
                 <div class="demo-quick-access">
                     <span class="demo-label">Acceso Rápido Demo (RBAC)</span>
                     <div class="demo-chips-group">
                         <a href="{% url 'core:login' %}?rol=admin" class="demo-chip" title="Vista Alcaldía y Control Comunal">
-                            <i class="bi bi-building"></i> Admin / Alcaldía
+                            <i class="bi bi-building" aria-hidden="true"></i> Admin / Alcaldía
                         </a>
                         <a href="{% url 'core:login' %}?rol=verificador" class="demo-chip" title="Vista Supervisor y Auditoría">
-                            <i class="bi bi-patch-check"></i> Verificador / Supervisor
+                            <i class="bi bi-patch-check" aria-hidden="true"></i> Verificador / Supervisor
                         </a>
                         <a href="{% url 'core:login' %}?rol=gestor" class="demo-chip" title="Vista Terreno y Tubo de Trabajo">
-                            <i class="bi bi-geo-alt"></i> Gestor / Terreno
+                            <i class="bi bi-geo-alt" aria-hidden="true"></i> Gestor / Terreno
                         </a>
                     </div>
                 </div>
@@ -544,8 +725,14 @@
                 <span>Mesa de Ayuda: <a href="mailto:soporte@laserena.cl">soporte@laserena.cl</a> • DTI</span>
             </footer>
 
-        </div>
+        </section>
     </main>
+
+    <!-- CRÉDITOS FOTOGRÁFICOS: CAPTION EDITORIAL DISCRETO -->
+    <footer class="photo-editorial-caption">
+        <i class="bi bi-camera" aria-hidden="true"></i>
+        <span>Fotografía por Kevin Encina Molina y Scarlett Williams Medalla</span>
+    </footer>
 
 </div>
 
@@ -557,6 +744,7 @@
         const form = document.getElementById('loginForm');
         const usernameInput = document.getElementById('username');
 
+        // Alternar visibilidad de contraseña
         if (toggle && pwd && icon) {
             toggle.addEventListener('click', function(e) {
                 e.preventDefault();
@@ -566,6 +754,7 @@
             });
         }
 
+        // Validación & Envío
         if (form && usernameInput && pwd) {
             form.addEventListener('submit', function(e) {
                 e.preventDefault();
@@ -577,8 +766,8 @@
                         icon: 'warning',
                         title: 'Campos requeridos',
                         text: 'Por favor, ingrese su RUT y contraseña institucional.',
-                        confirmButtonColor: '#e11d48',
-                        background: '#0f172a',
+                        confirmButtonColor: '#B80003',
+                        background: '#0F172A',
                         color: '#ffffff'
                     });
                     return;
@@ -592,8 +781,8 @@
                         icon: 'warning',
                         title: 'Carácter no permitido',
                         text: 'Se detectaron caracteres inválidos o código malicioso. Ingrese un formato válido.',
-                        confirmButtonColor: '#e11d48',
-                        background: '#0f172a',
+                        confirmButtonColor: '#B80003',
+                        background: '#0F172A',
                         color: '#ffffff'
                     });
                     return;
@@ -604,27 +793,15 @@
                     title: 'Autenticación exitosa',
                     text: 'Redirigiendo al panel...',
                     showConfirmButton: false,
-                    timer: 1000,
-                    background: '#0f172a',
+                    timer: 850,
+                    background: '#0F172A',
                     color: '#ffffff'
                 });
 
                 setTimeout(function() {
                     form.submit();
-                }, 1000);
+                }, 850);
             });
-        }
-
-        if (typeof VanillaTilt !== 'undefined') {
-            const tiltCard = document.querySelector('.glass-card');
-            if (tiltCard) {
-                VanillaTilt.init(tiltCard, {
-                    max: 3,
-                    speed: 500,
-                    glare: true,
-                    "max-glare": 0.15,
-                });
-            }
         }
     });
 </script>
