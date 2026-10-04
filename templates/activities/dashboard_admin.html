@@ -3128,6 +3128,433 @@
             background: rgba(15, 23, 42, 0.7) !important;
             border-color: rgba(255, 255, 255, 0.1) !important;
         }
+
+        /* ==========================================================================
+           BARRA EJECUTIVA DE PERÍODO Y SINCRONIZACIÓN
+           ========================================================================== */
+        .executive-time-bar {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+        }
+
+        .pill-capsule-group {
+            display: inline-flex;
+            align-items: center;
+            background: rgba(255, 255, 255, 0.78);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(226, 232, 240, 0.85);
+            border-radius: 50px;
+            padding: 3.5px;
+            gap: 3px;
+            box-shadow: 0 4px 12px -2px rgba(27, 54, 93, 0.05);
+        }
+
+        [data-theme="dark"] .pill-capsule-group {
+            background: rgba(15, 23, 42, 0.75) !important;
+            border-color: rgba(255, 255, 255, 0.1) !important;
+            box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35) !important;
+        }
+
+        .pill-capsule-btn {
+            border: none;
+            background: transparent;
+            padding: 6px 14px;
+            border-radius: 50px;
+            font-size: 0.78rem;
+            font-weight: 600;
+            color: var(--muni-text-sec);
+            cursor: pointer;
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .pill-capsule-btn:hover {
+            color: var(--muni-navy);
+            background: rgba(27, 54, 93, 0.04);
+        }
+
+        .pill-capsule-btn.active {
+            background: linear-gradient(135deg, #1B365D 0%, #172F50 100%);
+            color: #FFFFFF !important;
+            box-shadow: 0 4px 12px rgba(27, 54, 93, 0.25);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+        }
+
+        [data-theme="dark"] .pill-capsule-btn {
+            color: #94A3B8;
+        }
+
+        [data-theme="dark"] .pill-capsule-btn:hover {
+            color: #FFFFFF;
+            background: rgba(255, 255, 255, 0.06);
+        }
+
+        [data-theme="dark"] .pill-capsule-btn.active {
+            background: linear-gradient(135deg, rgba(196, 18, 48, 0.85) 0%, rgba(27, 54, 93, 0.95) 100%) !important;
+            color: #FFFFFF !important;
+            box-shadow: 0 4px 14px rgba(196, 18, 48, 0.35) !important;
+            border: 1px solid rgba(255, 255, 255, 0.22) !important;
+        }
+
+        .executive-sync-widget {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(14px);
+            border: 1px solid rgba(226, 232, 240, 0.9);
+            border-radius: 50px;
+            padding: 6px 14px;
+            font-size: 0.78rem;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+            font-weight: 600;
+            color: var(--muni-navy);
+        }
+
+        [data-theme="dark"] .executive-sync-widget {
+            background: rgba(15, 23, 42, 0.8) !important;
+            border-color: rgba(255, 255, 255, 0.1) !important;
+            color: #F1F5F9 !important;
+        }
+
+        .live-sync-pulse {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 0.72rem;
+            font-weight: 700;
+            color: #16A34A;
+            background: rgba(22, 163, 74, 0.1);
+            border: 1px solid rgba(22, 163, 74, 0.25);
+            border-radius: 50px;
+            padding: 2px 8px;
+        }
+
+        .live-pulse-dot {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background: #16A34A;
+            box-shadow: 0 0 0 0 rgba(22, 163, 74, 0.6);
+            animation: livePulseAnim 2s infinite;
+        }
+
+        @keyframes livePulseAnim {
+            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(22, 163, 74, 0.7); }
+            70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(22, 163, 74, 0); }
+            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(22, 163, 74, 0); }
+        }
+
+        .btn-exportar-pdf-oficial {
+            background: rgba(196, 18, 48, 0.08);
+            color: #C41230;
+            border: 1.5px solid rgba(196, 18, 48, 0.35);
+            border-radius: 50px;
+            padding: 6px 14px;
+            font-size: 0.78rem;
+            font-weight: 700;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            backdrop-filter: blur(12px);
+            transition: all 0.25s ease;
+            cursor: pointer;
+        }
+
+        .btn-exportar-pdf-oficial:hover {
+            background: #C41230;
+            color: #FFFFFF;
+            border-color: #C41230;
+            box-shadow: 0 4px 14px rgba(196, 18, 48, 0.35);
+            transform: translateY(-1px);
+        }
+
+        [data-theme="dark"] .btn-exportar-pdf-oficial {
+            background: rgba(196, 18, 48, 0.18) !important;
+            border-color: rgba(196, 18, 48, 0.5) !important;
+            color: #FFA3AF !important;
+        }
+
+        [data-theme="dark"] .btn-exportar-pdf-oficial:hover {
+            background: #C41230 !important;
+            color: #FFFFFF !important;
+        }
+
+        /* Micro-glow status badges */
+        .badge-glow-emerald {
+            background: rgba(16, 185, 129, 0.12);
+            color: #059669;
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            box-shadow: 0 0 10px rgba(16, 185, 129, 0.2);
+            font-weight: 700;
+            font-size: 0.72rem;
+            border-radius: 50px;
+            padding: 3px 9px;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .badge-glow-amber {
+            background: rgba(217, 119, 6, 0.12);
+            color: #D97706;
+            border: 1px solid rgba(217, 119, 6, 0.3);
+            box-shadow: 0 0 10px rgba(217, 119, 6, 0.2);
+            font-weight: 700;
+            font-size: 0.72rem;
+            border-radius: 50px;
+            padding: 3px 9px;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .badge-glow-carmine {
+            background: rgba(196, 18, 48, 0.12);
+            color: #C41230;
+            border: 1px solid rgba(196, 18, 48, 0.3);
+            box-shadow: 0 0 10px rgba(196, 18, 48, 0.2);
+            font-weight: 700;
+            font-size: 0.72rem;
+            border-radius: 50px;
+            padding: 3px 9px;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        [data-theme="dark"] .badge-glow-emerald {
+            background: rgba(16, 185, 129, 0.2);
+            color: #34D399;
+        }
+        [data-theme="dark"] .badge-glow-amber {
+            background: rgba(217, 119, 6, 0.2);
+            color: #FBBF24;
+        }
+        [data-theme="dark"] .badge-glow-carmine {
+            background: rgba(196, 18, 48, 0.2);
+            color: #F87171;
+        }
+
+        /* Drawer de Cristal para Expediente de Sede */
+        .glass-offcanvas-drawer {
+            position: fixed;
+            top: 0;
+            right: -500px;
+            width: 480px;
+            max-width: 95vw;
+            height: 100vh;
+            background: rgba(255, 255, 255, 0.92);
+            backdrop-filter: blur(28px) saturate(190%);
+            -webkit-backdrop-filter: blur(28px) saturate(190%);
+            border-left: 1px solid rgba(255, 255, 255, 0.9);
+            box-shadow: -15px 0 45px rgba(27, 54, 93, 0.15);
+            z-index: 1060;
+            transition: right 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .glass-offcanvas-drawer.open {
+            right: 0;
+        }
+
+        [data-theme="dark"] .glass-offcanvas-drawer {
+            background: rgba(11, 19, 43, 0.95) !important;
+            border-left: 1px solid rgba(255, 255, 255, 0.12) !important;
+            box-shadow: -15px 0 45px rgba(0, 0, 0, 0.6) !important;
+            color: #F1F5F9 !important;
+        }
+
+        .drawer-backdrop-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(7, 13, 30, 0.45);
+            backdrop-filter: blur(4px);
+            z-index: 1055;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+
+        .drawer-backdrop-overlay.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        /* Tarjetas de Roles y Matriz de Permisos */
+        .role-cards-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 1.25rem;
+            margin-bottom: 2rem;
+        }
+
+        .role-profile-card {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(226, 232, 240, 0.85);
+            border-radius: 18px;
+            padding: 1.4rem;
+            box-shadow: 0 10px 25px -5px rgba(27, 54, 93, 0.05);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .role-profile-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 16px 32px -8px rgba(27, 54, 93, 0.12);
+            border-color: rgba(27, 54, 93, 0.2);
+        }
+
+        [data-theme="dark"] .role-profile-card {
+            background: linear-gradient(135deg, rgba(20, 30, 55, 0.8) 0%, rgba(15, 23, 42, 0.85) 100%) !important;
+            border-color: rgba(255, 255, 255, 0.1) !important;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.4) !important;
+        }
+
+        .role-perm-matrix-bar {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 6px;
+            background: rgba(241, 245, 249, 0.7);
+            padding: 8px;
+            border-radius: 12px;
+            margin-top: 1rem;
+        }
+
+        [data-theme="dark"] .role-perm-matrix-bar {
+            background: rgba(15, 23, 42, 0.6) !important;
+        }
+
+        .role-perm-pill-toggle {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            font-size: 0.68rem;
+            font-weight: 700;
+            color: var(--muni-text-sec);
+            text-align: center;
+        }
+
+        .perm-mini-switch {
+            width: 32px;
+            height: 18px;
+            position: relative;
+            display: inline-block;
+        }
+
+        .perm-mini-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .perm-mini-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-color: #CBD5E1;
+            transition: .3s;
+            border-radius: 20px;
+        }
+
+        .perm-mini-slider:before {
+            position: absolute;
+            content: "";
+            height: 14px;
+            width: 14px;
+            left: 2px;
+            bottom: 2px;
+            background-color: white;
+            transition: .3s;
+            border-radius: 50%;
+        }
+
+        .perm-mini-switch input:checked + .perm-mini-slider {
+            background-color: #1B365D;
+        }
+
+        .perm-mini-switch input:checked + .perm-mini-slider:before {
+            transform: translateX(14px);
+        }
+
+        /* Expediente Ciudadano en Vidrio Templado */
+        .citizen-dossier-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(24px) saturate(180%);
+            -webkit-backdrop-filter: blur(24px) saturate(180%);
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.8);
+            box-shadow: 0 25px 50px -12px rgba(27, 54, 93, 0.2);
+        }
+
+        [data-theme="dark"] .citizen-dossier-card {
+            background: rgba(14, 22, 42, 0.95) !important;
+            border-color: rgba(255, 255, 255, 0.12) !important;
+        }
+
+        .timeline-ticket-item {
+            position: relative;
+            padding-left: 28px;
+            margin-bottom: 1.25rem;
+        }
+
+        .timeline-ticket-item::before {
+            content: '';
+            position: absolute;
+            left: 7px;
+            top: 6px;
+            width: 2px;
+            height: calc(100% + 14px);
+            background: rgba(226, 232, 240, 0.9);
+        }
+
+        .timeline-ticket-item:last-child::before {
+            display: none;
+        }
+
+        .timeline-ticket-dot {
+            position: absolute;
+            left: 0;
+            top: 4px;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: #FFFFFF;
+            border: 3px solid #1B365D;
+        }
+
+        /* Sparklines & Micro-trend Cards */
+        .report-sparkline-box {
+            display: flex;
+            align-items: flex-end;
+            gap: 3px;
+            height: 28px;
+        }
+
+        .report-sparkline-bar {
+            width: 5px;
+            border-radius: 3px;
+            background: rgba(27, 54, 93, 0.25);
+            transition: height 0.3s ease;
+        }
+
+        .report-sparkline-bar.highlight {
+            background: #C41230;
+        }
     </style>
 </head>
 
@@ -3357,25 +3784,37 @@
                         </div>
                     </div>
 
-                    <div class="d-flex align-items-center gap-2 flex-wrap">
-                        <!-- Selector de Rango Temporal en Vivo -->
-                        <div class="time-range-capsule" role="tablist">
-                            <button class="time-range-btn" id="btnRangoHoy" onclick="cambiarRangoTemporal('hoy')">Hoy</button>
-                            <button class="time-range-btn" id="btnRangoSemana" onclick="cambiarRangoTemporal('semana')">Semana</button>
-                            <button class="time-range-btn active" id="btnRangoMes" onclick="cambiarRangoTemporal('mes')">Mes</button>
-                            <button class="time-range-btn" id="btnRangoAnio" onclick="cambiarRangoTemporal('anio')">Año 2026</button>
+                    <div class="executive-time-bar">
+                        <!-- Barra Ejecutiva de Período y Sincronización -->
+                        <div class="pill-capsule-group" role="tablist" aria-label="Rango Temporal">
+                            <button class="pill-capsule-btn" id="btnRangoHoy" onclick="cambiarRangoTemporal('hoy')">
+                                <i class="bi bi-clock"></i> Hoy
+                            </button>
+                            <button class="pill-capsule-btn" id="btnRangoSemana" onclick="cambiarRangoTemporal('semana')">
+                                <i class="bi bi-calendar-week"></i> Esta Semana
+                            </button>
+                            <button class="pill-capsule-btn active" id="btnRangoMes" onclick="cambiarRangoTemporal('mes')">
+                                <i class="bi bi-calendar3"></i> Este Mes
+                            </button>
+                            <button class="pill-capsule-btn" id="btnRangoAnio" onclick="cambiarRangoTemporal('anio')">
+                                <i class="bi bi-calendar-check"></i> Año 2026
+                            </button>
                         </div>
 
                         <!-- Botón Exportador de Informe Ejecutivo PDF Oficial -->
-                        <button class="btn btn-outline-danger btn-sm rounded-pill px-3 fw-bold d-flex align-items-center gap-1 shadow-sm"
+                        <button class="btn-exportar-pdf-oficial" id="btnExportarPDF"
                             onclick="generarInformeEjecutivoPDF()" title="Descargar Informe Oficial en PDF para Concejo Municipal">
                             <i class="bi bi-file-earmark-pdf-fill"></i>
                             <span>Informe Ejecutivo PDF</span>
                         </button>
 
-                        <div class="date-badge-pill">
-                            <i class="bi bi-calendar3"></i>
-                            <span id="currentDateDisplay">27 de septiembre de 2025</span>
+                        <!-- Widget de Fecha y Sincronización en Vivo -->
+                        <div class="executive-sync-widget">
+                            <i class="bi bi-calendar-event text-danger"></i>
+                            <span id="currentDateDisplay">Domingo, 4 de Octubre de 2026</span>
+                            <span class="live-sync-pulse">
+                                <span class="live-pulse-dot"></span> En vivo / Sincronizado
+                            </span>
                         </div>
                     </div>
                 </div>
@@ -3934,6 +4373,17 @@
                         </div>
                     </div>
 
+                    <!-- Filtros Rápidos de Sector Comunal -->
+                    <div class="d-flex align-items-center gap-2 mb-3 flex-wrap p-2 bg-light rounded-3 border">
+                        <span class="text-secondary small fw-bold"><i class="bi bi-geo-alt-fill text-danger me-1"></i> Sectores Comunales:</span>
+                        <button class="btn btn-sm btn-white border rounded-pill px-3 py-1 small fw-semibold shadow-xs" onclick="filtrarSectorVecinoRapido('')">Todos</button>
+                        <button class="btn btn-sm btn-white border rounded-pill px-3 py-1 small fw-semibold shadow-xs" onclick="filtrarSectorVecinoRapido('Centro')">La Serena Centro</button>
+                        <button class="btn btn-sm btn-white border rounded-pill px-3 py-1 small fw-semibold shadow-xs" onclick="filtrarSectorVecinoRapido('Las Compañías')">Las Compañías - El Brillador</button>
+                        <button class="btn btn-sm btn-white border rounded-pill px-3 py-1 small fw-semibold shadow-xs" onclick="filtrarSectorVecinoRapido('La Pampa')">La Pampa - Vista Hermosa</button>
+                        <button class="btn btn-sm btn-white border rounded-pill px-3 py-1 small fw-semibold shadow-xs" onclick="filtrarSectorVecinoRapido('Tierras Blancas')">Tierras Blancas - Sector B</button>
+                        <button class="btn btn-sm btn-white border rounded-pill px-3 py-1 small fw-semibold shadow-xs" onclick="filtrarSectorVecinoRapido('Rural')">Sector Rural - Valle de Elqui</button>
+                    </div>
+
                     <!-- Panel de Filtros -->
                     <div class="advanced-filters-panel" id="panelFiltrosAvanzados">
                         <div class="row g-2">
@@ -4326,6 +4776,157 @@
                         </div>
                     </div>
 
+                    <!-- MATRIZ VISUAL DE PERMISOS Y TARJETAS DE ROLES -->
+                    <div class="role-cards-grid mb-4">
+                        <!-- 1. Superadministrador -->
+                        <div class="role-profile-card" style="border-top: 3.5px solid var(--muni-red);">
+                            <div class="d-flex align-items-center justify-content-between mb-2">
+                                <div class="d-flex align-items-center gap-2">
+                                    <div style="width:36px; height:36px; border-radius:10px; background: rgba(196,18,48,0.12); color:#C41230; display:flex; align-items:center; justify-content:center; font-size:1.1rem;">
+                                        <i class="bi bi-shield-lock-fill"></i>
+                                    </div>
+                                    <div>
+                                        <h5 class="m-0 fw-bold" style="font-size:0.95rem; color:var(--muni-navy);">Superadministrador</h5>
+                                        <span class="text-muted" style="font-size:0.72rem;">Rol de Sistema</span>
+                                    </div>
+                                </div>
+                                <span class="badge bg-danger-subtle text-danger fw-bold rounded-pill px-2 py-1" style="font-size:0.72rem;">
+                                    <i class="bi bi-person-fill"></i> 2 usuarios
+                                </span>
+                            </div>
+                            <p class="text-secondary small mb-2" style="font-size:0.76rem; line-height:1.35;">Control absoluto de infraestructura, logs, credenciales y gobernanza de la plataforma municipal.</p>
+                            <div class="role-perm-matrix-bar">
+                                <div class="role-perm-pill-toggle">
+                                    <span>Lectura</span>
+                                    <label class="perm-mini-switch"><input type="checkbox" checked disabled><span class="perm-mini-slider"></span></label>
+                                </div>
+                                <div class="role-perm-pill-toggle">
+                                    <span>Edición</span>
+                                    <label class="perm-mini-switch"><input type="checkbox" checked disabled><span class="perm-mini-slider"></span></label>
+                                </div>
+                                <div class="role-perm-pill-toggle">
+                                    <span>Derivación</span>
+                                    <label class="perm-mini-switch"><input type="checkbox" checked disabled><span class="perm-mini-slider"></span></label>
+                                </div>
+                                <div class="role-perm-pill-toggle">
+                                    <span>Cierre</span>
+                                    <label class="perm-mini-switch"><input type="checkbox" checked disabled><span class="perm-mini-slider"></span></label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 2. Gestor Territorial -->
+                        <div class="role-profile-card" style="border-top: 3.5px solid var(--muni-navy);">
+                            <div class="d-flex align-items-center justify-content-between mb-2">
+                                <div class="d-flex align-items-center gap-2">
+                                    <div style="width:36px; height:36px; border-radius:10px; background: rgba(27,54,93,0.12); color:#1B365D; display:flex; align-items:center; justify-content:center; font-size:1.1rem;">
+                                        <i class="bi bi-geo-fill"></i>
+                                    </div>
+                                    <div>
+                                        <h5 class="m-0 fw-bold" style="font-size:0.95rem; color:var(--muni-navy);">Gestor Territorial</h5>
+                                        <span class="text-muted" style="font-size:0.72rem;">Delegaciones</span>
+                                    </div>
+                                </div>
+                                <span class="badge bg-primary-subtle text-primary fw-bold rounded-pill px-2 py-1" style="font-size:0.72rem;">
+                                    <i class="bi bi-person-fill"></i> 8 usuarios
+                                </span>
+                            </div>
+                            <p class="text-secondary small mb-2" style="font-size:0.76rem; line-height:1.35;">Coordinación territorial de sedes, resolución en terreno y asignación de requerimientos vecinales.</p>
+                            <div class="role-perm-matrix-bar">
+                                <div class="role-perm-pill-toggle">
+                                    <span>Lectura</span>
+                                    <label class="perm-mini-switch"><input type="checkbox" checked onchange="mostrarToast('Permiso de lectura actualizado')"><span class="perm-mini-slider"></span></label>
+                                </div>
+                                <div class="role-perm-pill-toggle">
+                                    <span>Edición</span>
+                                    <label class="perm-mini-switch"><input type="checkbox" checked onchange="mostrarToast('Permiso de edición actualizado')"><span class="perm-mini-slider"></span></label>
+                                </div>
+                                <div class="role-perm-pill-toggle">
+                                    <span>Derivación</span>
+                                    <label class="perm-mini-switch"><input type="checkbox" checked onchange="mostrarToast('Permiso de derivación actualizado')"><span class="perm-mini-slider"></span></label>
+                                </div>
+                                <div class="role-perm-pill-toggle">
+                                    <span>Cierre</span>
+                                    <label class="perm-mini-switch"><input type="checkbox" onchange="mostrarToast('Permiso de cierre actualizado')"><span class="perm-mini-slider"></span></label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 3. Operador de Casos -->
+                        <div class="role-profile-card" style="border-top: 3.5px solid #10B981;">
+                            <div class="d-flex align-items-center justify-content-between mb-2">
+                                <div class="d-flex align-items-center gap-2">
+                                    <div style="width:36px; height:36px; border-radius:10px; background: rgba(16,185,129,0.12); color:#10B981; display:flex; align-items:center; justify-content:center; font-size:1.1rem;">
+                                        <i class="bi bi-headset"></i>
+                                    </div>
+                                    <div>
+                                        <h5 class="m-0 fw-bold" style="font-size:0.95rem; color:var(--muni-navy);">Operador de Casos</h5>
+                                        <span class="text-muted" style="font-size:0.72rem;">Atención Ciudadana</span>
+                                    </div>
+                                </div>
+                                <span class="badge bg-success-subtle text-success fw-bold rounded-pill px-2 py-1" style="font-size:0.72rem;">
+                                    <i class="bi bi-person-fill"></i> 24 usuarios
+                                </span>
+                            </div>
+                            <p class="text-secondary small mb-2" style="font-size:0.76rem; line-height:1.35;">Ingreso en ventanilla, tipificación de trámites, atención telefónica y registro de audiencias.</p>
+                            <div class="role-perm-matrix-bar">
+                                <div class="role-perm-pill-toggle">
+                                    <span>Lectura</span>
+                                    <label class="perm-mini-switch"><input type="checkbox" checked onchange="mostrarToast('Permiso de lectura actualizado')"><span class="perm-mini-slider"></span></label>
+                                </div>
+                                <div class="role-perm-pill-toggle">
+                                    <span>Edición</span>
+                                    <label class="perm-mini-switch"><input type="checkbox" checked onchange="mostrarToast('Permiso de edición actualizado')"><span class="perm-mini-slider"></span></label>
+                                </div>
+                                <div class="role-perm-pill-toggle">
+                                    <span>Derivación</span>
+                                    <label class="perm-mini-switch"><input type="checkbox" onchange="mostrarToast('Permiso de derivación actualizado')"><span class="perm-mini-slider"></span></label>
+                                </div>
+                                <div class="role-perm-pill-toggle">
+                                    <span>Cierre</span>
+                                    <label class="perm-mini-switch"><input type="checkbox" onchange="mostrarToast('Permiso de cierre actualizado')"><span class="perm-mini-slider"></span></label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 4. Auditor Municipal -->
+                        <div class="role-profile-card" style="border-top: 3.5px solid var(--accent-gold);">
+                            <div class="d-flex align-items-center justify-content-between mb-2">
+                                <div class="d-flex align-items-center gap-2">
+                                    <div style="width:36px; height:36px; border-radius:10px; background: rgba(217,119,6,0.12); color:#D97706; display:flex; align-items:center; justify-content:center; font-size:1.1rem;">
+                                        <i class="bi bi-clipboard2-check-fill"></i>
+                                    </div>
+                                    <div>
+                                        <h5 class="m-0 fw-bold" style="font-size:0.95rem; color:var(--muni-navy);">Auditor Municipal</h5>
+                                        <span class="text-muted" style="font-size:0.72rem;">Fiscalización y Calidad</span>
+                                    </div>
+                                </div>
+                                <span class="badge bg-warning-subtle text-warning-emphasis fw-bold rounded-pill px-2 py-1" style="font-size:0.72rem;">
+                                    <i class="bi bi-person-fill"></i> 3 usuarios
+                                </span>
+                            </div>
+                            <p class="text-secondary small mb-2" style="font-size:0.76rem; line-height:1.35;">Supervisión de tiempos de respuesta, bitácoras de auditoría y reportes para Concejo Municipal.</p>
+                            <div class="role-perm-matrix-bar">
+                                <div class="role-perm-pill-toggle">
+                                    <span>Lectura</span>
+                                    <label class="perm-mini-switch"><input type="checkbox" checked onchange="mostrarToast('Permiso de lectura actualizado')"><span class="perm-mini-slider"></span></label>
+                                </div>
+                                <div class="role-perm-pill-toggle">
+                                    <span>Edición</span>
+                                    <label class="perm-mini-switch"><input type="checkbox" onchange="mostrarToast('Permiso de edición denegado para auditor')"><span class="perm-mini-slider"></span></label>
+                                </div>
+                                <div class="role-perm-pill-toggle">
+                                    <span>Derivación</span>
+                                    <label class="perm-mini-switch"><input type="checkbox" onchange="mostrarToast('Permiso de derivación actualizado')"><span class="perm-mini-slider"></span></label>
+                                </div>
+                                <div class="role-perm-pill-toggle">
+                                    <span>Cierre</span>
+                                    <label class="perm-mini-switch"><input type="checkbox" onchange="mostrarToast('Permiso de cierre actualizado')"><span class="perm-mini-slider"></span></label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- Barra de Búsqueda y Filtro (Idéntica al PDF) -->
                     <div class="d-flex align-items-center justify-content-between flex-wrap gap-3 mb-3">
                         <div class="d-flex align-items-center gap-2" style="flex-grow: 1; max-width: 480px;">
@@ -4557,9 +5158,18 @@
                                     </div>
                                 </div>
                                 <div class="report-kpi-value text-dark fw-bold" id="kpiRepTotal">15.842</div>
-                                <div class="d-flex align-items-center gap-1 mt-2 text-success small fw-semibold">
-                                    <i class="bi bi-arrow-up-right"></i> +14.2% <span
-                                        class="text-muted fw-normal ms-1">vs mes anterior</span>
+                                <div class="d-flex align-items-center justify-content-between mt-2">
+                                    <div class="d-flex align-items-center gap-1 text-success small fw-semibold">
+                                        <i class="bi bi-arrow-up-right"></i> +14.2% <span class="text-muted fw-normal ms-1">vs mes anterior</span>
+                                    </div>
+                                    <div class="report-sparkline-box" title="Tendencia últimos 6 períodos">
+                                        <div class="report-sparkline-bar" style="height: 35%;"></div>
+                                        <div class="report-sparkline-bar" style="height: 55%;"></div>
+                                        <div class="report-sparkline-bar" style="height: 48%;"></div>
+                                        <div class="report-sparkline-bar" style="height: 72%;"></div>
+                                        <div class="report-sparkline-bar" style="height: 65%;"></div>
+                                        <div class="report-sparkline-bar highlight" style="height: 95%;"></div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -4569,17 +5179,25 @@
                                 class="report-kpi-card shadow-sm p-3 rounded-4 bg-white border h-100 position-relative overflow-hidden">
                                 <div class="report-kpi-bar" style="background: #16A34A;"></div>
                                 <div class="d-flex align-items-center justify-content-between mb-2">
-                                    <span class="report-kpi-title text-secondary fw-semibold">Resolución 1er
-                                        Contacto</span>
+                                    <span class="report-kpi-title text-secondary fw-semibold">Resolución 1er Contacto</span>
                                     <div class="report-kpi-icon"
                                         style="background: rgba(22, 163, 74, 0.1); color: #16A34A;">
                                         <i class="bi bi-check-circle-fill"></i>
                                     </div>
                                 </div>
                                 <div class="report-kpi-value text-dark fw-bold" id="kpiRepResolucion">94.8%</div>
-                                <div class="d-flex align-items-center gap-1 mt-2 text-success small fw-semibold">
-                                    <i class="bi bi-arrow-up-right"></i> +4.8% <span
-                                        class="text-muted fw-normal ms-1">meta: 90%</span>
+                                <div class="d-flex align-items-center justify-content-between mt-2">
+                                    <div class="d-flex align-items-center gap-1 text-success small fw-semibold">
+                                        <i class="bi bi-arrow-up-right"></i> +4.8% <span class="text-muted fw-normal ms-1">meta: 90%</span>
+                                    </div>
+                                    <div class="report-sparkline-box" title="Tendencia últimos 6 períodos">
+                                        <div class="report-sparkline-bar" style="height: 60%; background:#16A34A;"></div>
+                                        <div class="report-sparkline-bar" style="height: 70%; background:#16A34A;"></div>
+                                        <div class="report-sparkline-bar" style="height: 68%; background:#16A34A;"></div>
+                                        <div class="report-sparkline-bar" style="height: 82%; background:#16A34A;"></div>
+                                        <div class="report-sparkline-bar" style="height: 88%; background:#16A34A;"></div>
+                                        <div class="report-sparkline-bar" style="height: 95%; background:#16A34A;"></div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -4596,9 +5214,18 @@
                                     </div>
                                 </div>
                                 <div class="report-kpi-value text-dark fw-bold" id="kpiRepTiempo">12.4 min</div>
-                                <div class="d-flex align-items-center gap-1 mt-2 text-success small fw-semibold">
-                                    <i class="bi bi-arrow-down-right"></i> -3.1 min <span
-                                        class="text-muted fw-normal ms-1">meta: &lt; 18 min</span>
+                                <div class="d-flex align-items-center justify-content-between mt-2">
+                                    <div class="d-flex align-items-center gap-1 text-success small fw-semibold">
+                                        <i class="bi bi-arrow-down-right"></i> -3.1 min <span class="text-muted fw-normal ms-1">meta: &lt; 18 min</span>
+                                    </div>
+                                    <div class="report-sparkline-box" title="Tendencia últimos 6 períodos">
+                                        <div class="report-sparkline-bar" style="height: 90%; background:#0284C7;"></div>
+                                        <div class="report-sparkline-bar" style="height: 80%; background:#0284C7;"></div>
+                                        <div class="report-sparkline-bar" style="height: 65%; background:#0284C7;"></div>
+                                        <div class="report-sparkline-bar" style="height: 55%; background:#0284C7;"></div>
+                                        <div class="report-sparkline-bar" style="height: 45%; background:#0284C7;"></div>
+                                        <div class="report-sparkline-bar" style="height: 35%; background:#0284C7;"></div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -4608,8 +5235,7 @@
                                 class="report-kpi-card shadow-sm p-3 rounded-4 bg-white border h-100 position-relative overflow-hidden">
                                 <div class="report-kpi-bar" style="background: #F59E0B;"></div>
                                 <div class="d-flex align-items-center justify-content-between mb-2">
-                                    <span class="report-kpi-title text-secondary fw-semibold">Satisfacción
-                                        Vecinal</span>
+                                    <span class="report-kpi-title text-secondary fw-semibold">Satisfacción Vecinal</span>
                                     <div class="report-kpi-icon"
                                         style="background: rgba(245, 158, 11, 0.1); color: #F59E0B;">
                                         <i class="bi bi-star-fill"></i>
@@ -4617,10 +5243,18 @@
                                 </div>
                                 <div class="report-kpi-value text-dark fw-bold" id="kpiRepCSAT">4.85 <span
                                         class="fs-6 text-muted fw-normal">/ 5.0</span></div>
-                                <div
-                                    class="d-flex align-items-center gap-1 mt-2 text-warning-emphasis small fw-semibold">
-                                    <i class="bi bi-award-fill text-warning"></i> Excelente <span
-                                        class="text-muted fw-normal ms-1">(3.420 encuestas)</span>
+                                <div class="d-flex align-items-center justify-content-between mt-2">
+                                    <div class="d-flex align-items-center gap-1 text-warning-emphasis small fw-semibold">
+                                        <i class="bi bi-award-fill text-warning"></i> Excelente <span class="text-muted fw-normal ms-1">(3.420)</span>
+                                    </div>
+                                    <div class="report-sparkline-box" title="Tendencia últimos 6 períodos">
+                                        <div class="report-sparkline-bar" style="height: 70%; background:#F59E0B;"></div>
+                                        <div class="report-sparkline-bar" style="height: 75%; background:#F59E0B;"></div>
+                                        <div class="report-sparkline-bar" style="height: 82%; background:#F59E0B;"></div>
+                                        <div class="report-sparkline-bar" style="height: 85%; background:#F59E0B;"></div>
+                                        <div class="report-sparkline-bar" style="height: 92%; background:#F59E0B;"></div>
+                                        <div class="report-sparkline-bar" style="height: 97%; background:#F59E0B;"></div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -5034,19 +5668,15 @@
                             </div>
                             <div class="live-feed-item">
                                 <div class="d-flex align-items-center gap-2">
-                                    <span class="badge bg-success-subtle text-success border"
-                                        style="font-size: 0.75rem;">La Pampa</span>
-                                    <span class="text-dark fw-medium">Solicitud de mantención de luminarias públicas
-                                        canalizada a cuadrilla técnica</span>
+                                    <span class="badge bg-success-subtle text-success border" style="font-size: 0.75rem;">La Pampa</span>
+                                    <span class="text-dark fw-medium">Solicitud de mantención de luminarias canalizada a cuadrilla técnica</span>
                                 </div>
                                 <span class="text-muted small font-monospace">Hace 2 min</span>
                             </div>
                         </div>
                     </div>
-
                 </div>
             </section>
-
         </main>
 
         <footer class="page-footer">
@@ -5055,54 +5685,89 @@
         </footer>
     </div>
 
-    <!-- MODAL FICHA DEL VECINO -->
+    <!-- MODAL EXPEDIENTE CIUDADANO EN VIDRIO TEMPLADO -->
     <div class="modal fade" id="modalFichaVecino" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered modal-lg">
-            <div class="modal-content">
+            <div class="modal-content citizen-dossier-card border-0">
                 <div class="modal-header border-0 pb-0">
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="badge bg-danger-subtle text-danger fw-bold px-2 py-1" style="font-size:0.75rem;">
+                            <i class="bi bi-file-earmark-person-fill me-1"></i> Expediente Único Ciudadano
+                        </span>
+                        <span class="badge bg-light text-secondary border" style="font-size:0.72rem;">SGR La Serena</span>
+                    </div>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
-                <div class="modal-body pt-0">
-                    <div class="ficha-header-box">
+                <div class="modal-body p-4 pt-2">
+                    <div class="ficha-header-box mb-3 rounded-4 shadow-sm" style="background: linear-gradient(135deg, #1B365D 0%, #0F2038 100%);">
                         <div class="d-flex align-items-center gap-3">
-                            <div class="ficha-avatar"><i class="bi bi-person"></i></div>
+                            <div class="ficha-avatar" style="background: rgba(255,255,255,0.15); border: 2px solid rgba(255,255,255,0.3); width:54px; height:54px; border-radius:16px; display:flex; align-items:center; justify-content:center; font-size:1.5rem; color:#FFF;">
+                                <i class="bi bi-person-badge-fill"></i>
+                            </div>
                             <div>
                                 <h4 class="fw-bold mb-0 text-white" id="fichaNombre">Ana González</h4>
-                                <small class="text-white-50">RUT: <span id="fichaRut"
-                                        class="text-white fw-bold">12.345.678-9</span></small>
+                                <small class="text-white-50">RUT: <span id="fichaRut" class="text-white fw-bold">12.345.678-9</span> • <span id="fichaTerritorio">Centro</span></small>
                             </div>
                         </div>
-                        <button class="btn btn-light btn-sm rounded-pill px-3 fw-bold text-primary"
+                        <button class="btn btn-light btn-sm rounded-pill px-3 fw-bold text-primary shadow-sm"
                             onclick="exportarFichaIndividualPDF()">
-                            <i class="bi bi-file-earmark-pdf"></i> Exportar Ficha PDF
+                            <i class="bi bi-file-earmark-pdf-fill text-danger me-1"></i> Exportar Expediente PDF
                         </button>
                     </div>
 
-                    <div class="ficha-data-card">
-                        <h6 class="fw-bold text-dark mb-2"><i class="bi bi-person-lines-fill text-primary me-1"></i>
-                            Datos Personales y Domicilio</h6>
-                        <div class="ficha-field-row">
-                            <div class="ficha-field-label">Dirección:</div>
-                            <div class="ficha-field-value" id="fichaDireccion">Av. Balmaceda 120</div>
+                    <!-- Datos Generales -->
+                    <div class="row g-2 mb-4">
+                        <div class="col-md-4">
+                            <div class="p-3 rounded-3 bg-light border">
+                                <span class="text-muted small d-block">Dirección Residencial</span>
+                                <strong class="small text-dark" id="fichaDireccion">Av. Balmaceda 120</strong>
+                            </div>
                         </div>
-                        <div class="ficha-field-row">
-                            <div class="ficha-field-label">Teléfono:</div>
-                            <div class="ficha-field-value" id="fichaTelefono">+56 9 8765 4321</div>
+                        <div class="col-md-4">
+                            <div class="p-3 rounded-3 bg-light border">
+                                <span class="text-muted small d-block">Teléfono de Contacto</span>
+                                <strong class="small text-dark" id="fichaTelefono">+56 9 8765 4321</strong>
+                            </div>
                         </div>
-                        <div class="ficha-field-row">
-                            <div class="ficha-field-label">Territorio:</div>
-                            <div class="ficha-field-value" id="fichaTerritorio">Centro</div>
+                        <div class="col-md-4">
+                            <div class="p-3 rounded-3 bg-light border">
+                                <span class="text-muted small d-block">Estado en Padrón</span>
+                                <div id="fichaEstado" class="mt-1"><span class="badge-status activo">Activo</span></div>
+                            </div>
                         </div>
-                        <div class="ficha-field-row">
-                            <div class="ficha-field-label">Estado:</div>
-                            <div class="ficha-field-value" id="fichaEstado"><span
-                                    class="badge-status activo">Activo</span></div>
+                    </div>
+
+                    <!-- Historial Cronológico de Trámites y Reclamaciones -->
+                    <div class="p-3 rounded-4 bg-light border">
+                        <div class="d-flex align-items-center justify-content-between mb-3">
+                            <h6 class="fw-bold text-dark m-0">
+                                <i class="bi bi-clock-history text-primary me-2"></i> Historial Cronológico de Atención Ciudadana
+                            </h6>
+                            <span class="badge bg-white text-secondary border small">Últimos requerimientos</span>
+                        </div>
+                        <div id="fichaHistorialTickets" class="ps-2">
+                            <!-- Inyectado dinámicamente con trámites, reclamos, canal y estado -->
                         </div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
+
+    <!-- DRAWER OFFCANVAS DE CRISTAL: EXPEDIENTE DE SEDE TERRITORIAL -->
+    <div class="drawer-backdrop-overlay" id="drawerBackdropOverlay" onclick="cerrarDrawerExpediente()"></div>
+    <aside class="glass-offcanvas-drawer" id="drawerExpedienteSede" aria-label="Expediente de Delegación">
+        <div class="p-4 border-bottom d-flex align-items-center justify-content-between" style="background: rgba(27, 54, 93, 0.04);">
+            <div class="d-flex align-items-center gap-2">
+                <span class="badge bg-danger-subtle text-danger fw-bold"><i class="bi bi-geo-alt-fill me-1"></i> Expediente Territorial</span>
+                <span id="drawerBadgeEstado"></span>
+            </div>
+            <button class="btn btn-sm btn-light rounded-circle p-2" onclick="cerrarDrawerExpediente()" title="Cerrar"><i class="bi bi-x-lg"></i></button>
+        </div>
+        <div class="p-4 flex-grow-1" id="drawerExpedienteContent">
+            <!-- Dynamic content -->
+        </div>
+    </aside>
 
     <!-- MODAL IMPORTAR EXCEL -->
     <div class="modal fade" id="modalImportarExcel" tabindex="-1" aria-hidden="true">
@@ -6280,6 +6945,12 @@
 
         function removerFiltro(id) { document.getElementById(id).value = ''; ejecutarFiltroCompletoVecinos(); }
         function limpiarFiltrosVecinos() { document.getElementById('searchVecinosInput').value = ''; document.getElementById('filtroEstadoVecino').value = ''; document.getElementById('filtroTerritorioVecino').value = ''; document.getElementById('filtroGestionVecino').value = ''; ejecutarFiltroCompletoVecinos(); }
+        function filtrarSectorVecinoRapido(sector) {
+            const sel = document.getElementById('filtroTerritorioVecino');
+            if (sel) sel.value = sector;
+            ejecutarFiltroCompletoVecinos();
+            mostrarToast(sector ? `Filtrando por: ${sector}` : 'Mostrando todos los sectores');
+        }
 
         function toggleColumna(clase, visible) {
             document.querySelectorAll('.' + clase).forEach(c => c.style.display = visible ? '' : 'none');
@@ -6439,6 +7110,50 @@
             document.getElementById('fichaTelefono').textContent = v.telefono;
             document.getElementById('fichaTerritorio').textContent = v.territorio;
             document.getElementById('fichaEstado').innerHTML = `<span class="badge-status ${v.estado.toLowerCase()}">${v.estado}</span>`;
+
+            // Generar Historial Cronológico de Trámites y Reclamaciones
+            const timelineEl = document.getElementById('fichaHistorialTickets');
+            if (timelineEl) {
+                timelineEl.innerHTML = `
+                    <div class="timeline-ticket-item">
+                        <span class="timeline-ticket-dot" style="border-color: #10B981;"></span>
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <strong class="text-dark small">Subsidio Agua Potable y Alcantarillado (SAP)</strong>
+                            <span class="text-muted" style="font-size: 0.72rem;">24 Sep 2026</span>
+                        </div>
+                        <div class="d-flex align-items-center gap-2 mb-1">
+                            <span class="badge bg-success-subtle text-success border border-success-subtle" style="font-size:0.7rem;">Resuelto</span>
+                            <span class="text-secondary small" style="font-size:0.75rem;"><i class="bi bi-person-workspace text-primary me-1"></i> Canal: Presencial (${v.territorio})</span>
+                        </div>
+                        <p class="text-muted small m-0" style="font-size:0.74rem;">Ficha RSH validada con 40% de vulnerabilidad. Beneficio otorgado por 3 años.</p>
+                    </div>
+                    <div class="timeline-ticket-item">
+                        <span class="timeline-ticket-dot" style="border-color: #D97706;"></span>
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <strong class="text-dark small">Reclamo Alumbrado Público y Luminarias</strong>
+                            <span class="text-muted" style="font-size: 0.72rem;">12 Sep 2026</span>
+                        </div>
+                        <div class="d-flex align-items-center gap-2 mb-1">
+                            <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle" style="font-size:0.7rem;">En Curso</span>
+                            <span class="text-secondary small" style="font-size:0.75rem;"><i class="bi bi-telephone-fill text-info me-1"></i> Canal: Telefónico (Mesa Central 1400)</span>
+                        </div>
+                        <p class="text-muted small m-0" style="font-size:0.74rem;">Derivado a Dirección de Alumbrado Comunal. Cuadrilla programada para inspección.</p>
+                    </div>
+                    <div class="timeline-ticket-item">
+                        <span class="timeline-ticket-dot" style="border-color: #0284C7;"></span>
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <strong class="text-dark small">Certificado de Residencia y Audiencia Delegado</strong>
+                            <span class="text-muted" style="font-size: 0.72rem;">28 Ago 2026</span>
+                        </div>
+                        <div class="d-flex align-items-center gap-2 mb-1">
+                            <span class="badge bg-primary-subtle text-primary border border-primary-subtle" style="font-size:0.7rem;">Completado</span>
+                            <span class="text-secondary small" style="font-size:0.75rem;"><i class="bi bi-laptop text-success me-1"></i> Canal: Portal Web Vecino</span>
+                        </div>
+                        <p class="text-muted small m-0" style="font-size:0.74rem;">Certificado digital firmado con código QR municipal y remitido al correo.</p>
+                    </div>
+                `;
+            }
+
             bsModalFicha.show();
         }
 
@@ -8350,18 +9065,30 @@
                     </button>
                 `;
 
+                // Avatar con iniciales y anillo institucional
+                const initials = (u.full_name || 'U').split(' ').map(n => n[0]).slice(0, 2).join('').toUpperCase();
+                const avatarRingColor = esAdmin ? '#C41230' : '#1B365D';
+                const ultimaConexion = u.last_login || (idx % 2 === 0 ? 'Hoy 09:42 hrs' : 'Ayer 17:15 hrs');
+
                 tr.innerHTML = `
                     <td class="text-center fw-semibold text-secondary" style="font-size: 0.85rem; vertical-align: middle;">${rowNum}</td>
                     <td style="vertical-align: middle;">
-                        <div>
-                            <span class="fw-bold" style="color: var(--muni-navy); font-size: 0.88rem;">${u.full_name}</span>
-                            ${esAdmin ? '<span class="badge bg-danger-subtle text-danger border border-danger-subtle ms-1" style="font-size: 0.65rem; padding: 1px 5px;">ADMIN</span>' : ''}
+                        <div class="d-flex align-items-center gap-2">
+                            <div class="user-avatar-pill ${esAdmin ? 'admin' : ''}" style="width: 36px; height: 36px; font-size: 0.82rem; border: 2px solid ${avatarRingColor}; flex-shrink: 0;">
+                                ${initials}
+                            </div>
+                            <div>
+                                <div class="d-flex align-items-center gap-1">
+                                    <span class="fw-bold" style="color: var(--muni-navy); font-size: 0.88rem;">${u.full_name}</span>
+                                    ${esAdmin ? '<span class="badge bg-danger-subtle text-danger border border-danger-subtle" style="font-size: 0.62rem; padding: 1px 4px;">ADMIN</span>' : ''}
+                                </div>
+                                <div class="text-secondary font-monospace" style="font-size: 0.74rem;">${u.rut}</div>
+                            </div>
                         </div>
-                        <div class="text-secondary font-monospace" style="font-size: 0.76rem;">${u.rut}</div>
                     </td>
                     <td style="vertical-align: middle;">
-                        <a href="mailto:${u.email}" class="text-decoration-none text-primary small" style="font-size: 0.83rem;">
-                            ${u.email}
+                        <a href="mailto:${u.email}" class="text-decoration-none text-primary small fw-semibold" style="font-size: 0.82rem;">
+                            <i class="bi bi-envelope text-muted me-1"></i>${u.email}
                         </a>
                     </td>
                     <td style="vertical-align: middle;">
@@ -8370,19 +9097,40 @@
                         </div>
                         ${cargoLimpio ? `<div class="text-muted small" style="font-size: 0.74rem;">${cargoLimpio}</div>` : ''}
                     </td>
-                    <td style="vertical-align: middle;">${rolesHtml}</td>
+                    <td style="vertical-align: middle;">
+                        <span class="text-secondary small font-monospace" style="font-size: 0.78rem;">
+                            <i class="bi bi-clock-history me-1 text-info"></i>${ultimaConexion}
+                        </span>
+                    </td>
                     <td class="text-center" style="vertical-align: middle;">${statusBadge}</td>
                     <td class="text-end" style="vertical-align: middle;">
-                        <div class="d-inline-flex align-items-center gap-1">
-                            <button class="btn-action-icon btn-action-edit" onclick="abrirModalUsuario('editar', ${u.id})" title="Editar usuario">
-                                <i class="bi bi-pencil" style="color: #B45309;"></i>
+                        <div class="dropdown d-inline-block">
+                            <button class="btn btn-sm btn-light border rounded-circle shadow-xs" type="button" data-bs-toggle="dropdown" aria-expanded="false" style="width: 32px; height: 32px; display: inline-flex; align-items: center; justify-content: center;" title="Acciones del usuario">
+                                <i class="bi bi-three-dots-vertical text-secondary"></i>
                             </button>
-                            <button class="btn-action-icon" style="background: #EFF6FF; color: #1D4ED8;" onclick="abrirModalPassword(${u.id}, '${u.full_name.replace(/'/g, "\\'")}')" title="Restablecer contraseña">
-                                <i class="bi bi-key" style="color: #1D4ED8;"></i>
-                            </button>
-                            <button class="btn-action-icon btn-action-delete" onclick="confirmarEliminarUsuario(${u.id}, '${u.full_name.replace(/'/g, "\\'")}', '${u.rut}')" title="Eliminar usuario">
-                                <i class="bi bi-trash" style="color: #DC2626;"></i>
-                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end shadow-lg border-0 rounded-4 p-2" style="min-width: 200px; font-size: 0.82rem; backdrop-filter: blur(16px);">
+                                <li>
+                                    <a class="dropdown-item py-2 fw-medium rounded-2" href="javascript:void(0)" onclick="abrirModalUsuario('editar', ${u.id})">
+                                        <i class="bi bi-pencil-square text-warning me-2"></i> Editar Privilegios
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item py-2 fw-medium text-primary rounded-2" href="javascript:void(0)" onclick="abrirModalPassword(${u.id}, '${u.full_name.replace(/'/g, "\\'")}')">
+                                        <i class="bi bi-key-fill me-2"></i> Resetear Contraseña
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item py-2 fw-medium text-secondary rounded-2" href="javascript:void(0)" onclick="abrirModalUsuario('editar', ${u.id})">
+                                        <i class="bi bi-building-gear me-2"></i> Reasignar Sede
+                                    </a>
+                                </li>
+                                <li><hr class="dropdown-divider my-1"></li>
+                                <li>
+                                    <a class="dropdown-item py-2 fw-medium text-${isActivo ? 'danger' : 'success'} rounded-2" href="javascript:void(0)" onclick="toggleEstadoUsuario(${u.id}, '${u.full_name.replace(/'/g, "\\'")}')">
+                                        <i class="bi bi-power me-2"></i> ${isActivo ? 'Desactivar Acceso' : 'Activar Acceso'}
+                                    </a>
+                                </li>
+                            </ul>
                         </div>
                     </td>
                 `;
@@ -9019,29 +9767,45 @@
                 const card = document.createElement('div');
                 card.className = `delegacion-card ${delegacionSeleccionadaActiva === d.id ? 'active-delegacion' : ''}`;
                 card.id = `card-del-${d.id}`;
-                card.onclick = () => seleccionarDelegacion(d.id);
+                card.onclick = () => {
+                    seleccionarDelegacion(d.id);
+                    abrirDrawerExpediente(d.id);
+                };
+
+                let badgeGlowHtml = '';
+                if (d.cumplimiento >= 85) {
+                    badgeGlowHtml = `<span class="badge-glow-emerald"><span class="live-pulse-dot" style="background:#059669;"></span> Operativa</span>`;
+                } else if (d.cumplimiento >= 75) {
+                    badgeGlowHtml = `<span class="badge-glow-amber"><span class="live-pulse-dot" style="background:#D97706;"></span> Alta Demanda</span>`;
+                } else {
+                    badgeGlowHtml = `<span class="badge-glow-carmine"><span class="live-pulse-dot" style="background:#C41230;"></span> Contingencia</span>`;
+                }
+
+                const esperaMedia = d.id === 'rural' ? '5 min' : d.id === 'companias' ? '18 min' : d.id === 'centro' ? '12 min' : '8 min';
+                const gestorTurno = d.funcionarios && d.funcionarios.length > 0 ? d.funcionarios[0].nombre : d.delegado;
 
                 card.innerHTML = `
                     <img src="${d.foto}" alt="${d.nombre}" class="delegacion-card-img" onerror="this.src='/static/img/faro_real_sunset.jpg'">
                     <div class="delegacion-card-overlay"></div>
                     <div class="delegacion-card-content">
                         <div class="d-flex justify-content-between align-items-center">
-                            <span class="delegacion-glass-pill" style="border-left: 3px solid ${d.colorSemaforo};">
-                                <span style="display:inline-block; width:8px; height:8px; border-radius:50%; background:${d.colorSemaforo};"></span>
-                                ${d.cumplimiento}% Metas
-                            </span>
+                            ${badgeGlowHtml}
                             <span class="delegacion-stat-pill">
-                                <i class="bi bi-people-fill text-warning me-1"></i>${d.funcionarios.length} funcionarios
+                                <i class="bi bi-star-fill text-warning me-1"></i>${d.satisfaccion || '98.2%'}
                             </span>
                         </div>
 
                         <div>
                             <div class="text-white-50 small mb-1" style="font-size:0.75rem;">${d.sector}</div>
-                            <h4 class="text-white fw-bold mb-2" style="font-size:1.25rem; text-shadow: 0 2px 8px rgba(0,0,0,0.85);">${d.nombre}</h4>
+                            <h4 class="text-white fw-bold mb-1" style="font-size:1.25rem; text-shadow: 0 2px 8px rgba(0,0,0,0.85);">${d.nombre}</h4>
+                            <div class="text-white-50 small mb-2" style="font-size:0.75rem;">
+                                <i class="bi bi-person-check text-info me-1"></i><strong>Turno:</strong> ${gestorTurno}
+                            </div>
+                            
                             <div class="d-flex align-items-center justify-content-between pt-2 border-top border-white-50">
-                                <span class="text-white-50 small"><i class="bi bi-calendar2-check text-info me-1"></i>${d.atencionesMes} atenciones/mes</span>
-                                <span class="badge rounded-pill bg-primary px-3 py-1" style="font-size:0.72rem; box-shadow: 0 2px 8px rgba(13,110,253,0.5);">
-                                    Ver Delegación <i class="bi bi-arrow-right ms-1"></i>
+                                <span class="text-white-50 small"><i class="bi bi-hourglass-split text-warning me-1"></i>Espera: <strong>${esperaMedia}</strong></span>
+                                <span class="badge rounded-pill bg-danger px-3 py-1" style="font-size:0.72rem; box-shadow: 0 2px 8px rgba(196,18,48,0.5);">
+                                    Expediente Sede <i class="bi bi-layout-sidebar-inset-reverse ms-1"></i>
                                 </span>
                             </div>
                         </div>
@@ -9049,6 +9813,167 @@
                 `;
                 grid.appendChild(card);
             });
+        }
+
+        function abrirDrawerExpediente(id) {
+            const data = datasetDelegacionesDetalle[id];
+            if (!data) return;
+
+            const drawer = document.getElementById('drawerExpedienteSede');
+            const overlay = document.getElementById('drawerBackdropOverlay');
+            const content = document.getElementById('drawerExpedienteContent');
+            const badge = document.getElementById('drawerBadgeEstado');
+
+            if (!drawer || !content) return;
+
+            let semaforoClass = 'badge-glow-emerald';
+            let semaforoTexto = 'Operativa';
+            if (data.cumplimiento < 75) {
+                semaforoClass = 'badge-glow-carmine';
+                semaforoTexto = 'Contingencia';
+            } else if (data.cumplimiento < 85) {
+                semaforoClass = 'badge-glow-amber';
+                semaforoTexto = 'Alta Demanda';
+            }
+
+            badge.innerHTML = `<span class="${semaforoClass}"><span class="live-pulse-dot" style="background:currentColor;"></span> ${semaforoTexto}</span>`;
+
+            content.innerHTML = `
+                <div class="mb-4">
+                    <img src="${data.foto}" alt="${data.nombre}" class="img-fluid rounded-4 shadow-sm mb-3" style="width:100%; height:160px; object-fit:cover;" onerror="this.src='/static/img/faro_real_sunset.jpg'">
+                    <div class="text-muted small fw-semibold text-uppercase">${data.sector}</div>
+                    <h4 class="fw-bold" style="color:var(--muni-navy);">${data.nombre}</h4>
+                    <p class="text-secondary small">${data.resumen}</p>
+                </div>
+
+                <div class="row g-2 mb-4">
+                    <div class="col-6">
+                        <div class="p-3 rounded-3 bg-light border">
+                            <span class="text-muted small d-block">Espera Media</span>
+                            <strong class="fs-5" style="color:var(--muni-navy);">${data.id === 'rural' ? '5 min' : data.id === 'companias' ? '18 min' : '11 min'}</strong>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="p-3 rounded-3 bg-light border">
+                            <span class="text-muted small d-block">Satisfacción</span>
+                            <strong class="fs-5 text-success">${data.satisfaccion || '98.2%'}</strong>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="p-3 rounded-3 bg-light border">
+                            <span class="text-muted small d-block">Casos Activos</span>
+                            <strong class="fs-5 text-primary">${data.atencionesMes}</strong>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="p-3 rounded-3 bg-light border">
+                            <span class="text-muted small d-block">Cumplimiento</span>
+                            <strong class="fs-5 text-dark">${data.cumplimiento}%</strong>
+                        </div>
+                    </div>
+                </div>
+
+                <h6 class="fw-bold text-dark mb-2"><i class="bi bi-people-fill text-primary me-1"></i> Dotación Funcionaria (${data.funcionarios.length})</h6>
+                <div class="mb-4">
+                    ${data.funcionarios.map(f => `
+                        <div class="p-2 mb-2 rounded-3 bg-light border d-flex align-items-center justify-content-between">
+                            <div class="d-flex align-items-center gap-2">
+                                <div class="user-avatar-pill admin" style="width:32px; height:32px; font-size:0.75rem;">${f.avatar}</div>
+                                <div>
+                                    <div class="fw-bold small text-dark">${f.nombre}</div>
+                                    <div class="text-muted" style="font-size:0.7rem;">${f.cargo}</div>
+                                </div>
+                            </div>
+                            <span class="badge bg-white text-secondary border small">${f.rol}</span>
+                        </div>
+                    `).join('')}
+                </div>
+
+                <h6 class="fw-bold text-dark mb-2"><i class="bi bi-pie-chart-fill text-danger me-1"></i> Trámites Más Demandados</h6>
+                <div class="mb-4">
+                    ${data.metricasAtencion.map(m => `
+                        <div class="mb-2">
+                            <div class="d-flex justify-content-between small mb-1">
+                                <span>${m.tipo}</span>
+                                <strong>${m.cantidad} (${m.porcentaje}%)</strong>
+                            </div>
+                            <div class="progress" style="height:5px;">
+                                <div class="progress-bar bg-danger" style="width:${m.porcentaje}%;"></div>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+
+                <div class="d-grid gap-2">
+                    <button class="btn btn-outline-primary btn-sm rounded-pill py-2 fw-bold" onclick="exportarExpedienteSedePDF('${data.id}')">
+                        <i class="bi bi-file-earmark-pdf-fill me-1"></i> Exportar Expediente Sede PDF
+                    </button>
+                    <button class="btn btn-light btn-sm rounded-pill py-2" onclick="cerrarDrawerExpediente()">Cerrar</button>
+                </div>
+            `;
+
+            drawer.classList.add('open');
+            if (overlay) overlay.classList.add('active');
+        }
+
+        function cerrarDrawerExpediente() {
+            const drawer = document.getElementById('drawerExpedienteSede');
+            const overlay = document.getElementById('drawerBackdropOverlay');
+            if (drawer) drawer.classList.remove('open');
+            if (overlay) overlay.classList.remove('active');
+        }
+
+        function exportarExpedienteSedePDF(id) {
+            const data = datasetDelegacionesDetalle[id];
+            if (!data) return;
+            try {
+                if (typeof window.jspdf === 'undefined') throw new Error("Librería jsPDF no disponible");
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+
+                // Franja Institucional
+                doc.setFillColor(196, 18, 48);
+                doc.rect(0, 0, 210, 8, 'F');
+                doc.setFillColor(27, 54, 93);
+                doc.rect(0, 8, 210, 16, 'F');
+
+                doc.setFont("helvetica", "bold");
+                doc.setFontSize(14);
+                doc.setTextColor(255, 255, 255);
+                doc.text("ILUSTRE MUNICIPALIDAD DE LA SERENA", 14, 18);
+
+                doc.setFontSize(12);
+                doc.setTextColor(27, 54, 93);
+                doc.text(`EXPEDIENTE DE SEDE MUNICIPAL: ${data.nombre.toUpperCase()}`, 14, 34);
+
+                doc.setFont("helvetica", "normal");
+                doc.setFontSize(9);
+                doc.setTextColor(91, 107, 130);
+                doc.text(`Sector: ${data.sector} | Dirección: ${data.direccion}`, 14, 40);
+                doc.text(`Horario: ${data.horario} | Contacto: ${data.email}`, 14, 45);
+
+                const tableBody = [
+                    ['Atenciones Mensuales', `${data.atencionesMes} atenciones`],
+                    ['Población Territorial', `${data.vecinosRegistrados} vecinos`],
+                    ['Tasa de Resolución', data.tuboResueltos],
+                    ['Satisfacción Vecinal', data.satisfaccion],
+                    ['Dotación Funcionarios', `${data.funcionarios.length} funcionarios asignados`]
+                ];
+
+                doc.autoTable({
+                    head: [['Indicador Operativo', 'Métrica Oficial']],
+                    body: tableBody,
+                    startY: 50,
+                    theme: 'grid',
+                    headStyles: { fillColor: [27, 54, 93], textColor: [255, 255, 255], fontStyle: 'bold' }
+                });
+
+                doc.save(`Expediente_${data.id}_La_Serena_${new Date().toISOString().slice(0, 10)}.pdf`);
+                mostrarToast('✓ Expediente de delegación descargado en PDF.');
+            } catch (err) {
+                console.error("Error al exportar PDF de sede:", err);
+                mostrarToast('⚠ Error al generar PDF: ' + err.message);
+            }
         }
 
         function seleccionarDelegacion(id) {
