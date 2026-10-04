@@ -2820,6 +2820,314 @@
             padding: 4px 11px !important;
             box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6) !important;
         }
+
+        /* ==========================================================================
+           MODO OSCURO / DARK LIQUID GLASS (CIVIC NIGHT THEME)
+           ========================================================================== */
+        .btn-theme-toggle {
+            width: 38px;
+            height: 38px;
+            border-radius: 12px;
+            border: 1px solid var(--muni-border);
+            background: #FFFFFF;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.05rem;
+            color: var(--muni-navy);
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+            cursor: pointer;
+            transition: all 0.25s ease;
+        }
+
+        .btn-theme-toggle:hover {
+            transform: scale(1.06);
+            border-color: var(--muni-blue-action);
+            color: var(--muni-blue-action);
+        }
+
+        [data-theme="dark"],
+        body[data-theme="dark"] {
+            --muni-bg-page: #070D1E;
+            --muni-card-bg: #111A2E;
+            --muni-border: rgba(255, 255, 255, 0.12);
+            --muni-text-main: #F1F5F9;
+            --muni-text-sec: #94A3B8;
+            --muni-navy: #FFFFFF;
+        }
+
+        [data-theme="dark"] body,
+        body[data-theme="dark"],
+        html[data-theme="dark"] body {
+            background-color: #070D1E !important;
+            background-image:
+                radial-gradient(at 15% 20%, rgba(196, 18, 48, 0.22) 0px, transparent 40%),
+                radial-gradient(at 85% 15%, rgba(30, 58, 138, 0.35) 0px, transparent 50%),
+                radial-gradient(at 50% 80%, rgba(15, 23, 42, 0.6) 0px, transparent 45%),
+                radial-gradient(at 80% 85%, rgba(217, 119, 6, 0.15) 0px, transparent 40%) !important;
+            color: #E2E8F0 !important;
+        }
+
+        [data-theme="dark"] body::before,
+        body[data-theme="dark"]::before {
+            background: radial-gradient(circle, rgba(196, 18, 48, 0.12) 0%, rgba(7, 13, 30, 0) 70%) !important;
+        }
+
+        [data-theme="dark"] .top-header,
+        body[data-theme="dark"] .top-header {
+            background: rgba(11, 19, 43, 0.88) !important;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+        }
+
+        [data-theme="dark"] .header-sys-name {
+            color: #FFFFFF !important;
+        }
+
+        [data-theme="dark"] .btn-theme-toggle,
+        [data-theme="dark"] .btn-notification,
+        [data-theme="dark"] .user-dropdown-btn {
+            background: rgba(255, 255, 255, 0.06) !important;
+            border-color: rgba(255, 255, 255, 0.14) !important;
+            color: #FFFFFF !important;
+        }
+
+        [data-theme="dark"] .user-info-text {
+            color: #FFFFFF !important;
+        }
+
+        [data-theme="dark"] .flagship-glass-card {
+            background: linear-gradient(145deg, rgba(20, 30, 55, 0.85) 0%, rgba(11, 19, 43, 0.92) 100%) !important;
+            border: 1px solid rgba(255, 255, 255, 0.12) !important;
+            border-top: 3.5px solid var(--muni-red) !important;
+            box-shadow: 0 20px 45px -10px rgba(0, 0, 0, 0.5) !important;
+        }
+
+        [data-theme="dark"] .flagship-metric-number,
+        [data-theme="dark"] .flagship-action-text,
+        [data-theme="dark"] .support-number {
+            color: #FFFFFF !important;
+        }
+
+        [data-theme="dark"] .channel-distribution-box {
+            background: rgba(15, 23, 42, 0.65) !important;
+            border-color: rgba(255, 255, 255, 0.1) !important;
+        }
+
+        [data-theme="dark"] .channel-dist-header {
+            color: #E2E8F0 !important;
+        }
+
+        [data-theme="dark"] .support-glass-card {
+            background: linear-gradient(135deg, rgba(20, 30, 55, 0.8) 0%, rgba(15, 23, 42, 0.85) 100%) !important;
+            border-color: rgba(255, 255, 255, 0.1) !important;
+            box-shadow: 0 14px 28px -8px rgba(0, 0, 0, 0.4) !important;
+        }
+
+        [data-theme="dark"] .dashboard-panel,
+        [data-theme="dark"] .quick-card,
+        [data-theme="dark"] .civic-map-card,
+        [data-theme="dark"] .maintainer-card {
+            background: linear-gradient(135deg, rgba(20, 30, 55, 0.75) 0%, rgba(15, 23, 42, 0.8) 100%) !important;
+            border-color: rgba(255, 255, 255, 0.1) !important;
+            color: #F1F5F9 !important;
+        }
+
+        [data-theme="dark"] .dashboard-panel h3,
+        [data-theme="dark"] .quick-card-title,
+        [data-theme="dark"] .dashboard-title-box h1,
+        [data-theme="dark"] .quick-access-header h2 {
+            color: #FFFFFF !important;
+        }
+
+        [data-theme="dark"] .custom-clean-table th {
+            color: #94A3B8 !important;
+            background: rgba(255, 255, 255, 0.03) !important;
+            border-bottom-color: rgba(255, 255, 255, 0.1) !important;
+        }
+
+        [data-theme="dark"] .custom-clean-table td {
+            color: #E2E8F0 !important;
+            border-bottom-color: rgba(255, 255, 255, 0.06) !important;
+        }
+
+        [data-theme="dark"] .time-range-capsule {
+            background: rgba(255, 255, 255, 0.08) !important;
+            border-color: rgba(255, 255, 255, 0.12) !important;
+        }
+
+        [data-theme="dark"] .time-range-btn {
+            color: #94A3B8 !important;
+        }
+
+        [data-theme="dark"] .time-range-btn.active {
+            background: #FFFFFF !important;
+            color: #0B132B !important;
+        }
+
+        /* ==========================================================================
+           DROPDOWN DE NOTIFICACIONES ADMINISTRATIVAS
+           ========================================================================== */
+        .admin-notif-dropdown {
+            background: rgba(255, 255, 255, 0.96) !important;
+            backdrop-filter: blur(20px) !important;
+            -webkit-backdrop-filter: blur(20px) !important;
+            box-shadow: 0 20px 40px -8px rgba(27, 54, 93, 0.18) !important;
+            border: 1px solid rgba(226, 232, 240, 0.8) !important;
+        }
+
+        [data-theme="dark"] .admin-notif-dropdown {
+            background: rgba(15, 23, 42, 0.95) !important;
+            border-color: rgba(255, 255, 255, 0.12) !important;
+            color: #F1F5F9 !important;
+        }
+
+        .notif-item {
+            transition: background 0.2s ease;
+        }
+        .notif-item:hover {
+            background: rgba(27, 54, 93, 0.035);
+        }
+        .notif-item.unread {
+            background: rgba(13, 110, 253, 0.03);
+        }
+        [data-theme="dark"] .notif-item:hover {
+            background: rgba(255, 255, 255, 0.04);
+        }
+
+        .notif-icon-circle {
+            width: 34px;
+            height: 34px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+            flex-shrink: 0;
+        }
+
+        /* ==========================================================================
+           SELECTOR DE RANGO TEMPORAL (CAPSULE TABS)
+           ========================================================================== */
+        .time-range-capsule {
+            display: inline-flex;
+            background: rgba(241, 245, 249, 0.9);
+            border: 1px solid rgba(226, 232, 240, 0.9);
+            border-radius: 50px;
+            padding: 3px;
+            gap: 2px;
+        }
+
+        .time-range-btn {
+            border: none;
+            background: transparent;
+            padding: 4px 12px;
+            border-radius: 50px;
+            font-size: 0.76rem;
+            font-weight: 700;
+            color: var(--muni-text-sec);
+            cursor: pointer;
+            transition: all 0.22s ease;
+        }
+
+        .time-range-btn:hover {
+            color: var(--muni-navy);
+        }
+
+        .time-range-btn.active {
+            background: #FFFFFF;
+            color: var(--muni-navy);
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+        }
+
+        .date-badge-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 5px 13px;
+            background: #FFFFFF;
+            border: 1px solid var(--muni-border);
+            border-radius: 50px;
+            font-size: 0.78rem;
+            font-weight: 600;
+            color: var(--muni-navy);
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+        }
+
+        [data-theme="dark"] .date-badge-pill {
+            background: rgba(255, 255, 255, 0.08) !important;
+            border-color: rgba(255, 255, 255, 0.14) !important;
+            color: #F1F5F9 !important;
+        }
+
+        /* ==========================================================================
+           VISUALIZADOR TERRITORIAL COMUNAL (MAPA INTERACTIVO DE LA SERENA)
+           ========================================================================== */
+        .civic-map-section {
+            margin-bottom: 1.5rem;
+        }
+
+        .civic-map-card {
+            background: linear-gradient(145deg, rgba(255, 255, 255, 0.85) 0%, rgba(248, 250, 252, 0.7) 100%);
+            backdrop-filter: blur(24px) saturate(190%);
+            -webkit-backdrop-filter: blur(24px) saturate(190%);
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.9);
+            box-shadow: 0 16px 36px -10px rgba(27, 54, 93, 0.07);
+            padding: 1.4rem 1.6rem;
+        }
+
+        .map-interactive-container {
+            display: grid;
+            grid-template-columns: minmax(0, 6.2fr) minmax(0, 3.8fr);
+            gap: 1.5rem;
+            align-items: center;
+        }
+
+        @media (max-width: 992px) {
+            .map-interactive-container {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .map-svg-wrap {
+            position: relative;
+            background: radial-gradient(circle at center, rgba(13, 110, 253, 0.04) 0%, rgba(248, 250, 252, 0.4) 100%);
+            border: 1px solid rgba(226, 232, 240, 0.8);
+            border-radius: 16px;
+            padding: 1.2rem;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        [data-theme="dark"] .map-svg-wrap {
+            background: radial-gradient(circle at center, rgba(13, 110, 253, 0.08) 0%, rgba(15, 23, 42, 0.6) 100%) !important;
+            border-color: rgba(255, 255, 255, 0.08) !important;
+        }
+
+        .delegation-pin-group {
+            cursor: pointer;
+            transition: transform 0.25s ease;
+        }
+
+        .delegation-pin-group:hover,
+        .delegation-pin-group.active {
+            transform: scale(1.12);
+        }
+
+        .map-focus-panel {
+            background: rgba(248, 250, 252, 0.85);
+            border: 1px solid rgba(226, 232, 240, 0.8);
+            border-radius: 16px;
+            padding: 1.2rem;
+            transition: all 0.3s ease;
+        }
+
+        [data-theme="dark"] .map-focus-panel {
+            background: rgba(15, 23, 42, 0.7) !important;
+            border-color: rgba(255, 255, 255, 0.1) !important;
+        }
     </style>
 </head>
 
@@ -2921,11 +3229,88 @@
             </div>
 
             <div class="header-right">
-                <button class="btn-notification" title="Notificaciones"
-                    onclick="mostrarToast('Tiene 3 atenciones prioritarias pendientes.')">
-                    <i class="bi bi-bell"></i>
-                    <span class="badge-count">3</span>
+                <!-- Toggle Modo Oscuro / Claro -->
+                <button class="btn-theme-toggle" id="btnToggleDarkMode" onclick="toggleDarkMode()" title="Alternar Modo Oscuro / Claro">
+                    <i class="bi bi-moon-stars-fill" id="themeToggleIcon"></i>
                 </button>
+
+                <!-- Dropdown de Notificaciones Administrativas & Seguridad de Personal -->
+                <div class="dropdown">
+                    <button class="btn-notification" type="button" data-bs-toggle="dropdown" aria-expanded="false" title="Centro de Notificaciones Administrativas">
+                        <i class="bi bi-bell"></i>
+                        <span class="badge-count" id="adminNotifBadge">3</span>
+                    </button>
+                    <div class="dropdown-menu dropdown-menu-end shadow-lg border-0 rounded-4 mt-2 p-0 admin-notif-dropdown" style="min-width: 360px; max-width: 400px;">
+                        <div class="notif-header d-flex align-items-center justify-content-between p-3 border-bottom">
+                            <div>
+                                <h6 class="m-0 fw-bold" style="color: var(--muni-navy); font-size: 0.9rem;">
+                                    <i class="bi bi-shield-lock-fill text-danger me-1"></i> Alertas de Funcionarios
+                                </h6>
+                                <span class="text-muted" style="font-size: 0.72rem;">Seguridad y credenciales de trabajadores</span>
+                            </div>
+                            <button class="btn btn-sm btn-link text-decoration-none p-0 fw-semibold" onclick="marcarNotificacionesLeidas()" style="font-size: 0.75rem; color: var(--muni-blue-action);">
+                                Marcar leídas
+                            </button>
+                        </div>
+                        <div class="notif-list-body" id="adminNotifList" style="max-height: 320px; overflow-y: auto;">
+                            <!-- Notificación 1: Clave -->
+                            <div class="notif-item p-3 border-bottom d-flex gap-3 align-items-start unread">
+                                <div class="notif-icon-circle bg-danger-subtle text-danger">
+                                    <i class="bi bi-key-fill"></i>
+                                </div>
+                                <div class="flex-grow-1">
+                                    <div class="d-flex justify-content-between align-items-center mb-1">
+                                        <strong style="font-size: 0.8rem; color: #1E293B;">Recuperación de Clave</strong>
+                                        <span class="text-muted" style="font-size: 0.7rem;">Hace 12 min</span>
+                                    </div>
+                                    <p class="m-0 text-secondary" style="font-size: 0.76rem; line-height: 1.35;">
+                                        El gestor <strong>Rodrigo Araya</strong> (Delegación Las Compañías) solicitó restablecer su contraseña de acceso institucional.
+                                    </p>
+                                    <div class="mt-2">
+                                        <button class="btn btn-sm btn-outline-danger rounded-pill px-2 py-0" style="font-size: 0.72rem;" onclick="abrirModalPassword(2, 'Rodrigo Araya')">
+                                            <i class="bi bi-shield-check me-1"></i> Resetear Clave
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- Notificación 2: Correo -->
+                            <div class="notif-item p-3 border-bottom d-flex gap-3 align-items-start unread">
+                                <div class="notif-icon-circle bg-primary-subtle text-primary">
+                                    <i class="bi bi-envelope-exclamation-fill"></i>
+                                </div>
+                                <div class="flex-grow-1">
+                                    <div class="d-flex justify-content-between align-items-center mb-1">
+                                        <strong style="font-size: 0.8rem; color: #1E293B;">Cambio de Correo Oficial</strong>
+                                        <span class="text-muted" style="font-size: 0.7rem;">Hace 45 min</span>
+                                    </div>
+                                    <p class="m-0 text-secondary" style="font-size: 0.76rem; line-height: 1.35;">
+                                        La funcionaria <strong>Camila Sepúlveda</strong> solicitó actualizar su correo oficial a <code>c.sepulveda@laserena.cl</code>.
+                                    </p>
+                                </div>
+                            </div>
+                            <!-- Notificación 3: Alta de funcionario -->
+                            <div class="notif-item p-3 d-flex gap-3 align-items-start unread">
+                                <div class="notif-icon-circle bg-warning-subtle text-warning">
+                                    <i class="bi bi-person-plus-fill"></i>
+                                </div>
+                                <div class="flex-grow-1">
+                                    <div class="d-flex justify-content-between align-items-center mb-1">
+                                        <strong style="font-size: 0.8rem; color: #1E293B;">Nuevo Gestor en Espera</strong>
+                                        <span class="text-muted" style="font-size: 0.7rem;">Hace 2 horas</span>
+                                    </div>
+                                    <p class="m-0 text-secondary" style="font-size: 0.76rem; line-height: 1.35;">
+                                        Se registró nuevo gestor territorial (Delegación La Pampa). Pendiente validar asignación de roles.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="notif-footer p-2 text-center bg-light rounded-bottom-4">
+                            <a href="javascript:void(0)" onclick="abrirModalAuditoria()" class="small text-decoration-none fw-semibold" style="color: var(--muni-navy); font-size: 0.75rem;">
+                                Ver Registro de Trazabilidad <i class="bi bi-arrow-right"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
 
                 <div class="dropdown">
                     <button class="user-dropdown-btn" type="button" data-bs-toggle="dropdown" aria-expanded="false">
@@ -2971,9 +3356,27 @@
                             <p>Resumen general del sistema de atención ciudadana</p>
                         </div>
                     </div>
-                    <div class="date-badge-pill">
-                        <i class="bi bi-calendar3"></i>
-                        <span id="currentDateDisplay">27 de septiembre de 2025</span>
+
+                    <div class="d-flex align-items-center gap-2 flex-wrap">
+                        <!-- Selector de Rango Temporal en Vivo -->
+                        <div class="time-range-capsule" role="tablist">
+                            <button class="time-range-btn" id="btnRangoHoy" onclick="cambiarRangoTemporal('hoy')">Hoy</button>
+                            <button class="time-range-btn" id="btnRangoSemana" onclick="cambiarRangoTemporal('semana')">Semana</button>
+                            <button class="time-range-btn active" id="btnRangoMes" onclick="cambiarRangoTemporal('mes')">Mes</button>
+                            <button class="time-range-btn" id="btnRangoAnio" onclick="cambiarRangoTemporal('anio')">Año 2026</button>
+                        </div>
+
+                        <!-- Botón Exportador de Informe Ejecutivo PDF Oficial -->
+                        <button class="btn btn-outline-danger btn-sm rounded-pill px-3 fw-bold d-flex align-items-center gap-1 shadow-sm"
+                            onclick="generarInformeEjecutivoPDF()" title="Descargar Informe Oficial en PDF para Concejo Municipal">
+                            <i class="bi bi-file-earmark-pdf-fill"></i>
+                            <span>Informe Ejecutivo PDF</span>
+                        </button>
+
+                        <div class="date-badge-pill">
+                            <i class="bi bi-calendar3"></i>
+                            <span id="currentDateDisplay">27 de septiembre de 2025</span>
+                        </div>
                     </div>
                 </div>
 
@@ -3190,6 +3593,163 @@
                                     </tr>
                                 </tbody>
                             </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- VISUALIZADOR TERRITORIAL COMUNAL: MAPA INTERACTIVO DE LA SERENA -->
+                <div class="civic-map-section">
+                    <div class="civic-map-card">
+                        <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
+                            <div>
+                                <div class="d-flex align-items-center gap-2 mb-1">
+                                    <span class="badge" style="background: rgba(27, 54, 93, 0.12); color: var(--muni-navy); font-weight: 700; font-size: 0.72rem;">
+                                        <i class="bi bi-geo-alt-fill text-danger me-1"></i> COBERTURA TERRITORIAL ACTIVA
+                                    </span>
+                                    <span class="badge bg-success-subtle text-success fw-bold" style="font-size: 0.72rem;">
+                                        <i class="bi bi-broadcast me-1"></i> 6 Delegaciones en Línea
+                                    </span>
+                                </div>
+                                <h3 class="m-0 fw-bold" style="color: var(--muni-navy); font-size: 1.15rem;">
+                                    Mapa Territorial de Atención Ciudadana — Comuna de La Serena
+                                </h3>
+                                <p class="text-muted small m-0">Haz clic en cualquier delegación para inspeccionar los indicadores en vivo.</p>
+                            </div>
+                            <button class="btn btn-sm btn-outline-primary rounded-pill px-3 fw-semibold" onclick="switchView('delegaciones')">
+                                Ver Módulo Delegaciones <i class="bi bi-arrow-right ms-1"></i>
+                            </button>
+                        </div>
+
+                        <div class="map-interactive-container">
+                            <!-- SVG Mapa Comunal Esquematizado de La Serena -->
+                            <div class="map-svg-wrap">
+                                <svg viewBox="0 0 760 380" style="width: 100%; height: auto; max-height: 320px; overflow: visible;">
+                                    <defs>
+                                        <!-- Filtro de sombra y gradiente costero -->
+                                        <linearGradient id="oceanGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                                            <stop offset="0%" stop-color="#38BDF8" stop-opacity="0.12" />
+                                            <stop offset="100%" stop-color="#0284C7" stop-opacity="0.04" />
+                                        </linearGradient>
+                                        <linearGradient id="landGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                                            <stop offset="0%" stop-color="#F1F5F9" stop-opacity="0.85" />
+                                            <stop offset="100%" stop-color="#E2E8F0" stop-opacity="0.95" />
+                                        </linearGradient>
+                                        <filter id="pinGlow" x="-30%" y="-30%" width="160%" height="160%">
+                                            <feDropShadow dx="0" dy="4" stdDeviation="4" flood-color="#1B365D" flood-opacity="0.25" />
+                                        </filter>
+                                    </defs>
+
+                                    <!-- Silueta Costera y Bahía de Coquimbo / La Serena -->
+                                    <path d="M 40,20 Q 90,80 110,140 T 130,220 Q 140,290 190,360 L 740,360 L 740,20 Z" 
+                                          fill="url(#landGrad)" stroke="rgba(203, 213, 225, 0.9)" stroke-width="1.5" />
+                                    <!-- Océano Pacífico / Costa -->
+                                    <path d="M 0,0 L 40,20 Q 90,80 110,140 T 130,220 Q 140,290 190,360 L 0,360 Z" 
+                                          fill="url(#oceanGrad)" />
+
+                                    <!-- Rotulación Geográfica -->
+                                    <text x="35" y="260" fill="#64748B" font-size="11" font-weight="700" letter-spacing="1.5">OCÉANO PACÍFICO</text>
+                                    <text x="45" y="110" fill="#0284C7" font-size="10" font-weight="700"><tspan font-weight="bold">Faro Monumental</tspan> ⛵</text>
+
+                                    <!-- Vías Conectoras / Eje Vial 4 Esquinas & Ruta 5 -->
+                                    <path d="M 120,110 L 260,140 L 410,135 L 560,110" fill="none" stroke="rgba(148, 163, 184, 0.7)" stroke-width="2" stroke-dasharray="4,4" />
+                                    <path d="M 260,140 L 270,240 L 360,310" fill="none" stroke="rgba(148, 163, 184, 0.7)" stroke-width="2" stroke-dasharray="4,4" />
+                                    <path d="M 260,140 L 460,220" fill="none" stroke="rgba(148, 163, 184, 0.7)" stroke-width="2" stroke-dasharray="4,4" />
+
+                                    <!-- NODO 1: Las Compañías (Norte) -->
+                                    <g class="delegation-pin-group" id="pin-lascompanias" onclick="seleccionarDelegacionMapa('lascompanias')">
+                                        <circle cx="280" cy="70" r="16" fill="rgba(13, 110, 253, 0.18)" />
+                                        <circle cx="280" cy="70" r="9" fill="#0D6EFD" filter="url(#pinGlow)" />
+                                        <circle cx="280" cy="70" r="3.5" fill="#FFFFFF" />
+                                        <text x="280" y="46" text-anchor="middle" font-size="11" font-weight="800" fill="#1B365D">Las Compañías</text>
+                                        <text x="280" y="99" text-anchor="middle" font-size="9.5" font-weight="600" fill="#16A34A">1.120 aten.</text>
+                                    </g>
+
+                                    <!-- NODO 2: La Serena Centro (Consistorial) -->
+                                    <g class="delegation-pin-group active" id="pin-centro" onclick="seleccionarDelegacionMapa('centro')">
+                                        <circle cx="250" cy="145" r="20" fill="rgba(196, 18, 48, 0.22)" />
+                                        <circle cx="250" cy="145" r="11" fill="#C41230" filter="url(#pinGlow)" />
+                                        <circle cx="250" cy="145" r="4" fill="#FFFFFF" />
+                                        <text x="250" y="125" text-anchor="middle" font-size="12" font-weight="800" fill="#C41230">La Serena Centro</text>
+                                        <text x="250" y="177" text-anchor="middle" font-size="9.5" font-weight="600" fill="#16A34A">1.450 aten. (Sede Central)</text>
+                                    </g>
+
+                                    <!-- NODO 3: La Pampa -->
+                                    <g class="delegation-pin-group" id="pin-lapampa" onclick="seleccionarDelegacionMapa('lapampa')">
+                                        <circle cx="280" cy="245" r="16" fill="rgba(124, 58, 237, 0.18)" />
+                                        <circle cx="280" cy="245" r="9" fill="#7C3AED" filter="url(#pinGlow)" />
+                                        <circle cx="280" cy="245" r="3.5" fill="#FFFFFF" />
+                                        <text x="280" y="228" text-anchor="middle" font-size="11" font-weight="800" fill="#1B365D">La Pampa</text>
+                                        <text x="280" y="274" text-anchor="middle" font-size="9.5" font-weight="600" fill="#16A34A">890 aten.</text>
+                                    </g>
+
+                                    <!-- NODO 4: La Florida -->
+                                    <g class="delegation-pin-group" id="pin-laflorida" onclick="seleccionarDelegacionMapa('laflorida')">
+                                        <circle cx="440" cy="195" r="16" fill="rgba(16, 185, 129, 0.18)" />
+                                        <circle cx="440" cy="195" r="9" fill="#10B981" filter="url(#pinGlow)" />
+                                        <circle cx="440" cy="195" r="3.5" fill="#FFFFFF" />
+                                        <text x="440" y="176" text-anchor="middle" font-size="11" font-weight="800" fill="#1B365D">La Florida</text>
+                                        <text x="440" y="224" text-anchor="middle" font-size="9.5" font-weight="600" fill="#16A34A">670 aten.</text>
+                                    </g>
+
+                                    <!-- NODO 5: Tierras Blancas / Límite Sur -->
+                                    <g class="delegation-pin-group" id="pin-tierrasblancas" onclick="seleccionarDelegacionMapa('tierrasblancas')">
+                                        <circle cx="360" cy="315" r="16" fill="rgba(217, 119, 6, 0.18)" />
+                                        <circle cx="360" cy="315" r="9" fill="#D97706" filter="url(#pinGlow)" />
+                                        <circle cx="360" cy="315" r="3.5" fill="#FFFFFF" />
+                                        <text x="360" y="298" text-anchor="middle" font-size="11" font-weight="800" fill="#1B365D">Tierras Blancas</text>
+                                        <text x="360" y="344" text-anchor="middle" font-size="9.5" font-weight="600" fill="#16A34A">540 aten.</text>
+                                    </g>
+
+                                    <!-- NODO 6: Sector Rural / Algarrobito -->
+                                    <g class="delegation-pin-group" id="pin-rural" onclick="seleccionarDelegacionMapa('rural')">
+                                        <circle cx="580" cy="115" r="16" fill="rgba(2, 132, 199, 0.18)" />
+                                        <circle cx="580" cy="115" r="9" fill="#0284C7" filter="url(#pinGlow)" />
+                                        <circle cx="580" cy="115" r="3.5" fill="#FFFFFF" />
+                                        <text x="580" y="96" text-anchor="middle" font-size="11" font-weight="800" fill="#1B365D">Sector Rural / Valle</text>
+                                        <text x="580" y="144" text-anchor="middle" font-size="9.5" font-weight="600" fill="#16A34A">320 aten.</text>
+                                    </g>
+                                </svg>
+                            </div>
+
+                            <!-- Panel de Foco Territorial Activo -->
+                            <div class="map-focus-panel" id="panelFocoTerritorial">
+                                <div class="d-flex align-items-center justify-content-between mb-2">
+                                    <span class="badge" id="mapFocusBadge" style="background: rgba(196, 18, 48, 0.14); color: #C41230; font-weight: 700; font-size: 0.72rem;">
+                                        SEDE CENTRAL
+                                    </span>
+                                    <span class="text-success small fw-bold"><i class="bi bi-circle-fill me-1" style="font-size: 0.5rem;"></i> Activa</span>
+                                </div>
+                                <h5 class="fw-bold mb-1" id="mapFocusTitle" style="color: var(--muni-navy);">La Serena Centro</h5>
+                                <p class="text-muted small mb-3" id="mapFocusAddress"><i class="bi bi-geo-alt me-1"></i> Los Carrera #301 (Edificio Consistorial)</p>
+
+                                <div class="p-2 rounded-3 bg-white border mb-3">
+                                    <div class="row g-2 text-center">
+                                        <div class="col-6 border-end">
+                                            <span class="d-block text-muted" style="font-size: 0.7rem; text-transform: uppercase;">Espera Media</span>
+                                            <strong class="text-dark" id="mapFocusWaitTime" style="font-size: 1.1rem;">6 min</strong>
+                                        </div>
+                                        <div class="col-6">
+                                            <span class="d-block text-muted" style="font-size: 0.7rem; text-transform: uppercase;">Satisfacción</span>
+                                            <strong class="text-success" id="mapFocusSatisfaction" style="font-size: 1.1rem;">98.4%</strong>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="mb-3 small">
+                                    <div class="d-flex justify-content-between text-muted mb-1" style="font-size: 0.75rem;">
+                                        <span>Gestor Encargado:</span>
+                                        <strong class="text-dark" id="mapFocusManager">Kevin Encina M.</strong>
+                                    </div>
+                                    <div class="d-flex justify-content-between text-muted" style="font-size: 0.75rem;">
+                                        <span>Horario de Atención:</span>
+                                        <span class="text-dark" id="mapFocusSchedule">08:30 - 14:00 hrs</span>
+                                    </div>
+                                </div>
+
+                                <button class="btn btn-primary btn-sm w-100 rounded-pill fw-semibold shadow-sm" onclick="switchView('delegaciones')">
+                                    <i class="bi bi-building me-1"></i> Ver Delegaciones Municipales
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -5565,6 +6125,9 @@
             // Cargar foto de perfil persistente si existe
             cargarFotoPerfilGuardada();
 
+            // Cargar tema institucional guardado (Modo Oscuro / Claro)
+            aplicarTemaGuardado();
+
             /* Modales de Gestión de Usuarios */
             const elModalUsr = document.getElementById('modalUsuario');
             if (elModalUsr && window.bootstrap) bsModalUsuario = new bootstrap.Modal(elModalUsr);
@@ -6159,6 +6722,410 @@
                 document.querySelectorAll('.user-avatar-img').forEach(img => {
                     img.src = avatarGuardado;
                 });
+            }
+        }
+
+        /* ==========================================================================
+           1. CONTROL DE MODO OSCURO / DARK LIQUID GLASS
+           ========================================================================== */
+        function toggleDarkMode() {
+            const html = document.documentElement;
+            const currentTheme = html.getAttribute('data-theme') || (document.body.getAttribute('data-theme') === 'dark' ? 'dark' : 'light');
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            html.setAttribute('data-theme', newTheme);
+            document.body.setAttribute('data-theme', newTheme);
+            localStorage.setItem('sgr_theme_preference', newTheme);
+
+            const icon = document.getElementById('themeToggleIcon');
+            if (icon) {
+                if (newTheme === 'dark') {
+                    icon.classList.remove('bi-moon-stars-fill');
+                    icon.classList.add('bi-sun-fill');
+                } else {
+                    icon.classList.remove('bi-sun-fill');
+                    icon.classList.add('bi-moon-stars-fill');
+                }
+            }
+            mostrarToast(newTheme === 'dark' ? 'Modo Nocturno Cívico activado' : 'Modo Luminoso activado');
+        }
+
+        function aplicarTemaGuardado() {
+            const savedTheme = localStorage.getItem('sgr_theme_preference');
+            if (savedTheme === 'dark') {
+                document.documentElement.setAttribute('data-theme', 'dark');
+                document.body.setAttribute('data-theme', 'dark');
+                const icon = document.getElementById('themeToggleIcon');
+                if (icon) {
+                    icon.classList.remove('bi-moon-stars-fill');
+                    icon.classList.add('bi-sun-fill');
+                }
+            }
+        }
+
+        /* ==========================================================================
+           2. NOTIFICACIONES ADMINISTRATIVAS & SEGURIDAD DE PERSONAL
+           ========================================================================== */
+        function marcarNotificacionesLeidas() {
+            const items = document.querySelectorAll('#adminNotifList .notif-item');
+            items.forEach(it => it.classList.remove('unread'));
+            const badge = document.getElementById('adminNotifBadge');
+            if (badge) {
+                badge.style.display = 'none';
+            }
+            mostrarToast('✓ Alertas de seguridad marcadas como revisadas.');
+        }
+
+        /* ==========================================================================
+           3. FILTRO DE RANGO TEMPORAL EN VIVO (HOY / SEMANA / MES / AÑO)
+           ========================================================================== */
+        const datasetRangos = {
+            hoy: {
+                total: '142',
+                trend: '+6% vs ayer',
+                desc: 'Atenciones registradas en el día en curso en dependencias municipales.',
+                resueltas: '92.4% Resueltas',
+                presencial: 58,
+                telefonica: 30,
+                online: 12,
+                chartLabels: ['08:30', '10:00', '11:30', '13:00', '14:30', '16:00'],
+                dataPresencial: [15, 28, 38, 25, 20, 16],
+                dataTelefonica: [8, 14, 18, 12, 10, 8],
+                dataOnline: [3, 6, 8, 5, 4, 3]
+            },
+            semana: {
+                total: '840',
+                trend: '+11% vs sem anterior',
+                desc: 'Atenciones acumuladas en los últimos 7 días operativos.',
+                resueltas: '93.7% Resueltas',
+                presencial: 55,
+                telefonica: 31,
+                online: 14,
+                chartLabels: ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'],
+                dataPresencial: [140, 165, 180, 170, 155, 30],
+                dataTelefonica: [80, 95, 100, 90, 85, 10],
+                dataOnline: [35, 42, 48, 40, 38, 5]
+            },
+            mes: {
+                total: '3.421',
+                trend: '+18% vs mes anterior',
+                desc: 'Atenciones registradas en la red de delegaciones municipales y canales digitales.',
+                resueltas: '94.8% Resueltas',
+                presencial: 54,
+                telefonica: 32,
+                online: 14,
+                chartLabels: ['Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep'],
+                dataPresencial: [500, 610, 710, 680, 620, 750],
+                dataTelefonica: [300, 380, 480, 420, 410, 520],
+                dataOnline: [150, 200, 260, 220, 215, 276]
+            },
+            anio: {
+                total: '28.940',
+                trend: '+14% anual',
+                desc: 'Total histórico consolidado de la gestión ciudadana 2026.',
+                resueltas: '96.1% Resueltas',
+                presencial: 52,
+                telefonica: 33,
+                online: 15,
+                chartLabels: ['2021', '2022', '2023', '2024', '2025', '2026 (Proy.)'],
+                dataPresencial: [3800, 4200, 4900, 5300, 6100, 6800],
+                dataTelefonica: [2200, 2500, 2900, 3200, 3700, 4100],
+                dataOnline: [800, 1100, 1400, 1700, 2100, 2400]
+            }
+        };
+
+        function cambiarRangoTemporal(rango) {
+            const data = datasetRangos[rango];
+            if (!data) return;
+
+            // Actualizar botones de filtro
+            ['hoy', 'semana', 'mes', 'anio'].forEach(r => {
+                const btn = document.getElementById(`btnRango${r.charAt(0).toUpperCase() + r.slice(1)}`);
+                if (btn) {
+                    if (r === rango) btn.classList.add('active');
+                    else btn.classList.remove('active');
+                }
+            });
+
+            // Actualizar Tarjeta Rectora (Flagship)
+            const numEl = document.querySelector('.flagship-metric-number');
+            if (numEl) numEl.textContent = data.total;
+
+            const trendEl = document.querySelector('.flagship-trend-chip');
+            if (trendEl) trendEl.innerHTML = `<i class="bi bi-graph-up-arrow"></i> ${data.trend}`;
+
+            const descEl = document.querySelector('.flagship-desc');
+            if (descEl) descEl.textContent = data.desc;
+
+            const headerRes = document.querySelector('.channel-dist-header .text-primary');
+            if (headerRes) headerRes.textContent = data.resueltas;
+
+            const segPre = document.querySelector('.ch-segment.ch-presencial');
+            if (segPre) segPre.style.width = `${data.presencial}%`;
+            const segTel = document.querySelector('.ch-segment.ch-telefonica');
+            if (segTel) segTel.style.width = `${data.telefonica}%`;
+            const segOnl = document.querySelector('.ch-segment.ch-online');
+            if (segOnl) segOnl.style.width = `${data.online}%`;
+
+            // Actualizar Gráfico Chart.js
+            if (chartInstance) {
+                chartInstance.data.labels = data.chartLabels;
+                chartInstance.data.datasets[0].data = data.dataPresencial;
+                chartInstance.data.datasets[1].data = data.dataTelefonica;
+                chartInstance.data.datasets[2].data = data.dataOnline;
+                chartInstance.update();
+            }
+
+            mostrarToast(`Vista actualizada: Rango temporal '${rango.toUpperCase()}'`);
+        }
+
+        /* ==========================================================================
+           4. SELECCIÓN DE DELEGACIÓN EN EL MAPA COMUNAL INTERACTIVO
+           ========================================================================== */
+        const delegacionesMapaData = {
+            centro: {
+                nombre: 'La Serena Centro',
+                direccion: 'Los Carrera #301 (Edificio Consistorial)',
+                badge: 'SEDE CENTRAL',
+                badgeColor: 'rgba(196, 18, 48, 0.14)',
+                badgeText: '#C41230',
+                espera: '6 min',
+                satisfaccion: '98.4%',
+                gestor: 'Kevin Encina M.',
+                horario: '08:30 - 14:00 hrs'
+            },
+            lascompanias: {
+                nombre: 'Las Compañías',
+                direccion: 'Esmeralda #2451 (Sector Norte)',
+                badge: 'DELEGACIÓN NORTE',
+                badgeColor: 'rgba(13, 110, 253, 0.14)',
+                badgeText: '#0D6EFD',
+                espera: '9 min',
+                satisfaccion: '94.2%',
+                gestor: 'Rodrigo Araya R.',
+                horario: '08:30 - 14:00 hrs'
+            },
+            lapampa: {
+                nombre: 'La Pampa',
+                direccion: 'Juana Ross de Edwards #120',
+                badge: 'DELEGACIÓN SUR',
+                badgeColor: 'rgba(124, 58, 237, 0.14)',
+                badgeText: '#7C3AED',
+                espera: '7 min',
+                satisfaccion: '96.8%',
+                gestor: 'Camila Sepúlveda G.',
+                horario: '08:30 - 14:00 hrs'
+            },
+            laflorida: {
+                nombre: 'La Florida',
+                direccion: 'Av. El Santo #1050',
+                badge: 'DELEGACIÓN ORIENTE',
+                badgeColor: 'rgba(16, 185, 129, 0.14)',
+                badgeText: '#10B981',
+                espera: '8 min',
+                satisfaccion: '95.1%',
+                gestor: 'Carlos Rojas P.',
+                horario: '08:30 - 14:00 hrs'
+            },
+            tierrasblancas: {
+                nombre: 'Tierras Blancas',
+                direccion: 'Calle Linares #890 (Límite Sur)',
+                badge: 'CONURBACIÓN',
+                badgeColor: 'rgba(217, 119, 6, 0.14)',
+                badgeText: '#D97706',
+                espera: '11 min',
+                satisfaccion: '93.0%',
+                gestor: 'Ana Torres V.',
+                horario: '08:30 - 14:00 hrs'
+            },
+            rural: {
+                nombre: 'Sector Rural y Caletas',
+                direccion: 'Ruta 41 Km 8 (Algarrobito)',
+                badge: 'TERRITORIO EXTENDIDO',
+                badgeColor: 'rgba(2, 132, 199, 0.14)',
+                badgeText: '#0284C7',
+                espera: '5 min',
+                satisfaccion: '99.1%',
+                gestor: 'Patricia Silva M.',
+                horario: '09:00 - 13:30 hrs'
+            }
+        };
+
+        function seleccionarDelegacionMapa(key) {
+            const data = delegacionesMapaData[key];
+            if (!data) return;
+
+            // Actualizar pines SVG
+            document.querySelectorAll('.delegation-pin-group').forEach(p => p.classList.remove('active'));
+            const pinActivo = document.getElementById(`pin-${key}`);
+            if (pinActivo) pinActivo.classList.add('active');
+
+            // Actualizar panel de detalle
+            const badgeEl = document.getElementById('mapFocusBadge');
+            if (badgeEl) {
+                badgeEl.textContent = data.badge;
+                badgeEl.style.background = data.badgeColor;
+                badgeEl.style.color = data.badgeText;
+            }
+
+            const titleEl = document.getElementById('mapFocusTitle');
+            if (titleEl) titleEl.textContent = data.nombre;
+
+            const addrEl = document.getElementById('mapFocusAddress');
+            if (addrEl) addrEl.innerHTML = `<i class="bi bi-geo-alt me-1"></i> ${data.direccion}`;
+
+            const waitEl = document.getElementById('mapFocusWaitTime');
+            if (waitEl) waitEl.textContent = data.espera;
+
+            const satEl = document.getElementById('mapFocusSatisfaction');
+            if (satEl) satEl.textContent = data.satisfaccion;
+
+            const mgrEl = document.getElementById('mapFocusManager');
+            if (mgrEl) mgrEl.textContent = data.gestor;
+
+            const schEl = document.getElementById('mapFocusSchedule');
+            if (schEl) schEl.textContent = data.horario;
+
+            mostrarToast(`Delegación seleccionada: ${data.nombre}`);
+        }
+
+        /* ==========================================================================
+           5. GENERADOR DE INFORME EJECUTIVO EN PDF OFICIAL (JSPDF + AUTOTABLE)
+           ========================================================================== */
+        function generarInformeEjecutivoPDF() {
+            try {
+                if (!window.jspdf || !window.jspdf.jsPDF) {
+                    mostrarToast('Error: Librería jsPDF no disponible.');
+                    return;
+                }
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF({
+                    orientation: 'portrait',
+                    unit: 'mm',
+                    format: 'a4'
+                });
+
+                const fechaActual = document.getElementById('currentDateDisplay')?.textContent || 'Octubre 2026';
+
+                // 1. Membrete Institucional Oficial
+                doc.setFillColor(27, 54, 93); // Azul Marino Serena
+                doc.rect(0, 0, 210, 24, 'F');
+
+                doc.setFillColor(196, 18, 48); // Rojo Colonial
+                doc.rect(0, 24, 210, 3, 'F');
+
+                doc.setTextColor(255, 255, 255);
+                doc.setFont('helvetica', 'bold');
+                doc.setFontSize(14);
+                doc.text('ILUSTRE MUNICIPALIDAD DE LA SERENA', 14, 12);
+
+                doc.setFont('helvetica', 'normal');
+                doc.setFontSize(9);
+                doc.text('DIRECCIÓN DE ATENCIÓN CIUDADANA — SISTEMA DE GESTIÓN REGIONAL (SGR)', 14, 18);
+
+                // 2. Título del Documento
+                doc.setTextColor(27, 54, 93);
+                doc.setFont('helvetica', 'bold');
+                doc.setFontSize(16);
+                doc.text('INFORME EJECUTIVO DE GESTIÓN Y RENDICIÓN MUNICIPAL', 14, 38);
+
+                doc.setTextColor(100, 116, 139);
+                doc.setFont('helvetica', 'normal');
+                doc.setFontSize(9);
+                doc.text(`Fecha de Emisión: ${fechaActual} | Generado por: Administrador Municipal`, 14, 44);
+
+                // 3. Resumen Ejecutivo (KPIs Clave)
+                doc.setDrawColor(226, 232, 240);
+                doc.setFillColor(248, 250, 252);
+                doc.roundedRect(14, 50, 182, 28, 3, 3, 'FD');
+
+                doc.setTextColor(27, 54, 93);
+                doc.setFont('helvetica', 'bold');
+                doc.setFontSize(10);
+                doc.text('CONSOLIDADO DE METAS & COBERTURA COMUNAL', 20, 58);
+
+                doc.setFontSize(9);
+                doc.setFont('helvetica', 'normal');
+                doc.setTextColor(51, 65, 85);
+                doc.text('• Padrón Activo de Vecinos: 12.458 inscritos (+12% semestral)', 20, 65);
+                doc.text('• Atenciones Realizadas (Mes Activo): 3.421 trámites y solicitudes', 20, 71);
+                doc.text('• Cobertura Territorial: 6 de 6 Delegaciones operativas al 100%', 110, 65);
+                doc.text('• Cumplimiento Promedio de Metas: 87.0% (Meta esperada: 85%)', 110, 71);
+
+                // 4. Tabla de Delegaciones (AutoTable)
+                const tablaDelegacionesData = [
+                    ['La Serena Centro', 'Los Carrera #301', '1.450', '6 min', '98.4%', 'Operativa'],
+                    ['Las Compañías', 'Esmeralda #2451', '1.120', '9 min', '94.2%', 'Operativa'],
+                    ['La Pampa', 'Juana Ross #120', '890', '7 min', '96.8%', 'Operativa'],
+                    ['La Florida', 'Av. El Santo #1050', '670', '8 min', '95.1%', 'Operativa'],
+                    ['Tierras Blancas', 'Calle Linares #890', '540', '11 min', '93.0%', 'Operativa'],
+                    ['Sector Rural', 'Ruta 41 Km 8', '320', '5 min', '99.1%', 'Operativa']
+                ];
+
+                doc.autoTable({
+                    startY: 85,
+                    head: [['Delegación Municipal', 'Ubicación Sede', 'Atenciones', 'T. Espera', 'Satisfacción', 'Estado']],
+                    body: tablaDelegacionesData,
+                    theme: 'striped',
+                    headStyles: {
+                        fillColor: [27, 54, 93],
+                        textColor: [255, 255, 255],
+                        fontStyle: 'bold',
+                        fontSize: 8.5
+                    },
+                    bodyStyles: {
+                        fontSize: 8,
+                        textColor: [30, 41, 59]
+                    },
+                    margin: { left: 14, right: 14 }
+                });
+
+                // 5. Tabla de Canales de Atención
+                const finalY = doc.lastAutoTable.finalY + 10;
+                doc.setTextColor(27, 54, 93);
+                doc.setFont('helvetica', 'bold');
+                doc.setFontSize(11);
+                doc.text('DISTRIBUCIÓN Y RESOLUCIÓN POR CANAL CIUDADANO', 14, finalY);
+
+                const canalesData = [
+                    ['Canal Presencial (Módulos)', '1.847', '54%', '95.2%'],
+                    ['Canal Telefónico (Call Center 800)', '1.095', '32%', '93.8%'],
+                    ['Canal Online / Portal Vecino', '479', '14%', '96.4%']
+                ];
+
+                doc.autoTable({
+                    startY: finalY + 4,
+                    head: [['Canal de Contacto', 'Total Casos', 'Participación', 'Tasa Resolución']],
+                    body: canalesData,
+                    theme: 'grid',
+                    headStyles: {
+                        fillColor: [196, 18, 48],
+                        textColor: [255, 255, 255],
+                        fontStyle: 'bold',
+                        fontSize: 8.5
+                    },
+                    bodyStyles: {
+                        fontSize: 8
+                    },
+                    margin: { left: 14, right: 14 }
+                });
+
+                // 6. Pie de Página y Firma Digital Institucional
+                const footerY = doc.lastAutoTable.finalY + 16;
+                doc.setDrawColor(203, 213, 225);
+                doc.line(14, footerY, 196, footerY);
+
+                doc.setFontSize(8);
+                doc.setFont('helvetica', 'normal');
+                doc.setTextColor(148, 163, 184);
+                doc.text('Documento oficial generado automáticamente por el Sistema de Gestión Ciudadana SGR v1.0.', 14, footerY + 6);
+                doc.text('Firma Digital: 8a7f9c2d-muni-laserena-valida | Ilustre Municipalidad de La Serena', 14, footerY + 11);
+
+                // Guardar PDF
+                doc.save(`Informe_Ejecutivo_Municipal_LaSerena_${new Date().toISOString().slice(0, 10)}.pdf`);
+                mostrarToast('✓ Informe Ejecutivo Municipal descargado en PDF con éxito.');
+            } catch (err) {
+                console.error('Error generando PDF:', err);
+                mostrarToast('Ocurrió un error al compilar el documento PDF.');
             }
         }
 
