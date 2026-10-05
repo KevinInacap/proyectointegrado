@@ -1,7 +1,8 @@
-{% load static %}
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
+    {% load static %}
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Portal Empleado Municipal · Ilustre Municipalidad de La Serena</title>
@@ -9,33 +10,38 @@
     <!-- Google Fonts: Plus Jakarta Sans -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
 
     <!-- Bootstrap Icons -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-    
+
     <!-- SweetAlert2 -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
     <!-- Glassmorphism Portal Custom Styles -->
     <link rel="stylesheet" href="{% static 'css/glassmorphism_portal.css' %}">
 </head>
+
 <body>
 
     <div class="portal-backdrop">
-        
+
         <!-- =================================================================
-             BARRA LATERAL (SIDEBAR) IZQUIERDA
-             ================================================================= -->
+            BARRA LATERAL (SIDEBAR) IZQUIERDA
+            ================================================================= -->
         <aside class="sidebar-glass" aria-label="Navegación principal">
             <div>
                 <!-- Logotipo Oficial Ilustre Municipalidad de La Serena (Vector Proporcional Oficial) -->
-                <a href="{% url 'activities:dashboard_gestor' %}" class="brand-official-link" title="Ilustre Municipalidad de La Serena">
-                    <img src="{% static 'images/laserena_horizontal_blanco.svg' %}" alt="Ilustre Municipalidad de La Serena" class="brand-official-logo">
+                <a href="{% url 'activities:dashboard_gestor' %}" class="brand-official-link"
+                    title="Ilustre Municipalidad de La Serena">
+                    <img src="{% static 'images/laserena_horizontal_blanco.svg' %}"
+                        alt="Ilustre Municipalidad de La Serena" class="brand-official-logo">
                 </a>
 
                 <!-- 1. PERFIL COMPLETO DEL FUNCIONARIO (BAJO EL ESCUDO) -->
-                <div class="sidebar-profile-card" onclick="openProfileModal()" role="button" tabindex="0" title="Ver Mi Perfil Institucional">
+                <div class="sidebar-profile-card" onclick="openProfileModal()" role="button" tabindex="0"
+                    title="Ver Mi Perfil Institucional">
                     <div class="profile-avatar-container">
                         <div class="profile-avatar-circle">
                             <span>{{ first_name|slice:":1"|default:"K" }}</span>
@@ -56,39 +62,48 @@
                 <nav class="sidebar-nav" aria-label="Secciones del portal">
                     <ul class="sidebar-nav-list">
                         <li>
-                            <a href="javascript:void(0)" class="nav-link-glass active-pill" onclick="closeAllModals(); setActiveNavLink('nav-home')" id="nav-home">
+                            <a href="javascript:void(0)" class="nav-link-glass active-pill"
+                                onclick="closeAllModals(); setActiveNavLink('nav-home')" id="nav-home">
                                 <span class="nav-icon-wrap"><i class="bi bi-house-door-fill"></i></span>
                                 <span class="nav-link-text">Inicio / Portal</span>
                             </a>
                         </li>
                         <li>
-                            <a href="javascript:void(0)" class="nav-link-glass" onclick="openMisEvidenciasModal(); setActiveNavLink('nav-evidencias')" id="nav-evidencias">
+                            <a href="javascript:void(0)" class="nav-link-glass"
+                                onclick="openMisEvidenciasModal(); setActiveNavLink('nav-evidencias')"
+                                id="nav-evidencias">
                                 <span class="nav-icon-wrap"><i class="bi bi-camera-fill"></i></span>
                                 <span class="nav-link-text">Mis Evidencias y Gestiones</span>
-                                <span class="sidebar-badge badge-green">{{ kpi.my_accumulated_validated|default:"38" }}</span>
+                                <span class="sidebar-badge badge-green">{{ kpi.my_accumulated_validated|default:"38"
+                                    }}</span>
                             </a>
                         </li>
                         <li>
-                            <a href="javascript:void(0)" class="nav-link-glass" onclick="openCasesSection(); setActiveNavLink('nav-tubo')" id="nav-tubo">
+                            <a href="javascript:void(0)" class="nav-link-glass"
+                                onclick="openCasesSection(); setActiveNavLink('nav-tubo')" id="nav-tubo">
                                 <span class="nav-icon-wrap"><i class="bi bi-clipboard-data-fill"></i></span>
                                 <span class="nav-link-text">Gestión General y Tubo</span>
                                 <span class="sidebar-badge badge-amber">{{ tubo_trabajo|length|default:"4" }}</span>
                             </a>
                         </li>
                         <li>
-                            <a href="javascript:void(0)" class="nav-link-glass" onclick="openRendimientoModal(); setActiveNavLink('nav-rendimiento')" id="nav-rendimiento">
+                            <a href="javascript:void(0)" class="nav-link-glass"
+                                onclick="openRendimientoModal(); setActiveNavLink('nav-rendimiento')"
+                                id="nav-rendimiento">
                                 <span class="nav-icon-wrap"><i class="bi bi-graph-up-arrow"></i></span>
                                 <span class="nav-link-text">Mi Rendimiento SGR</span>
                             </a>
                         </li>
                         <li>
-                            <a href="javascript:void(0)" class="nav-link-glass" onclick="openProfileModal(); setActiveNavLink('nav-profile')" id="nav-profile">
+                            <a href="javascript:void(0)" class="nav-link-glass"
+                                onclick="openProfileModal(); setActiveNavLink('nav-profile')" id="nav-profile">
                                 <span class="nav-icon-wrap"><i class="bi bi-person-badge-fill"></i></span>
                                 <span class="nav-link-text">Mi Perfil</span>
                             </a>
                         </li>
                         <li>
-                            <a href="javascript:void(0)" class="nav-link-glass nav-link-logout" onclick="confirmLogout()" id="nav-logout">
+                            <a href="javascript:void(0)" class="nav-link-glass nav-link-logout"
+                                onclick="confirmLogout()" id="nav-logout">
                                 <span class="nav-icon-wrap"><i class="bi bi-box-arrow-right"></i></span>
                                 <span class="nav-link-text">Cerrar Sesión</span>
                             </a>
@@ -127,7 +142,7 @@
              ================================================================= -->
         <main class="main-viewport">
             <section class="portal-card-hub" id="main-portal-hub">
-                
+
                 <!-- Encabezado del Panel Central -->
                 <header class="hub-header">
                     <div class="hub-greeting-group">
@@ -142,7 +157,8 @@
                     </div>
 
                     <!-- Badge Superior Derecho -->
-                    <button class="badge-employee-pill" onclick="openProfileModal()" type="button" title="Ver perfil institucional de funcionario">
+                    <button class="badge-employee-pill" onclick="openProfileModal()" type="button"
+                        title="Ver perfil institucional de funcionario">
                         <i class="bi bi-person-fill"></i>
                         <span>Perfil empleado</span>
                     </button>
@@ -150,9 +166,10 @@
 
                 <!-- Grilla de las Dos Opciones Principales -->
                 <div class="hub-cards-grid">
-                    
+
                     <!-- TARJETA 1: Agregar / Ver casos -->
-                    <article class="action-card card-cases" onclick="openCasesSection()" tabindex="0" role="button" aria-label="Abrir gestión de casos: Agregar y ver casos asignados a tu unidad">
+                    <article class="action-card card-cases" onclick="openCasesSection()" tabindex="0" role="button"
+                        aria-label="Abrir gestión de casos: Agregar y ver casos asignados a tu unidad">
                         <!-- Icono Superior Frosted -->
                         <div class="card-icon-bubble">
                             <i class="bi bi-folder2-open"></i>
@@ -161,7 +178,8 @@
                         <!-- Textos de la Tarjeta -->
                         <div class="card-content-wrap">
                             <h2 class="card-title">Agregar / Ver casos</h2>
-                            <p class="card-description">Gestiona, registra y realiza seguimiento a los casos asignados a tu unidad en terreno.</p>
+                            <p class="card-description">Gestiona, registra y realiza seguimiento a los casos asignados a
+                                tu unidad en terreno.</p>
                         </div>
 
                         <!-- Botón Circular de Acción con Flecha -->
@@ -172,16 +190,22 @@
                         </div>
 
                         <!-- Marca de agua vectorial sutil institucional -->
-                        <svg class="card-watermark" viewBox="0 0 160 160" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-                            <rect x="24" y="44" width="112" height="84" rx="12" stroke="currentColor" stroke-width="3" stroke-dasharray="6 4" opacity="0.5"/>
-                            <path d="M40 32H75L87 44H120C126.6 44 132 49.4 132 56V62H28V44C28 37.4 33.4 32 40 32Z" stroke="currentColor" stroke-width="3" opacity="0.6"/>
-                            <circle cx="80" cy="86" r="18" stroke="currentColor" stroke-width="2.5" opacity="0.45"/>
-                            <path d="M74 86L78 90L86 82" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" opacity="0.65"/>
+                        <svg class="card-watermark" viewBox="0 0 160 160" fill="none" xmlns="http://www.w3.org/2000/svg"
+                            aria-hidden="true">
+                            <rect x="24" y="44" width="112" height="84" rx="12" stroke="currentColor" stroke-width="3"
+                                stroke-dasharray="6 4" opacity="0.5" />
+                            <path d="M40 32H75L87 44H120C126.6 44 132 49.4 132 56V62H28V44C28 37.4 33.4 32 40 32Z"
+                                stroke="currentColor" stroke-width="3" opacity="0.6" />
+                            <circle cx="80" cy="86" r="18" stroke="currentColor" stroke-width="2.5" opacity="0.45" />
+                            <path d="M74 86L78 90L86 82" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
+                                stroke-linejoin="round" opacity="0.65" />
                         </svg>
                     </article>
 
                     <!-- TARJETA 2: Revisar datos de la ciudadanía -->
-                    <article class="action-card card-citizenship" onclick="openCitizenshipSection()" tabindex="0" role="button" aria-label="Abrir revisión de datos de la ciudadanía: Consulta y revisa la información de las personas">
+                    <article class="action-card card-citizenship" onclick="openCitizenshipSection()" tabindex="0"
+                        role="button"
+                        aria-label="Abrir revisión de datos de la ciudadanía: Consulta y revisa la información de las personas">
                         <!-- Icono Superior Frosted -->
                         <div class="card-icon-bubble">
                             <i class="bi bi-people-fill"></i>
@@ -190,7 +214,8 @@
                         <!-- Textos de la Tarjeta -->
                         <div class="card-content-wrap">
                             <h2 class="card-title">Revisar datos de la ciudadanía</h2>
-                            <p class="card-description">Consulta información verificada, historial de atenciones y datos comunales de vecinos.</p>
+                            <p class="card-description">Consulta información verificada, historial de atenciones y datos
+                                comunales de vecinos.</p>
                         </div>
 
                         <!-- Botón Circular de Acción con Flecha -->
@@ -201,11 +226,14 @@
                         </div>
 
                         <!-- Marca de agua vectorial sutil comunitaria -->
-                        <svg class="card-watermark" viewBox="0 0 160 160" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-                            <circle cx="80" cy="54" r="22" stroke="currentColor" stroke-width="3" opacity="0.55"/>
-                            <path d="M44 126C44 98 62 86 80 86C98 86 116 98 116 126" stroke="currentColor" stroke-width="3" stroke-linecap="round" opacity="0.5"/>
-                            <circle cx="122" cy="64" r="15" stroke="currentColor" stroke-width="2.5" opacity="0.4"/>
-                            <path d="M112 120C116 104 126 96 138 96C144 96 150 99 154 105" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" opacity="0.35"/>
+                        <svg class="card-watermark" viewBox="0 0 160 160" fill="none" xmlns="http://www.w3.org/2000/svg"
+                            aria-hidden="true">
+                            <circle cx="80" cy="54" r="22" stroke="currentColor" stroke-width="3" opacity="0.55" />
+                            <path d="M44 126C44 98 62 86 80 86C98 86 116 98 116 126" stroke="currentColor"
+                                stroke-width="3" stroke-linecap="round" opacity="0.5" />
+                            <circle cx="122" cy="64" r="15" stroke="currentColor" stroke-width="2.5" opacity="0.4" />
+                            <path d="M112 120C116 104 126 96 138 96C144 96 150 99 154 105" stroke="currentColor"
+                                stroke-width="2.5" stroke-linecap="round" opacity="0.35" />
                         </svg>
                     </article>
 
@@ -233,11 +261,14 @@
 
                 <!-- Tira horizontal de micro-KPIs tipo pastilla (32px de alto) -->
                 <div class="cases-kpi-strip">
-                    <span class="cases-kpi-pill pill-active"><i class="bi bi-layers-fill"></i> <strong>{{ tubo_trabajo|length|default:"4" }} Casos Activos</strong></span>
+                    <span class="cases-kpi-pill pill-active"><i class="bi bi-layers-fill"></i> <strong>{{
+                            tubo_trabajo|length|default:"4" }} Casos Activos</strong></span>
                     <span style="color: rgba(255,255,255,0.3); font-size: 11px;">·</span>
-                    <span class="cases-kpi-pill pill-validated"><i class="bi bi-patch-check-fill"></i> <strong>{{ kpi.my_accumulated_validated|default:"38" }} Validados (+1pt)</strong></span>
+                    <span class="cases-kpi-pill pill-validated"><i class="bi bi-patch-check-fill"></i> <strong>{{
+                            kpi.my_accumulated_validated|default:"38" }} Validados (+1pt)</strong></span>
                     <span style="color: rgba(255,255,255,0.3); font-size: 11px;">·</span>
-                    <span class="cases-kpi-pill pill-goal"><i class="bi bi-bullseye"></i> <strong>{{ kpi.my_compliance_pct|default:"84.4" }}% Meta</strong></span>
+                    <span class="cases-kpi-pill pill-goal"><i class="bi bi-bullseye"></i> <strong>{{
+                            kpi.my_compliance_pct|default:"84.4" }}% Meta</strong></span>
                 </div>
 
                 <div class="cases-top-actions">
@@ -245,7 +276,8 @@
                         <i class="bi bi-arrow-left"></i>
                         <span>Volver al Menú</span>
                     </button>
-                    <button type="button" class="btn-cases-close" onclick="closeAllModals()" aria-label="Cerrar ventana">
+                    <button type="button" class="btn-cases-close" onclick="closeAllModals()"
+                        aria-label="Cerrar ventana">
                         <i class="bi bi-x-lg"></i>
                     </button>
                 </div>
@@ -262,15 +294,20 @@
                 <!-- Input de búsqueda delgado (36px de alto) -->
                 <div class="cases-search-box">
                     <i class="bi bi-search"></i>
-                    <input type="text" id="caseSearchInput" placeholder="Buscar por código o vecino..." onkeyup="filterCasesTable()">
+                    <input type="text" id="caseSearchInput" placeholder="Buscar por código o vecino..."
+                        onkeyup="filterCasesTable()">
                 </div>
 
                 <!-- Micro-filtros en pastilla -->
                 <div class="cases-filters-pills">
-                    <button type="button" class="cases-filter-btn active" onclick="setCasesFilter('all', this)">Todos ({{ tubo_trabajo|length|default:"4" }})</button>
-                    <button type="button" class="cases-filter-btn" onclick="setCasesFilter('En Proceso', this)">En Proceso</button>
-                    <button type="button" class="cases-filter-btn" onclick="setCasesFilter('Pendiente', this)">Pendientes</button>
-                    <button type="button" class="cases-filter-btn" onclick="setCasesFilter('Realizado', this)">Realizados</button>
+                    <button type="button" class="cases-filter-btn active" onclick="setCasesFilter('all', this)">Todos
+                        ({{ tubo_trabajo|length|default:"4" }})</button>
+                    <button type="button" class="cases-filter-btn" onclick="setCasesFilter('En Proceso', this)">En
+                        Proceso</button>
+                    <button type="button" class="cases-filter-btn"
+                        onclick="setCasesFilter('Pendiente', this)">Pendientes</button>
+                    <button type="button" class="cases-filter-btn"
+                        onclick="setCasesFilter('Realizado', this)">Realizados</button>
                 </div>
             </div>
 
@@ -293,24 +330,39 @@
                         {% for item in tubo_trabajo %}
                         <tr class="case-row-item" data-status="{{ item.status|default:'En Proceso' }}">
                             <td><span class="badge-case-code">{{ item.code }}</span></td>
-                            <td style="font-size: 12px; color: #CBD5E1; white-space: nowrap;"><i class="bi bi-calendar3" style="margin-right: 4px; opacity: 0.7;"></i>{{ item.request_date }}</td>
+                            <td style="font-size: 12px; color: #CBD5E1; white-space: nowrap;"><i class="bi bi-calendar3"
+                                    style="margin-right: 4px; opacity: 0.7;"></i>{{ item.request_date }}</td>
                             <td style="color: #F8FAFC; max-width: 250px;">{{ item.problem }}</td>
                             <td style="color: #E2E8F0; font-weight: 500;">{{ item.requester }}</td>
-                            <td style="color: #93C5FD; font-family: monospace; white-space: nowrap;">{{ item.phone|default:"+56 9 8452 1102" }}</td>
-                            <td><span class="badge-case-due"><i class="bi bi-clock-history"></i> {{ item.due_date|default:"18 Sep 2026" }}</span></td>
+                            <td style="color: #93C5FD; font-family: monospace; white-space: nowrap;">{{
+                                item.phone|default:"+56 9 8452 1102" }}</td>
+                            <td><span class="badge-case-due"><i class="bi bi-clock-history"></i> {{
+                                    item.due_date|default:"18 Sep 2026" }}</span></td>
                             <td>
-                                {% if item.status == 'Realizado' or item.status == 'Aprobado' or item.status == 'Aprobada' %}
-                                    <span class="badge-status-mini status-completed"><i class="bi bi-check-circle-fill"></i> Realizado</span>
+                                {% if item.status == 'Realizado' or item.status == 'Aprobado' or item.status ==
+                                'Aprobada' %}
+                                <span class="badge-status-mini status-completed"><i class="bi bi-check-circle-fill"></i>
+                                    Realizado</span>
                                 {% elif item.status == 'Pendiente' or item.status == 'Observada' %}
-                                    <span class="badge-status-mini status-pending"><i class="bi bi-clock-fill"></i> Pendiente</span>
+                                <span class="badge-status-mini status-pending"><i class="bi bi-clock-fill"></i>
+                                    Pendiente</span>
                                 {% elif item.status == 'En Proceso' or item.status == 'En Revisión' %}
-                                    <span class="badge-status-mini status-in-progress"><i class="bi bi-gear-fill"></i> En Proceso</span>
+                                <span class="badge-status-mini status-in-progress"><i class="bi bi-gear-fill"></i> En
+                                    Proceso</span>
                                 {% else %}
-                                    <span class="badge-status-mini status-completed"><i class="bi bi-check-circle-fill"></i> Realizado</span>
+                                <span class="badge-status-mini status-completed"><i class="bi bi-check-circle-fill"></i>
+                                    Realizado</span>
                                 {% endif %}
                             </td>
                             <td style="text-align: center;">
-                                <button type="button" class="btn-case-view-mini" onclick="viewCaseDetail('{{ item.code }}', '{{ item.problem|escapejs }}', '{{ item.requester|escapejs }}', '{{ item.phone|default:"+56 9 8452 1102"|escapejs }}', '{{ item.due_date|default:"18 Sep 2026"|escapejs }}', '{{ item.status|default:"En Proceso" }}')">
+                                <button type="button" class="btn-case-view-mini"
+                                    data-code="{{ item.code }}"
+                                    data-problem="{{ item.problem|escapejs }}"
+                                    data-requester="{{ item.requester|escapejs }}"
+                                    data-phone="{{ item.phone|default:'+56 9 8452 1102' }}"
+                                    data-due="{{ item.due_date|default:'18 Sep 2026' }}"
+                                    data-status="{{ item.status|default:'En Proceso' }}"
+                                    onclick="viewCaseDetail(this.dataset.code, this.dataset.problem, this.dataset.requester, this.dataset.phone, this.dataset.due, this.dataset.status)">
                                     <i class="bi bi-eye-fill"></i> Ver
                                 </button>
                             </td>
@@ -319,26 +371,43 @@
 
                         {% for hist in historial_personal %}
                         {% with hist_stat=hist.status|default:hist.supervisor_status %}
-                        <tr class="case-row-item" data-status="{% if hist_stat == 'Aprobada' or hist_stat == 'Realizado' or hist_stat == 'Aprobado' %}Realizado{% elif hist_stat == 'Observada' or hist_stat == 'Pendiente' %}Pendiente{% else %}En Proceso{% endif %}">
-                            <td><span class="badge-case-code" style="color: #E2E8F0; background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.2);">{{ hist.code }}</span></td>
-                            <td style="font-size: 12px; color: #CBD5E1; white-space: nowrap;"><i class="bi bi-calendar3" style="margin-right: 4px; opacity: 0.7;"></i>{{ hist.date }}</td>
+                        <tr class="case-row-item"
+                            data-status="{% if hist_stat == 'Aprobada' or hist_stat == 'Realizado' or hist_stat == 'Aprobado' %}Realizado{% elif hist_stat == 'Observada' or hist_stat == 'Pendiente' %}Pendiente{% else %}En Proceso{% endif %}">
+                            <td><span class="badge-case-code"
+                                    style="color: #E2E8F0; background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.2);">{{
+                                    hist.code }}</span></td>
+                            <td style="font-size: 12px; color: #CBD5E1; white-space: nowrap;"><i class="bi bi-calendar3"
+                                    style="margin-right: 4px; opacity: 0.7;"></i>{{ hist.date }}</td>
                             <td style="color: #F8FAFC; max-width: 250px;">{{ hist.activity }}</td>
                             <td style="color: #E2E8F0; font-weight: 500;">{{ hist.contact }}</td>
-                            <td style="color: #93C5FD; font-family: monospace; white-space: nowrap;">{{ hist.phone|default:"+56 9 8452 1102" }}</td>
-                            <td><span class="badge-case-due"><i class="bi bi-clock-history"></i> {{ hist.due_date|default:"16 Sep 2026" }}</span></td>
+                            <td style="color: #93C5FD; font-family: monospace; white-space: nowrap;">{{
+                                hist.phone|default:"+56 9 8452 1102" }}</td>
+                            <td><span class="badge-case-due"><i class="bi bi-clock-history"></i> {{
+                                    hist.due_date|default:"16 Sep 2026" }}</span></td>
                             <td>
                                 {% if hist_stat == 'Realizado' or hist_stat == 'Aprobado' or hist_stat == 'Aprobada' %}
-                                    <span class="badge-status-mini status-completed"><i class="bi bi-check-circle-fill"></i> Realizado</span>
+                                <span class="badge-status-mini status-completed"><i class="bi bi-check-circle-fill"></i>
+                                    Realizado</span>
                                 {% elif hist_stat == 'Pendiente' or hist_stat == 'Observada' %}
-                                    <span class="badge-status-mini status-pending"><i class="bi bi-clock-fill"></i> Pendiente</span>
+                                <span class="badge-status-mini status-pending"><i class="bi bi-clock-fill"></i>
+                                    Pendiente</span>
                                 {% elif hist_stat == 'En Proceso' or hist_stat == 'En Revisión' %}
-                                    <span class="badge-status-mini status-in-progress"><i class="bi bi-gear-fill"></i> En Proceso</span>
+                                <span class="badge-status-mini status-in-progress"><i class="bi bi-gear-fill"></i> En
+                                    Proceso</span>
                                 {% else %}
-                                    <span class="badge-status-mini status-completed"><i class="bi bi-check-circle-fill"></i> Realizado</span>
+                                <span class="badge-status-mini status-completed"><i class="bi bi-check-circle-fill"></i>
+                                    Realizado</span>
                                 {% endif %}
                             </td>
                             <td style="text-align: center;">
-                                <button type="button" class="btn-case-view-mini" onclick="viewCaseDetail('{{ hist.code }}', '{{ hist.activity|escapejs }}', '{{ hist.contact|escapejs }}', '{{ hist.phone|default:"+56 9 8452 1102"|escapejs }}', '{{ hist.due_date|default:"16 Sep 2026"|escapejs }}', '{% if hist_stat == 'Aprobada' or hist_stat == 'Realizado' or hist_stat == 'Aprobado' %}Realizado{% elif hist_stat == 'Observada' or hist_stat == 'Pendiente' %}Pendiente{% else %}En Proceso{% endif %}')">
+                                <button type="button" class="btn-case-view-mini"
+                                    data-code="{{ hist.code }}"
+                                    data-problem="{{ hist.activity|escapejs }}"
+                                    data-requester="{{ hist.contact|escapejs }}"
+                                    data-phone="{{ hist.phone|default:'+56 9 8452 1102' }}"
+                                    data-due="{{ hist.due_date|default:'16 Sep 2026' }}"
+                                    data-status="{% if hist_stat == 'Aprobada' or hist_stat == 'Realizado' or hist_stat == 'Aprobado' %}Realizado{% elif hist_stat == 'Observada' or hist_stat == 'Pendiente' %}Pendiente{% else %}En Proceso{% endif %}"
+                                    onclick="viewCaseDetail(this.dataset.code, this.dataset.problem, this.dataset.requester, this.dataset.phone, this.dataset.due, this.dataset.status)">
                                     <i class="bi bi-eye-fill"></i> Ver
                                 </button>
                             </td>
@@ -354,27 +423,34 @@
     <!-- =================================================================
          MODAL EXCLUSIVO: "MIS EVIDENCIAS Y GESTIONES SUBIDAS"
          ================================================================= -->
-    <div class="glass-overlay-panel" id="modal-evidencias" role="dialog" aria-modal="true" aria-labelledby="evidenciasModalTitle">
+    <div class="glass-overlay-panel" id="modal-evidencias" role="dialog" aria-modal="true"
+        aria-labelledby="evidenciasModalTitle">
         <div class="glass-modal-container evidencias-modal-compact">
             <!-- Fila 1: Título + Tira de Dictámenes + Botones Volver y Cerrar -->
             <header class="cases-top-row">
                 <div class="cases-title-group" id="evidenciasModalTitle">
                     <i class="bi bi-camera-fill" style="color: #34d399; font-size: 1.15rem;"></i>
                     <span>Mis Evidencias y Registros Personales</span>
-                    <span class="cases-delegation-pill" style="color: #86efac; border-color: rgba(134, 239, 172, 0.3); background: rgba(34, 197, 94, 0.15);">
+                    <span class="cases-delegation-pill"
+                        style="color: #86efac; border-color: rgba(134, 239, 172, 0.3); background: rgba(34, 197, 94, 0.15);">
                         Historial acreditado por {{ user_name|default:"Kevin Encina Molina" }}
                     </span>
                 </div>
 
                 <!-- Tira horizontal de micro-KPIs tipo pastilla (32px de alto) -->
                 <div class="cases-kpi-strip">
-                    <span class="cases-kpi-pill pill-active"><i class="bi bi-folder-check"></i> <strong>38 Total Acreditadas</strong></span>
+                    <span class="cases-kpi-pill pill-active"><i class="bi bi-folder-check"></i> <strong>38 Total
+                            Acreditadas</strong></span>
                     <span style="color: rgba(255,255,255,0.3); font-size: 11px;">·</span>
-                    <span class="cases-kpi-pill pill-validated"><i class="bi bi-check-circle-fill"></i> <strong>35 Aprobadas</strong></span>
+                    <span class="cases-kpi-pill pill-validated"><i class="bi bi-check-circle-fill"></i> <strong>35
+                            Aprobadas</strong></span>
                     <span style="color: rgba(255,255,255,0.3); font-size: 11px;">·</span>
-                    <span class="cases-kpi-pill pill-goal"><i class="bi bi-hourglass-split"></i> <strong>2 En Revisión</strong></span>
+                    <span class="cases-kpi-pill pill-goal"><i class="bi bi-hourglass-split"></i> <strong>2 En
+                            Revisión</strong></span>
                     <span style="color: rgba(255,255,255,0.3); font-size: 11px;">·</span>
-                    <span class="cases-kpi-pill" style="color: #fca5a5; background: rgba(239,68,68,0.2); border: 1px solid rgba(248,113,113,0.4);"><i class="bi bi-exclamation-diamond-fill"></i> <strong>1 Observada</strong></span>
+                    <span class="cases-kpi-pill"
+                        style="color: #fca5a5; background: rgba(239,68,68,0.2); border: 1px solid rgba(248,113,113,0.4);"><i
+                            class="bi bi-exclamation-diamond-fill"></i> <strong>1 Observada</strong></span>
                 </div>
 
                 <div class="cases-top-actions">
@@ -382,7 +458,8 @@
                         <i class="bi bi-arrow-left"></i>
                         <span>Volver al Menú</span>
                     </button>
-                    <button type="button" class="btn-cases-close" onclick="closeAllModals()" aria-label="Cerrar ventana">
+                    <button type="button" class="btn-cases-close" onclick="closeAllModals()"
+                        aria-label="Cerrar ventana">
                         <i class="bi bi-x-lg"></i>
                     </button>
                 </div>
@@ -393,15 +470,21 @@
                 <!-- Input de búsqueda rápido por código o vecino -->
                 <div class="cases-search-box" style="max-width: 480px;">
                     <i class="bi bi-search"></i>
-                    <input type="text" id="evidenceSearchInput" placeholder="Buscar por código inmutable (ORC-, SOC-, LOR-), labor o vecino..." onkeyup="filterEvidenciasTable()">
+                    <input type="text" id="evidenceSearchInput"
+                        placeholder="Buscar por código inmutable (ORC-, SOC-, LOR-), labor o vecino..."
+                        onkeyup="filterEvidenciasTable()">
                 </div>
 
                 <!-- Filtros de dictamen en pastilla -->
                 <div class="cases-filters-pills">
-                    <button type="button" class="cases-filter-btn active" onclick="setEvidenciasFilter('all', this)">Todas (38)</button>
-                    <button type="button" class="cases-filter-btn" onclick="setEvidenciasFilter('Aprobada', this)">Aprobadas (35)</button>
-                    <button type="button" class="cases-filter-btn" onclick="setEvidenciasFilter('En Revisión', this)">En Revisión (2)</button>
-                    <button type="button" class="cases-filter-btn" onclick="setEvidenciasFilter('Observada', this)" style="color: #fca5a5;">Observadas / Por Corregir (1)</button>
+                    <button type="button" class="cases-filter-btn active"
+                        onclick="setEvidenciasFilter('all', this)">Todas (38)</button>
+                    <button type="button" class="cases-filter-btn"
+                        onclick="setEvidenciasFilter('Aprobada', this)">Aprobadas (35)</button>
+                    <button type="button" class="cases-filter-btn" onclick="setEvidenciasFilter('En Revisión', this)">En
+                        Revisión (2)</button>
+                    <button type="button" class="cases-filter-btn" onclick="setEvidenciasFilter('Observada', this)"
+                        style="color: #fca5a5;">Observadas / Por Corregir (1)</button>
                 </div>
             </div>
 
@@ -421,36 +504,50 @@
                     </thead>
                     <tbody>
                         {% for ev in mis_evidencias %}
-                        <tr class="evidence-row-item" data-status="{{ ev.supervisor_status }}" id="evidence-row-{{ ev.code }}">
+                        <tr class="evidence-row-item" data-status="{{ ev.supervisor_status }}"
+                            id="evidence-row-{{ ev.code }}">
                             <td><span class="badge-evidence-code">{{ ev.code }}</span></td>
-                            <td style="font-size: 12px; color: #FFFFFF; white-space: nowrap;"><i class="bi bi-calendar3" style="margin-right: 4px; opacity: 0.7;"></i><span class="ev-date">{{ ev.date }}</span></td>
+                            <td style="font-size: 12px; color: #FFFFFF; white-space: nowrap;"><i class="bi bi-calendar3"
+                                    style="margin-right: 4px; opacity: 0.7;"></i><span class="ev-date">{{ ev.date
+                                    }}</span></td>
                             <td><span class="badge-evidence-type">{{ ev.activity_type }}</span></td>
                             <td>
                                 <div style="font-weight: 600; color: #FFFFFF;" class="ev-contact">{{ ev.contact }}</div>
-                                <div style="font-size: 11px; color: #CBD5E1; font-family: monospace;" class="ev-phone">{{ ev.phone }}</div>
+                                <div style="font-size: 11px; color: #CBD5E1; font-family: monospace;" class="ev-phone">
+                                    {{ ev.phone }}</div>
                             </td>
                             <td style="text-align: center;">
-                                <button type="button" class="evidence-thumbnail-btn" onclick="viewEvidenceDetail('{{ ev.code }}', '{{ ev.date }}', '{{ ev.activity_type|escapejs }}', '{{ ev.activity|escapejs }}', '{{ ev.contact|escapejs }}', '{{ ev.phone|escapejs }}', '{{ ev.thumbnail }}', '{{ ev.hash_inmutable }}', '{{ ev.supervisor_status }}', '{{ ev.supervisor_note|escapejs }}')" title="Ver evidencia fotográfica">
-                                    <img src="{{ ev.thumbnail }}" alt="Evidencia {{ ev.code }}" class="evidence-thumbnail-img">
+                                <button type="button" class="evidence-thumbnail-btn"
+                                    onclick="viewEvidenceDetail('{{ ev.code }}', '{{ ev.date }}', '{{ ev.activity_type|escapejs }}', '{{ ev.activity|escapejs }}', '{{ ev.contact|escapejs }}', '{{ ev.phone|escapejs }}', '{{ ev.thumbnail }}', '{{ ev.hash_inmutable }}', '{{ ev.supervisor_status }}', '{{ ev.supervisor_note|escapejs }}')"
+                                    title="Ver evidencia fotográfica">
+                                    <img src="{{ ev.thumbnail }}" alt="Evidencia {{ ev.code }}"
+                                        class="evidence-thumbnail-img">
                                 </button>
                             </td>
                             <td>
                                 {% if ev.supervisor_status == 'Aprobada' %}
-                                    <span class="badge-status-mini status-aprobada"><i class="bi bi-check-circle-fill"></i> Aprobada</span>
+                                <span class="badge-status-mini status-aprobada"><i class="bi bi-check-circle-fill"></i>
+                                    Aprobada</span>
                                 {% elif ev.supervisor_status == 'En Revisión' %}
-                                    <span class="badge-status-mini status-revision"><i class="bi bi-hourglass-split"></i> En Revisión</span>
+                                <span class="badge-status-mini status-revision"><i class="bi bi-hourglass-split"></i> En
+                                    Revisión</span>
                                 {% elif ev.supervisor_status == 'Observada' %}
-                                    <span class="badge-status-mini status-observada"><i class="bi bi-exclamation-triangle-fill"></i> Observada</span>
+                                <span class="badge-status-mini status-observada"><i
+                                        class="bi bi-exclamation-triangle-fill"></i> Observada</span>
                                 {% else %}
-                                    <span class="badge-status-mini status-revision">{{ ev.supervisor_status }}</span>
+                                <span class="badge-status-mini status-revision">{{ ev.supervisor_status }}</span>
                                 {% endif %}
                             </td>
                             <td style="text-align: center;">
                                 <div style="display: inline-flex; gap: 5px; justify-content: center;">
-                                    <button type="button" class="btn-evidence-view" onclick="viewEvidenceDetail('{{ ev.code }}', '{{ ev.date }}', '{{ ev.activity_type|escapejs }}', '{{ ev.activity|escapejs }}', '{{ ev.contact|escapejs }}', '{{ ev.phone|escapejs }}', '{{ ev.thumbnail }}', '{{ ev.hash_inmutable }}', '{{ ev.supervisor_status }}', '{{ ev.supervisor_note|escapejs }}')" title="Ver detalle inmutable">
+                                    <button type="button" class="btn-evidence-view"
+                                        onclick="viewEvidenceDetail('{{ ev.code }}', '{{ ev.date }}', '{{ ev.activity_type|escapejs }}', '{{ ev.activity|escapejs }}', '{{ ev.contact|escapejs }}', '{{ ev.phone|escapejs }}', '{{ ev.thumbnail }}', '{{ ev.hash_inmutable }}', '{{ ev.supervisor_status }}', '{{ ev.supervisor_note|escapejs }}')"
+                                        title="Ver detalle inmutable">
                                         <i class="bi bi-eye-fill"></i> Ver
                                     </button>
-                                    <button type="button" class="btn-evidence-edit" onclick="editEvidenceModal('{{ ev.code }}', '{{ ev.date }}', '{{ ev.contact|escapejs }}', '{{ ev.phone|escapejs }}', '{{ ev.supervisor_status }}', '{{ ev.supervisor_note|escapejs }}')" title="Editar datos propios y bitácora">
+                                    <button type="button" class="btn-evidence-edit"
+                                        onclick="editEvidenceModal('{{ ev.code }}', '{{ ev.date }}', '{{ ev.contact|escapejs }}', '{{ ev.phone|escapejs }}', '{{ ev.supervisor_status }}', '{{ ev.supervisor_note|escapejs }}')"
+                                        title="Editar datos propios y bitácora">
                                         <i class="bi bi-pencil-fill"></i> Editar
                                     </button>
                                 </div>
@@ -466,7 +563,8 @@
     <!-- =================================================================
          MODAL: "MI RENDIMIENTO SGR"
          ================================================================= -->
-    <div class="glass-overlay-panel" id="modal-rendimiento" role="dialog" aria-modal="true" aria-labelledby="rendimientoModalTitle">
+    <div class="glass-overlay-panel" id="modal-rendimiento" role="dialog" aria-modal="true"
+        aria-labelledby="rendimientoModalTitle">
         <div class="glass-modal-container rendimiento-modal-compact">
             <header class="cases-top-row">
                 <div class="cases-title-group" id="rendimientoModalTitle">
@@ -479,7 +577,8 @@
                         <i class="bi bi-arrow-left"></i>
                         <span>Volver al Menú</span>
                     </button>
-                    <button type="button" class="btn-cases-close" onclick="closeAllModals()" aria-label="Cerrar ventana">
+                    <button type="button" class="btn-cases-close" onclick="closeAllModals()"
+                        aria-label="Cerrar ventana">
                         <i class="bi bi-x-lg"></i>
                     </button>
                 </div>
@@ -488,90 +587,121 @@
             <!-- 3 Tarjetas de Resumen Superior -->
             <div class="rendimiento-kpis-grid">
                 <div class="rendimiento-kpi-card">
-                    <div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; font-weight: 700;">Semáforo Diario</div>
+                    <div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; font-weight: 700;">Semáforo
+                        Diario</div>
                     <div class="rendimiento-kpi-val" style="color: #34D399;">98,2%</div>
-                    <div style="font-size: 11.5px; color: #A7F3D0;"><i class="bi bi-patch-check-fill"></i> ● Verde al día (Óptimo)</div>
+                    <div style="font-size: 11.5px; color: #A7F3D0;"><i class="bi bi-patch-check-fill"></i> ● Verde al
+                        día (Óptimo)</div>
                 </div>
                 <div class="rendimiento-kpi-card">
-                    <div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; font-weight: 700;">Tiempo Computable</div>
-                    <div class="rendimiento-kpi-val" style="color: #7DD3FC;">56 / 91 <span style="font-size: 14px; font-weight: 500; color: #94A3B8;">días</span></div>
-                    <div style="font-size: 11.5px; color: #BAE6FD;"><i class="bi bi-calendar-check"></i> 61,5% del trimestre transcurrido</div>
+                    <div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; font-weight: 700;">Tiempo
+                        Computable</div>
+                    <div class="rendimiento-kpi-val" style="color: #7DD3FC;">56 / 91 <span
+                            style="font-size: 14px; font-weight: 500; color: #94A3B8;">días</span></div>
+                    <div style="font-size: 11.5px; color: #BAE6FD;"><i class="bi bi-calendar-check"></i> 61,5% del
+                        trimestre transcurrido</div>
                 </div>
                 <div class="rendimiento-kpi-card">
-                    <div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; font-weight: 700;">Cumplimiento Meta Trimestral</div>
+                    <div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; font-weight: 700;">
+                        Cumplimiento Meta Trimestral</div>
                     <div class="rendimiento-kpi-val" style="color: #FDE68A;">84,4%</div>
-                    <div style="font-size: 11.5px; color: #FEF08A;"><i class="bi bi-bullseye"></i> 38 de 45 unidades verificadas</div>
+                    <div style="font-size: 11.5px; color: #FEF08A;"><i class="bi bi-bullseye"></i> 38 de 45 unidades
+                        verificadas</div>
                 </div>
             </div>
 
             <!-- Gran Barra de Progreso General -->
-            <div style="background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.14); border-radius: 12px; padding: 1rem 1.25rem; margin-bottom: 1.25rem;">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; font-size: 12px;">
-                    <span style="font-weight: 600; color: #FFFFFF;"><i class="bi bi-activity text-primary"></i> Ritmo Operativo Consolidado Territorial</span>
+            <div
+                style="background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.14); border-radius: 12px; padding: 1rem 1.25rem; margin-bottom: 1.25rem;">
+                <div
+                    style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; font-size: 12px;">
+                    <span style="font-weight: 600; color: #FFFFFF;"><i class="bi bi-activity text-primary"></i> Ritmo
+                        Operativo Consolidado Territorial</span>
                     <span style="font-weight: 700; color: #34D399;">84.4% de avance</span>
                 </div>
-                <div style="width: 100%; height: 8px; background: rgba(0,0,0,0.3); border-radius: 4px; overflow: hidden;">
-                    <div style="width: 84.4%; height: 100%; background: linear-gradient(90deg, #2563EB 0%, #10B981 100%); border-radius: 4px; box-shadow: 0 0 10px rgba(16, 185, 129, 0.6);"></div>
+                <div
+                    style="width: 100%; height: 8px; background: rgba(0,0,0,0.3); border-radius: 4px; overflow: hidden;">
+                    <div
+                        style="width: 84.4%; height: 100%; background: linear-gradient(90deg, #2563EB 0%, #10B981 100%); border-radius: 4px; box-shadow: 0 0 10px rgba(16, 185, 129, 0.6);">
+                    </div>
                 </div>
             </div>
 
             <!-- Detalle de Ponderaciones (Grid de 4 Tarjetas) -->
-            <div style="font-size: 12.5px; font-weight: 700; color: #F1F5F9; margin-bottom: 0.75rem; text-transform: uppercase; letter-spacing: 0.04em;">
-                <i class="bi bi-layers-fill" style="color: #60a5fa; margin-right: 4px;"></i> Detalle de Ponderaciones por Cargo
+            <div
+                style="font-size: 12.5px; font-weight: 700; color: #F1F5F9; margin-bottom: 0.75rem; text-transform: uppercase; letter-spacing: 0.04em;">
+                <i class="bi bi-layers-fill" style="color: #60a5fa; margin-right: 4px;"></i> Detalle de Ponderaciones
+                por Cargo
             </div>
             <div class="rendimiento-metas-grid">
                 <div class="rendimiento-meta-card">
                     <div style="display: flex; justify-content: space-between; align-items: center;">
-                        <span style="font-weight: 700; font-size: 12.5px; color: #FFFFFF;">Operativos Vecinales y Terreno</span>
-                        <span style="background: rgba(59,130,246,0.25); border: 1px solid rgba(147,197,253,0.5); color: #93C5FD; font-size: 11px; padding: 1px 7px; border-radius: 6px; font-weight: 700;">35% Ponderador</span>
+                        <span style="font-weight: 700; font-size: 12.5px; color: #FFFFFF;">Operativos Vecinales y
+                            Terreno</span>
+                        <span
+                            style="background: rgba(59,130,246,0.25); border: 1px solid rgba(147,197,253,0.5); color: #93C5FD; font-size: 11px; padding: 1px 7px; border-radius: 6px; font-weight: 700;">35%
+                            Ponderador</span>
                     </div>
                     <div style="display: flex; justify-content: space-between; font-size: 11.5px; color: #CBD5E1;">
                         <span>Meta Trimestre: <strong>45 operativos</strong></span>
                         <span style="color: #86EFAC;">Realizado: <strong>38 (84.4%)</strong></span>
                     </div>
-                    <div style="width: 100%; height: 5px; background: rgba(255,255,255,0.1); border-radius: 3px; overflow: hidden;">
+                    <div
+                        style="width: 100%; height: 5px; background: rgba(255,255,255,0.1); border-radius: 3px; overflow: hidden;">
                         <div style="width: 84.4%; height: 100%; background: #3B82F6; border-radius: 3px;"></div>
                     </div>
                 </div>
 
                 <div class="rendimiento-meta-card">
                     <div style="display: flex; justify-content: space-between; align-items: center;">
-                        <span style="font-weight: 700; font-size: 12.5px; color: #FFFFFF;">Atenciones RSH y Fichas Sociales</span>
-                        <span style="background: rgba(16,185,129,0.25); border: 1px solid rgba(110,231,183,0.5); color: #6EE7B7; font-size: 11px; padding: 1px 7px; border-radius: 6px; font-weight: 700;">30% Ponderador</span>
+                        <span style="font-weight: 700; font-size: 12.5px; color: #FFFFFF;">Atenciones RSH y Fichas
+                            Sociales</span>
+                        <span
+                            style="background: rgba(16,185,129,0.25); border: 1px solid rgba(110,231,183,0.5); color: #6EE7B7; font-size: 11px; padding: 1px 7px; border-radius: 6px; font-weight: 700;">30%
+                            Ponderador</span>
                     </div>
                     <div style="display: flex; justify-content: space-between; font-size: 11.5px; color: #CBD5E1;">
                         <span>Meta Trimestre: <strong>130 atenciones</strong></span>
                         <span style="color: #86EFAC;">Realizado: <strong>112 (86.1%)</strong></span>
                     </div>
-                    <div style="width: 100%; height: 5px; background: rgba(255,255,255,0.1); border-radius: 3px; overflow: hidden;">
+                    <div
+                        style="width: 100%; height: 5px; background: rgba(255,255,255,0.1); border-radius: 3px; overflow: hidden;">
                         <div style="width: 86.1%; height: 100%; background: #10B981; border-radius: 3px;"></div>
                     </div>
                 </div>
 
                 <div class="rendimiento-meta-card">
                     <div style="display: flex; justify-content: space-between; align-items: center;">
-                        <span style="font-weight: 700; font-size: 12.5px; color: #FFFFFF;">Comités Vecinales de Seguridad</span>
-                        <span style="background: rgba(245,158,11,0.25); border: 1px solid rgba(251,191,36,0.5); color: #FDE68A; font-size: 11px; padding: 1px 7px; border-radius: 6px; font-weight: 700;">20% Ponderador</span>
+                        <span style="font-weight: 700; font-size: 12.5px; color: #FFFFFF;">Comités Vecinales de
+                            Seguridad</span>
+                        <span
+                            style="background: rgba(245,158,11,0.25); border: 1px solid rgba(251,191,36,0.5); color: #FDE68A; font-size: 11px; padding: 1px 7px; border-radius: 6px; font-weight: 700;">20%
+                            Ponderador</span>
                     </div>
                     <div style="display: flex; justify-content: space-between; font-size: 11.5px; color: #CBD5E1;">
                         <span>Meta Trimestre: <strong>25 reuniones</strong></span>
                         <span style="color: #86EFAC;">Realizado: <strong>22 (88.0%)</strong></span>
                     </div>
-                    <div style="width: 100%; height: 5px; background: rgba(255,255,255,0.1); border-radius: 3px; overflow: hidden;">
+                    <div
+                        style="width: 100%; height: 5px; background: rgba(255,255,255,0.1); border-radius: 3px; overflow: hidden;">
                         <div style="width: 88%; height: 100%; background: #F59E0B; border-radius: 3px;"></div>
                     </div>
                 </div>
 
                 <div class="rendimiento-meta-card">
                     <div style="display: flex; justify-content: space-between; align-items: center;">
-                        <span style="font-weight: 700; font-size: 12.5px; color: #FFFFFF;">Fiscalización y Retiro de Escombros</span>
-                        <span style="background: rgba(139,29,44,0.35); border: 1px solid rgba(248,113,113,0.5); color: #FECACA; font-size: 11px; padding: 1px 7px; border-radius: 6px; font-weight: 700;">15% Ponderador</span>
+                        <span style="font-weight: 700; font-size: 12.5px; color: #FFFFFF;">Fiscalización y Retiro de
+                            Escombros</span>
+                        <span
+                            style="background: rgba(139,29,44,0.35); border: 1px solid rgba(248,113,113,0.5); color: #FECACA; font-size: 11px; padding: 1px 7px; border-radius: 6px; font-weight: 700;">15%
+                            Ponderador</span>
                     </div>
                     <div style="display: flex; justify-content: space-between; font-size: 11.5px; color: #CBD5E1;">
                         <span>Meta Trimestre: <strong>30 inspecciones</strong></span>
                         <span style="color: #86EFAC;">Realizado: <strong>26 (86.7%)</strong></span>
                     </div>
-                    <div style="width: 100%; height: 5px; background: rgba(255,255,255,0.1); border-radius: 3px; overflow: hidden;">
+                    <div
+                        style="width: 100%; height: 5px; background: rgba(255,255,255,0.1); border-radius: 3px; overflow: hidden;">
                         <div style="width: 86.7%; height: 100%; background: #EF4444; border-radius: 3px;"></div>
                     </div>
                 </div>
@@ -582,7 +712,8 @@
     <!-- =================================================================
          MODAL 2: SECCIÓN REVISIÓN DATOS DE LA CIUDADANÍA
          ================================================================= -->
-    <div class="glass-overlay-panel" id="modal-citizenship" role="dialog" aria-modal="true" aria-labelledby="citizenshipModalTitle">
+    <div class="glass-overlay-panel" id="modal-citizenship" role="dialog" aria-modal="true"
+        aria-labelledby="citizenshipModalTitle">
         <div class="glass-modal-container">
             <header class="glass-modal-header">
                 <div class="glass-modal-title" id="citizenshipModalTitle">
@@ -592,21 +723,27 @@
                         Registro Social & Vecinal La Serena
                     </span>
                 </div>
-                <button type="button" class="glass-modal-close-btn" onclick="closeAllModals()" aria-label="Cerrar ventana">
+                <button type="button" class="glass-modal-close-btn" onclick="closeAllModals()"
+                    aria-label="Cerrar ventana">
                     <i class="bi bi-x-lg"></i>
                 </button>
             </header>
 
             <div class="glass-modal-body">
                 <!-- Barra de Filtros y Búsqueda -->
-                <div style="display: flex; gap: 1rem; align-items: center; justify-content: space-between; flex-wrap: wrap; margin-bottom: 1.75rem;">
+                <div
+                    style="display: flex; gap: 1rem; align-items: center; justify-content: space-between; flex-wrap: wrap; margin-bottom: 1.75rem;">
                     <div class="glass-input-group" style="max-width: 440px; flex: 1;">
                         <i class="bi bi-search glass-input-icon"></i>
-                        <input type="text" id="citizenSearchInput" class="glass-input" placeholder="Buscar por RUT, Nombre del vecino o Dirección..." onkeyup="filterCitizensTable()">
+                        <input type="text" id="citizenSearchInput" class="glass-input"
+                            placeholder="Buscar por RUT, Nombre del vecino o Dirección..."
+                            onkeyup="filterCitizensTable()">
                     </div>
 
                     <div style="display: flex; gap: 0.75rem; align-items: center;">
-                        <button type="button" class="btn-glass-primary" style="background: linear-gradient(135deg, rgba(20, 160, 160, 0.85) 0%, rgba(14, 130, 140, 0.95) 100%);" onclick="openNewCitizenModal()">
+                        <button type="button" class="btn-glass-primary"
+                            style="background: linear-gradient(135deg, rgba(20, 160, 160, 0.85) 0%, rgba(14, 130, 140, 0.95) 100%);"
+                            onclick="openNewCitizenModal()">
                             <i class="bi bi-person-plus-fill"></i>
                             <span>+ Nueva Ficha Social</span>
                         </button>
@@ -618,17 +755,25 @@
                 </div>
 
                 <!-- Resumen Ciudadano RSH -->
-                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1.5rem;">
-                    <div style="background: rgba(255,255,255,0.14); border: 1px solid rgba(255,255,255,0.3); border-radius: 18px; padding: 1.15rem 1.4rem;">
-                        <div style="font-size: 0.82rem; color: rgba(255,255,255,0.8); text-transform: uppercase;">Vecinos Atendidos Sector</div>
-                        <div style="font-size: 1.75rem; font-weight: 800; color: #ffffff;">{{ ciudadania_records|length|default:"5" }} registrados</div>
+                <div
+                    style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1.5rem;">
+                    <div
+                        style="background: rgba(255,255,255,0.14); border: 1px solid rgba(255,255,255,0.3); border-radius: 18px; padding: 1.15rem 1.4rem;">
+                        <div style="font-size: 0.82rem; color: rgba(255,255,255,0.8); text-transform: uppercase;">
+                            Vecinos Atendidos Sector</div>
+                        <div style="font-size: 1.75rem; font-weight: 800; color: #ffffff;">{{
+                            ciudadania_records|length|default:"5" }} registrados</div>
                     </div>
-                    <div style="background: rgba(255,255,255,0.14); border: 1px solid rgba(255,255,255,0.3); border-radius: 18px; padding: 1.15rem 1.4rem;">
-                        <div style="font-size: 0.82rem; color: rgba(255,255,255,0.8); text-transform: uppercase;">Tramo RSH ≤ 40% (Prioritario)</div>
+                    <div
+                        style="background: rgba(255,255,255,0.14); border: 1px solid rgba(255,255,255,0.3); border-radius: 18px; padding: 1.15rem 1.4rem;">
+                        <div style="font-size: 0.82rem; color: rgba(255,255,255,0.8); text-transform: uppercase;">Tramo
+                            RSH ≤ 40% (Prioritario)</div>
                         <div style="font-size: 1.75rem; font-weight: 800; color: #a7f3d0;">60% del sector</div>
                     </div>
-                    <div style="background: rgba(255,255,255,0.14); border: 1px solid rgba(255,255,255,0.3); border-radius: 18px; padding: 1.15rem 1.4rem;">
-                        <div style="font-size: 0.82rem; color: rgba(255,255,255,0.8); text-transform: uppercase;">Protocolo Atención</div>
+                    <div
+                        style="background: rgba(255,255,255,0.14); border: 1px solid rgba(255,255,255,0.3); border-radius: 18px; padding: 1.15rem 1.4rem;">
+                        <div style="font-size: 0.82rem; color: rgba(255,255,255,0.8); text-transform: uppercase;">
+                            Protocolo Atención</div>
                         <div style="font-size: 1.75rem; font-weight: 800; color: #2dd4bf;">Regla RN-012</div>
                     </div>
                 </div>
@@ -655,7 +800,8 @@
                                 <td>{{ cit.name }}</td>
                                 <td>{{ cit.address }}</td>
                                 <td>
-                                    <span class="status-badge-glass {% if cit.rsh_tramo == '40%' %}danger{% elif cit.rsh_tramo == '50%' %}warning{% else %}success{% endif %}">
+                                    <span
+                                        class="status-badge-glass {% if cit.rsh_tramo == '40%' %}danger{% elif cit.rsh_tramo == '50%' %}warning{% else %}success{% endif %}">
                                         {{ cit.rsh_tramo }} ({{ cit.rsh_status }})
                                     </span>
                                 </td>
@@ -667,14 +813,17 @@
                                     </span>
                                 </td>
                                 <td>
-                                    <button type="button" class="btn-glass-secondary" style="padding: 0.35rem 0.75rem; font-size: 0.82rem;" onclick="viewCitizenDetail('{{ cit.rut }}', '{{ cit.name|escapejs }}', '{{ cit.rsh_tramo }}', '{{ cit.case_type|escapejs }}', '{{ cit.phone }}')">
+                                    <button type="button" class="btn-glass-secondary"
+                                        style="padding: 0.35rem 0.75rem; font-size: 0.82rem;"
+                                        onclick="viewCitizenDetail('{{ cit.rut }}', '{{ cit.name|escapejs }}', '{{ cit.rsh_tramo }}', '{{ cit.case_type|escapejs }}', '{{ cit.phone }}')">
                                         <i class="bi bi-person-lines-fill"></i> Ficha
                                     </button>
                                 </td>
                             </tr>
                             {% empty %}
                             <tr>
-                                <td colspan="8" style="text-align: center; padding: 2rem;">No se encontraron registros de ciudadanía en el sistema.</td>
+                                <td colspan="8" style="text-align: center; padding: 2rem;">No se encontraron registros
+                                    de ciudadanía en el sistema.</td>
                             </tr>
                             {% endfor %}
                         </tbody>
@@ -687,46 +836,57 @@
     <!-- =================================================================
          MODAL 3: PERFIL DEL FUNCIONARIO MUNICIPAL
          ================================================================= -->
-    <div class="glass-overlay-panel" id="modal-profile" role="dialog" aria-modal="true" aria-labelledby="profileModalTitle">
+    <div class="glass-overlay-panel" id="modal-profile" role="dialog" aria-modal="true"
+        aria-labelledby="profileModalTitle">
         <div class="glass-modal-container" style="max-width: 580px;">
             <header class="glass-modal-header">
                 <div class="glass-modal-title" id="profileModalTitle">
                     <i class="bi bi-person-badge-fill text-info"></i>
                     <span>Perfil del Empleado Municipal</span>
                 </div>
-                <button type="button" class="glass-modal-close-btn" onclick="closeAllModals()" aria-label="Cerrar ventana">
+                <button type="button" class="glass-modal-close-btn" onclick="closeAllModals()"
+                    aria-label="Cerrar ventana">
                     <i class="bi bi-x-lg"></i>
                 </button>
             </header>
 
             <div class="glass-modal-body" style="padding: 2.25rem 2rem; text-align: center;">
-                <div style="width: 88px; height: 88px; margin: 0 auto 1.25rem; border-radius: 50%; background: rgba(255,255,255,0.22); border: 2px solid rgba(255,255,255,0.6); display: flex; align-items: center; justify-content: center; font-size: 2.6rem; color: #ffffff; box-shadow: 0 10px 25px rgba(0,0,0,0.2);">
+                <div
+                    style="width: 88px; height: 88px; margin: 0 auto 1.25rem; border-radius: 50%; background: rgba(255,255,255,0.22); border: 2px solid rgba(255,255,255,0.6); display: flex; align-items: center; justify-content: center; font-size: 2.6rem; color: #ffffff; box-shadow: 0 10px 25px rgba(0,0,0,0.2);">
                     <i class="bi bi-person-check-fill"></i>
                 </div>
 
-                <h3 style="font-size: 1.55rem; font-weight: 800; color: #ffffff; margin-bottom: 0.35rem;">{{ user_name|default:"Kevin Encina Molina" }}</h3>
-                <p style="font-size: 0.95rem; color: #93c5fd; font-weight: 600; margin-bottom: 1.75rem;">{{ user_role|default:"Territorial OO.CC." }}</p>
+                <h3 style="font-size: 1.55rem; font-weight: 800; color: #ffffff; margin-bottom: 0.35rem;">{{
+                    user_name|default:"Kevin Encina Molina" }}</h3>
+                <p style="font-size: 0.95rem; color: #93c5fd; font-weight: 600; margin-bottom: 1.75rem;">{{
+                    user_role|default:"Territorial OO.CC." }}</p>
 
-                <div style="display: flex; flex-direction: column; gap: 0.85rem; text-align: left; background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.25); border-radius: 18px; padding: 1.5rem;">
-                    <div style="display: flex; justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,0.15); padding-bottom: 0.6rem;">
+                <div
+                    style="display: flex; flex-direction: column; gap: 0.85rem; text-align: left; background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.25); border-radius: 18px; padding: 1.5rem;">
+                    <div
+                        style="display: flex; justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,0.15); padding-bottom: 0.6rem;">
                         <span style="color: rgba(255,255,255,0.75);">RUT Funcionario:</span>
                         <strong style="color: #ffffff;">{{ user_rut|default:"12.345.678-K" }}</strong>
                     </div>
-                    <div style="display: flex; justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,0.15); padding-bottom: 0.6rem;">
+                    <div
+                        style="display: flex; justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,0.15); padding-bottom: 0.6rem;">
                         <span style="color: rgba(255,255,255,0.75);">Delegación Asignada:</span>
                         <strong style="color: #ffffff;">{{ current_delegation|default:"Delegación La Pampa" }}</strong>
                     </div>
-                    <div style="display: flex; justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,0.15); padding-bottom: 0.6rem;">
+                    <div
+                        style="display: flex; justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,0.15); padding-bottom: 0.6rem;">
                         <span style="color: rgba(255,255,255,0.75);">Dirección Municipal:</span>
                         <strong style="color: #ffffff;">DIDECO · Territorio y Vecinos</strong>
                     </div>
-                    <div style="display: flex; justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,0.15); padding-bottom: 0.6rem;">
+                    <div
+                        style="display: flex; justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,0.15); padding-bottom: 0.6rem;">
                         <span style="color: rgba(255,255,255,0.75);">Período Operativo:</span>
                         <strong style="color: #ffffff;">{{ current_period|default:"T3 - Septiembre 2026" }}</strong>
                     </div>
                     <div style="display: flex; justify-content: space-between;">
                         <span style="color: rgba(255,255,255,0.75);">Estado de Acceso:</span>
-                        <span class="status-badge-glass success" style="font-size: 0.8rem;"><i class="bi bi-shield-check"></i> Activo en Terreno</span>
+                        <span class="status-badge-glass success" style="font-size: 0.8rem;"><i
+                                class="bi bi-shield-check"></i> Activo en Terreno</span>
                     </div>
                 </div>
 
@@ -747,7 +907,8 @@
     <!-- =================================================================
          MODAL 4: FORMULARIO NUEVA ACTIVIDAD / CASO EN TERRENO
          ================================================================= -->
-    <div class="glass-overlay-panel" id="modal-new-case" role="dialog" aria-modal="true" aria-labelledby="newCaseModalTitle">
+    <div class="glass-overlay-panel" id="modal-new-case" role="dialog" aria-modal="true"
+        aria-labelledby="newCaseModalTitle">
         <div class="glass-modal-container" style="max-width: 680px;">
             <header class="glass-modal-header">
                 <div class="glass-modal-title" id="newCaseModalTitle">
@@ -760,42 +921,67 @@
             </header>
 
             <div class="glass-modal-body" style="padding: 2rem;">
-                <form id="formNewCase" method="POST" action="{% url 'activities:activity_create' %}" enctype="multipart/form-data" onsubmit="handleNewCaseSubmit(event)">
+                <form id="formNewCase" method="POST" action="{% url 'activities:activity_create' %}"
+                    enctype="multipart/form-data" onsubmit="handleNewCaseSubmit(event)">
                     {% csrf_token %}
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.25rem;">
                         <div>
-                            <label style="font-size: 0.85rem; color: rgba(255,255,255,0.85); margin-bottom: 0.4rem; display: block;">Código de Actividad:</label>
-                            <input type="text" name="activity_code" class="glass-input" style="padding-left: 1.25rem;" value="ACT-2026-0850" required>
+                            <label
+                                style="font-size: 0.85rem; color: rgba(255,255,255,0.85); margin-bottom: 0.4rem; display: block;">Código
+                                de Actividad:</label>
+                            <input type="text" name="activity_code" class="glass-input" style="padding-left: 1.25rem;"
+                                value="ACT-2026-0850" required>
                         </div>
                         <div>
-                            <label style="font-size: 0.85rem; color: rgba(255,255,255,0.85); margin-bottom: 0.4rem; display: block;">Fecha de Atención:</label>
-                            <input type="date" name="activity_date" class="glass-input" style="padding-left: 1.25rem;" value="2026-09-17" required>
+                            <label
+                                style="font-size: 0.85rem; color: rgba(255,255,255,0.85); margin-bottom: 0.4rem; display: block;">Fecha
+                                de Atención:</label>
+                            <input type="date" name="activity_date" class="glass-input" style="padding-left: 1.25rem;"
+                                value="2026-09-17" required>
                         </div>
                     </div>
 
                     <div style="margin-bottom: 1.25rem;">
-                        <label style="font-size: 0.85rem; color: rgba(255,255,255,0.85); margin-bottom: 0.4rem; display: block;">Descripción del Problema o Caso:</label>
-                        <textarea name="problem_description" class="glass-input" style="padding: 0.75rem 1.25rem; height: 80px; border-radius: 16px; resize: none;" placeholder="Ej: Solicitud de inspección de luminarias y apoyo social..." required></textarea>
+                        <label
+                            style="font-size: 0.85rem; color: rgba(255,255,255,0.85); margin-bottom: 0.4rem; display: block;">Descripción
+                            del Problema o Caso:</label>
+                        <textarea name="problem_description" class="glass-input"
+                            style="padding: 0.75rem 1.25rem; height: 80px; border-radius: 16px; resize: none;"
+                            placeholder="Ej: Solicitud de inspección de luminarias y apoyo social..."
+                            required></textarea>
                     </div>
 
                     <div style="margin-bottom: 1.25rem;">
-                        <label style="font-size: 0.85rem; color: rgba(255,255,255,0.85); margin-bottom: 0.4rem; display: block;">Acción Ejecutada en Terreno:</label>
-                        <textarea name="executed_action" class="glass-input" style="padding: 0.75rem 1.25rem; height: 75px; border-radius: 16px; resize: none;" placeholder="Ej: Levantamiento de ficha en terreno y coordinación con cuadrilla..." required></textarea>
+                        <label
+                            style="font-size: 0.85rem; color: rgba(255,255,255,0.85); margin-bottom: 0.4rem; display: block;">Acción
+                            Ejecutada en Terreno:</label>
+                        <textarea name="executed_action" class="glass-input"
+                            style="padding: 0.75rem 1.25rem; height: 75px; border-radius: 16px; resize: none;"
+                            placeholder="Ej: Levantamiento de ficha en terreno y coordinación con cuadrilla..."
+                            required></textarea>
                     </div>
 
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.25rem;">
                         <div>
-                            <label style="font-size: 0.85rem; color: rgba(255,255,255,0.85); margin-bottom: 0.4rem; display: block;">Nombre del Vecino / Contacto:</label>
-                            <input type="text" name="contact_name" class="glass-input" style="padding-left: 1.25rem;" placeholder="Ej: Juan Pérez Morales" required>
+                            <label
+                                style="font-size: 0.85rem; color: rgba(255,255,255,0.85); margin-bottom: 0.4rem; display: block;">Nombre
+                                del Vecino / Contacto:</label>
+                            <input type="text" name="contact_name" class="glass-input" style="padding-left: 1.25rem;"
+                                placeholder="Ej: Juan Pérez Morales" required>
                         </div>
                         <div>
-                            <label style="font-size: 0.85rem; color: rgba(255,255,255,0.85); margin-bottom: 0.4rem; display: block;">Teléfono de Contacto:</label>
-                            <input type="text" name="contact_phone" class="glass-input" style="padding-left: 1.25rem;" placeholder="+56 9 1234 5678" required>
+                            <label
+                                style="font-size: 0.85rem; color: rgba(255,255,255,0.85); margin-bottom: 0.4rem; display: block;">Teléfono
+                                de Contacto:</label>
+                            <input type="text" name="contact_phone" class="glass-input" style="padding-left: 1.25rem;"
+                                placeholder="+56 9 1234 5678" required>
                         </div>
                     </div>
 
                     <div style="margin-bottom: 1.5rem;">
-                        <label style="font-size: 0.85rem; color: rgba(255,255,255,0.85); margin-bottom: 0.4rem; display: block;">Evidencia Fotográfica / Documento:</label>
+                        <label
+                            style="font-size: 0.85rem; color: rgba(255,255,255,0.85); margin-bottom: 0.4rem; display: block;">Evidencia
+                            Fotográfica / Documento:</label>
                         <input type="file" name="evidence_file" class="glass-input" style="padding: 0.5rem 1.25rem;">
                     </div>
 
@@ -901,7 +1087,7 @@
                 const text = row.textContent.toLowerCase();
                 const rowStatus = row.getAttribute('data-status') || '';
                 const matchesQuery = text.includes(query);
-                const matchesStatus = (currentCaseStatusFilter === 'all') || 
+                const matchesStatus = (currentCaseStatusFilter === 'all') ||
                     (currentCaseStatusFilter === 'Pendiente' && (rowStatus === 'Pendiente' || rowStatus === 'Ingresado')) ||
                     (currentCaseStatusFilter === 'Realizado' && (rowStatus === 'Realizado' || rowStatus === 'Aprobado')) ||
                     (rowStatus === currentCaseStatusFilter);
@@ -1345,4 +1531,5 @@
         }
     </script>
 </body>
+
 </html>

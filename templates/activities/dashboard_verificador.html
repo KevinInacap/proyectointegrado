@@ -1,7 +1,7 @@
-{% load static %}
 <!DOCTYPE html>
 <html lang="es">
 <head>
+    {% load static %}
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SGR Auditoría & Supervisión Territorial · Las Compañías</title>
@@ -779,7 +779,7 @@
                             <td><strong>{{ staff.expected_meta }}%</strong></td>
                             <td>
                                 <div class="progress-sgr-wrapper">
-                                    <div class="progress-sgr-fill bg-{{ staff.status_class }}" style="width: {% if staff.current_compliance > 100 %}100{% else %}{{ staff.current_compliance }}{% endif %}%;"></div>
+                                    <div class="progress-sgr-fill bg-{{ staff.status_class }}" data-compliance="{{ staff.current_compliance }}" style="max-width: 100%;"></div>
                                 </div>
                                 <span class="fw-bold text-{{ staff.status_class }}">{{ staff.current_compliance }}%</span>
                             </td>
@@ -816,6 +816,14 @@
 
     <!-- LOGICA DE VALIDACIÓN CON SWEETALERT2 -->
     <script>
+        // Inicializar barras de progreso seguras
+        document.addEventListener('DOMContentLoaded', function() {
+            document.querySelectorAll('.progress-sgr-fill[data-compliance]').forEach(function(el) {
+                const val = parseFloat(el.getAttribute('data-compliance')) || 0;
+                el.style.width = Math.min(100, Math.max(0, val)) + '%';
+            });
+        });
+
         // Modal para APROBAR Evidencia Fotográfica (+1 Punto de logro)
         function approveEvidence(code, official) {
             Swal.fire({
