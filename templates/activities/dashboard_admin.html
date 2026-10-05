@@ -1,8 +1,8 @@
-{% load static %}
 <!DOCTYPE html>
 <html lang="es">
 
 <head>
+    {% load static %}
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sistema Municipal | Gestión de Atención Ciudadana (SGR) — La Serena</title>
@@ -349,6 +349,8 @@
             overflow: hidden;
             border: none;
             background: transparent;
+            mask-image: linear-gradient(to top, rgba(0, 0, 0, 1) 15%, rgba(0, 0, 0, 0.5) 50%, rgba(0, 0, 0, 0) 100%);
+            -webkit-mask-image: linear-gradient(to top, rgba(0, 0, 0, 1) 15%, rgba(0, 0, 0, 0.5) 50%, rgba(0, 0, 0, 0) 100%);
         }
 
         .sidebar-faro-image-wrap {
@@ -363,16 +365,16 @@
             height: 100%;
             object-fit: cover;
             object-position: center 25%;
-            opacity: 0.65;
-            transition: transform 0.6s ease, opacity 0.4s ease;
-            /* La máscara difumina suavemente la foto para que se una como una sola entidad con el azul del sidebar */
-            mask-image: linear-gradient(to top, rgba(0, 0, 0, 1) 0%, rgba(0, 0, 0, 0.8) 50%, rgba(0, 0, 0, 0) 98%);
-            -webkit-mask-image: linear-gradient(to top, rgba(0, 0, 0, 1) 0%, rgba(0, 0, 0, 0.8) 50%, rgba(0, 0, 0, 0) 98%);
+            mix-blend-mode: luminosity;
+            opacity: 0.38;
+            transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.6s ease;
+            mask-image: linear-gradient(to top, rgba(0, 0, 0, 1) 15%, rgba(0, 0, 0, 0.5) 50%, rgba(0, 0, 0, 0) 100%);
+            -webkit-mask-image: linear-gradient(to top, rgba(0, 0, 0, 1) 15%, rgba(0, 0, 0, 0.5) 50%, rgba(0, 0, 0, 0) 100%);
         }
 
         .sidebar-faro-footer:hover .sidebar-faro-bg-img {
-            opacity: 0.85;
-            transform: scale(1.05);
+            opacity: 0.6;
+            transform: scale(1.03);
         }
 
         /* Capa de color idéntica a la paleta del sidebar que baña la fotografía */
@@ -3130,7 +3132,29 @@
         }
 
         /* ==========================================================================
-           BARRA EJECUTIVA DE PERÍODO Y SINCRONIZACIÓN
+           SISTEMA DE ANIMACIONES Y FÍSICAS DE RESORTE (FRAMER MOTION / ACETERNITY / MAGIC UI)
+           ========================================================================== */
+        :root {
+            --ease-spring: cubic-bezier(0.16, 1, 0.3, 1);
+            --ease-elastic: cubic-bezier(0.34, 1.56, 0.64, 1);
+            --ease-smooth: cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        /* Tipografía Numérica Tabular para erradicar el Layout Shift */
+        .tabular-nums,
+        .flagship-metric-number,
+        .support-number,
+        .report-kpi-val,
+        .badge-count,
+        .executive-sync-widget,
+        .kpi-trend-badge,
+        .font-monospace {
+            font-variant-numeric: tabular-nums;
+            font-feature-settings: "tnum";
+        }
+
+        /* ==========================================================================
+           BARRA EJECUTIVA DE PERÍODO Y SINCRONIZACIÓN (SLIDING LAYOUT PILL)
            ========================================================================== */
         .executive-time-bar {
             display: flex;
@@ -3140,34 +3164,58 @@
         }
 
         .pill-capsule-group {
+            position: relative;
             display: inline-flex;
             align-items: center;
             background: rgba(255, 255, 255, 0.78);
-            backdrop-filter: blur(16px);
-            -webkit-backdrop-filter: blur(16px);
+            backdrop-filter: blur(20px) saturate(180%);
+            -webkit-backdrop-filter: blur(20px) saturate(180%);
             border: 1px solid rgba(226, 232, 240, 0.85);
             border-radius: 50px;
-            padding: 3.5px;
-            gap: 3px;
-            box-shadow: 0 4px 12px -2px rgba(27, 54, 93, 0.05);
+            padding: 4px;
+            gap: 2px;
+            box-shadow: inset 0 1px 1px 0 rgba(255, 255, 255, 0.5), 0 4px 12px -2px rgba(27, 54, 93, 0.05);
+            isolation: isolate;
         }
 
         [data-theme="dark"] .pill-capsule-group {
             background: rgba(15, 23, 42, 0.75) !important;
             border-color: rgba(255, 255, 255, 0.1) !important;
-            box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35) !important;
+            box-shadow: inset 0 1px 1px 0 rgba(255, 255, 255, 0.08), 0 4px 14px rgba(0, 0, 0, 0.35) !important;
+        }
+
+        /* Glider deslizante con física de resorte (Framer Motion style) */
+        .pill-slider-glider {
+            position: absolute;
+            top: 4px;
+            bottom: 4px;
+            left: 0;
+            border-radius: 50px;
+            background: linear-gradient(135deg, #1B365D 0%, #172F50 100%);
+            box-shadow: 0 4px 14px rgba(27, 54, 93, 0.28);
+            transition: transform 0.32s cubic-bezier(0.16, 1, 0.3, 1), width 0.32s cubic-bezier(0.16, 1, 0.3, 1);
+            z-index: 1;
+            pointer-events: none;
+        }
+
+        [data-theme="dark"] .pill-slider-glider {
+            background: linear-gradient(135deg, rgba(196, 18, 48, 0.9) 0%, rgba(27, 54, 93, 0.95) 100%) !important;
+            box-shadow: 0 4px 14px rgba(196, 18, 48, 0.45) !important;
+            border: 1px solid rgba(255, 255, 255, 0.22);
         }
 
         .pill-capsule-btn {
+            position: relative;
+            z-index: 2;
             border: none;
-            background: transparent;
+            background: transparent !important;
             padding: 6px 14px;
             border-radius: 50px;
             font-size: 0.78rem;
             font-weight: 600;
             color: var(--muni-text-sec);
             cursor: pointer;
-            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            transition: color 0.25s var(--ease-spring);
             display: inline-flex;
             align-items: center;
             gap: 5px;
@@ -3175,14 +3223,11 @@
 
         .pill-capsule-btn:hover {
             color: var(--muni-navy);
-            background: rgba(27, 54, 93, 0.04);
         }
 
         .pill-capsule-btn.active {
-            background: linear-gradient(135deg, #1B365D 0%, #172F50 100%);
             color: #FFFFFF !important;
-            box-shadow: 0 4px 12px rgba(27, 54, 93, 0.25);
-            border: 1px solid rgba(255, 255, 255, 0.15);
+            font-weight: 700;
         }
 
         [data-theme="dark"] .pill-capsule-btn {
@@ -3191,16 +3236,13 @@
 
         [data-theme="dark"] .pill-capsule-btn:hover {
             color: #FFFFFF;
-            background: rgba(255, 255, 255, 0.06);
         }
 
         [data-theme="dark"] .pill-capsule-btn.active {
-            background: linear-gradient(135deg, rgba(196, 18, 48, 0.85) 0%, rgba(27, 54, 93, 0.95) 100%) !important;
             color: #FFFFFF !important;
-            box-shadow: 0 4px 14px rgba(196, 18, 48, 0.35) !important;
-            border: 1px solid rgba(255, 255, 255, 0.22) !important;
         }
 
+        /* Widget de Fecha y Sincronización en Vivo */
         .executive-sync-widget {
             display: inline-flex;
             align-items: center;
@@ -3222,10 +3264,11 @@
             color: #F1F5F9 !important;
         }
 
+        /* Radar Pulse Concéntrico en Vivo */
         .live-sync-pulse {
             display: inline-flex;
             align-items: center;
-            gap: 5px;
+            gap: 6px;
             font-size: 0.72rem;
             font-weight: 700;
             color: #16A34A;
@@ -3236,21 +3279,32 @@
         }
 
         .live-pulse-dot {
-            width: 7px;
-            height: 7px;
+            position: relative;
+            width: 8px;
+            height: 8px;
             border-radius: 50%;
             background: #16A34A;
-            box-shadow: 0 0 0 0 rgba(22, 163, 74, 0.6);
-            animation: livePulseAnim 2s infinite;
+            display: inline-block;
         }
 
-        @keyframes livePulseAnim {
-            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(22, 163, 74, 0.7); }
-            70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(22, 163, 74, 0); }
-            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(22, 163, 74, 0); }
+        .live-pulse-dot::after {
+            content: '';
+            position: absolute;
+            inset: -3px;
+            border-radius: 50%;
+            border: 2px solid #16A34A;
+            animation: radar-ping 1.8s cubic-bezier(0, 0, 0.2, 1) infinite;
         }
 
+        @keyframes radar-ping {
+            0% { transform: scale(0.8); opacity: 1; }
+            75%, 100% { transform: scale(2.4); opacity: 0; }
+        }
+
+        /* Shine Border & Diagonal Shimmer en Botón Exportador */
         .btn-exportar-pdf-oficial {
+            position: relative;
+            overflow: hidden;
             background: rgba(196, 18, 48, 0.08);
             color: #C41230;
             border: 1.5px solid rgba(196, 18, 48, 0.35);
@@ -3262,16 +3316,37 @@
             align-items: center;
             gap: 6px;
             backdrop-filter: blur(12px);
-            transition: all 0.25s ease;
+            transition: all 0.25s var(--ease-spring);
             cursor: pointer;
+        }
+
+        .btn-exportar-pdf-oficial::after {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(60deg, transparent 40%, rgba(255, 255, 255, 0.4) 50%, transparent 60%);
+            transform: translateX(-100%) rotate(25deg);
+            pointer-events: none;
+        }
+
+        .btn-exportar-pdf-oficial:hover::after {
+            animation: shine-sweep 1.2s ease-in-out infinite;
+        }
+
+        @keyframes shine-sweep {
+            0% { transform: translateX(-100%) rotate(25deg); }
+            100% { transform: translateX(200%) rotate(25deg); }
         }
 
         .btn-exportar-pdf-oficial:hover {
             background: #C41230;
             color: #FFFFFF;
             border-color: #C41230;
-            box-shadow: 0 4px 14px rgba(196, 18, 48, 0.35);
-            transform: translateY(-1px);
+            box-shadow: 0 6px 20px rgba(196, 18, 48, 0.4);
+            transform: translateY(-2px);
         }
 
         [data-theme="dark"] .btn-exportar-pdf-oficial {
@@ -3285,47 +3360,127 @@
             color: #FFFFFF !important;
         }
 
-        /* Micro-glow status badges */
+        /* ==========================================================================
+           SPOTLIGHT CURSOR TRACKING (ACETERNITY UI) & 3D HOVER ELEVATION
+           ========================================================================== */
+        .spotlight-card {
+            position: relative;
+            overflow: hidden;
+            isolation: isolate;
+            transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.3s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.25s ease !important;
+        }
+
+        .spotlight-card::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: inherit;
+            background: radial-gradient(600px circle at var(--mouse-x, -1000px) var(--mouse-y, -1000px), rgba(196, 18, 48, 0.08), transparent 40%);
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.4s var(--ease-spring);
+            z-index: 1;
+        }
+
+        .spotlight-card:hover::before {
+            opacity: 1;
+        }
+
+        [data-theme="dark"] .spotlight-card::before {
+            background: radial-gradient(600px circle at var(--mouse-x, -1000px) var(--mouse-y, -1000px), rgba(217, 119, 6, 0.12), transparent 40%);
+        }
+
+        .spotlight-card:hover {
+            transform: translateY(-3px) !important;
+            box-shadow: 0 20px 35px -10px rgba(27, 54, 93, 0.12), inset 0 1px 1px 0 rgba(255, 255, 255, 0.3) !important;
+        }
+
+        [data-theme="dark"] .spotlight-card:hover {
+            box-shadow: 0 20px 35px -10px rgba(0, 0, 0, 0.6), inset 0 1px 1px 0 rgba(255, 255, 255, 0.1) !important;
+        }
+
+        /* Segmentos de Distribución por Canales con Expansión Dinámica */
+        .channel-multi-bar {
+            display: flex;
+            height: 10px;
+            border-radius: 50px;
+            overflow: visible;
+            background: rgba(226, 232, 240, 0.5);
+            margin-bottom: 0.75rem;
+            position: relative;
+        }
+
+        .ch-segment {
+            height: 100%;
+            transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), filter 0.2s ease;
+            position: relative;
+            cursor: pointer;
+        }
+
+        .ch-segment:hover {
+            transform: scaleY(1.35);
+            filter: brightness(1.15);
+            z-index: 5;
+        }
+
+        /* ==========================================================================
+           BREATHING GLOW EN BADGES DE ESTADO (OPERATIVA, ALTA DEMANDA, CONTINGENCIA)
+           ========================================================================== */
+        @keyframes breathing-glow-emerald {
+            0%, 100% { box-shadow: 0 0 6px rgba(16, 185, 129, 0.25); }
+            50% { box-shadow: 0 0 16px rgba(16, 185, 129, 0.65), 0 0 0 3px rgba(16, 185, 129, 0.15); }
+        }
+
+        @keyframes breathing-glow-amber {
+            0%, 100% { box-shadow: 0 0 6px rgba(217, 119, 6, 0.25); }
+            50% { box-shadow: 0 0 16px rgba(217, 119, 6, 0.65), 0 0 0 3px rgba(217, 119, 6, 0.15); }
+        }
+
+        @keyframes breathing-glow-carmine {
+            0%, 100% { box-shadow: 0 0 6px rgba(196, 18, 48, 0.25); }
+            50% { box-shadow: 0 0 16px rgba(196, 18, 48, 0.65), 0 0 0 3px rgba(196, 18, 48, 0.15); }
+        }
+
         .badge-glow-emerald {
             background: rgba(16, 185, 129, 0.12);
             color: #059669;
             border: 1px solid rgba(16, 185, 129, 0.3);
-            box-shadow: 0 0 10px rgba(16, 185, 129, 0.2);
             font-weight: 700;
             font-size: 0.72rem;
             border-radius: 50px;
             padding: 3px 9px;
             display: inline-flex;
             align-items: center;
-            gap: 4px;
+            gap: 5px;
+            animation: breathing-glow-emerald 2.6s ease-in-out infinite;
         }
 
         .badge-glow-amber {
             background: rgba(217, 119, 6, 0.12);
             color: #D97706;
             border: 1px solid rgba(217, 119, 6, 0.3);
-            box-shadow: 0 0 10px rgba(217, 119, 6, 0.2);
             font-weight: 700;
             font-size: 0.72rem;
             border-radius: 50px;
             padding: 3px 9px;
             display: inline-flex;
             align-items: center;
-            gap: 4px;
+            gap: 5px;
+            animation: breathing-glow-amber 2.6s ease-in-out infinite;
         }
 
         .badge-glow-carmine {
             background: rgba(196, 18, 48, 0.12);
             color: #C41230;
             border: 1px solid rgba(196, 18, 48, 0.3);
-            box-shadow: 0 0 10px rgba(196, 18, 48, 0.2);
             font-weight: 700;
             font-size: 0.72rem;
             border-radius: 50px;
             padding: 3px 9px;
             display: inline-flex;
             align-items: center;
-            gap: 4px;
+            gap: 5px;
+            animation: breathing-glow-carmine 2.6s ease-in-out infinite;
         }
 
         [data-theme="dark"] .badge-glow-emerald {
@@ -3341,12 +3496,79 @@
             color: #F87171;
         }
 
+        /* ==========================================================================
+           TARJETAS MODULARES DE DELEGACIÓN EN VIDRIO ESMERILADO
+           ========================================================================== */
+        .delegacion-modular-glass-card {
+            background: rgba(255, 255, 255, 0.82);
+            backdrop-filter: blur(20px) saturate(180%);
+            -webkit-backdrop-filter: blur(20px) saturate(180%);
+            border: 1px solid rgba(226, 232, 240, 0.9);
+            border-radius: 20px;
+            padding: 1.25rem;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            min-height: 220px;
+            cursor: pointer;
+            box-shadow: inset 0 1px 1px 0 rgba(255, 255, 255, 0.5), 0 4px 16px -2px rgba(27, 54, 93, 0.06);
+            transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.3s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.25s ease;
+        }
+
+        [data-theme="dark"] .delegacion-modular-glass-card {
+            background: rgba(15, 23, 42, 0.75) !important;
+            border-color: rgba(255, 255, 255, 0.1) !important;
+            box-shadow: inset 0 1px 1px 0 rgba(255, 255, 255, 0.1), 0 4px 20px rgba(0, 0, 0, 0.4) !important;
+        }
+
+        .delegacion-modular-glass-card:hover {
+            transform: translateY(-4px);
+            border-color: rgba(196, 18, 48, 0.4) !important;
+            box-shadow: 0 20px 35px -10px rgba(27, 54, 93, 0.14), 0 0 15px rgba(196, 18, 48, 0.1) !important;
+        }
+
+        [data-theme="dark"] .delegacion-modular-glass-card:hover {
+            border-color: rgba(217, 119, 6, 0.4) !important;
+            box-shadow: 0 20px 35px -10px rgba(0, 0, 0, 0.6), 0 0 15px rgba(217, 119, 6, 0.15) !important;
+        }
+
+        .btn-expediente-sede-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.76rem;
+            font-weight: 700;
+            color: #C41230;
+            background: rgba(196, 18, 48, 0.06);
+            border: 1px solid rgba(196, 18, 48, 0.2);
+            border-radius: 50px;
+            padding: 4px 12px;
+            transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .btn-expediente-sede-link .expediente-arrow {
+            display: inline-block;
+            transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .delegacion-modular-glass-card:hover .btn-expediente-sede-link {
+            background: #C41230;
+            color: #FFFFFF;
+            border-color: #C41230;
+            box-shadow: 0 4px 12px rgba(196, 18, 48, 0.35);
+        }
+
+        .delegacion-modular-glass-card:hover .btn-expediente-sede-link .expediente-arrow {
+            transform: translateX(6px);
+        }
+
         /* Drawer de Cristal para Expediente de Sede */
         .glass-offcanvas-drawer {
             position: fixed;
             top: 0;
-            right: -500px;
-            width: 480px;
+            right: -520px;
+            width: 490px;
             max-width: 95vw;
             height: 100vh;
             background: rgba(255, 255, 255, 0.92);
@@ -3355,7 +3577,7 @@
             border-left: 1px solid rgba(255, 255, 255, 0.9);
             box-shadow: -15px 0 45px rgba(27, 54, 93, 0.15);
             z-index: 1060;
-            transition: right 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+            transition: right 0.38s cubic-bezier(0.16, 1, 0.3, 1);
             overflow-y: auto;
             display: flex;
             flex-direction: column;
@@ -3379,11 +3601,12 @@
             width: 100vw;
             height: 100vh;
             background: rgba(7, 13, 30, 0.45);
-            backdrop-filter: blur(4px);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
             z-index: 1055;
             opacity: 0;
             pointer-events: none;
-            transition: opacity 0.3s ease;
+            transition: opacity 0.32s cubic-bezier(0.16, 1, 0.3, 1);
         }
 
         .drawer-backdrop-overlay.active {
@@ -3391,7 +3614,61 @@
             pointer-events: auto;
         }
 
-        /* Tarjetas de Roles y Matriz de Permisos */
+        /* ==========================================================================
+           TABLAS DE ALTA DENSIDAD: HOVER BRAND ACCENT & STAGGER REVEAL
+           ========================================================================== */
+        .custom-clean-table tbody tr,
+        .high-density-table tbody tr {
+            transition: background-color 0.18s ease, border-left 0.15s ease;
+            border-left: 3px solid transparent;
+        }
+
+        .custom-clean-table tbody tr:hover,
+        .high-density-table tbody tr:hover {
+            background: rgba(27, 54, 93, 0.035) !important;
+            border-left: 3px solid #C41230 !important;
+        }
+
+        [data-theme="dark"] .custom-clean-table tbody tr:hover,
+        [data-theme="dark"] .high-density-table tbody tr:hover {
+            background: rgba(255, 255, 255, 0.04) !important;
+            border-left: 3px solid #C41230 !important;
+        }
+
+        .custom-clean-table tbody tr .dropdown button,
+        .custom-clean-table tbody tr .btn-action-context,
+        .high-density-table tbody tr .table-action-btn {
+            opacity: 0.4;
+            transform: translateX(0);
+            transition: opacity 0.2s ease, transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .custom-clean-table tbody tr:hover .dropdown button,
+        .custom-clean-table tbody tr:hover .btn-action-context,
+        .high-density-table tbody tr:hover .table-action-btn {
+            opacity: 1;
+            transform: translateX(-2px);
+        }
+
+        @keyframes staggerFadeUp {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .stagger-item {
+            animation: staggerFadeUp 0.32s cubic-bezier(0.16, 1, 0.3, 1) both;
+            animation-delay: calc(var(--stagger-i, 0) * 25ms);
+        }
+
+        /* ==========================================================================
+           ROLES & PERMISOS: MINI-SWITCHES CON FÍSICA DE RESORTE (SPRING MOTION)
+           ========================================================================== */
         .role-cards-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
@@ -3407,7 +3684,7 @@
             border-radius: 18px;
             padding: 1.4rem;
             box-shadow: 0 10px 25px -5px rgba(27, 54, 93, 0.05);
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
             position: relative;
             overflow: hidden;
         }
@@ -3467,7 +3744,7 @@
             cursor: pointer;
             top: 0; left: 0; right: 0; bottom: 0;
             background-color: #CBD5E1;
-            transition: .3s;
+            transition: background-color 0.25s ease, box-shadow 0.25s ease;
             border-radius: 20px;
         }
 
@@ -3479,16 +3756,57 @@
             left: 2px;
             bottom: 2px;
             background-color: white;
-            transition: .3s;
+            transition: transform 0.28s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.25s ease;
             border-radius: 50%;
         }
 
         .perm-mini-switch input:checked + .perm-mini-slider {
             background-color: #1B365D;
+            box-shadow: 0 0 10px rgba(217, 119, 6, 0.5);
         }
 
         .perm-mini-switch input:checked + .perm-mini-slider:before {
             transform: translateX(14px);
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
+        }
+
+        .perm-mini-switch:hover .perm-mini-slider {
+            box-shadow: 0 0 8px rgba(196, 18, 48, 0.35);
+        }
+
+        /* ==========================================================================
+           CAMPANA DE NOTIFICACIONES PENDULAR & MODALES EN VIDRIO TEMPLADO
+           ========================================================================== */
+        @keyframes bell-ring {
+            0%, 100% { transform: rotate(0deg); }
+            15% { transform: rotate(14deg); }
+            30% { transform: rotate(-12deg); }
+            45% { transform: rotate(8deg); }
+            60% { transform: rotate(-6deg); }
+            75% { transform: rotate(3deg); }
+        }
+
+        .bell-ringing {
+            display: inline-block;
+            transform-origin: top center;
+            animation: bell-ring 0.85s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .btn-notification:hover .bi-bell {
+            display: inline-block;
+            transform-origin: top center;
+            animation: bell-ring 0.85s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .modal.fade .modal-dialog {
+            transform: scale(0.96);
+            opacity: 0;
+            transition: transform 0.26s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.26s cubic-bezier(0.16, 1, 0.3, 1) !important;
+        }
+
+        .modal.show .modal-dialog {
+            transform: scale(1) !important;
+            opacity: 1 !important;
         }
 
         /* Expediente Ciudadano en Vidrio Templado */
@@ -3626,7 +3944,8 @@
         <div class="sidebar-faro-footer">
             <div class="sidebar-faro-image-wrap">
                 <img src="{% static 'img/faro_real_sunset.jpg' %}"
-                    onerror="this.onerror=null; this.src='{% static 'img/faro_laserena_bg.jpg' %}';"
+                    data-fallback="{% static 'img/faro_laserena_bg.jpg' %}"
+                    onerror="this.onerror=null; if(this.dataset.fallback) this.src=this.dataset.fallback;"
                     alt="Faro Monumental de La Serena al Atardecer" class="sidebar-faro-bg-img">
                 <div class="sidebar-faro-fade-layer"></div>
             </div>
@@ -3785,8 +4104,9 @@
                     </div>
 
                     <div class="executive-time-bar">
-                        <!-- Barra Ejecutiva de Período y Sincronización -->
+                        <!-- Barra Ejecutiva de Período y Sincronización (Sliding Layout Pill) -->
                         <div class="pill-capsule-group" role="tablist" aria-label="Rango Temporal">
+                            <div class="pill-slider-glider" id="pillSliderGlider"></div>
                             <button class="pill-capsule-btn" id="btnRangoHoy" onclick="cambiarRangoTemporal('hoy')">
                                 <i class="bi bi-clock"></i> Hoy
                             </button>
@@ -3801,7 +4121,7 @@
                             </button>
                         </div>
 
-                        <!-- Botón Exportador de Informe Ejecutivo PDF Oficial -->
+                        <!-- Botón Exportador de Informe Ejecutivo PDF Oficial con Shine Border -->
                         <button class="btn-exportar-pdf-oficial" id="btnExportarPDF"
                             onclick="generarInformeEjecutivoPDF()" title="Descargar Informe Oficial en PDF para Concejo Municipal">
                             <i class="bi bi-file-earmark-pdf-fill"></i>
@@ -3821,8 +4141,8 @@
 
                 <!-- CONSOLA EJECUTIVA DE MANDO CÍVICO (DISEÑO ASIMÉTRICO & LIQUID GLASS) -->
                 <div class="civic-cockpit-grid">
-                    <!-- Tarjeta Rectora (Flagship): Pulso Operativo Comunal -->
-                    <div class="flagship-glass-card" onclick="switchView('atenciones')" role="button" tabindex="0">
+                    <!-- Tarjeta Rectora (Flagship): Pulso Operativo Comunal con Spotlight Cursor Tracking -->
+                    <div class="flagship-glass-card spotlight-card" onclick="switchView('atenciones')" role="button" tabindex="0">
                         <div class="flagship-header">
                             <div class="d-flex align-items-center gap-2">
                                 <span class="live-pulse-dot" title="Monitoreo en tiempo real"></span>
@@ -3870,10 +4190,10 @@
                         </div>
                     </div>
 
-                    <!-- Trilogía de Indicadores Cívicos -->
+                    <!-- Trilogía de Indicadores Cívicos con Spotlight Effect -->
                     <div class="civic-indicators-stack">
                         <!-- Indicador 1: Padrón Comunal -->
-                        <div class="support-glass-card support-blue" onclick="switchView('vecinos')" role="button"
+                        <div class="support-glass-card support-blue spotlight-card" onclick="switchView('vecinos')" role="button"
                             tabindex="0">
                             <div class="support-card-content">
                                 <div class="support-icon-wrap icon-blue">
@@ -3895,7 +4215,7 @@
                         </div>
 
                         <!-- Indicador 2: Red Territorial de Delegaciones -->
-                        <div class="support-glass-card support-purple" onclick="switchView('delegaciones')"
+                        <div class="support-glass-card support-purple spotlight-card" onclick="switchView('delegaciones')"
                             role="button" tabindex="0">
                             <div class="support-card-content">
                                 <div class="support-icon-wrap icon-purple">
@@ -3917,7 +4237,7 @@
                         </div>
 
                         <!-- Indicador 3: Metas Municipales -->
-                        <div class="support-glass-card support-amber" onclick="switchView('metas')" role="button"
+                        <div class="support-glass-card support-amber spotlight-card" onclick="switchView('metas')" role="button"
                             tabindex="0">
                             <div class="support-card-content">
                                 <div class="support-icon-wrap icon-amber">
@@ -5148,7 +5468,7 @@
                     <div class="row g-3 mb-4">
                         <div class="col-sm-6 col-xl-3">
                             <div
-                                class="report-kpi-card shadow-sm p-3 rounded-4 bg-white border h-100 position-relative overflow-hidden">
+                                class="report-kpi-card spotlight-card shadow-sm p-3 rounded-4 bg-white border h-100 position-relative overflow-hidden">
                                 <div class="report-kpi-bar" style="background: var(--muni-red);"></div>
                                 <div class="d-flex align-items-center justify-content-between mb-2">
                                     <span class="report-kpi-title text-secondary fw-semibold">Atenciones Totales</span>
@@ -5176,7 +5496,7 @@
 
                         <div class="col-sm-6 col-xl-3">
                             <div
-                                class="report-kpi-card shadow-sm p-3 rounded-4 bg-white border h-100 position-relative overflow-hidden">
+                                class="report-kpi-card spotlight-card shadow-sm p-3 rounded-4 bg-white border h-100 position-relative overflow-hidden">
                                 <div class="report-kpi-bar" style="background: #16A34A;"></div>
                                 <div class="d-flex align-items-center justify-content-between mb-2">
                                     <span class="report-kpi-title text-secondary fw-semibold">Resolución 1er Contacto</span>
@@ -5204,7 +5524,7 @@
 
                         <div class="col-sm-6 col-xl-3">
                             <div
-                                class="report-kpi-card shadow-sm p-3 rounded-4 bg-white border h-100 position-relative overflow-hidden">
+                                class="report-kpi-card spotlight-card shadow-sm p-3 rounded-4 bg-white border h-100 position-relative overflow-hidden">
                                 <div class="report-kpi-bar" style="background: #0284C7;"></div>
                                 <div class="d-flex align-items-center justify-content-between mb-2">
                                     <span class="report-kpi-title text-secondary fw-semibold">Tiempo Medio Espera</span>
@@ -5232,7 +5552,7 @@
 
                         <div class="col-sm-6 col-xl-3">
                             <div
-                                class="report-kpi-card shadow-sm p-3 rounded-4 bg-white border h-100 position-relative overflow-hidden">
+                                class="report-kpi-card spotlight-card shadow-sm p-3 rounded-4 bg-white border h-100 position-relative overflow-hidden">
                                 <div class="report-kpi-bar" style="background: #F59E0B;"></div>
                                 <div class="d-flex align-items-center justify-content-between mb-2">
                                     <span class="report-kpi-title text-secondary fw-semibold">Satisfacción Vecinal</span>
@@ -6818,6 +7138,19 @@
             try { cargarUsuariosDesdeDB(false); } catch (e) { console.warn("Cargar usuarios error:", e); }
             try { initDelegacionesView(); } catch (e) { console.warn("Delegaciones init error:", e); }
             try { initRolesView(false); } catch (e) { console.warn("Roles init error:", e); }
+
+            // Inicializar motor de micro-interacciones (Spotlight, Sliding Pill, Number Tickers)
+            try {
+                setTimeout(() => {
+                    if (typeof updatePillSlider === 'function') updatePillSlider();
+                    if (typeof initSpotlightEffect === 'function') initSpotlightEffect();
+                    const numEl = document.querySelector('.flagship-metric-number');
+                    if (numEl && typeof animateNumberTicker === 'function') animateNumberTicker(numEl, '3.421', 500);
+                }, 120);
+                window.addEventListener('resize', () => {
+                    if (typeof updatePillSlider === 'function') updatePillSlider();
+                });
+            } catch (e) { console.warn("Micro-interactions init error:", e); }
         });
 
         function toggleSidebar() {
@@ -6859,8 +7192,23 @@
                 document.getElementById('sidebarOverlay').classList.remove('active');
             }
 
-            if (viewName === 'dashboard' && chartInstance) chartInstance.resize();
-            if (viewName === 'reportes') initReportesCharts();
+            if (viewName === 'dashboard') {
+                if (chartInstance) chartInstance.resize();
+                setTimeout(() => {
+                    if (typeof updatePillSlider === 'function') updatePillSlider();
+                    if (typeof initSpotlightEffect === 'function') initSpotlightEffect();
+                }, 50);
+            }
+            if (viewName === 'reportes') {
+                initReportesCharts();
+                setTimeout(() => {
+                    if (typeof initSpotlightEffect === 'function') initSpotlightEffect();
+                    const kpiTotal = document.getElementById('kpiRepTotal');
+                    if (kpiTotal && typeof animateNumberTicker === 'function') animateNumberTicker(kpiTotal, '15.842', 500);
+                    const kpiRes = document.getElementById('kpiRepResolucion');
+                    if (kpiRes && typeof animateNumberTicker === 'function') animateNumberTicker(kpiRes, '94.8%', 500);
+                }, 50);
+            }
             if (viewName === 'usuarios') cargarUsuariosDesdeDB(false);
             if (viewName === 'delegaciones') initDelegacionesView();
             if (viewName === 'roles') initRolesView(false);
@@ -6880,9 +7228,11 @@
                 return;
             }
 
-            datos.forEach(v => {
+            datos.forEach((v, idx) => {
                 const isSel = seleccionadosIds.has(v.id);
                 const tr = document.createElement('tr');
+                tr.className = 'stagger-item';
+                tr.style.setProperty('--stagger-i', idx);
                 if (isSel) tr.classList.add('selected-row');
 
                 tr.innerHTML = `
@@ -7331,8 +7681,10 @@
         }
 
         function filtrarLogsAuditoria() {
-            const query = (document.getElementById('searchAuditLogInput')?.value || '').toLowerCase().trim();
-            const accion = (document.getElementById('filtroAccionAuditLog')?.value || '');
+            const elSearchInput = document.getElementById('searchAuditLogInput');
+            const query = (elSearchInput && elSearchInput.value ? elSearchInput.value : '').toLowerCase().trim();
+            const elAccionInput = document.getElementById('filtroAccionAuditLog');
+            const accion = (elAccionInput && elAccionInput.value ? elAccionInput.value : '');
 
             logsFiltradosAuditoria = datasetAuditLogs.filter(l => {
                 const matchQ = !query ||
@@ -7487,7 +7839,82 @@
             if (badge) {
                 badge.style.display = 'none';
             }
+            triggerBellRing();
             mostrarToast('✓ Alertas de seguridad marcadas como revisadas.');
+        }
+
+        /* ==========================================================================
+           MICRO-INTERACCIONES: SPOTLIGHT, SLIDING PILL, NUMBER TICKER & BELL RING
+           ========================================================================== */
+        function initSpotlightEffect() {
+            document.querySelectorAll('.spotlight-card').forEach(card => {
+                if (card.dataset.spotlightBound) return;
+                card.dataset.spotlightBound = "true";
+                card.addEventListener('mousemove', e => {
+                    const rect = card.getBoundingClientRect();
+                    card.style.setProperty('--mouse-x', `${e.clientX - rect.left}px`);
+                    card.style.setProperty('--mouse-y', `${e.clientY - rect.top}px`);
+                });
+            });
+        }
+
+        function updatePillSlider() {
+            const group = document.querySelector('.pill-capsule-group');
+            const activeBtn = group ? group.querySelector('.pill-capsule-btn.active') : null;
+            const glider = document.getElementById('pillSliderGlider');
+            if (!group || !activeBtn || !glider) return;
+            const groupRect = group.getBoundingClientRect();
+            const btnRect = activeBtn.getBoundingClientRect();
+            const offsetLeft = btnRect.left - groupRect.left;
+            glider.style.width = `${btnRect.width}px`;
+            glider.style.transform = `translateX(${offsetLeft}px)`;
+        }
+
+        function animateNumberTicker(el, rawTarget, duration = 400) {
+            if (!el) return;
+            const strTarget = String(rawTarget).trim();
+            const hasPercent = strTarget.includes('%');
+            const cleanNumStr = strTarget.replace('%', '').replace(/\./g, '').replace(',', '.');
+            const targetVal = parseFloat(cleanNumStr);
+            if (isNaN(targetVal)) {
+                el.textContent = strTarget;
+                return;
+            }
+
+            const startTime = performance.now();
+            const startVal = 0;
+            const isDecimal = strTarget.includes(',') || (strTarget.includes('.') && !strTarget.includes('000') && targetVal < 100);
+
+            function step(currentTime) {
+                const elapsed = currentTime - startTime;
+                const progress = Math.min(elapsed / duration, 1);
+                const ease = 1 - Math.pow(1 - progress, 3);
+                const currentVal = startVal + (targetVal - startVal) * ease;
+
+                if (hasPercent) {
+                    el.textContent = `${currentVal.toFixed(1)}%`;
+                } else if (isDecimal) {
+                    el.textContent = currentVal.toFixed(1).replace('.', ',');
+                } else {
+                    el.textContent = Math.round(currentVal).toLocaleString('es-CL');
+                }
+
+                if (progress < 1) {
+                    requestAnimationFrame(step);
+                } else {
+                    el.textContent = strTarget;
+                }
+            }
+            requestAnimationFrame(step);
+        }
+
+        function triggerBellRing() {
+            const bell = document.querySelector('.btn-notification .bi-bell');
+            if (!bell) return;
+            bell.classList.remove('bell-ringing');
+            void bell.offsetWidth;
+            bell.classList.add('bell-ringing');
+            setTimeout(() => bell.classList.remove('bell-ringing'), 900);
         }
 
         /* ==========================================================================
@@ -7561,9 +7988,11 @@
                 }
             });
 
-            // Actualizar Tarjeta Rectora (Flagship)
+            updatePillSlider();
+
+            // Actualizar Tarjeta Rectora (Flagship) con animación Number Ticker
             const numEl = document.querySelector('.flagship-metric-number');
-            if (numEl) numEl.textContent = data.total;
+            if (numEl) animateNumberTicker(numEl, data.total, 450);
 
             const trendEl = document.querySelector('.flagship-trend-chip');
             if (trendEl) trendEl.innerHTML = `<i class="bi bi-graph-up-arrow"></i> ${data.trend}`;
@@ -7581,8 +8010,12 @@
             const segOnl = document.querySelector('.ch-segment.ch-online');
             if (segOnl) segOnl.style.width = `${data.online}%`;
 
-            // Actualizar Gráfico Chart.js
+            // Actualizar Gráfico Chart.js con animación fluida
             if (chartInstance) {
+                chartInstance.options.animation = {
+                    duration: 650,
+                    easing: 'easeOutQuart'
+                };
                 chartInstance.data.labels = data.chartLabels;
                 chartInstance.data.datasets[0].data = data.dataPresencial;
                 chartInstance.data.datasets[1].data = data.dataTelefonica;
@@ -7719,7 +8152,8 @@
                     format: 'a4'
                 });
 
-                const fechaActual = document.getElementById('currentDateDisplay')?.textContent || 'Octubre 2026';
+                const elDate = document.getElementById('currentDateDisplay');
+                const fechaActual = (elDate && elDate.textContent) ? elDate.textContent : 'Octubre 2026';
 
                 // 1. Membrete Institucional Oficial
                 doc.setFillColor(27, 54, 93); // Azul Marino Serena
@@ -8240,8 +8674,10 @@
            LÓGICA COMPARATIVA 1 VS 1 (FRENTE A FRENTE)
            ========================================================================== */
         function actualizarComparativa1vs1() {
-            const idA = document.getElementById('selectCompareDelA')?.value || 'centro';
-            let idB = document.getElementById('selectCompareDelB')?.value || 'companias';
+            const elSelA = document.getElementById('selectCompareDelA');
+            const idA = (elSelA && elSelA.value) ? elSelA.value : 'centro';
+            const elSelBInit = document.getElementById('selectCompareDelB');
+            let idB = (elSelBInit && elSelBInit.value) ? elSelBInit.value : 'companias';
 
             // Evitar comparar la misma delegación
             if (idA === idB) {
@@ -8655,9 +9091,12 @@
         }
 
         function actualizarReportesDatos() {
-            const p = document.getElementById('filtroPeriodoReporte')?.value || 'trimestre';
-            const d = document.getElementById('filtroDelegacionReporte')?.value || '';
-            const c = document.getElementById('filtroCanalReporte')?.value || '';
+            const elP = document.getElementById('filtroPeriodoReporte');
+            const p = (elP && elP.value) ? elP.value : 'trimestre';
+            const elD = document.getElementById('filtroDelegacionReporte');
+            const d = (elD && elD.value) ? elD.value : '';
+            const elC = document.getElementById('filtroCanalReporte');
+            const c = (elC && elC.value) ? elC.value : '';
 
             let factor = 1;
             if (p === 'mes') factor = 0.35;
@@ -8716,8 +9155,10 @@
             }
 
             // Hoja 3: Comparativa 1 vs 1 Activa
-            const idA = document.getElementById('selectCompareDelA')?.value || 'centro';
-            const idB = document.getElementById('selectCompareDelB')?.value || 'companias';
+            const elCompA = document.getElementById('selectCompareDelA');
+            const idA = (elCompA && elCompA.value) ? elCompA.value : 'centro';
+            const elCompB = document.getElementById('selectCompareDelB');
+            const idB = (elCompB && elCompB.value) ? elCompB.value : 'companias';
             const delA = catalogoMetricasDelegaciones[idA] || catalogoMetricasDelegaciones['centro'];
             const delB = catalogoMetricasDelegaciones[idB] || catalogoMetricasDelegaciones['companias'];
 
@@ -8946,10 +9387,14 @@
         }
 
         function filtrarUsuarios() {
-            const query = (document.getElementById('searchUsuariosInput')?.value || '').toLowerCase().trim();
-            const delFiltro = document.getElementById('filtroDelegacionUsuario')?.value || '';
-            const rolFiltro = document.getElementById('filtroRolUsuario')?.value || '';
-            const estFiltro = document.getElementById('filtroEstadoUsuario')?.value || '';
+            const elSearchU = document.getElementById('searchUsuariosInput');
+            const query = (elSearchU && elSearchU.value ? elSearchU.value : '').toLowerCase().trim();
+            const elDelU = document.getElementById('filtroDelegacionUsuario');
+            const delFiltro = (elDelU && elDelU.value) ? elDelU.value : '';
+            const elRolU = document.getElementById('filtroRolUsuario');
+            const rolFiltro = (elRolU && elRolU.value) ? elRolU.value : '';
+            const elEstU = document.getElementById('filtroEstadoUsuario');
+            const estFiltro = (elEstU && elEstU.value) ? elEstU.value : '';
 
             filasFiltradasUsuarios = datasetUsuarios.filter(u => {
                 const matchTexto = !query ||
@@ -9022,6 +9467,8 @@
 
             datos.forEach((u, idx) => {
                 const tr = document.createElement('tr');
+                tr.className = 'stagger-item';
+                tr.style.setProperty('--stagger-i', idx);
                 const rowNum = inicio + idx + 1;
                 const esAdmin = u.is_superuser || (u.roles || []).some(r => r.name.toLowerCase().includes('admin'));
 
@@ -9763,10 +10210,11 @@
             if (!grid) return;
             grid.innerHTML = '';
 
-            Object.values(datasetDelegacionesDetalle).forEach(d => {
+            Object.values(datasetDelegacionesDetalle).forEach((d, idx) => {
                 const card = document.createElement('div');
-                card.className = `delegacion-card ${delegacionSeleccionadaActiva === d.id ? 'active-delegacion' : ''}`;
+                card.className = `delegacion-modular-glass-card spotlight-card stagger-item ${delegacionSeleccionadaActiva === d.id ? 'active-delegacion' : ''}`;
                 card.id = `card-del-${d.id}`;
+                card.style.setProperty('--stagger-i', idx);
                 card.onclick = () => {
                     seleccionarDelegacion(d.id);
                     abrirDrawerExpediente(d.id);
@@ -9785,34 +10233,47 @@
                 const gestorTurno = d.funcionarios && d.funcionarios.length > 0 ? d.funcionarios[0].nombre : d.delegado;
 
                 card.innerHTML = `
-                    <img src="${d.foto}" alt="${d.nombre}" class="delegacion-card-img" onerror="this.src='/static/img/faro_real_sunset.jpg'">
-                    <div class="delegacion-card-overlay"></div>
-                    <div class="delegacion-card-content">
-                        <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <div class="d-flex justify-content-between align-items-center mb-3">
                             ${badgeGlowHtml}
-                            <span class="delegacion-stat-pill">
+                            <span class="badge bg-light text-dark border px-2 py-1 shadow-xs" style="font-size: 0.74rem; font-weight: 700;">
                                 <i class="bi bi-star-fill text-warning me-1"></i>${d.satisfaccion || '98.2%'}
                             </span>
                         </div>
 
-                        <div>
-                            <div class="text-white-50 small mb-1" style="font-size:0.75rem;">${d.sector}</div>
-                            <h4 class="text-white fw-bold mb-1" style="font-size:1.25rem; text-shadow: 0 2px 8px rgba(0,0,0,0.85);">${d.nombre}</h4>
-                            <div class="text-white-50 small mb-2" style="font-size:0.75rem;">
-                                <i class="bi bi-person-check text-info me-1"></i><strong>Turno:</strong> ${gestorTurno}
+                        <div class="mb-3">
+                            <div class="text-muted text-uppercase fw-bold" style="font-size: 0.68rem; letter-spacing: 0.5px;">${d.sector}</div>
+                            <h4 class="fw-bold mb-1" style="color: var(--muni-navy); font-size: 1.18rem;">${d.nombre}</h4>
+                            <div class="text-secondary small text-truncate" style="font-size: 0.78rem;">
+                                <i class="bi bi-geo-alt-fill text-danger me-1"></i>${d.direccion}
                             </div>
-                            
-                            <div class="d-flex align-items-center justify-content-between pt-2 border-top border-white-50">
-                                <span class="text-white-50 small"><i class="bi bi-hourglass-split text-warning me-1"></i>Espera: <strong>${esperaMedia}</strong></span>
-                                <span class="badge rounded-pill bg-danger px-3 py-1" style="font-size:0.72rem; box-shadow: 0 2px 8px rgba(196,18,48,0.5);">
-                                    Expediente Sede <i class="bi bi-layout-sidebar-inset-reverse ms-1"></i>
-                                </span>
+                        </div>
+
+                        <div class="p-2 rounded-3 mb-3" style="background: rgba(27, 54, 93, 0.035); border: 1px solid rgba(226, 232, 240, 0.85);">
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <span class="text-muted small" style="font-size: 0.73rem;"><i class="bi bi-person-badge text-primary me-1"></i>Gestor Turno:</span>
+                                <span class="fw-bold text-dark small" style="font-size: 0.76rem;">${gestorTurno}</span>
                             </div>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span class="text-muted small" style="font-size: 0.73rem;"><i class="bi bi-hourglass-split text-warning me-1"></i>Espera Media:</span>
+                                <span class="fw-bold text-dark small font-monospace" style="font-size: 0.76rem;">${esperaMedia}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="d-flex align-items-center justify-content-between pt-2 border-top">
+                        <span class="badge bg-primary-subtle text-primary border border-primary-subtle px-2 py-1" style="font-size: 0.72rem; font-weight: 600;">
+                            ${d.casosActivos || 42} Casos Activos
+                        </span>
+                        <div class="btn-expediente-sede-link" title="Abrir expediente de sede">
+                            <span>Expediente Sede</span>
+                            <i class="bi bi-arrow-right expediente-arrow"></i>
                         </div>
                     </div>
                 `;
                 grid.appendChild(card);
             });
+            initSpotlightEffect();
         }
 
         function abrirDrawerExpediente(id) {
@@ -10524,11 +10985,13 @@
                 filtrarRoles();
             }
         }
-
         function filtrarRoles() {
-            const query = (document.getElementById('searchRolesInput')?.value || '').toLowerCase().trim();
-            const tipoFiltro = document.getElementById('filtroTipoRol')?.value || '';
-            const modFiltro = document.getElementById('filtroModuloRol')?.value || '';
+            const elSearchR = document.getElementById('searchRolesInput');
+            const query = (elSearchR && elSearchR.value ? elSearchR.value : '').toLowerCase().trim();
+            const elTipoR = document.getElementById('filtroTipoRol');
+            const tipoFiltro = (elTipoR && elTipoR.value) ? elTipoR.value : '';
+            const elModR = document.getElementById('filtroModuloRol');
+            const modFiltro = (elModR && elModR.value) ? elModR.value : '';
 
             filasFiltradasRoles = datasetRoles.filter(r => {
                 const matchTexto = !query ||
@@ -10830,9 +11293,12 @@
         }
 
         async function ejecutarGuardarRol() {
-            const id = document.getElementById('rolFormId')?.value;
-            const name = document.getElementById('rolFormNombre')?.value.trim();
-            const description = document.getElementById('rolFormDescripcion')?.value.trim();
+            const elId = document.getElementById('rolFormId');
+            const id = elId ? elId.value : '';
+            const elNom = document.getElementById('rolFormNombre');
+            const name = (elNom && elNom.value) ? elNom.value.trim() : '';
+            const elDesc = document.getElementById('rolFormDescripcion');
+            const description = (elDesc && elDesc.value) ? elDesc.value.trim() : '';
 
             if (!name) {
                 alert('El nombre del rol es obligatorio.');
@@ -11119,10 +11585,14 @@
         }
 
         async function ejecutarGuardarNuevaFuncion() {
-            const moduleId = document.getElementById('nuevaFuncionModulo')?.value;
-            const code = document.getElementById('nuevaFuncionCodigo')?.value.trim();
-            const name = document.getElementById('nuevaFuncionNombre')?.value.trim();
-            const desc = document.getElementById('nuevaFuncionDesc')?.value.trim();
+            const elMod = document.getElementById('nuevaFuncionModulo');
+            const moduleId = elMod ? elMod.value : '';
+            const elCode = document.getElementById('nuevaFuncionCodigo');
+            const code = (elCode && elCode.value) ? elCode.value.trim() : '';
+            const elName = document.getElementById('nuevaFuncionNombre');
+            const name = (elName && elName.value) ? elName.value.trim() : '';
+            const elDesc = document.getElementById('nuevaFuncionDesc');
+            const desc = (elDesc && elDesc.value) ? elDesc.value.trim() : '';
 
             if (!code || !name) {
                 alert('Código y nombre de la función son requeridos.');

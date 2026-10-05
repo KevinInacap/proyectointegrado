@@ -893,9 +893,9 @@
             if (btn) btn.classList.add('active');
             filterCasesTable();
         }
-
         function filterCasesTable() {
-            const query = (document.getElementById('caseSearchInput')?.value || '').toLowerCase();
+            const elInput = document.getElementById('caseSearchInput');
+            const query = (elInput && elInput.value ? elInput.value : '').toLowerCase();
             const rows = document.querySelectorAll('#casesDataTable tbody tr.case-row-item');
             rows.forEach(row => {
                 const text = row.textContent.toLowerCase();
@@ -932,7 +932,8 @@
         }
 
         function filterEvidenciasTable() {
-            const query = (document.getElementById('evidenceSearchInput')?.value || '').toLowerCase();
+            const elEvidence = document.getElementById('evidenceSearchInput');
+            const query = (elEvidence && elEvidence.value ? elEvidence.value : '').toLowerCase();
             const rows = document.querySelectorAll('#evidenciasDataTable tbody tr.evidence-row-item');
             rows.forEach(row => {
                 const text = row.textContent.toLowerCase();
@@ -1082,10 +1083,14 @@
                 confirmButtonText: '<i class="bi bi-floppy-fill"></i> Guardar Modificación',
                 confirmButtonColor: '#8B1D2C',
                 preConfirm: () => {
-                    const newDate = sanitizeInput(document.getElementById('swal-edit-date')?.value?.trim());
-                    const newContact = sanitizeInput(document.getElementById('swal-edit-contact')?.value?.trim());
-                    const newPhone = sanitizeInput(document.getElementById('swal-edit-phone')?.value?.trim());
-                    const motivo = sanitizeInput(document.getElementById('swal-edit-motivo')?.value?.trim());
+                    const elDate = document.getElementById('swal-edit-date');
+                    const newDate = sanitizeInput(elDate && elDate.value ? elDate.value.trim() : '');
+                    const elContact = document.getElementById('swal-edit-contact');
+                    const newContact = sanitizeInput(elContact && elContact.value ? elContact.value.trim() : '');
+                    const elPhone = document.getElementById('swal-edit-phone');
+                    const newPhone = sanitizeInput(elPhone && elPhone.value ? elPhone.value.trim() : '');
+                    const elMotivo = document.getElementById('swal-edit-motivo');
+                    const motivo = sanitizeInput(elMotivo && elMotivo.value ? elMotivo.value.trim() : '');
                     const fileInput = document.getElementById('swal-edit-file');
                     const hasFile = fileInput && fileInput.files && fileInput.files.length > 0;
 
