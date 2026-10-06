@@ -2358,6 +2358,12 @@
                     if (elIna) elIna.textContent = data.summary.inactivos;
                     const elAdm = document.getElementById('lblAdminsUsuarios');
                     if (elAdm) elAdm.textContent = data.summary.admins;
+
+                    const elPorc = document.getElementById('lblPorcActivos');
+                    if (elPorc && data.summary.total > 0) {
+                        const pct = Math.round((data.summary.activos / data.summary.total) * 100);
+                        elPorc.textContent = `${pct}% de dotación habilitada`;
+                    }
                 }
 
                 // Poblar Select de Filtros si no tienen opciones
@@ -2392,6 +2398,15 @@
             }
         }
 
+        let filtroFacetUsuarioActual = '';
+
+        function filtrarUsuariosFacet(filtro, btn) {
+            filtroFacetUsuarioActual = filtro;
+            document.querySelectorAll('.usuario-filter-pill').forEach(p => p.classList.remove('active'));
+            if (btn) btn.classList.add('active');
+            filtrarUsuarios();
+        }
+
         function filtrarUsuarios() {
             const elSearchU = document.getElementById('searchUsuariosInput');
             const query = (elSearchU && elSearchU.value ? elSearchU.value : '').toLowerCase().trim();
@@ -2404,17 +2419,39 @@
 
             filasFiltradasUsuarios = datasetUsuarios.filter(u => {
                 const matchTexto = !query ||
-                    u.full_name.toLowerCase().includes(query) ||
-                    u.username.toLowerCase().includes(query) ||
-                    u.rut.toLowerCase().includes(query) ||
-                    u.email.toLowerCase().includes(query) ||
-                    u.position_name.toLowerCase().includes(query);
+                    (u.full_name || '').toLowerCase().includes(query) ||
+                    (u.username || '').toLowerCase().includes(query) ||
+                    (u.rut || '').toLowerCase().includes(query) ||
+                    (u.email || '').toLowerCase().includes(query) ||
+                    (u.position_name || '').toLowerCase().includes(query);
 
                 const matchDel = !delFiltro || String(u.delegation_id) === String(delFiltro);
-                const matchRol = !rolFiltro || u.roles.some(r => String(r.id) === String(rolFiltro));
+                const matchRol = !rolFiltro || (u.roles || []).some(r => String(r.id) === String(rolFiltro));
                 const matchEst = !estFiltro || u.status === estFiltro;
 
-                return matchTexto && matchDel && matchRol && matchEst;
+                // Filtro por Facet Pills
+                let matchFacet = true;
+                if (filtroFacetUsuarioActual === 'Activo') {
+                    matchFacet = u.status === 'Activo';
+                } else if (filtroFacetUsuarioActual === 'Inactivo') {
+                    matchFacet = u.status === 'Inactivo';
+                } else if (filtroFacetUsuarioActual === 'admin') {
+                    matchFacet = u.is_superuser || (u.roles || []).some(r => r.name.toLowerCase().includes('admin'));
+                } else if (filtroFacetUsuarioActual === 'gestor') {
+                    matchFacet = (u.roles || []).some(r => r.name.toLowerCase().includes('gestor'));
+                } else if (filtroFacetUsuarioActual === 'verificador') {
+                    matchFacet = (u.roles || []).some(r => r.name.toLowerCase().includes('verificador'));
+                } else if (filtroFacetUsuarioActual === 'Centro Histórico') {
+                    matchFacet = (u.delegation_name || '').toLowerCase().includes('centro');
+                } else if (filtroFacetUsuarioActual === 'Las Compañías') {
+                    matchFacet = (u.delegation_name || '').toLowerCase().includes('compañ');
+                } else if (filtroFacetUsuarioActual === 'Pampa') {
+                    matchFacet = (u.delegation_name || '').toLowerCase().includes('pampa');
+                } else if (filtroFacetUsuarioActual === 'Rural') {
+                    matchFacet = (u.delegation_name || '').toLowerCase().includes('rural');
+                }
+
+                return matchTexto && matchDel && matchRol && matchEst && matchFacet;
             });
 
             // Aplicar orden
@@ -2428,6 +2465,11 @@
             if (document.getElementById('filtroDelegacionUsuario')) document.getElementById('filtroDelegacionUsuario').value = '';
             if (document.getElementById('filtroRolUsuario')) document.getElementById('filtroRolUsuario').value = '';
             if (document.getElementById('filtroEstadoUsuario')) document.getElementById('filtroEstadoUsuario').value = '';
+            filtroFacetUsuarioActual = '';
+            document.querySelectorAll('.usuario-filter-pill').forEach((p, idx) => {
+                if (idx === 0) p.classList.add('active');
+                else p.classList.remove('active');
+            });
             filtrarUsuarios();
         }
 
@@ -2465,7 +2507,7 @@
             const datos = filasFiltradasUsuarios.slice(inicio, fin);
 
             if (datos.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="8" class="text-center py-5 text-muted">
+                tbody.innerHTML = `<tr><td colspan="9" class="text-center py-5 text-muted">
                     <div class="empty-state-pro py-2">
                         <div class="empty-state-icon"><i class="bi bi-person-x"></i></div>
                         <div class="empty-state-title">No se encontraron funcionarios</div>
@@ -2473,7 +2515,8 @@
                         <button class="btn btn-sm btn-outline-primary rounded-pill px-3" onclick="limpiarFiltrosUsuarios()">Restablecer Filtros</button>
                     </div>
                 </td></tr>`;
-                document.getElementById('lblRegistrosInfoUsuarios').textContent = '0 registros encontrados';
+                const lblInfo = document.getElementById('lblRegistrosInfoUsuarios');
+                if (lblInfo) lblInfo.textContent = '0 registros encontrados';
                 actualizarPaginadorUsuarios(0);
                 return;
             }
@@ -2519,7 +2562,7 @@
                 const isActivo = u.status === 'Activo';
                 const statusBadge = `
                     <button class="btn btn-sm p-0 border-0" onclick="toggleEstadoUsuario(${u.id}, '${u.full_name.replace(/'/g, "\\'")}')" title="Clic para alternar estado">
-                        <span class="badge ${isActivo ? 'bg-success-subtle text-success border border-success-subtle' : 'bg-danger-subtle text-danger border border-danger-subtle'} px-2 py-1" style="font-size: 0.78rem; font-weight: 600; cursor: pointer;">
+                        <span class="badge ${isActivo ? 'bg-success-subtle text-success border border-success-subtle' : 'bg-danger-subtle text-danger border border-danger-subtle'} px-3 py-1 rounded-pill" style="font-size: 0.80rem; font-weight: 700; cursor: pointer;">
                             <i class="bi ${isActivo ? 'bi-check-circle-fill' : 'bi-x-circle-fill'} me-1"></i>${u.status}
                         </span>
                     </button>
@@ -2527,7 +2570,7 @@
 
                 // Avatar con iniciales y anillo institucional
                 const initials = (u.full_name || 'U').split(' ').map(n => n[0]).slice(0, 2).join('').toUpperCase();
-                const avatarRingColor = esAdmin ? '#C41230' : '#1B365D';
+                const avatarRingColor = esAdmin ? 'var(--muni-red)' : 'var(--muni-navy)';
                 const ultimaConexion = u.last_login || (idx % 2 === 0 ? 'Hoy 09:42 hrs' : 'Ayer 17:15 hrs');
 
                 const isSelected = typeof selectedTableRows !== 'undefined' && selectedTableRows.has(u.id);
@@ -2538,70 +2581,76 @@
                         <input type="checkbox" class="form-check-input check-user-row" data-id="${u.id}" ${isSelected ? 'checked' : ''} onchange="toggleFilaSeleccionada(${u.id}, this)">
                     </td>
                     <td class="text-center fw-semibold text-secondary" style="font-size: 0.85rem; vertical-align: middle;">${rowNum}</td>
-                    <td style="vertical-align: middle;">
+                    <td style="vertical-align: middle; cursor: pointer;" onclick="seleccionarUsuarioDetalle('${u.id}')">
                         <div class="d-flex align-items-center gap-2">
-                            <div class="user-avatar-pill ${esAdmin ? 'admin' : ''}" style="width: 36px; height: 36px; font-size: 0.82rem; border: 2px solid ${avatarRingColor}; flex-shrink: 0;">
+                            <div class="user-avatar-pill ${esAdmin ? 'admin' : ''}" style="width: 38px; height: 38px; font-size: 0.85rem; font-weight: 800; border: 2px solid ${avatarRingColor}; flex-shrink: 0; background: ${esAdmin ? 'var(--muni-red)' : 'var(--muni-navy)'}; color: #FFF;">
                                 ${initials}
                             </div>
-                            <div>
+                            <div style="min-width: 0;">
                                 <div class="d-flex align-items-center gap-1">
-                                    <span class="fw-bold" style="color: var(--muni-navy); font-size: 0.88rem;">${u.full_name}</span>
-                                    ${esAdmin ? '<span class="badge bg-danger-subtle text-danger border border-danger-subtle" style="font-size: 0.62rem; padding: 1px 4px;">ADMIN</span>' : ''}
+                                    <span class="fw-bold text-truncate" style="color: var(--muni-navy); font-size: 0.90rem;">${u.full_name}</span>
+                                    ${esAdmin ? '<span class="badge rounded-pill px-2 py-0 text-white fw-bold" style="background: var(--muni-red); font-size: 0.65rem;">ADMIN</span>' : ''}
                                 </div>
-                                <div class="text-secondary font-monospace" style="font-size: 0.74rem;">${u.rut}</div>
+                                <div class="text-secondary small d-flex align-items-center gap-1 font-monospace" style="font-size: 0.74rem;">
+                                    <span>${u.rut || 'RUT no reg.'}</span>
+                                    <span>•</span>
+                                    <a href="mailto:${u.email}" class="text-primary text-decoration-none text-truncate" style="max-width: 170px;" onclick="event.stopPropagation();" title="${u.email}">
+                                        ${u.email}
+                                    </a>
+                                </div>
                             </div>
                         </div>
                     </td>
                     <td style="vertical-align: middle;">
-                        <a href="mailto:${u.email}" class="text-decoration-none text-primary small fw-semibold" style="font-size: 0.82rem;">
-                            <i class="bi bi-envelope text-muted me-1"></i>${u.email}
-                        </a>
-                    </td>
-                    <td style="vertical-align: middle;">
-                        <div class="fw-medium text-dark small" style="font-size: 0.83rem;">
+                        <div class="fw-bold small" style="font-size: 0.85rem; color: var(--muni-navy);">
                             <i class="bi bi-geo-alt-fill text-danger me-1"></i>${delegacionLimpia}
                         </div>
-                        ${cargoLimpio ? `<div class="text-muted small" style="font-size: 0.74rem;">${cargoLimpio}</div>` : ''}
+                        ${cargoLimpio ? `<div class="text-muted small text-truncate" style="font-size: 0.75rem; max-width: 180px;">${cargoLimpio}</div>` : ''}
                     </td>
                     <td style="vertical-align: middle;">
-                        <span class="text-secondary small font-monospace" style="font-size: 0.78rem;">
-                            <i class="bi bi-clock-history me-1 text-info"></i>${ultimaConexion}
-                        </span>
+                        <div class="d-flex flex-wrap gap-1">
+                            ${rolesHtml}
+                        </div>
                     </td>
                     <td class="text-center" style="vertical-align: middle;">${statusBadge}</td>
-                    <td class="text-end" style="vertical-align: middle;">
-                        <div class="dropdown d-inline-block">
-                            <button class="btn btn-sm btn-light border rounded-circle shadow-xs" type="button" data-bs-toggle="dropdown" aria-expanded="false" style="width: 32px; height: 32px; display: inline-flex; align-items: center; justify-content: center;" title="Acciones del usuario">
-                                <i class="bi bi-three-dots-vertical text-secondary"></i>
+                    <td class="text-end" style="vertical-align: middle; padding-right: 1rem;">
+                        <div class="d-flex align-items-center justify-content-end gap-1">
+                            <button class="btn btn-sm btn-outline-primary rounded-pill px-3 py-1 fw-bold shadow-xs d-flex align-items-center gap-1" onclick="seleccionarUsuarioDetalle('${u.id}')" title="Ver ficha técnica del funcionario" style="font-size: 0.78rem;">
+                                <i class="bi bi-person-vcard"></i> Ficha
                             </button>
-                            <ul class="dropdown-menu dropdown-menu-end shadow-lg border-0 rounded-4 p-2" style="min-width: 200px; font-size: 0.82rem; backdrop-filter: blur(16px);">
-                                <li>
-                                    <a class="dropdown-item py-2 fw-medium text-primary rounded-2" href="javascript:void(0)" onclick="abrirAdminDrawer('usuario', ${u.id})">
-                                        <i class="bi bi-layout-sidebar-inset-reverse me-2"></i> Abrir en Panel Lateral
-                                    </a>
-                                </li>
-                                <li>
-                                    <a class="dropdown-item py-2 fw-medium rounded-2" href="javascript:void(0)" onclick="abrirModalUsuario('editar', ${u.id})">
-                                        <i class="bi bi-pencil-square text-warning me-2"></i> Editar Privilegios
-                                    </a>
-                                </li>
-                                <li>
-                                    <a class="dropdown-item py-2 fw-medium text-primary rounded-2" href="javascript:void(0)" onclick="abrirModalPassword(${u.id}, '${u.full_name.replace(/'/g, "\\'")}')">
-                                        <i class="bi bi-key-fill me-2"></i> Resetear Contraseña
-                                    </a>
-                                </li>
-                                <li>
-                                    <a class="dropdown-item py-2 fw-medium text-secondary rounded-2" href="javascript:void(0)" onclick="abrirModalUsuario('editar', ${u.id})">
-                                        <i class="bi bi-building-gear me-2"></i> Reasignar Sede
-                                    </a>
-                                </li>
-                                <li><hr class="dropdown-divider my-1"></li>
-                                <li>
-                                    <a class="dropdown-item py-2 fw-medium text-${isActivo ? 'danger' : 'success'} rounded-2" href="javascript:void(0)" onclick="toggleEstadoUsuario(${u.id}, '${u.full_name.replace(/'/g, "\\'")}')">
-                                        <i class="bi bi-power me-2"></i> ${isActivo ? 'Desactivar Acceso' : 'Activar Acceso'}
-                                    </a>
-                                </li>
-                            </ul>
+                            <div class="dropdown d-inline-block">
+                                <button class="btn btn-sm btn-light border rounded-circle shadow-xs" type="button" data-bs-toggle="dropdown" aria-expanded="false" style="width: 32px; height: 32px; display: inline-flex; align-items: center; justify-content: center;" title="Todas las acciones">
+                                    <i class="bi bi-three-dots-vertical text-secondary"></i>
+                                </button>
+                                <ul class="dropdown-menu dropdown-menu-end shadow-lg border p-2" style="min-width: 210px; font-size: 0.84rem; background: #FFFFFF !important; z-index: 1080;">
+                                    <li>
+                                        <a class="dropdown-item py-2 fw-semibold text-primary rounded-2 d-flex align-items-center gap-2" href="javascript:void(0)" onclick="seleccionarUsuarioDetalle('${u.id}')">
+                                            <i class="bi bi-person-lines-fill text-primary"></i> Ver Ficha Completa
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item py-2 fw-semibold text-dark rounded-2 d-flex align-items-center gap-2" href="javascript:void(0)" onclick="abrirModalUsuario('editar', ${u.id})">
+                                            <i class="bi bi-pencil-square text-warning"></i> Editar Funcionario
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item py-2 fw-semibold text-dark rounded-2 d-flex align-items-center gap-2" href="javascript:void(0)" onclick="abrirModalPassword(${u.id}, '${u.full_name.replace(/'/g, "\\'")}')">
+                                            <i class="bi bi-key-fill text-info"></i> Resetear Contraseña
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item py-2 fw-semibold text-dark rounded-2 d-flex align-items-center gap-2" href="javascript:void(0)" onclick="exportarFichaUsuarioPDF(${u.id})">
+                                            <i class="bi bi-file-earmark-pdf-fill text-danger"></i> Credencial PDF
+                                        </a>
+                                    </li>
+                                    <li><hr class="dropdown-divider my-1"></li>
+                                    <li>
+                                        <a class="dropdown-item py-2 fw-semibold text-${isActivo ? 'danger' : 'success'} rounded-2 d-flex align-items-center gap-2" href="javascript:void(0)" onclick="toggleEstadoUsuario(${u.id}, '${u.full_name.replace(/'/g, "\\'")}')">
+                                            <i class="bi bi-power"></i> ${isActivo ? 'Desactivar Acceso' : 'Activar Acceso'}
+                                        </a>
+                                    </li>
+                                </ul>
+                            </div>
                         </div>
                     </td>
                 `;
@@ -2609,8 +2658,198 @@
             });
 
             const total = filasFiltradasUsuarios.length;
-            document.getElementById('lblRegistrosInfoUsuarios').textContent = `Mostrando ${Math.min(fin, total)} de ${total} usuarios`;
+            const lblInfo = document.getElementById('lblRegistrosInfoUsuarios');
+            if (lblInfo) lblInfo.textContent = `Mostrando ${Math.min(fin, total)} de ${total} funcionarios`;
             actualizarPaginadorUsuarios(total);
+        }
+
+        function cerrarFichaUsuario() {
+            const panel = document.getElementById('panelDetalleUsuario');
+            if (panel) panel.style.display = 'none';
+        }
+
+        function seleccionarUsuarioDetalle(id) {
+            const u = datasetUsuarios.find(x => String(x.id) === String(id));
+            if (!u) {
+                mostrarToast('⚠ No se encontró la información del funcionario seleccionado.');
+                return;
+            }
+
+            const panel = document.getElementById('panelDetalleUsuario');
+            if (!panel) return;
+
+            const esAdmin = u.is_superuser || (u.roles || []).some(r => r.name.toLowerCase().includes('admin'));
+            const initials = (u.full_name || 'U').split(' ').map(n => n[0]).slice(0, 2).join('').toUpperCase();
+            const avatarColor = esAdmin ? 'var(--muni-red)' : 'var(--muni-navy)';
+            const isActivo = u.status === 'Activo';
+
+            // Roles badges
+            let rolesHtml = '';
+            if (u.roles && u.roles.length > 0) {
+                rolesHtml = u.roles.map(r => `
+                    <span class="badge bg-white text-dark border px-3 py-2 rounded-pill shadow-xs me-1 mb-1 fw-bold" style="font-size: 0.82rem;">
+                        <i class="bi bi-shield-check text-primary me-1"></i>${r.name}
+                    </span>
+                `).join(' ');
+            } else {
+                rolesHtml = '<span class="text-muted small">Sin rol asignado</span>';
+            }
+
+            panel.innerHTML = `
+                <div class="usuario-detail-glass-card">
+                    <!-- Barra de Navegación Rápida -->
+                    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3 pb-2 border-bottom">
+                        <button class="btn btn-sm btn-outline-primary rounded-pill px-3 py-1 fw-bold shadow-xs d-flex align-items-center gap-2"
+                            onclick="cerrarFichaUsuario()">
+                            <i class="bi bi-x-lg"></i> Cerrar Ficha del Funcionario
+                        </button>
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="badge rounded-pill px-3 py-1 text-white fw-bold shadow-xs" style="background: ${isActivo ? 'var(--status-success)' : 'var(--muni-red)'}; font-size: 0.75rem;">
+                                <i class="bi ${isActivo ? 'bi-check-circle-fill' : 'bi-x-circle-fill'} me-1"></i>${u.status}
+                            </span>
+                            <span class="badge bg-white text-secondary border px-3 py-1 rounded-pill small fw-bold shadow-xs">
+                                Ficha de Funcionario #${u.id}
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="row g-4 align-items-center">
+                        <div class="col-lg-7">
+                            <div class="d-flex align-items-center gap-3">
+                                <div style="width: 72px; height: 72px; border-radius: 20px; background: ${avatarColor}; color: #FFF; display: flex; align-items: center; justify-content: center; font-size: 1.8rem; font-weight: 800; box-shadow: 0 8px 24px rgba(27,54,93,0.18); flex-shrink: 0;">
+                                    ${initials}
+                                </div>
+                                <div>
+                                    <div class="d-flex align-items-center gap-2 flex-wrap mb-1">
+                                        <h3 class="m-0 fw-bold" style="color: var(--muni-navy); font-size: 1.55rem; letter-spacing: -0.2px;">
+                                            ${u.full_name}
+                                        </h3>
+                                        ${esAdmin ? '<span class="badge rounded-pill px-2 py-1 text-white fw-bold" style="background: var(--muni-red); font-size: 0.70rem;">ADMINISTRADOR</span>' : ''}
+                                    </div>
+                                    <div class="text-secondary small font-monospace fw-semibold" style="font-size: 0.85rem;">
+                                        RUT: ${u.rut || 'Sin RUT'} • Usuario: @${u.username}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="row g-3 mt-3 pt-3 border-top text-dark" style="font-size: 0.88rem;">
+                                <div class="col-sm-6">
+                                    <div class="text-muted small fw-bold text-uppercase" style="font-size: 0.70rem;">Correo Institucional</div>
+                                    <a href="mailto:${u.email}" class="text-decoration-none text-primary fw-bold d-flex align-items-center gap-1 mt-1">
+                                        <i class="bi bi-envelope-fill text-muted"></i> ${u.email}
+                                    </a>
+                                </div>
+                                <div class="col-sm-6">
+                                    <div class="text-muted small fw-bold text-uppercase" style="font-size: 0.70rem;">Delegación Asignada</div>
+                                    <div class="fw-bold mt-1" style="color: var(--muni-navy);">
+                                        <i class="bi bi-geo-alt-fill text-danger me-1"></i> ${u.delegation_name || 'Sin Sede Asignada'}
+                                    </div>
+                                </div>
+                                <div class="col-sm-6">
+                                    <div class="text-muted small fw-bold text-uppercase" style="font-size: 0.70rem;">Cargo Funcionario</div>
+                                    <div class="fw-semibold mt-1 text-dark">
+                                        <i class="bi bi-briefcase-fill text-secondary me-1"></i> ${u.position_name || 'Personal Municipal'}
+                                    </div>
+                                </div>
+                                <div class="col-sm-6">
+                                    <div class="text-muted small fw-bold text-uppercase" style="font-size: 0.70rem;">Último Acceso Registrado</div>
+                                    <div class="fw-semibold mt-1 text-secondary font-monospace">
+                                        <i class="bi bi-clock-history text-info me-1"></i> ${u.last_login || 'Hoy 09:42 hrs'}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-lg-5">
+                            <div class="p-3 rounded-4 bg-white border shadow-xs mb-3">
+                                <div class="text-muted small fw-bold text-uppercase mb-2" style="font-size: 0.72rem; letter-spacing: 0.04em;">
+                                    Roles y Perfiles de Acceso
+                                </div>
+                                <div>
+                                    ${rolesHtml}
+                                </div>
+                            </div>
+
+                            <div class="d-flex align-items-center gap-2 flex-wrap">
+                                <button class="btn btn-sm btn-outline-primary rounded-pill px-3 py-2 fw-bold shadow-xs" onclick="abrirModalPassword(${u.id}, '${u.full_name.replace(/'/g, "\\'")}')">
+                                    <i class="bi bi-key-fill me-1"></i> Resetear Contraseña
+                                </button>
+                                <button class="btn btn-sm btn-outline-secondary rounded-pill px-3 py-2 fw-bold shadow-xs" onclick="abrirModalUsuario('editar', ${u.id})">
+                                    <i class="bi bi-pencil-square me-1"></i> Editar Datos
+                                </button>
+                                <button class="btn btn-sm btn-outline-${isActivo ? 'danger' : 'success'} rounded-pill px-3 py-2 fw-bold shadow-xs" onclick="toggleEstadoUsuario(${u.id}, '${u.full_name.replace(/'/g, "\\'")}')">
+                                    <i class="bi bi-power me-1"></i> ${isActivo ? 'Desactivar Cuenta' : 'Activar Cuenta'}
+                                </button>
+                                <button class="btn-exportar-pdf-oficial" onclick="exportarFichaUsuarioPDF(${u.id})" style="font-size: 0.78rem; padding: 0.40rem 1rem;">
+                                    <i class="bi bi-file-earmark-pdf-fill"></i> Credencial PDF
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            panel.style.display = 'block';
+            setTimeout(() => {
+                panel.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }, 60);
+
+            mostrarToast(`✓ Ficha de ${u.full_name} desplegada correctamente.`);
+        }
+
+        function exportarFichaUsuarioPDF(id) {
+            const u = datasetUsuarios.find(x => String(x.id) === String(id));
+            if (!u || !window.jspdf) return;
+
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+
+            // Membrete Oficial
+            doc.setFillColor(27, 54, 93);
+            doc.rect(0, 0, 210, 24, 'F');
+            doc.setFillColor(196, 18, 48);
+            doc.rect(0, 24, 210, 2.5, 'F');
+
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(13);
+            doc.setTextColor(255, 255, 255);
+            doc.text('ILUSTRE MUNICIPALIDAD DE LA SERENA', 14, 11);
+            doc.setFontSize(9);
+            doc.setFont('helvetica', 'normal');
+            doc.text('Dirección de Gestión Territorial y Participación Ciudadana', 14, 18);
+
+            doc.setTextColor(27, 54, 93);
+            doc.setFontSize(15);
+            doc.setFont('helvetica', 'bold');
+            doc.text('CREDENCIAL Y EXPEDIENTE DE FUNCIONARIO MUNICIPAL', 14, 38);
+
+            doc.setFontSize(10);
+            doc.setFont('helvetica', 'normal');
+            doc.setTextColor(71, 85, 105);
+            doc.text(`Identificador de Cuenta: #${u.id} | Fecha de Emisión: ${new Date().toLocaleDateString('es-CL')}`, 14, 45);
+
+            const tableBody = [
+                ['Nombre Completo', u.full_name || 'N/A'],
+                ['RUT Institucional', u.rut || 'N/A'],
+                ['Nombre de Usuario', u.username || 'N/A'],
+                ['Correo Electrónico', u.email || 'N/A'],
+                ['Sede / Delegación', u.delegation_name || 'Sin Asignación'],
+                ['Cargo Oficial', u.position_name || 'Personal Municipal'],
+                ['Roles y Privilegios', (u.roles || []).map(r => r.name).join(', ') || 'Sin Rol'],
+                ['Estado de Cuenta', u.status || 'Activo'],
+                ['Último Acceso Registrado', u.last_login || 'N/A']
+            ];
+
+            doc.autoTable({
+                head: [['Parámetro Institucional', 'Información Oficial']],
+                body: tableBody,
+                startY: 52,
+                theme: 'grid',
+                headStyles: { fillColor: [27, 54, 93], textColor: [255, 255, 255], fontStyle: 'bold' }
+            });
+
+            doc.save(`Credencial_Funcionario_${u.id}_${new Date().toISOString().slice(0, 10)}.pdf`);
+            mostrarToast('✓ Credencial de funcionario descargada en PDF.');
         }
 
         function actualizarPaginadorUsuarios(total) {
@@ -3228,29 +3467,52 @@
         };
 
         let delegacionSeleccionadaActiva = null;
+        let filtroZonaActivo = 'todas';
+
+        function filtrarDelegacionesPorSector(zona) {
+            filtroZonaActivo = zona;
+            document.querySelectorAll('.delegacion-filter-pill').forEach(b => b.classList.remove('active'));
+            const activeBtn = document.getElementById(`btn-filtro-${zona}`);
+            if (activeBtn) activeBtn.classList.add('active');
+            renderizarDelegacionesCards(zona);
+        }
 
         function initDelegacionesView() {
+            renderizarDelegacionesCards(filtroZonaActivo);
+        }
+
+        function renderizarDelegacionesCards(filtro = 'todas') {
             const grid = document.getElementById('delegacionesCardsGrid');
             if (!grid) return;
             grid.innerHTML = '';
 
-            Object.values(datasetDelegacionesDetalle).forEach((d, idx) => {
+            const items = Object.values(datasetDelegacionesDetalle).filter(d => {
+                if (filtro === 'todas') return true;
+                if (filtro === 'urbano') return ['centro', 'companias', 'pampa', 'antena'].includes(d.id);
+                if (filtro === 'costa') return d.id === 'costa';
+                if (filtro === 'rural') return d.id === 'rural';
+                return true;
+            });
+
+            items.forEach((d, idx) => {
                 const card = document.createElement('div');
-                card.className = `delegacion-modular-glass-card spotlight-card stagger-item ${delegacionSeleccionadaActiva === d.id ? 'active-delegacion' : ''}`;
+                card.className = `delegacion-modular-glass-card spotlight-card ${delegacionSeleccionadaActiva === d.id ? 'active-delegacion' : ''}`;
                 card.id = `card-del-${d.id}`;
-                card.style.setProperty('--stagger-i', idx);
                 card.onclick = () => {
-                    cerrarDrawerExpediente();
                     seleccionarDelegacion(d.id);
                 };
 
-                let badgeGlowHtml = '';
+                let statusBadgeBg = 'rgba(5, 150, 105, 0.90)';
+                let statusLabel = 'Operativa 100%';
                 if (d.cumplimiento >= 85) {
-                    badgeGlowHtml = `<span class="badge-glow-emerald">Operativa</span>`;
+                    statusBadgeBg = 'rgba(5, 150, 105, 0.90)';
+                    statusLabel = 'Operativa 100%';
                 } else if (d.cumplimiento >= 75) {
-                    badgeGlowHtml = `<span class="badge-glow-amber">Alta Demanda</span>`;
+                    statusBadgeBg = 'rgba(217, 119, 6, 0.90)';
+                    statusLabel = 'Alta Demanda';
                 } else {
-                    badgeGlowHtml = `<span class="badge-glow-carmine">Contingencia</span>`;
+                    statusBadgeBg = 'rgba(220, 38, 38, 0.90)';
+                    statusLabel = 'Atención Especial';
                 }
 
                 const esperaMedia = d.id === 'rural' ? '5 min' : d.id === 'companias' ? '18 min' : d.id === 'centro' ? '12 min' : '8 min';
@@ -3258,46 +3520,63 @@
 
                 card.innerHTML = `
                     <div>
-                        <div class="d-flex justify-content-between align-items-center mb-3">
-                            ${badgeGlowHtml}
-                            <span class="badge bg-light text-dark border px-2 py-1 shadow-xs" style="font-size: 0.74rem; font-weight: 700;">
+                        <!-- Cabecera Fotográfica 16:9 con Badges de Cristal Flotantes -->
+                        <div class="delegacion-card-img-wrap">
+                            <img src="${d.foto || '/static/img/delegacion_centro.jpg'}" alt="${d.nombre}" class="delegacion-card-img" onerror="this.src='/static/img/faro_real_sunset.jpg'">
+                            <span class="delegacion-card-status-pill" style="background: ${statusBadgeBg};">
+                                <i class="bi bi-circle-fill me-1" style="font-size: 0.55rem;"></i> ${statusLabel}
+                            </span>
+                            <span class="delegacion-card-score-pill">
                                 <i class="bi bi-star-fill text-warning me-1"></i>${d.satisfaccion || '98.2%'}
                             </span>
                         </div>
 
-                        <div class="mb-3">
-                            <div class="text-muted text-uppercase fw-bold" style="font-size: 0.68rem; letter-spacing: 0.5px;">${d.sector}</div>
-                            <h4 class="fw-bold mb-1" style="color: var(--muni-navy); font-size: 1.18rem;">${d.nombre}</h4>
-                            <div class="text-secondary small text-truncate" style="font-size: 0.78rem;">
+                        <!-- Contenido Principal -->
+                        <div class="p-3 pb-2">
+                            <div class="text-muted text-uppercase fw-bold mb-1" style="font-size: 0.70rem; letter-spacing: 0.05em;">
+                                ${d.sector}
+                            </div>
+                            <h4 class="fw-bold mb-1" style="color: var(--muni-navy); font-size: 1.25rem;">
+                                ${d.nombre}
+                            </h4>
+                            <div class="text-secondary small text-truncate mb-3" style="font-size: 0.82rem;">
                                 <i class="bi bi-geo-alt-fill text-danger me-1"></i>${d.direccion}
                             </div>
-                        </div>
 
-                        <div class="p-2 rounded-3 mb-3" style="background: rgba(27, 54, 93, 0.035); border: 1px solid rgba(226, 232, 240, 0.85);">
-                            <div class="d-flex justify-content-between align-items-center mb-1">
-                                <span class="text-muted small" style="font-size: 0.73rem;"><i class="bi bi-person-badge text-primary me-1"></i>Gestor Turno:</span>
-                                <span class="fw-bold text-dark small" style="font-size: 0.76rem;">${gestorTurno}</span>
-                            </div>
-                            <div class="d-flex justify-content-between align-items-center">
-                                <span class="text-muted small" style="font-size: 0.73rem;"><i class="bi bi-hourglass-split text-warning me-1"></i>Espera Media:</span>
-                                <span class="fw-bold text-dark small font-monospace" style="font-size: 0.76rem;">${esperaMedia}</span>
+                            <!-- Cápsula de Gestor y Horario (Vidrio Esmerilado) -->
+                            <div class="p-2 px-3 rounded-3 mb-2" style="background: rgba(27, 54, 93, 0.04); border: 1px solid rgba(226, 232, 240, 0.9);">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <span class="text-muted small" style="font-size: 0.74rem;">
+                                        <i class="bi bi-person-badge text-primary me-1"></i>Delegado(a):
+                                    </span>
+                                    <span class="fw-bold text-dark small" style="font-size: 0.78rem;">${gestorTurno}</span>
+                                </div>
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <span class="text-muted small" style="font-size: 0.74rem;">
+                                        <i class="bi bi-hourglass-split text-warning me-1"></i>Espera Media:
+                                    </span>
+                                    <span class="fw-bold text-dark small font-monospace" style="font-size: 0.78rem;">${esperaMedia}</span>
+                                </div>
                             </div>
                         </div>
                     </div>
 
-                    <div class="d-flex align-items-center justify-content-between pt-2 border-top">
-                        <span class="badge bg-primary-subtle text-primary border border-primary-subtle px-2 py-1" style="font-size: 0.72rem; font-weight: 600;">
-                            ${d.casosActivos || 42} Casos Activos
-                        </span>
-                        <div class="btn-expediente-sede-link" title="Ver detalles de sede">
-                            <span>Ver Delegación</span>
-                            <i class="bi bi-arrow-right expediente-arrow"></i>
+                    <!-- Pie de la Tarjeta con Enlace de Cristal -->
+                    <div class="p-3 pt-0">
+                        <div class="d-flex align-items-center justify-content-between pt-2 border-top">
+                            <span class="badge bg-primary-subtle text-primary border border-primary-subtle px-2 py-1" style="font-size: 0.74rem; font-weight: 700;">
+                                <i class="bi bi-folder2-open me-1"></i> ${d.atencionesMes || 420} Casos / mes
+                            </span>
+                            <div class="btn-expediente-sede-link" title="Ver ficha territorial de sede">
+                                <span>Ver Ficha Técnica</span>
+                                <i class="bi bi-arrow-right expediente-arrow"></i>
+                            </div>
                         </div>
                     </div>
                 `;
                 grid.appendChild(card);
             });
-            initSpotlightEffect();
+            if (typeof initSpotlightEffect === 'function') initSpotlightEffect();
         }
 
         function abrirDrawerExpediente(id) {
@@ -3372,37 +3651,48 @@
             const data = datasetDelegacionesDetalle[id];
             if (!data) return;
 
-            // Actualizar estilo activo en las tarjetas
-            document.querySelectorAll('.delegacion-card').forEach(c => c.classList.remove('active-delegacion'));
+            // Mapeo de fotos oficiales en alta definición
+            const fotosSedes = {
+                'centro': '/static/img/delegacion_centro.jpg',
+                'companias': '/static/img/delegacion_companias.jpg',
+                'pampa': '/static/img/delegacion_pampa.jpg',
+                'antena': '/static/img/delegacion_antena.jpg',
+                'costa': '/static/img/delegacion_costa.jpg',
+                'rural': '/static/img/delegacion_rural.jpg'
+            };
+            const fotoSede = fotosSedes[id] || '/static/img/faro_real_sunset.jpg';
+
+            // Actualizar estilo activo en las tarjetas modulares
+            document.querySelectorAll('.delegacion-modular-glass-card').forEach(c => c.classList.remove('active-delegacion'));
             const activeCard = document.getElementById(`card-del-${id}`);
             if (activeCard) activeCard.classList.add('active-delegacion');
 
             const panel = document.getElementById('panelDetalleDelegacion');
             if (!panel) return;
 
-            // Construir Funcionarios HTML
+            // Construir Funcionarios HTML con tarjetas Liquid Glass legibles
             const funcionariosHtml = data.funcionarios.map(f => `
                 <div class="col-md-6 col-lg-3">
-                    <div class="p-3 rounded-3 border bg-light h-100 d-flex flex-column justify-content-between">
-                        <div class="d-flex align-items-center gap-2 mb-2">
-                            <div class="user-avatar-pill ${f.rol.includes('Coordinador') || f.rol.includes('Delegado') ? 'admin' : ''}" style="width:38px; height:38px; font-size:0.85rem;">
-                                ${f.avatar}
-                            </div>
-                            <div style="min-width:0;">
-                                <div class="fw-bold text-dark text-truncate" title="${f.nombre}">${f.nombre}</div>
-                                <div class="text-muted small">${f.rut}</div>
-                            </div>
-                        </div>
+                    <div class="delegacion-funcionario-glass-card">
                         <div>
-                            <div class="small text-secondary mb-1"><strong>Cargo:</strong> ${f.cargo}</div>
+                            <div class="d-flex align-items-center gap-2 mb-2">
+                                <div class="user-avatar-pill ${f.rol.includes('Coordinador') || f.rol.includes('Delegado') ? 'admin' : ''}" style="width:42px; height:42px; font-size:0.9rem; font-weight:800; background: var(--muni-navy); color:#FFF;">
+                                    ${f.avatar}
+                                </div>
+                                <div style="min-width:0;">
+                                    <div class="fw-bold text-truncate" style="color: var(--muni-navy); font-size: 0.92rem;" title="${f.nombre}">${f.nombre}</div>
+                                    <div class="text-muted small">${f.rut}</div>
+                                </div>
+                            </div>
+                            <div class="small text-secondary mb-2"><strong>Cargo:</strong> ${f.cargo}</div>
                             <span class="role-badge-pill role-badge-${f.rol.toLowerCase().includes('gestor') ? 'gestor' : f.rol.toLowerCase().includes('verificador') ? 'verificador' : 'admin'} mb-2">
                                 ${f.rol}
                             </span>
-                            <div class="pt-2 border-top">
-                                <a href="mailto:${f.email}" class="small text-decoration-none text-primary d-flex align-items-center gap-1 text-truncate">
-                                    <i class="bi bi-envelope"></i> ${f.email}
-                                </a>
-                            </div>
+                        </div>
+                        <div class="pt-2 border-top mt-2">
+                            <a href="mailto:${f.email}" class="small text-decoration-none text-primary d-flex align-items-center gap-1 text-truncate" title="${f.email}">
+                                <i class="bi bi-envelope-fill text-muted"></i> ${f.email}
+                            </a>
                         </div>
                     </div>
                 </div>
@@ -3410,7 +3700,7 @@
 
             // Construir Barrios HTML
             const barriosHtml = data.barrios.map(b => `
-                <span class="badge bg-white text-dark border px-3 py-2 rounded-pill me-1 mb-2 shadow-sm" style="font-size:0.8rem;">
+                <span class="badge bg-white text-dark border px-3 py-2 rounded-pill me-1 mb-2 shadow-xs" style="font-size:0.82rem; font-weight:600;">
                     <i class="bi bi-geo-alt-fill text-danger me-1"></i> ${b}
                 </span>
             `).join('');
@@ -3419,114 +3709,125 @@
             const metricasHtml = data.metricasAtencion.map(m => `
                 <div class="mb-3">
                     <div class="d-flex justify-content-between small fw-bold mb-1">
-                        <span>${m.tipo}</span>
-                        <span class="text-primary">${m.cantidad} (${m.porcentaje}%)</span>
+                        <span style="color: var(--muni-navy);">${m.tipo}</span>
+                        <span class="text-primary fw-bold">${m.cantidad} (${m.porcentaje}%)</span>
                     </div>
-                    <div class="progress" style="height: 7px; border-radius: 4px;">
-                        <div class="progress-bar" style="width: ${m.porcentaje}%; background-color: ${data.colorSemaforo};"></div>
+                    <div class="progress" style="height: 8px; border-radius: 6px; background: rgba(226, 232, 240, 0.8);">
+                        <div class="progress-bar" style="width: ${m.porcentaje}%; background-color: ${data.colorSemaforo}; border-radius: 6px;"></div>
                     </div>
                 </div>
             `).join('');
 
             panel.innerHTML = `
-                <!-- Barra de Navegación de Delegación (Sin modales ni desenfoques) -->
+                <!-- Barra de Navegación Rápida -->
                 <div class="mb-3 d-flex justify-content-between align-items-center flex-wrap gap-2">
-                    <button class="btn btn-sm btn-outline-primary rounded-pill px-3 py-1 fw-bold shadow-xs" onclick="document.getElementById('panelDetalleDelegacion').style.display='none'; document.getElementById('view-delegaciones').scrollIntoView({behavior: 'smooth'});">
-                        <i class="bi bi-arrow-left me-1"></i> Volver a todas las delegaciones
+                    <button class="btn btn-sm btn-outline-primary rounded-pill px-3 py-1 fw-bold shadow-xs d-flex align-items-center gap-2" onclick="document.getElementById('panelDetalleDelegacion').style.display='none'; document.getElementById('view-delegaciones').scrollIntoView({behavior: 'smooth'});">
+                        <i class="bi bi-arrow-left"></i> Volver a todas las delegaciones
                     </button>
-                    <span class="badge bg-light text-secondary border px-3 py-1 small fw-semibold">
-                        <i class="bi bi-geo-alt-fill text-danger me-1"></i> Ficha Territorial: ${data.nombre}
+                    <span class="badge bg-white text-secondary border px-3 py-2 rounded-pill small fw-bold shadow-xs">
+                        <i class="bi bi-geo-alt-fill text-danger me-1"></i> Ficha Territorial Oficial: ${data.nombre}
                     </span>
                 </div>
 
-                <!-- Encabezado con degradado Glassmorphism -->
-                <div class="delegacion-detail-header">
-                    <div class="d-flex justify-content-between align-items-start flex-wrap gap-3">
-                        <div class="d-flex align-items-center gap-3">
-                            <div style="width: 52px; height: 52px; border-radius: 14px; background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.3); display: flex; align-items: center; justify-content: center; font-size: 1.6rem; color: #FFF;">
-                                <i class="bi bi-building-check"></i>
-                            </div>
+                <!-- Banner Panorámico con Foto HD y Tarjeta Flotante Liquid Glass -->
+                <div class="delegacion-detail-hero-banner">
+                    <img src="${fotoSede}" alt="${data.nombre}" class="delegacion-detail-hero-bg">
+                    
+                    <div class="delegacion-detail-hero-glass-card">
+                        <div class="d-flex justify-content-between align-items-start flex-wrap gap-3 mb-2">
                             <div>
-                                <div class="d-flex align-items-center gap-2 mb-1">
-                                    <span class="badge bg-warning text-dark fw-bold rounded-pill" style="font-size:0.75rem;">DELEGACIÓN SELECCIONADA</span>
-                                    <span class="badge rounded-pill" style="background: ${data.colorSemaforo}; color:#FFF; font-size:0.75rem;">${data.statusSemaforo}</span>
+                                <div class="d-flex align-items-center gap-2 mb-2 flex-wrap">
+                                    <span class="badge rounded-pill px-3 py-1 text-uppercase fw-bold" style="background: var(--muni-navy); color: #FFF; font-size: 0.72rem; letter-spacing: 0.05em;">
+                                        Sede Municipal Activa
+                                    </span>
+                                    <span class="badge rounded-pill px-3 py-1 fw-bold text-white shadow-xs" style="background: ${data.colorSemaforo}; font-size: 0.72rem;">
+                                        <i class="bi bi-circle-fill me-1" style="font-size: 0.55rem;"></i>${data.statusSemaforo}
+                                    </span>
+                                    <span class="badge bg-white text-dark border px-2 py-1 rounded-pill small fw-bold">
+                                        <i class="bi bi-star-fill text-warning me-1"></i>${data.satisfaccion} Satisfacción
+                                    </span>
                                 </div>
-                                <h3 class="m-0 fw-bold text-white">${data.nombre}</h3>
-                                <p class="text-white-50 m-0 small">${data.sector}</p>
+                                <h2 class="m-0 fw-bold" style="color: var(--muni-navy); font-size: 1.85rem; letter-spacing: -0.3px;">
+                                    ${data.nombre}
+                                </h2>
+                                <p class="text-secondary m-0 fw-semibold" style="font-size: 0.95rem;">
+                                    ${data.sector} • Cobertura Comunal La Serena
+                                </p>
+                            </div>
+                            
+                            <div class="d-flex align-items-center gap-2">
+                                <button class="btn-exportar-pdf-oficial" onclick="exportarFichaDelegacionPDF('${data.id}')" title="Descargar Ficha en PDF">
+                                    <i class="bi bi-file-earmark-pdf-fill"></i> Descargar Ficha PDF
+                                </button>
                             </div>
                         </div>
-                        <div class="d-flex align-items-center gap-2">
-                            <button class="btn btn-outline-light btn-sm rounded-pill px-3" onclick="exportarFichaDelegacionPDF('${data.id}')">
-                                <i class="bi bi-file-earmark-pdf me-1"></i> Ficha Delegación PDF
-                            </button>
-                        </div>
-                    </div>
 
-                    <!-- Datos de contacto y sede -->
-                    <div class="row g-2 mt-3 pt-3 border-top border-white-50 text-white small">
-                        <div class="col-md-4">
-                            <i class="bi bi-geo-alt-fill text-warning me-1"></i> <strong>Sede:</strong> ${data.direccion}
-                        </div>
-                        <div class="col-md-3">
-                            <i class="bi bi-telephone-fill text-info me-1"></i> <strong>Fono:</strong> ${data.telefono}
-                        </div>
-                        <div class="col-md-3">
-                            <i class="bi bi-clock-fill text-success me-1"></i> <strong>Horario:</strong> ${data.horario}
-                        </div>
-                        <div class="col-md-2 text-md-end">
-                            <i class="bi bi-person-fill text-warning me-1"></i> <strong>Delegado(a):</strong> ${data.delegado}
+                        <!-- Datos Institucionales de la Delegación -->
+                        <div class="row g-2 mt-3 pt-3 border-top text-dark small" style="border-color: rgba(226, 232, 240, 0.9) !important; font-size: 0.88rem;">
+                            <div class="col-md-4">
+                                <i class="bi bi-geo-alt-fill text-danger me-1"></i> <strong>Sede:</strong> ${data.direccion}
+                            </div>
+                            <div class="col-md-3">
+                                <i class="bi bi-telephone-fill text-primary me-1"></i> <strong>Fono:</strong> ${data.telefono}
+                            </div>
+                            <div class="col-md-2">
+                                <i class="bi bi-clock-fill text-success me-1"></i> <strong>Horario:</strong> ${data.horario}
+                            </div>
+                            <div class="col-md-3 text-md-end">
+                                <i class="bi bi-person-badge-fill text-warning me-1"></i> <strong>Delegado(a):</strong> ${data.delegado}
+                            </div>
                         </div>
                     </div>
                 </div>
 
-                <div class="p-4">
-                    <!-- Resumen Territorial -->
-                    <div class="alert alert-light border-start border-4 mb-4 py-2 px-3 small text-secondary" style="border-left-color: ${data.colorSemaforo} !important; background: #F8FAFC;">
-                        <i class="bi bi-info-circle-fill text-primary me-2"></i> ${data.resumen}
+                <div class="p-4 pt-1">
+                    <!-- Resumen Territorial Municipal -->
+                    <div class="alert alert-light border-start border-4 mb-4 py-3 px-4 text-secondary shadow-xs" style="border-left-color: ${data.colorSemaforo} !important; background: rgba(255, 255, 255, 0.9); border-radius: 12px; font-size: 0.92rem; line-height: 1.5;">
+                        <i class="bi bi-info-circle-fill text-primary me-2 fs-6"></i> ${data.resumen}
                     </div>
 
-                    <!-- KPIs Específicos de esta Delegación -->
+                    <!-- KPIs Específicos de esta Delegación en Cápsulas Liquid Glass -->
                     <div class="row g-3 mb-4">
                         <div class="col-sm-6 col-md-3">
-                            <div class="p-3 rounded-3 border bg-light text-center">
-                                <div class="text-muted small fw-semibold">Cumplimiento de Metas</div>
-                                <div class="fs-3 fw-bold" style="color:${data.colorSemaforo};">${data.cumplimiento}%</div>
-                                <div class="progress mt-2" style="height: 6px;">
-                                    <div class="progress-bar" style="width: ${data.cumplimiento}%; background-color: ${data.colorSemaforo};"></div>
+                            <div class="delegacion-detail-kpi-card">
+                                <div class="text-muted small fw-bold text-uppercase" style="font-size: 0.72rem; letter-spacing: 0.04em;">Cumplimiento Operativo</div>
+                                <div class="fs-3 fw-bold my-1" style="color: ${data.colorSemaforo};">${data.cumplimiento}%</div>
+                                <div class="progress" style="height: 6px; border-radius: 4px; background: rgba(226, 232, 240, 0.8);">
+                                    <div class="progress-bar" style="width: ${data.cumplimiento}%; background-color: ${data.colorSemaforo}; border-radius: 4px;"></div>
                                 </div>
                             </div>
                         </div>
                         <div class="col-sm-6 col-md-3">
-                            <div class="p-3 rounded-3 border bg-light text-center">
-                                <div class="text-muted small fw-semibold">Atenciones del Mes</div>
-                                <div class="fs-3 fw-bold text-dark">${data.atencionesMes}</div>
-                                <small class="text-success fw-semibold"><i class="bi bi-arrow-up-right me-1"></i>En curso</small>
+                            <div class="delegacion-detail-kpi-card">
+                                <div class="text-muted small fw-bold text-uppercase" style="font-size: 0.72rem; letter-spacing: 0.04em;">Atenciones del Mes</div>
+                                <div class="fs-3 fw-bold my-1" style="color: var(--muni-navy);">${data.atencionesMes}</div>
+                                <small class="text-success fw-bold"><i class="bi bi-check2-circle me-1"></i>Registros validados</small>
                             </div>
                         </div>
                         <div class="col-sm-6 col-md-3">
-                            <div class="p-3 rounded-3 border bg-light text-center">
-                                <div class="text-muted small fw-semibold">Vecinos Atendidos</div>
-                                <div class="fs-3 fw-bold text-dark">${data.vecinosRegistrados}</div>
-                                <small class="text-muted">Población territorial</small>
+                            <div class="delegacion-detail-kpi-card">
+                                <div class="text-muted small fw-bold text-uppercase" style="font-size: 0.72rem; letter-spacing: 0.04em;">Vecinos Atendidos</div>
+                                <div class="fs-3 fw-bold my-1" style="color: var(--muni-navy);">${data.vecinosRegistrados}</div>
+                                <small class="text-muted fw-semibold">Población territorial</small>
                             </div>
                         </div>
                         <div class="col-sm-6 col-md-3">
-                            <div class="p-3 rounded-3 border bg-light text-center">
-                                <div class="text-muted small fw-semibold">Casos Resueltos (Tubo)</div>
-                                <div class="fs-3 fw-bold text-primary">${data.tuboResueltos}</div>
-                                <small class="text-info fw-semibold"><i class="bi bi-shield-check me-1"></i>Satisfacción: ${data.satisfaccion}</small>
+                            <div class="delegacion-detail-kpi-card">
+                                <div class="text-muted small fw-bold text-uppercase" style="font-size: 0.72rem; letter-spacing: 0.04em;">Casos Resueltos</div>
+                                <div class="fs-3 fw-bold my-1 text-primary">${data.tuboResueltos}</div>
+                                <small class="text-info fw-bold"><i class="bi bi-shield-check me-1"></i>Satisfacción: ${data.satisfaccion}</small>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Pestaña 1: Dotación Funcionaria de esta Delegación -->
+                    <!-- Dotación Funcionaria de esta Delegación -->
                     <div class="mb-4">
-                        <div class="d-flex align-items-center justify-content-between mb-3">
-                            <h5 class="fw-bold m-0 text-dark">
+                        <div class="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2">
+                            <h5 class="fw-bold m-0" style="color: var(--muni-navy);">
                                 <i class="bi bi-people-fill text-primary me-2"></i> Dotación Funcionaria Asignada (${data.funcionarios.length} funcionarios)
                             </h5>
-                            <button class="btn btn-sm btn-outline-primary rounded-pill px-3" onclick="switchView('usuarios')">
-                                <i class="bi bi-gear-fill me-1"></i> Gestionar en Usuarios
+                            <button class="btn btn-sm btn-outline-primary rounded-pill px-3 fw-bold" onclick="switchView('usuarios')">
+                                <i class="bi bi-gear-fill me-1"></i> Administrar en Usuarios
                             </button>
                         </div>
                         <div class="row g-3">
@@ -3535,25 +3836,25 @@
                     </div>
 
                     <div class="row g-4 pt-2">
-                        <!-- Pestaña 2: Barrios y Unidades Vecinales -->
+                        <!-- Barrios y Unidades Vecinales -->
                         <div class="col-lg-7">
-                            <h5 class="fw-bold mb-3 text-dark">
+                            <h5 class="fw-bold mb-3" style="color: var(--muni-navy);">
                                 <i class="bi bi-map-fill text-danger me-2"></i> Barrios y Sectores Atendidos
                             </h5>
-                            <div class="p-3 rounded-3 border bg-light mb-3">
+                            <div class="p-3 rounded-4 border bg-white mb-2 shadow-xs">
                                 ${barriosHtml}
                             </div>
                             <small class="text-muted">
-                                * Cada sector cuenta con enlace directo con directivas de Juntas de Vecinos y clubes de adultos mayores correspondientes.
+                                * Cada sector cuenta con enlace territorial directo con directivas de Juntas de Vecinos y clubes de personas mayores.
                             </small>
                         </div>
 
-                        <!-- Pestaña 3: Desglose de Atenciones por Tipo -->
+                        <!-- Desglose de Atenciones por Tipo -->
                         <div class="col-lg-5">
-                            <h5 class="fw-bold mb-3 text-dark">
+                            <h5 class="fw-bold mb-3" style="color: var(--muni-navy);">
                                 <i class="bi bi-pie-chart-fill text-success me-2"></i> Distribución de Atenciones
                             </h5>
-                            <div class="p-3 rounded-3 border bg-light">
+                            <div class="p-3 rounded-4 border bg-white shadow-xs">
                                 ${metricasHtml}
                             </div>
                         </div>
@@ -3568,7 +3869,7 @@
                 panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
             }, 100);
 
-            mostrarToast(`✓ Datos de ${data.nombre} cargados correctamente.`);
+            mostrarToast(`✓ Ficha territorial de ${data.nombre} cargada correctamente.`);
         }
 
         function exportarFichaDelegacionPDF(id) {
