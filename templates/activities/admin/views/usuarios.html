@@ -1,0 +1,184 @@
+<section id="view-usuarios" class="maintainer-view">
+                <div class="maintainer-card">
+                    <!-- Header Oficial de Usuarios -->
+                    <div
+                        class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3 pb-2 border-bottom">
+                        <div>
+                            <h2 class="m-0 fw-bold"
+                                style="color: var(--muni-navy); font-size: 1.65rem; letter-spacing: -0.3px;">Usuarios
+                            </h2>
+                            <p class="text-secondary m-0" style="font-size: 0.85rem;">
+                                Administración y control de cuentas, funcionarios y perfiles de acceso
+                            </p>
+                        </div>
+                        <div class="d-flex align-items-center gap-2">
+                            <button class="btn btn-outline-secondary rounded-pill px-3 py-1 fw-semibold small"
+                                onclick="abrirModalAuditoria()" title="Ver historial de cambios y auditoría">
+                                <i class="bi bi-clock-history me-1"></i> Auditoría
+                            </button>
+                            <button class="btn btn-outline-primary rounded-pill px-3 py-1 fw-semibold small"
+                                onclick="abrirAdminDrawer('usuario')" title="Apertura rápida en panel lateral de cristal">
+                                <i class="bi bi-layout-sidebar-inset-reverse me-1"></i> Panel Rápido
+                            </button>
+                            <button class="liquid-glass-btn-primary" onclick="abrirModalUsuario('nuevo')">
+                                <i class="bi bi-plus-lg me-1"></i> Nuevo Usuario
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Indicadores KPI de Usuarios -->
+                    <div class="table-meta-indicators py-2 px-3 mb-2">
+                        <div class="meta-stat-group d-flex align-items-center gap-3 flex-wrap">
+                            <span class="meta-stat-item"><i class="bi bi-people-fill me-1 text-primary"></i> <strong
+                                    id="lblTotalUsuarios">0</strong> usuarios</span>
+                            <span class="text-muted">•</span>
+                            <span class="meta-stat-item"><i class="bi bi-check-circle-fill me-1 text-success"></i>
+                                <strong id="lblActivosUsuarios">0</strong> activos</span>
+                            <span class="text-muted">•</span>
+                            <span class="meta-stat-item"><i class="bi bi-x-circle-fill me-1 text-danger"></i> <strong
+                                    id="lblInactivosUsuarios">0</strong> inactivos</span>
+                            <span class="text-muted">•</span>
+                            <span class="meta-stat-item"><i class="bi bi-shield-shaded me-1"
+                                    style="color: #C41230;"></i> <strong id="lblAdminsUsuarios">0</strong>
+                                administradores</span>
+                        </div>
+                    </div>
+
+                    <!-- Filtros Rápidos por Facetas (Pills Apple / Linear Style) -->
+                    <div class="facet-pill-group mb-3">
+                        <button type="button" class="facet-pill active" onclick="filtrarUsuariosFacet('', this)">
+                            <i class="bi bi-grid-fill me-1"></i> Todos
+                        </button>
+                        <button type="button" class="facet-pill" onclick="filtrarUsuariosFacet('Activo', this)">
+                            <i class="bi bi-check-circle-fill text-success me-1"></i> Activos
+                        </button>
+                        <button type="button" class="facet-pill" onclick="filtrarUsuariosFacet('Inactivo', this)">
+                            <i class="bi bi-x-circle-fill text-danger me-1"></i> Inactivos
+                        </button>
+                        <button type="button" class="facet-pill" onclick="filtrarUsuariosFacet('admin', this)">
+                            <i class="bi bi-shield-lock-fill text-primary me-1"></i> Administradores
+                        </button>
+                        <button type="button" class="facet-pill" onclick="filtrarUsuariosFacet('Centro Histórico', this)">
+                            <i class="bi bi-geo-alt me-1"></i> Centro Histórico
+                        </button>
+                        <button type="button" class="facet-pill" onclick="filtrarUsuariosFacet('Las Compañías', this)">
+                            <i class="bi bi-geo-alt me-1"></i> Las Compañías
+                        </button>
+                    </div>
+
+                    <!-- Barra de Búsqueda, Filtros y Acciones -->
+                    <div
+                        class="usuarios-toolbar d-flex align-items-center justify-content-between gap-3 mb-3 p-2 bg-white border rounded-3 flex-wrap">
+                        <div class="d-flex align-items-center gap-2 flex-grow-1 flex-wrap">
+                            <div class="search-input-wrapper position-relative"
+                                style="min-width: 200px; max-width: 260px; flex: 1;">
+                                <i class="bi bi-search position-absolute top-50 start-0 translate-middle-y ms-3 text-secondary"
+                                    style="font-size: 0.85rem;"></i>
+                                <input type="text" class="form-control form-control-sm ps-5 bg-light border-0"
+                                    id="searchUsuariosInput" onkeyup="filtrarUsuarios()"
+                                    placeholder="Buscar funcionario, RUT o correo..."
+                                    style="border-radius: 8px; font-size: 0.84rem; height: 35px;">
+                            </div>
+
+                            <select class="form-select form-select-sm bg-light border-0" id="filtroDelegacionUsuario"
+                                onchange="filtrarUsuarios()"
+                                style="width: auto; height: 35px; border-radius: 8px; font-size: 0.82rem; font-weight: 500;">
+                                <option value="">Todas las Delegaciones</option>
+                            </select>
+
+                            <select class="form-select form-select-sm bg-light border-0" id="filtroRolUsuario"
+                                onchange="filtrarUsuarios()"
+                                style="width: auto; height: 35px; border-radius: 8px; font-size: 0.82rem; font-weight: 500;">
+                                <option value="">Todos los Roles</option>
+                            </select>
+
+                            <select class="form-select form-select-sm bg-light border-0" id="filtroEstadoUsuario"
+                                onchange="filtrarUsuarios()"
+                                style="width: auto; height: 35px; border-radius: 8px; font-size: 0.82rem; font-weight: 500;">
+                                <option value="">Todos los Estados</option>
+                                <option value="Activo">Solo Activos</option>
+                                <option value="Inactivo">Solo Inactivos</option>
+                            </select>
+
+                            <button class="btn btn-sm btn-light border-0 text-secondary"
+                                onclick="limpiarFiltrosUsuarios()" title="Restablecer filtros"
+                                style="height: 35px; width: 35px; border-radius: 8px; display: flex; align-items: center; justify-content: center;">
+                                <i class="bi bi-arrow-counterclockwise"></i>
+                            </button>
+                        </div>
+
+                        <div class="d-flex align-items-center gap-1 flex-shrink-0">
+                            <div class="btn-group btn-group-sm bg-light p-1 rounded-3">
+                                <button
+                                    class="btn btn-sm border-0 text-dark fw-semibold px-3 d-flex align-items-center gap-1"
+                                    onclick="exportarExcelUsuarios()" title="Exportar reporte a Excel"
+                                    style="border-radius: 6px; font-size: 0.80rem; background: #FFFFFF; box-shadow: 0 1px 3px rgba(0,0,0,0.06);">
+                                    <i class="bi bi-file-earmark-excel text-success"></i> Excel
+                                </button>
+                                <button
+                                    class="btn btn-sm border-0 text-dark fw-semibold px-3 d-flex align-items-center gap-1"
+                                    onclick="exportarPDFUsuarios()" title="Exportar reporte a PDF"
+                                    style="border-radius: 6px; font-size: 0.80rem; background: #FFFFFF; box-shadow: 0 1px 3px rgba(0,0,0,0.06);">
+                                    <i class="bi bi-file-earmark-pdf text-danger"></i> PDF
+                                </button>
+                                <button
+                                    class="btn btn-sm border-0 text-dark fw-semibold px-3 d-flex align-items-center gap-1"
+                                    onclick="window.print()" title="Imprimir listado"
+                                    style="border-radius: 6px; font-size: 0.80rem; background: #FFFFFF; box-shadow: 0 1px 3px rgba(0,0,0,0.06);">
+                                    <i class="bi bi-printer text-primary"></i> Imprimir
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Tabla de Usuarios del Sistema (Sin Scroll Horizontal) -->
+                    <div class="excel-table-wrapper">
+                        <div class="table-responsive" style="overflow-x: auto;">
+                            <table class="custom-clean-table w-100" id="tablaUsuarios">
+                                <thead>
+                                    <tr>
+                                        <th style="width: 36px;" class="text-center">
+                                            <input type="checkbox" class="form-check-input" id="checkAllUsuarios"
+                                                onchange="toggleSeleccionarTodosUsuarios(this.checked)">
+                                        </th>
+                                        <th style="width: 45px; text-align: center;">#</th>
+                                        <th class="sortable" onclick="ordenarUsuarios('full_name')">Funcionario / RUT <i
+                                                class="bi bi-arrow-down-up sort-icon"></i></th>
+                                        <th>Correo Institucional</th>
+                                        <th class="sortable" onclick="ordenarUsuarios('delegation_name')">Delegación /
+                                            Cargo <i class="bi bi-arrow-down-up sort-icon"></i></th>
+                                        <th>Rol Asignado</th>
+                                        <th class="text-center sortable" onclick="ordenarUsuarios('status')"
+                                             style="width: 100px;">Estado</th>
+                                        <th class="text-end" style="width: 105px;">Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tablaUsuariosBody">
+                                    <tr>
+                                        <td colspan="7" class="text-center py-4 text-muted">
+                                            <div class="spinner-border spinner-border-sm text-primary me-2"
+                                                role="status"></div>
+                                            Cargando usuarios desde la base de datos...
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Paginador de Usuarios -->
+                    <div class="table-pagination-footer">
+                        <div class="d-flex align-items-center gap-2">
+                            <span>Mostrar</span>
+                            <select class="form-select form-select-sm" style="width: 70px;"
+                                id="selectFilasPorPaginaUsuarios" onchange="cambiarFilasPorPaginaUsuarios(this.value)">
+                                <option value="10">10</option>
+                                <option value="25">25</option>
+                                <option value="50">50</option>
+                            </select>
+                            <span id="lblRegistrosInfoUsuarios" class="small">Cargando registros...</span>
+                        </div>
+                        <div class="pagination-pills" id="paginadorPillsUsuarios"></div>
+                    </div>
+                </div>
+            </section>

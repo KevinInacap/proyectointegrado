@@ -1,0 +1,543 @@
+<section id="view-dashboard" class="maintainer-view active">
+    <!-- 1. HERO BANNER PANORÁMICO DE IDENTIDAD SERENENSE (LIQUID GLASS PURO Y FOTO REAL) -->
+    <div class="serena-hero-glass-banner mb-4">
+        <img src="/static/img/faro_laserena_bg.jpg" alt="Faro Monumental de La Serena" class="serena-hero-bg-img" onerror="this.src='/static/img/faro_real_sunset.jpg'">
+        <div class="serena-hero-content">
+            <div style="max-width: 680px;">
+                <div class="d-flex align-items-center gap-2 mb-2 flex-wrap">
+                    <span class="badge" style="background: var(--muni-red); color: #FFFFFF; font-weight: 800; font-size: 0.78rem; letter-spacing: 0.06em; padding: 0.4rem 0.9rem; border-radius: 50px; box-shadow: 0 4px 12px rgba(196, 18, 48, 0.25);">
+                        <i class="bi bi-geo-alt-fill me-1"></i> ILUSTRE MUNICIPALIDAD DE LA SERENA
+                    </span>
+                    <span class="badge" style="background: rgba(27, 54, 93, 0.10); color: var(--muni-navy); font-weight: 700; font-size: 0.78rem; padding: 0.4rem 0.9rem; border-radius: 50px; border: 1px solid rgba(27, 54, 93, 0.18);">
+                        <i class="bi bi-shield-check me-1"></i> GESTIÓN SOCIAL Y ATENCIÓN CIUDADANA
+                    </span>
+                </div>
+                <h1 style="font-size: 2.1rem; font-weight: 800; color: var(--muni-navy); letter-spacing: -0.02em; margin-bottom: 0.4rem; line-height: 1.2;">
+                    Portal Municipal de La Serena
+                </h1>
+                <p style="font-size: 0.98rem; color: #334155; line-height: 1.5; margin: 0; font-weight: 500;">
+                    Atención preferencial a nuestros adultos mayores, trámites sociales y despliegue territorial activo en las 6 delegaciones de la comuna.
+                </p>
+            </div>
+
+            <!-- Cápsula de Clima y Costas de La Serena -->
+            <div class="serena-weather-glass-card">
+                <div style="font-size: 2.2rem; line-height: 1;" title="Clima de La Serena">
+                    ☀️
+                </div>
+                <div>
+                    <div class="d-flex align-items-baseline gap-2">
+                        <strong style="font-size: 1.45rem; font-weight: 800; color: var(--muni-navy); line-height: 1;">19°C</strong>
+                        <span style="font-size: 0.82rem; font-weight: 700; color: #475569;">La Serena</span>
+                    </div>
+                    <div style="font-size: 0.80rem; color: #475569; margin-top: 2px; font-weight: 500;">
+                        Camanchaca matinal despejando a sol
+                    </div>
+                    <div style="font-size: 0.74rem; color: #059669; font-weight: 700; margin-top: 2px;">
+                        <i class="bi bi-water me-1"></i> Borde Costero & Av. del Mar habilitados
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 2. TRES INDICADORES CÍVICOS ESENCIALES (VIDRIO LISO TRANSLÚCIDO) -->
+    <div class="row g-3 mb-4">
+        <!-- Delegaciones -->
+        <div class="col-md-4">
+            <div class="sgr-kpi-card kpi-emerald" onclick="switchView('delegaciones')" role="button" tabindex="0">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="sgr-kpi-icon-wrap icon-emerald" style="width: 52px; height: 52px; font-size: 1.5rem;">
+                        <i class="bi bi-buildings-fill"></i>
+                    </div>
+                    <div>
+                        <div class="sgr-kpi-label" style="font-size: 0.78rem; margin: 0;">Red Territorial</div>
+                        <div style="font-size: 1.55rem; font-weight: 800; color: var(--muni-navy); line-height: 1.2;">
+                            6 Delegaciones
+                        </div>
+                        <div style="font-size: 0.82rem; color: #059669; font-weight: 700;">
+                            <i class="bi bi-check-circle-fill me-1"></i> 100% Operativas hoy (08:30 - 14:00)
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Atenciones -->
+        <div class="col-md-4">
+            <div class="sgr-kpi-card kpi-navy" onclick="switchView('atenciones')" role="button" tabindex="0">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="sgr-kpi-icon-wrap icon-navy" style="width: 52px; height: 52px; font-size: 1.5rem;">
+                        <i class="bi bi-clipboard2-check-fill"></i>
+                    </div>
+                    <div>
+                        <div class="sgr-kpi-label" style="font-size: 0.78rem; margin: 0;">Atención a la Comunidad</div>
+                        <div style="font-size: 1.55rem; font-weight: 800; color: var(--muni-navy); line-height: 1.2;">
+                            3.421 Vecinos
+                        </div>
+                        <div style="font-size: 0.82rem; color: #475569; font-weight: 600;">
+                            Requerimientos gestionados en el período
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Padrón -->
+        <div class="col-md-4">
+            <div class="sgr-kpi-card kpi-blue" onclick="switchView('vecinos')" role="button" tabindex="0">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="sgr-kpi-icon-wrap icon-blue" style="width: 52px; height: 52px; font-size: 1.5rem;">
+                        <i class="bi bi-people-fill"></i>
+                    </div>
+                    <div>
+                        <div class="sgr-kpi-label" style="font-size: 0.78rem; margin: 0;">Padrón Comunal</div>
+                        <div style="font-size: 1.55rem; font-weight: 800; color: var(--muni-navy); line-height: 1.2;">
+                            12.458 Residentes
+                        </div>
+                        <div style="font-size: 0.82rem; color: #475569; font-weight: 600;">
+                            Registrados con Ficha Social RSH activa
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 3. MAPA Y RED TERRITORIAL DE LAS 6 SEDES (ESPACIOSO, INTERACTIVO Y CON FOTOS HD) -->
+    <div class="dashboard-panel mb-4">
+        <!-- Encabezado de la Sección de Sedes -->
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3 pb-2 border-bottom">
+            <div>
+                <span class="badge" style="background: rgba(196, 18, 48, 0.10); color: var(--muni-red); font-weight: 800; font-size: 0.78rem;">
+                    <i class="bi bi-map-fill me-1"></i> CARTOGRAFÍA COMUNAL Y RED TERRITORIAL
+                </span>
+                <h3 style="font-size: 1.35rem; font-weight: 800; color: var(--muni-navy); margin: 0.3rem 0 0 0;">
+                    Sedes Municipales y Despliegue en La Serena
+                </h3>
+                <p class="text-secondary small mb-0" style="margin-top: 2px;">
+                    Seleccione una delegación en la barra o pulse un punto en el mapa para revisar sus dependencias y dotación.
+                </p>
+            </div>
+            <button class="btn btn-sm btn-outline-primary rounded-pill px-3 py-1 fw-bold" onclick="switchView('delegaciones')">
+                Ver Módulo Delegaciones <i class="bi bi-arrow-right ms-1"></i>
+            </button>
+        </div>
+
+        <!-- Barra de Selector Horizontal de las 6 Sedes -->
+        <div class="serena-sedes-pills-bar">
+            <div class="serena-sede-pill active" id="pill-sede-centro" onclick="seleccionarDelegacionMapa('centro')">
+                <span class="pill-dot"></span>
+                <span>1. Centro Histórico</span>
+            </div>
+            <div class="serena-sede-pill" id="pill-sede-lascompanias" onclick="seleccionarDelegacionMapa('lascompanias')">
+                <span class="pill-dot"></span>
+                <span>2. Las Compañías</span>
+            </div>
+            <div class="serena-sede-pill" id="pill-sede-lapampa" onclick="seleccionarDelegacionMapa('lapampa')">
+                <span class="pill-dot"></span>
+                <span>3. La Pampa</span>
+            </div>
+            <div class="serena-sede-pill" id="pill-sede-laflorida" onclick="seleccionarDelegacionMapa('laflorida')">
+                <span class="pill-dot"></span>
+                <span>4. La Antena - La Florida</span>
+            </div>
+            <div class="serena-sede-pill" id="pill-sede-tierrasblancas" onclick="seleccionarDelegacionMapa('tierrasblancas')">
+                <span class="pill-dot"></span>
+                <span>5. Avenida del Mar</span>
+            </div>
+            <div class="serena-sede-pill" id="pill-sede-rural" onclick="seleccionarDelegacionMapa('rural')">
+                <span class="pill-dot"></span>
+                <span>6. Sector Rural y Caletas</span>
+            </div>
+        </div>
+
+        <!-- Layout de 2 Columnas Balanceadas: Mapa a la izquierda + Ficha HD a la derecha -->
+        <div class="serena-map-layout">
+            <!-- Columna Izquierda: Mapa SVG de La Serena -->
+            <div class="serena-map-svg-panel">
+                <svg viewBox="0 0 760 380" style="width: 100%; height: auto; max-height: 340px; overflow: visible;">
+                    <defs>
+                        <linearGradient id="oceanGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" stop-color="#38BDF8" stop-opacity="0.14" />
+                            <stop offset="100%" stop-color="#0284C7" stop-opacity="0.05" />
+                        </linearGradient>
+                        <linearGradient id="landGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.95" />
+                            <stop offset="100%" stop-color="#F1F5F9" stop-opacity="0.98" />
+                        </linearGradient>
+                        <filter id="pinGlow" x="-30%" y="-30%" width="160%" height="160%">
+                            <feDropShadow dx="0" dy="3" stdDeviation="3" flood-color="#1B365D" flood-opacity="0.25" />
+                        </filter>
+                    </defs>
+
+                    <!-- Costa y Bahía -->
+                    <path d="M 40,20 Q 90,80 110,140 T 130,220 Q 140,290 190,360 L 740,360 L 740,20 Z" fill="url(#landGrad)" stroke="rgba(203, 213, 225, 0.9)" stroke-width="1.5" />
+                    <path d="M 0,0 L 40,20 Q 90,80 110,140 T 130,220 Q 140,290 190,360 L 0,360 Z" fill="url(#oceanGrad)" />
+
+                    <!-- Rotulación Marítima -->
+                    <text x="35" y="280" fill="#64748B" font-size="11" font-weight="700" letter-spacing="1.5">OCÉANO PACÍFICO</text>
+                    <text x="45" y="110" fill="#0284C7" font-size="10" font-weight="700"><tspan font-weight="bold">Faro Monumental</tspan> ⛵</text>
+
+                    <!-- Ejes viales -->
+                    <path d="M 120,110 L 260,140 L 410,135 L 560,110" fill="none" stroke="rgba(148, 163, 184, 0.6)" stroke-width="2" stroke-dasharray="4,4" />
+                    <path d="M 260,140 L 270,240 L 360,310" fill="none" stroke="rgba(148, 163, 184, 0.6)" stroke-width="2" stroke-dasharray="4,4" />
+                    <path d="M 260,140 L 460,220" fill="none" stroke="rgba(148, 163, 184, 0.6)" stroke-width="2" stroke-dasharray="4,4" />
+
+                    <!-- 1. Las Compañías -->
+                    <g class="delegation-pin-group" id="pin-lascompanias" onclick="seleccionarDelegacionMapa('lascompanias')" style="cursor: pointer;">
+                        <circle cx="280" cy="70" r="16" fill="rgba(27, 54, 93, 0.16)" />
+                        <circle cx="280" cy="70" r="9" fill="#1B365D" filter="url(#pinGlow)" />
+                        <circle cx="280" cy="70" r="3.5" fill="#FFFFFF" />
+                        <text x="280" y="46" text-anchor="middle" font-size="11" font-weight="800" fill="#1B365D">Las Compañías</text>
+                    </g>
+
+                    <!-- 2. Centro Histórico -->
+                    <g class="delegation-pin-group active" id="pin-centro" onclick="seleccionarDelegacionMapa('centro')" style="cursor: pointer;">
+                        <circle cx="250" cy="145" r="20" fill="rgba(196, 18, 48, 0.22)" />
+                        <circle cx="250" cy="145" r="11" fill="#C41230" filter="url(#pinGlow)" />
+                        <circle cx="250" cy="145" r="4" fill="#FFFFFF" />
+                        <text x="250" y="125" text-anchor="middle" font-size="12" font-weight="800" fill="#C41230">Centro Histórico</text>
+                    </g>
+
+                    <!-- 3. La Pampa -->
+                    <g class="delegation-pin-group" id="pin-lapampa" onclick="seleccionarDelegacionMapa('lapampa')" style="cursor: pointer;">
+                        <circle cx="280" cy="245" r="16" fill="rgba(37, 99, 235, 0.16)" />
+                        <circle cx="280" cy="245" r="9" fill="#2563EB" filter="url(#pinGlow)" />
+                        <circle cx="280" cy="245" r="3.5" fill="#FFFFFF" />
+                        <text x="280" y="228" text-anchor="middle" font-size="11" font-weight="800" fill="#1B365D">La Pampa</text>
+                    </g>
+
+                    <!-- 4. La Antena - La Florida -->
+                    <g class="delegation-pin-group" id="pin-laflorida" onclick="seleccionarDelegacionMapa('laflorida')" style="cursor: pointer;">
+                        <circle cx="440" cy="195" r="16" fill="rgba(5, 150, 105, 0.16)" />
+                        <circle cx="440" cy="195" r="9" fill="#059669" filter="url(#pinGlow)" />
+                        <circle cx="440" cy="195" r="3.5" fill="#FFFFFF" />
+                        <text x="440" y="176" text-anchor="middle" font-size="11" font-weight="800" fill="#1B365D">La Antena</text>
+                    </g>
+
+                    <!-- 5. Avenida del Mar -->
+                    <g class="delegation-pin-group" id="pin-tierrasblancas" onclick="seleccionarDelegacionMapa('tierrasblancas')" style="cursor: pointer;">
+                        <circle cx="160" cy="235" r="16" fill="rgba(2, 132, 199, 0.16)" />
+                        <circle cx="160" cy="235" r="9" fill="#0284C7" filter="url(#pinGlow)" />
+                        <circle cx="160" cy="235" r="3.5" fill="#FFFFFF" />
+                        <text x="160" y="218" text-anchor="middle" font-size="11" font-weight="800" fill="#1B365D">Av. del Mar</text>
+                    </g>
+
+                    <!-- 6. Sector Rural -->
+                    <g class="delegation-pin-group" id="pin-rural" onclick="seleccionarDelegacionMapa('rural')" style="cursor: pointer;">
+                        <circle cx="580" cy="115" r="16" fill="rgba(217, 119, 6, 0.16)" />
+                        <circle cx="580" cy="115" r="9" fill="#D97706" filter="url(#pinGlow)" />
+                        <circle cx="580" cy="115" r="3.5" fill="#FFFFFF" />
+                        <text x="580" y="96" text-anchor="middle" font-size="11" font-weight="800" fill="#1B365D">Sector Rural</text>
+                    </g>
+                </svg>
+            </div>
+
+            <!-- Columna Derecha: Tarjeta de Foco Territorial HD (Vidrio Líquido con Amplio Espacio) -->
+            <div class="serena-map-detail-card" id="panelFocoTerritorial">
+                <div>
+                    <!-- Foto 16:9 de la Delegación Seleccionada con Badge Flotante -->
+                    <div class="serena-map-photo-wrap">
+                        <img src="/static/img/delegacion_centro.jpg" id="mapFocusPhoto" alt="Sede de Delegación" class="serena-map-photo-img" onerror="this.src='/static/img/faro_real_sunset.jpg'">
+                        <span id="mapFocusBadge" class="badge" style="position: absolute; top: 12px; right: 12px; background: #C41230; color: #FFFFFF; font-weight: 800; font-size: 0.76rem; padding: 0.38rem 0.85rem; border-radius: 50px; box-shadow: 0 4px 12px rgba(0,0,0,0.25);">
+                            SEDE CENTRAL
+                        </span>
+                    </div>
+
+                    <!-- Datos Principales de la Delegación -->
+                    <div class="mb-3">
+                        <h3 class="fw-bold mb-1" id="mapFocusTitle" style="color: var(--muni-navy); font-size: 1.35rem;">
+                            Centro Histórico
+                        </h3>
+                        <div id="mapFocusSector" class="text-muted small fw-semibold mb-1" style="font-size: 0.82rem;">
+                            Casco Colonial & Edificio Consistorial
+                        </div>
+                        <p class="text-secondary small mb-0" id="mapFocusAddress" style="font-size: 0.88rem;">
+                            <i class="bi bi-geo-alt-fill text-danger me-1"></i> Los Carrera #301 (Edificio Consistorial)
+                        </p>
+                    </div>
+
+                    <!-- Grid 2x2 Cómodo de Atención & Contacto (Sin cortes ni colapso de texto) -->
+                    <div class="p-3 rounded-3 mb-3" style="background: rgba(27, 54, 93, 0.04); border: 1px solid rgba(226, 232, 240, 0.9);">
+                        <div class="row g-2">
+                            <div class="col-6">
+                                <span class="text-muted small fw-bold text-uppercase d-block" style="font-size: 0.70rem; letter-spacing: 0.04em;">
+                                    <i class="bi bi-person-badge text-primary me-1"></i> Gestor Turno:
+                                </span>
+                                <strong id="mapFocusManager" class="text-dark" style="font-size: 0.86rem;">
+                                    Alan Von Kretschmann
+                                </strong>
+                            </div>
+                            <div class="col-6">
+                                <span class="text-muted small fw-bold text-uppercase d-block" style="font-size: 0.70rem; letter-spacing: 0.04em;">
+                                    <i class="bi bi-clock-fill text-success me-1"></i> Horario:
+                                </span>
+                                <strong id="mapFocusSchedule" class="text-dark" style="font-size: 0.86rem;">
+                                    08:30 - 14:00 hrs
+                                </strong>
+                            </div>
+                            <div class="col-6 mt-2 pt-2 border-top">
+                                <span class="text-muted small fw-bold text-uppercase d-block" style="font-size: 0.70rem; letter-spacing: 0.04em;">
+                                    <i class="bi bi-telephone-fill text-primary me-1"></i> Mesa Central:
+                                </span>
+                                <strong id="mapFocusPhone" class="text-primary" style="font-size: 0.86rem;">
+                                    <i class="bi bi-telephone-fill me-1"></i> 51 220 6600
+                                </strong>
+                            </div>
+                            <div class="col-6 mt-2 pt-2 border-top">
+                                <span class="text-muted small fw-bold text-uppercase d-block" style="font-size: 0.70rem; letter-spacing: 0.04em;">
+                                    <i class="bi bi-star-fill text-warning me-1"></i> Satisfacción:
+                                </span>
+                                <strong id="mapFocusSatisfaction" class="text-success" style="font-size: 0.86rem;">
+                                    <i class="bi bi-star-fill text-warning me-1"></i> 95.0%
+                                </strong>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Botón de Acción a Pantalla Completa de Delegación -->
+                <button class="btn w-100 rounded-pill fw-bold py-2 shadow-sm text-white" style="background: var(--muni-navy); border: none; font-size: 0.88rem;" onclick="irADetalleDelegacionDesdeMapa()">
+                    Ver Expediente Completo de esta Delegación <i class="bi bi-arrow-right ms-1"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 4. AGENDA, CALENDARIO Y SERVICIOS DEL DÍA (DISEÑO LIMPIO Y HUMANO) -->
+    <div class="row g-4 mb-4">
+        <!-- Columna Izquierda: Calendario de Octubre 2026 -->
+        <div class="col-lg-6">
+            <div class="dashboard-panel h-100 d-flex flex-column justify-content-between">
+                <div>
+                    <div class="d-flex align-items-center justify-content-between mb-3 pb-2 border-bottom">
+                        <div>
+                            <span class="badge" style="background: rgba(196, 18, 48, 0.10); color: var(--muni-red); font-weight: 800; font-size: 0.78rem;">
+                                <i class="bi bi-calendar-event me-1"></i> INFORMACIÓN DEL DÍA
+                            </span>
+                            <h3 style="font-size: 1.25rem; font-weight: 800; color: var(--muni-navy); margin: 0.25rem 0 0 0;">
+                                Calendario Municipal
+                            </h3>
+                        </div>
+                        <span class="badge bg-primary-subtle text-primary px-3 py-1 fw-bold rounded-pill" style="font-size: 0.82rem;">
+                            <i class="bi bi-clock-history me-1"></i> Lunes, 5 de Octubre
+                        </span>
+                    </div>
+
+                    <!-- Mini Calendario Visual de Octubre 2026 -->
+                    <div class="p-3 rounded-4 mb-3" style="background: rgba(248, 250, 252, 0.9); border: 1px solid rgba(226, 232, 240, 0.9);">
+                        <div class="d-flex justify-content-between align-items-center mb-2 px-1">
+                            <strong style="color: var(--muni-navy); font-size: 0.92rem;">
+                                <i class="bi bi-calendar3 text-primary me-1"></i> Octubre 2026
+                            </strong>
+                            <span class="text-muted small fw-semibold">Atención Territorial Activa</span>
+                        </div>
+
+                        <!-- Días de la semana -->
+                        <div style="display: grid; grid-template-columns: repeat(7, 1fr); text-align: center; font-size: 0.74rem; font-weight: 700; color: #64748B; margin-bottom: 6px;">
+                            <span>Lu</span><span>Ma</span><span>Mi</span><span>Ju</span><span>Vi</span><span>Sá</span><span>Do</span>
+                        </div>
+                        <!-- Días del mes con el día de hoy destacado -->
+                        <div style="display: grid; grid-template-columns: repeat(7, 1fr); text-align: center; gap: 4px; font-size: 0.82rem; font-weight: 600;">
+                            <span class="text-muted p-1">28</span>
+                            <span class="text-muted p-1">29</span>
+                            <span class="text-muted p-1">30</span>
+                            <span class="p-1 rounded-2 text-dark">1</span>
+                            <span class="p-1 rounded-2 text-dark">2</span>
+                            <span class="p-1 rounded-2 text-muted">3</span>
+                            <span class="p-1 rounded-2 text-muted">4</span>
+
+                            <!-- Hoy es 5 de Octubre -->
+                            <span class="p-1 rounded-3 text-white fw-bold shadow-sm" style="background: var(--muni-navy); border: 2px solid var(--muni-red);" title="Hoy: Lunes 5 de Octubre">
+                                5
+                            </span>
+                            <span class="p-1 rounded-2 text-dark">6</span>
+                            <span class="p-1 rounded-2 text-dark">7</span>
+                            <span class="p-1 rounded-2 text-dark">8</span>
+                            <span class="p-1 rounded-2 text-dark">9</span>
+                            <span class="p-1 rounded-2 text-muted">10</span>
+                            <span class="p-1 rounded-2 text-muted">11</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Botones de Acción Rápida -->
+                <div class="pt-3 border-top d-flex gap-2">
+                    <button class="btn btn-primary rounded-pill flex-grow-1 fw-bold py-2 shadow-sm" style="background: var(--muni-navy); border: none; font-size: 0.86rem;" onclick="switchView('vecinos')">
+                        <i class="bi bi-search me-1"></i> Buscar Vecino en Padrón
+                    </button>
+                    <button class="btn btn-outline-primary rounded-pill fw-bold py-2 px-3" style="font-size: 0.86rem;" onclick="switchView('atenciones')">
+                        <i class="bi bi-plus-circle me-1"></i> Registrar Atención
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Columna Derecha: Servicios Comunales y Atención Preferencial -->
+        <div class="col-lg-6">
+            <div class="dashboard-panel h-100 d-flex flex-column justify-content-between">
+                <div>
+                    <div class="d-flex align-items-center justify-content-between mb-3 pb-2 border-bottom">
+                        <div>
+                            <span class="badge" style="background: rgba(5, 150, 105, 0.10); color: #059669; font-weight: 800; font-size: 0.78rem;">
+                                <i class="bi bi-heart-pulse-fill me-1"></i> BIENESTAR CIUDADANO
+                            </span>
+                            <h3 style="font-size: 1.25rem; font-weight: 800; color: var(--muni-navy); margin: 0.25rem 0 0 0;">
+                                Servicios Útiles de Hoy
+                            </h3>
+                        </div>
+                        <span class="badge bg-success-subtle text-success px-3 py-1 fw-bold rounded-pill" style="font-size: 0.82rem;">
+                            <i class="bi bi-check-circle-fill me-1"></i> En Servicio
+                        </span>
+                    </div>
+
+                    <div class="d-flex flex-column gap-2 mb-2">
+                        <!-- Módulo Adulto Mayor -->
+                        <div class="p-3 rounded-3 bg-white border d-flex align-items-center justify-content-between shadow-xs">
+                            <div class="d-flex align-items-center gap-3">
+                                <div style="width: 40px; height: 40px; border-radius: 10px; background: rgba(196, 18, 48, 0.10); display: flex; align-items: center; justify-content: center;">
+                                    <i class="bi bi-heart-pulse-fill text-danger fs-5"></i>
+                                </div>
+                                <div>
+                                    <div class="fw-bold text-dark" style="font-size: 0.90rem;">Módulo Adulto Mayor (Sin Fila)</div>
+                                    <span class="text-muted small">Atención preferencial en Edificio Consistorial Prat #301</span>
+                                </div>
+                            </div>
+                            <span class="badge bg-success-subtle text-success small fw-bold">Habilitado</span>
+                        </div>
+
+                        <!-- Central Telefónica -->
+                        <div class="p-3 rounded-3 bg-white border d-flex align-items-center justify-content-between shadow-xs">
+                            <div class="d-flex align-items-center gap-3">
+                                <div style="width: 40px; height: 40px; border-radius: 10px; background: rgba(5, 150, 105, 0.10); display: flex; align-items: center; justify-content: center;">
+                                    <i class="bi bi-telephone-inbound-fill text-success fs-5"></i>
+                                </div>
+                                <div>
+                                    <div class="fw-bold text-dark" style="font-size: 0.90rem;">Mesa de Ayuda Aló Serena</div>
+                                    <span class="text-muted small">Central vecinal oficial: <strong>51 220 6600</strong></span>
+                                </div>
+                            </div>
+                            <span class="badge bg-light text-dark border small fw-bold">08:30 - 17:30</span>
+                        </div>
+
+                        <!-- Farmacia Popular de Turno -->
+                        <div class="p-3 rounded-3 bg-white border d-flex align-items-center justify-content-between shadow-xs">
+                            <div class="d-flex align-items-center gap-3">
+                                <div style="width: 40px; height: 40px; border-radius: 10px; background: rgba(13, 110, 253, 0.10); display: flex; align-items: center; justify-content: center;">
+                                    <i class="bi bi-capsule-pill text-primary fs-5"></i>
+                                </div>
+                                <div>
+                                    <div class="fw-bold text-dark" style="font-size: 0.90rem;">Farmacia Municipal de Turno</div>
+                                    <span class="text-muted small">Sucursal Centro (Calle Prat #451)</span>
+                                </div>
+                            </div>
+                            <span class="badge bg-light text-dark border small fw-bold">09:00 - 18:00</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="pt-3 border-top text-secondary small fw-medium">
+                    <i class="bi bi-info-circle text-primary me-1"></i> Para urgencias sociales comuníquese directamente al <strong>51 220 6600</strong>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 4. TABLÓN CÍVICO COMUNITARIO CON FOTOGRAFÍAS REALES 4K DE LA SERENA -->
+    <div class="mb-4">
+        <div class="d-flex justify-content-between align-items-end mb-3">
+            <div>
+                <span class="badge" style="background: rgba(196, 18, 48, 0.10); color: var(--muni-red); font-weight: 800; font-size: 0.78rem;">
+                    <i class="bi bi-newspaper me-1"></i> COMUNIDAD & TERRENO
+                </span>
+                <h3 style="font-size: 1.35rem; font-weight: 800; color: var(--muni-navy); margin: 0.25rem 0 0 0;">
+                    Novedades y Operativos en La Serena
+                </h3>
+            </div>
+            <span class="text-muted small fw-medium">
+                Semana en curso • Ilustre Municipalidad
+            </span>
+        </div>
+
+        <div class="civic-news-grid">
+            <!-- Tarjeta 1: Adultos Mayores -->
+            <div class="civic-news-card">
+                <div>
+                    <div class="civic-news-img-wrap">
+                        <img src="/static/img/adulto_mayor_serena.jpg" alt="Atención Adulto Mayor" class="civic-news-img">
+                        <span class="civic-news-badge" style="background: rgba(220, 38, 38, 0.85);">
+                            <i class="bi bi-heart-fill me-1 text-warning"></i> ADULTO MAYOR
+                        </span>
+                    </div>
+                    <div class="p-4 pb-2">
+                        <h4 class="fw-bold mb-2" style="font-size: 1.12rem; color: var(--muni-navy); line-height: 1.3;">
+                            Atención Prioritaria y Sin Fila para Personas Mayores
+                        </h4>
+                        <p class="text-secondary small" style="line-height: 1.5; margin-bottom: 1rem;">
+                            Módulo especial habilitado en el Edificio Consistorial y delegaciones barriales, con apoyo guiado en trámites de salud, subsidios y Ficha Social RSH.
+                        </p>
+                    </div>
+                </div>
+                <div class="p-4 pt-0">
+                    <button class="btn btn-sm btn-link text-decoration-none fw-bold p-0 d-flex align-items-center gap-1" style="color: var(--muni-navy); font-size: 0.85rem;" onclick="switchView('vecinos')">
+                        <span>Consultar padrón de adultos mayores</span>
+                        <i class="bi bi-arrow-right"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Tarjeta 2: Operativo en Las Compañías -->
+            <div class="civic-news-card">
+                <div>
+                    <div class="civic-news-img-wrap">
+                        <img src="/static/img/delegacion_companias.jpg" alt="Operativo Las Compañías" class="civic-news-img">
+                        <span class="civic-news-badge" style="background: rgba(13, 110, 253, 0.85);">
+                            <i class="bi bi-truck me-1 text-info"></i> OPERATIVO EN TERRENO
+                        </span>
+                    </div>
+                    <div class="p-4 pb-2">
+                        <h4 class="fw-bold mb-2" style="font-size: 1.12rem; color: var(--muni-navy); line-height: 1.3;">
+                            Despliegue Social y Sanitario en Las Compañías
+                        </h4>
+                        <p class="text-secondary small" style="line-height: 1.5; margin-bottom: 1rem;">
+                            Equipos municipales en terreno en Villa Los Aromos y El Romero para retiro de escombros, vacunación de mascotas y asistencia social directa a las familias.
+                        </p>
+                    </div>
+                </div>
+                <div class="p-4 pt-0">
+                    <button class="btn btn-sm btn-link text-decoration-none fw-bold p-0 d-flex align-items-center gap-1" style="color: var(--muni-navy); font-size: 0.85rem;" onclick="switchView('delegaciones')">
+                        <span>Ver sede Las Compañías</span>
+                        <i class="bi bi-arrow-right"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Tarjeta 3: Plaza de Armas y Artesanos -->
+            <div class="civic-news-card">
+                <div>
+                    <div class="civic-news-img-wrap">
+                        <img src="/static/img/feria_plaza_serena.jpg" alt="Feria Plaza de Armas" class="civic-news-img">
+                        <span class="civic-news-badge" style="background: rgba(5, 150, 105, 0.85);">
+                            <i class="bi bi-shop me-1 text-warning"></i> CULTURA Y COMUNIDAD
+                        </span>
+                    </div>
+                    <div class="p-4 pb-2">
+                        <h4 class="fw-bold mb-2" style="font-size: 1.12rem; color: var(--muni-navy); line-height: 1.3;">
+                            Feria de Emprendimiento en Plaza de Armas
+                        </h4>
+                        <p class="text-secondary small" style="line-height: 1.5; margin-bottom: 1rem;">
+                            Espacio cívico abierto a artesanos locales, productores de La Serena y actividades familiares frente a los jardines de nuestra histórica plaza central.
+                        </p>
+                    </div>
+                </div>
+                <div class="p-4 pt-0">
+                    <button class="btn btn-sm btn-link text-decoration-none fw-bold p-0 d-flex align-items-center gap-1" style="color: var(--muni-navy); font-size: 0.85rem;" onclick="switchView('atenciones')">
+                        <span>Ver requerimientos culturales</span>
+                        <i class="bi bi-arrow-right"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>

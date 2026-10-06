@@ -1,0 +1,233 @@
+<section id="view-roles" class="maintainer-view">
+                <div class="liquid-glass-card">
+                    <!-- Header Oficial (Fiel al PDF) -->
+                    <div
+                        class="d-flex align-items-center justify-content-between flex-wrap gap-3 mb-4 pb-2 border-bottom">
+                        <div>
+                            <h2 class="m-0 fw-bold"
+                                style="color: var(--muni-navy); font-size: 1.65rem; letter-spacing: -0.3px;">Roles</h2>
+                        </div>
+                        <div class="d-flex align-items-center gap-2">
+                            <button class="btn btn-outline-secondary rounded-pill px-3 py-1 fw-semibold small"
+                                onclick="abrirModalMatrizMyAdmin()" title="Ver matriz completa de permisos">
+                                <i class="bi bi-grid-3x3 me-1"></i> Matriz de Permisos
+                            </button>
+                            <button class="liquid-glass-btn-primary" onclick="abrirModalRol('nuevo')">
+                                <i class="bi bi-plus-lg me-1"></i> Nuevo Rol
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- MATRIZ VISUAL DE PERMISOS Y TARJETAS DE ROLES -->
+                    <div class="role-cards-grid mb-4">
+                        <!-- 1. Superadministrador -->
+                        <div class="role-profile-card" style="border-top: 3.5px solid var(--muni-red);">
+                            <div class="d-flex align-items-center justify-content-between mb-2">
+                                <div class="d-flex align-items-center gap-2">
+                                    <div style="width:36px; height:36px; border-radius:10px; background: rgba(196,18,48,0.12); color:#C41230; display:flex; align-items:center; justify-content:center; font-size:1.1rem;">
+                                        <i class="bi bi-shield-lock-fill"></i>
+                                    </div>
+                                    <div>
+                                        <h5 class="m-0 fw-bold" style="font-size:0.95rem; color:var(--muni-navy);">Superadministrador</h5>
+                                        <span class="text-muted" style="font-size:0.72rem;">Rol de Sistema</span>
+                                    </div>
+                                </div>
+                                <span class="badge bg-danger-subtle text-danger fw-bold rounded-pill px-2 py-1" style="font-size:0.72rem;">
+                                    <i class="bi bi-person-fill"></i> 2 usuarios
+                                </span>
+                            </div>
+                            <p class="text-secondary small mb-2" style="font-size:0.76rem; line-height:1.35;">Control absoluto de infraestructura, logs, credenciales y gobernanza de la plataforma municipal.</p>
+                            <div class="role-perm-matrix-bar">
+                                <div class="role-perm-pill-toggle">
+                                    <span>Lectura</span>
+                                    <label class="perm-mini-switch"><input type="checkbox" checked disabled><span class="perm-mini-slider"></span></label>
+                                </div>
+                                <div class="role-perm-pill-toggle">
+                                    <span>Edición</span>
+                                    <label class="perm-mini-switch"><input type="checkbox" checked disabled><span class="perm-mini-slider"></span></label>
+                                </div>
+                                <div class="role-perm-pill-toggle">
+                                    <span>Derivación</span>
+                                    <label class="perm-mini-switch"><input type="checkbox" checked disabled><span class="perm-mini-slider"></span></label>
+                                </div>
+                                <div class="role-perm-pill-toggle">
+                                    <span>Cierre</span>
+                                    <label class="perm-mini-switch"><input type="checkbox" checked disabled><span class="perm-mini-slider"></span></label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 2. Gestor Territorial -->
+                        <div class="role-profile-card" style="border-top: 3.5px solid var(--muni-navy);">
+                            <div class="d-flex align-items-center justify-content-between mb-2">
+                                <div class="d-flex align-items-center gap-2">
+                                    <div style="width:36px; height:36px; border-radius:10px; background: rgba(27,54,93,0.12); color:#1B365D; display:flex; align-items:center; justify-content:center; font-size:1.1rem;">
+                                        <i class="bi bi-geo-fill"></i>
+                                    </div>
+                                    <div>
+                                        <h5 class="m-0 fw-bold" style="font-size:0.95rem; color:var(--muni-navy);">Gestor Territorial</h5>
+                                        <span class="text-muted" style="font-size:0.72rem;">Delegaciones</span>
+                                    </div>
+                                </div>
+                                <span class="badge bg-primary-subtle text-primary fw-bold rounded-pill px-2 py-1" style="font-size:0.72rem;">
+                                    <i class="bi bi-person-fill"></i> 8 usuarios
+                                </span>
+                            </div>
+                            <p class="text-secondary small mb-2" style="font-size:0.76rem; line-height:1.35;">Coordinación territorial de sedes, resolución en terreno y asignación de requerimientos vecinales.</p>
+                            <div class="role-perm-matrix-bar">
+                                <div class="role-perm-pill-toggle">
+                                    <span>Lectura</span>
+                                    <label class="perm-mini-switch"><input type="checkbox" checked onchange="mostrarToast('Permiso de lectura actualizado')"><span class="perm-mini-slider"></span></label>
+                                </div>
+                                <div class="role-perm-pill-toggle">
+                                    <span>Edición</span>
+                                    <label class="perm-mini-switch"><input type="checkbox" checked onchange="mostrarToast('Permiso de edición actualizado')"><span class="perm-mini-slider"></span></label>
+                                </div>
+                                <div class="role-perm-pill-toggle">
+                                    <span>Derivación</span>
+                                    <label class="perm-mini-switch"><input type="checkbox" checked onchange="mostrarToast('Permiso de derivación actualizado')"><span class="perm-mini-slider"></span></label>
+                                </div>
+                                <div class="role-perm-pill-toggle">
+                                    <span>Cierre</span>
+                                    <label class="perm-mini-switch"><input type="checkbox" onchange="mostrarToast('Permiso de cierre actualizado')"><span class="perm-mini-slider"></span></label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 3. Operador de Casos -->
+                        <div class="role-profile-card" style="border-top: 3.5px solid #10B981;">
+                            <div class="d-flex align-items-center justify-content-between mb-2">
+                                <div class="d-flex align-items-center gap-2">
+                                    <div style="width:36px; height:36px; border-radius:10px; background: rgba(16,185,129,0.12); color:#10B981; display:flex; align-items:center; justify-content:center; font-size:1.1rem;">
+                                        <i class="bi bi-headset"></i>
+                                    </div>
+                                    <div>
+                                        <h5 class="m-0 fw-bold" style="font-size:0.95rem; color:var(--muni-navy);">Operador de Casos</h5>
+                                        <span class="text-muted" style="font-size:0.72rem;">Atención Ciudadana</span>
+                                    </div>
+                                </div>
+                                <span class="badge bg-success-subtle text-success fw-bold rounded-pill px-2 py-1" style="font-size:0.72rem;">
+                                    <i class="bi bi-person-fill"></i> 24 usuarios
+                                </span>
+                            </div>
+                            <p class="text-secondary small mb-2" style="font-size:0.76rem; line-height:1.35;">Ingreso en ventanilla, tipificación de trámites, atención telefónica y registro de audiencias.</p>
+                            <div class="role-perm-matrix-bar">
+                                <div class="role-perm-pill-toggle">
+                                    <span>Lectura</span>
+                                    <label class="perm-mini-switch"><input type="checkbox" checked onchange="mostrarToast('Permiso de lectura actualizado')"><span class="perm-mini-slider"></span></label>
+                                </div>
+                                <div class="role-perm-pill-toggle">
+                                    <span>Edición</span>
+                                    <label class="perm-mini-switch"><input type="checkbox" checked onchange="mostrarToast('Permiso de edición actualizado')"><span class="perm-mini-slider"></span></label>
+                                </div>
+                                <div class="role-perm-pill-toggle">
+                                    <span>Derivación</span>
+                                    <label class="perm-mini-switch"><input type="checkbox" onchange="mostrarToast('Permiso de derivación actualizado')"><span class="perm-mini-slider"></span></label>
+                                </div>
+                                <div class="role-perm-pill-toggle">
+                                    <span>Cierre</span>
+                                    <label class="perm-mini-switch"><input type="checkbox" onchange="mostrarToast('Permiso de cierre actualizado')"><span class="perm-mini-slider"></span></label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 4. Auditor Municipal -->
+                        <div class="role-profile-card" style="border-top: 3.5px solid var(--accent-gold);">
+                            <div class="d-flex align-items-center justify-content-between mb-2">
+                                <div class="d-flex align-items-center gap-2">
+                                    <div style="width:36px; height:36px; border-radius:10px; background: rgba(217,119,6,0.12); color:#D97706; display:flex; align-items:center; justify-content:center; font-size:1.1rem;">
+                                        <i class="bi bi-clipboard2-check-fill"></i>
+                                    </div>
+                                    <div>
+                                        <h5 class="m-0 fw-bold" style="font-size:0.95rem; color:var(--muni-navy);">Auditor Municipal</h5>
+                                        <span class="text-muted" style="font-size:0.72rem;">Fiscalización y Calidad</span>
+                                    </div>
+                                </div>
+                                <span class="badge bg-warning-subtle text-warning-emphasis fw-bold rounded-pill px-2 py-1" style="font-size:0.72rem;">
+                                    <i class="bi bi-person-fill"></i> 3 usuarios
+                                </span>
+                            </div>
+                            <p class="text-secondary small mb-2" style="font-size:0.76rem; line-height:1.35;">Supervisión de tiempos de respuesta, bitácoras de auditoría y reportes para Concejo Municipal.</p>
+                            <div class="role-perm-matrix-bar">
+                                <div class="role-perm-pill-toggle">
+                                    <span>Lectura</span>
+                                    <label class="perm-mini-switch"><input type="checkbox" checked onchange="mostrarToast('Permiso de lectura actualizado')"><span class="perm-mini-slider"></span></label>
+                                </div>
+                                <div class="role-perm-pill-toggle">
+                                    <span>Edición</span>
+                                    <label class="perm-mini-switch"><input type="checkbox" onchange="mostrarToast('Permiso de edición denegado para auditor')"><span class="perm-mini-slider"></span></label>
+                                </div>
+                                <div class="role-perm-pill-toggle">
+                                    <span>Derivación</span>
+                                    <label class="perm-mini-switch"><input type="checkbox" onchange="mostrarToast('Permiso de derivación actualizado')"><span class="perm-mini-slider"></span></label>
+                                </div>
+                                <div class="role-perm-pill-toggle">
+                                    <span>Cierre</span>
+                                    <label class="perm-mini-switch"><input type="checkbox" onchange="mostrarToast('Permiso de cierre actualizado')"><span class="perm-mini-slider"></span></label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Barra de Búsqueda y Filtro (Idéntica al PDF) -->
+                    <div class="d-flex align-items-center justify-content-between flex-wrap gap-3 mb-3">
+                        <div class="d-flex align-items-center gap-2" style="flex-grow: 1; max-width: 480px;">
+                            <div class="input-group input-group-sm">
+                                <span class="input-group-text bg-white border-end-0 text-muted"><i
+                                        class="bi bi-search"></i></span>
+                                <input type="text" class="form-control border-start-0" id="searchRolesInput"
+                                    onkeyup="filtrarRoles()" placeholder="Buscar...">
+                            </div>
+                            <select class="form-select form-select-sm" id="filtroTipoRol" onchange="filtrarRoles()"
+                                style="width: auto;">
+                                <option value="">Todos los roles</option>
+                                <option value="sistema">Roles de sistema</option>
+                                <option value="personalizado">Roles personalizados</option>
+                            </select>
+                        </div>
+                        <div class="text-secondary small">
+                            <span id="lblTotalRoles" class="fw-bold text-dark">10</span> roles configurados
+                        </div>
+                    </div>
+
+                    <!-- Tabla Principal de Roles (Coincidente con PDF: # | Nombre | Descripción | Permisos | Acciones) -->
+                    <div class="table-responsive">
+                        <table class="liquid-roles-table" id="tablaRoles">
+                            <thead>
+                                <tr>
+                                    <th style="width: 50px; text-align: center;">#</th>
+                                    <th style="min-width: 170px;">Nombre</th>
+                                    <th style="min-width: 250px;">Descripción</th>
+                                    <th style="min-width: 240px;">Permisos Asignados</th>
+                                    <th style="width: 100px; text-align: center;">Usuarios</th>
+                                    <th style="width: 110px; text-align: end;">Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tablaRolesBody">
+                                <tr>
+                                    <td colspan="6" class="text-center py-4 text-muted">
+                                        <div class="spinner-border spinner-border-sm text-primary me-2" role="status">
+                                        </div>
+                                        Cargando roles...
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Paginador y Contador de Roles -->
+                    <div class="table-pagination-footer mt-3">
+                        <div class="d-flex align-items-center gap-2">
+                            <span>Mostrar</span>
+                            <select class="form-select form-select-sm" style="width: 70px;"
+                                id="selectFilasPorPaginaRoles" onchange="cambiarFilasPorPaginaRoles(this.value)">
+                                <option value="10">10</option>
+                                <option value="25">25</option>
+                                <option value="50">50</option>
+                            </select>
+                            <span id="lblRegistrosInfoRoles" class="small">Cargando registros...</span>
+                        </div>
+                        <div class="pagination-pills" id="paginadorPillsRoles"></div>
+                    </div>
+                </div>
+            </section>

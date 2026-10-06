@@ -1,0 +1,665 @@
+<section id="view-reportes" class="maintainer-view">
+                <div class="maintainer-card p-4">
+                    <!-- Header Oficial del Módulo de Reportes -->
+                    <div
+                        class="d-flex justify-content-between align-items-start flex-wrap gap-3 mb-4 pb-3 border-bottom">
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="dashboard-title-icon"
+                                style="background: var(--muni-red); width: 48px; height: 48px; border-radius: 12px; display: flex; align-items: center; justify-content: center; color: #FFF; font-size: 1.4rem; box-shadow: 0 4px 12px rgba(196,18,48,0.25);">
+                                <i class="bi bi-bar-chart-line-fill"></i>
+                            </div>
+                            <div>
+                                <h1 class="h3 fw-bold mb-1"
+                                    style="color: var(--muni-navy); font-family: var(--font-heading);">
+                                    Reportes y Estadísticas Institucionales
+                                </h1>
+                                <p class="text-secondary small mb-0 fw-medium">
+                                    Gestión de Atención Ciudadana (SGR) · Ilustre Municipalidad de La Serena
+                                </p>
+                            </div>
+                        </div>
+                        <div class="d-flex align-items-center gap-2 flex-wrap">
+                            <button
+                                class="btn btn-outline-danger btn-sm fw-bold d-flex align-items-center gap-2 px-3 py-2 rounded-3 shadow-sm"
+                                onclick="generarReportePDFOficial()"
+                                style="border-color: var(--muni-red); color: var(--muni-red);">
+                                <i class="bi bi-file-earmark-pdf-fill"></i> Descargar Informe PDF
+                            </button>
+                            <button
+                                class="btn btn-success btn-sm fw-bold d-flex align-items-center gap-2 px-3 py-2 rounded-3 shadow-sm"
+                                onclick="exportarReportesExcel()">
+                                <i class="bi bi-file-earmark-excel-fill"></i> Exportar a Excel
+                            </button>
+                            <button
+                                class="btn btn-outline-secondary btn-sm fw-bold d-flex align-items-center gap-1 px-3 py-2 rounded-3 shadow-sm"
+                                onclick="window.print()">
+                                <i class="bi bi-printer"></i> Imprimir
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Filtros Dinámicos del Reporte -->
+                    <div class="p-3 bg-light rounded-3 border mb-4 shadow-xs">
+                        <div class="row g-2 align-items-end">
+                            <div class="col-md-3">
+                                <label class="form-label small fw-bold text-secondary mb-1">Período de Análisis</label>
+                                <select class="form-select form-select-sm" id="filtroPeriodoReporte"
+                                    onchange="actualizarReportesDatos()">
+                                    <option value="mes">Últimos 30 Días</option>
+                                    <option value="trimestre" selected>Tercer Trimestre 2026</option>
+                                    <option value="ano">Año Completo 2026</option>
+                                    <option value="historico">Histórico Consolidado</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label small fw-bold text-secondary mb-1">Delegación
+                                    Territorial</label>
+                                <select class="form-select form-select-sm" id="filtroDelegacionReporte"
+                                    onchange="actualizarReportesDatos()">
+                                    <option value="">Todas las Delegaciones (6)</option>
+                                    <option value="centro">La Serena Centro</option>
+                                    <option value="companias">Norte (Las Compañías)</option>
+                                    <option value="pampa">Sur (La Pampa)</option>
+                                    <option value="antena">Oriente (San Joaquín / La Antena)</option>
+                                    <option value="rural">Sector Rural</option>
+                                    <option value="costa">Avenida del Mar / Costanera</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label small fw-bold text-secondary mb-1">Canal de Atención</label>
+                                <select class="form-select form-select-sm" id="filtroCanalReporte"
+                                    onchange="actualizarReportesDatos()">
+                                    <option value="">Todos los Canales</option>
+                                    <option value="Presencial">Presencial (Ventanilla)</option>
+                                    <option value="Telefonico">Telefónico</option>
+                                    <option value="Digital">Digital / Portal Vecino</option>
+                                    <option value="Terreno">En Terreno / Móvil</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3 d-flex gap-2">
+                                <button class="btn btn-primary btn-sm w-100 fw-bold" onclick="actualizarReportesDatos()"
+                                    style="background: var(--muni-navy); border-color: var(--muni-navy);">
+                                    <i class="bi bi-funnel-fill me-1"></i> Filtrar Datos
+                                </button>
+                                <button class="btn btn-outline-secondary btn-sm" onclick="restablecerFiltrosReportes()"
+                                    title="Restablecer filtros">
+                                    <i class="bi bi-arrow-counterclockwise"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Pestañas de Navegación de Reportes + Control de Tiempo Real -->
+                    <div
+                        class="d-flex align-items-center justify-content-between flex-wrap gap-3 mb-4 p-2 bg-white rounded-3 border">
+                        <div class="btn-group btn-group-sm p-1 bg-light rounded-3">
+                            <button class="btn btn-sm btn-white border-0 fw-bold px-3 py-2 shadow-sm"
+                                id="tabReporteGeneral" onclick="cambiarSubvistaReporte('general')"
+                                style="background: #FFFFFF; color: var(--muni-navy); border-radius: 6px;">
+                                <i class="bi bi-graph-up text-primary me-1"></i> 1. Visión General
+                            </button>
+                            <button class="btn btn-sm border-0 fw-semibold text-secondary px-3 py-2" id="tabReporte1vs1"
+                                onclick="cambiarSubvistaReporte('1vs1')" style="border-radius: 6px;">
+                                <i class="bi bi-arrow-left-right text-danger me-1"></i> 2. Comparativa 1 vs 1
+                            </button>
+                            <button class="btn btn-sm border-0 fw-semibold text-secondary px-3 py-2"
+                                id="tabReporteMulti" onclick="cambiarSubvistaReporte('multi')"
+                                style="border-radius: 6px;">
+                                <i class="bi bi-grid-3x3-gap-fill text-success me-1"></i> 3. Todas contra Todas
+                            </button>
+                        </div>
+
+                        <!-- Indicador y Controles de Tiempo Real -->
+                        <div class="d-flex align-items-center gap-2">
+                            <div class="d-flex align-items-center gap-2 px-3 py-1 rounded-pill bg-light border">
+                                <span class="live-dot" id="liveDotIndicator"></span>
+                                <span class="small fw-bold text-dark" id="liveTextIndicator">Tiempo Real: ACTIVO</span>
+                                <span
+                                    class="badge bg-success-subtle text-success border border-success-subtle small py-0 px-2"
+                                    id="liveCounterSec">5s</span>
+                            </div>
+                            <button class="btn btn-sm btn-light border text-secondary px-2" id="btnToggleLive"
+                                onclick="toggleTiempoRealReportes()" title="Pausar / Reanudar monitoreo en vivo">
+                                <i class="bi bi-pause-fill" id="btnToggleLiveIcon"></i> <span id="btnToggleLiveText"
+                                    class="d-none d-sm-inline">Pausar</span>
+                            </button>
+                            <button class="btn btn-sm btn-outline-primary fw-semibold px-2"
+                                onclick="forzarActualizacionEnVivo()" title="Actualizar datos ahora">
+                                <i class="bi bi-arrow-repeat"></i> <span class="d-none d-sm-inline">Actualizar</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- 4 Tarjetas KPI Ejecutivas y Simétricas (Equilibradas y legibles) -->
+                    <div class="row g-3 mb-4">
+                        <div class="col-sm-6 col-xl-3">
+                            <div
+                                class="report-kpi-card spotlight-card shadow-sm p-3 rounded-4 bg-white border h-100 position-relative overflow-hidden">
+                                <div class="report-kpi-bar" style="background: var(--muni-red);"></div>
+                                <div class="d-flex align-items-center justify-content-between mb-2">
+                                    <span class="report-kpi-title text-secondary fw-semibold">Atenciones Totales</span>
+                                    <div class="report-kpi-icon"
+                                        style="background: rgba(196, 18, 48, 0.1); color: var(--muni-red);">
+                                        <i class="bi bi-people-fill"></i>
+                                    </div>
+                                </div>
+                                <div class="report-kpi-value text-dark fw-bold" id="kpiRepTotal">15.842</div>
+                                <div class="d-flex align-items-center justify-content-between mt-2">
+                                    <div class="d-flex align-items-center gap-1 text-success small fw-semibold">
+                                        <i class="bi bi-arrow-up-right"></i> +14.2% <span class="text-muted fw-normal ms-1">vs mes anterior</span>
+                                    </div>
+                                    <div class="report-sparkline-box" title="Tendencia últimos 6 períodos">
+                                        <div class="report-sparkline-bar" style="height: 35%;"></div>
+                                        <div class="report-sparkline-bar" style="height: 55%;"></div>
+                                        <div class="report-sparkline-bar" style="height: 48%;"></div>
+                                        <div class="report-sparkline-bar" style="height: 72%;"></div>
+                                        <div class="report-sparkline-bar" style="height: 65%;"></div>
+                                        <div class="report-sparkline-bar highlight" style="height: 95%;"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-sm-6 col-xl-3">
+                            <div
+                                class="report-kpi-card spotlight-card shadow-sm p-3 rounded-4 bg-white border h-100 position-relative overflow-hidden">
+                                <div class="report-kpi-bar" style="background: #16A34A;"></div>
+                                <div class="d-flex align-items-center justify-content-between mb-2">
+                                    <span class="report-kpi-title text-secondary fw-semibold">Resolución 1er Contacto</span>
+                                    <div class="report-kpi-icon"
+                                        style="background: rgba(22, 163, 74, 0.1); color: #16A34A;">
+                                        <i class="bi bi-check-circle-fill"></i>
+                                    </div>
+                                </div>
+                                <div class="report-kpi-value text-dark fw-bold" id="kpiRepResolucion">94.8%</div>
+                                <div class="d-flex align-items-center justify-content-between mt-2">
+                                    <div class="d-flex align-items-center gap-1 text-success small fw-semibold">
+                                        <i class="bi bi-arrow-up-right"></i> +4.8% <span class="text-muted fw-normal ms-1">meta: 90%</span>
+                                    </div>
+                                    <div class="report-sparkline-box" title="Tendencia últimos 6 períodos">
+                                        <div class="report-sparkline-bar" style="height: 60%; background:#16A34A;"></div>
+                                        <div class="report-sparkline-bar" style="height: 70%; background:#16A34A;"></div>
+                                        <div class="report-sparkline-bar" style="height: 68%; background:#16A34A;"></div>
+                                        <div class="report-sparkline-bar" style="height: 82%; background:#16A34A;"></div>
+                                        <div class="report-sparkline-bar" style="height: 88%; background:#16A34A;"></div>
+                                        <div class="report-sparkline-bar" style="height: 95%; background:#16A34A;"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-sm-6 col-xl-3">
+                            <div
+                                class="report-kpi-card spotlight-card shadow-sm p-3 rounded-4 bg-white border h-100 position-relative overflow-hidden">
+                                <div class="report-kpi-bar" style="background: #0284C7;"></div>
+                                <div class="d-flex align-items-center justify-content-between mb-2">
+                                    <span class="report-kpi-title text-secondary fw-semibold">Tiempo Medio Espera</span>
+                                    <div class="report-kpi-icon"
+                                        style="background: rgba(2, 132, 199, 0.1); color: #0284C7;">
+                                        <i class="bi bi-clock-history"></i>
+                                    </div>
+                                </div>
+                                <div class="report-kpi-value text-dark fw-bold" id="kpiRepTiempo">12.4 min</div>
+                                <div class="d-flex align-items-center justify-content-between mt-2">
+                                    <div class="d-flex align-items-center gap-1 text-success small fw-semibold">
+                                        <i class="bi bi-arrow-down-right"></i> -3.1 min <span class="text-muted fw-normal ms-1">meta: &lt; 18 min</span>
+                                    </div>
+                                    <div class="report-sparkline-box" title="Tendencia últimos 6 períodos">
+                                        <div class="report-sparkline-bar" style="height: 90%; background:#0284C7;"></div>
+                                        <div class="report-sparkline-bar" style="height: 80%; background:#0284C7;"></div>
+                                        <div class="report-sparkline-bar" style="height: 65%; background:#0284C7;"></div>
+                                        <div class="report-sparkline-bar" style="height: 55%; background:#0284C7;"></div>
+                                        <div class="report-sparkline-bar" style="height: 45%; background:#0284C7;"></div>
+                                        <div class="report-sparkline-bar" style="height: 35%; background:#0284C7;"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-sm-6 col-xl-3">
+                            <div
+                                class="report-kpi-card spotlight-card shadow-sm p-3 rounded-4 bg-white border h-100 position-relative overflow-hidden">
+                                <div class="report-kpi-bar" style="background: #F59E0B;"></div>
+                                <div class="d-flex align-items-center justify-content-between mb-2">
+                                    <span class="report-kpi-title text-secondary fw-semibold">Satisfacción Vecinal</span>
+                                    <div class="report-kpi-icon"
+                                        style="background: rgba(245, 158, 11, 0.1); color: #F59E0B;">
+                                        <i class="bi bi-star-fill"></i>
+                                    </div>
+                                </div>
+                                <div class="report-kpi-value text-dark fw-bold" id="kpiRepCSAT">4.85 <span
+                                        class="fs-6 text-muted fw-normal">/ 5.0</span></div>
+                                <div class="d-flex align-items-center justify-content-between mt-2">
+                                    <div class="d-flex align-items-center gap-1 text-warning-emphasis small fw-semibold">
+                                        <i class="bi bi-award-fill text-warning"></i> Excelente <span class="text-muted fw-normal ms-1">(3.420)</span>
+                                    </div>
+                                    <div class="report-sparkline-box" title="Tendencia últimos 6 períodos">
+                                        <div class="report-sparkline-bar" style="height: 70%; background:#F59E0B;"></div>
+                                        <div class="report-sparkline-bar" style="height: 75%; background:#F59E0B;"></div>
+                                        <div class="report-sparkline-bar" style="height: 82%; background:#F59E0B;"></div>
+                                        <div class="report-sparkline-bar" style="height: 85%; background:#F59E0B;"></div>
+                                        <div class="report-sparkline-bar" style="height: 92%; background:#F59E0B;"></div>
+                                        <div class="report-sparkline-bar" style="height: 97%; background:#F59E0B;"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- =========================================================
+                         SUBVISTA 1: VISIÓN GENERAL (TODOS LOS GRÁFICOS)
+                         ========================================================= -->
+                    <div class="subvista-reportes active" id="subvistaReporteGeneral">
+                        <!-- Fila 1 de Gráficos Analíticos -->
+                        <div class="row g-3 mb-4">
+                            <div class="col-lg-7">
+                                <div class="card border p-3 h-100 shadow-sm rounded-3 bg-white">
+                                    <div class="d-flex justify-content-between align-items-center mb-3">
+                                        <h6 class="fw-bold mb-0 text-dark"><i
+                                                class="bi bi-geo-alt-fill text-danger me-2"></i>Volumen de Atenciones
+                                            por Delegación Municipal</h6>
+                                        <span class="badge bg-light text-secondary border">Territorial</span>
+                                    </div>
+                                    <div style="height: 270px; position: relative;">
+                                        <canvas id="chartReporteDelegaciones"></canvas>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-lg-5">
+                                <div class="card border p-3 h-100 shadow-sm rounded-3 bg-white">
+                                    <div class="d-flex justify-content-between align-items-center mb-3">
+                                        <h6 class="fw-bold mb-0 text-dark"><i
+                                                class="bi bi-pie-chart-fill text-primary me-2"></i>Distribución por
+                                            Canal de Atención</h6>
+                                        <span class="badge bg-light text-secondary border">Canales</span>
+                                    </div>
+                                    <div style="height: 270px; position: relative;">
+                                        <canvas id="chartReporteCanales"></canvas>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Fila 2 de Gráficos Analíticos -->
+                        <div class="row g-3 mb-4">
+                            <div class="col-lg-6">
+                                <div class="card border p-3 h-100 shadow-sm rounded-3 bg-white">
+                                    <div class="d-flex justify-content-between align-items-center mb-3">
+                                        <h6 class="fw-bold mb-0 text-dark"><i
+                                                class="bi bi-graph-up text-success me-2"></i>Evolución Mensual:
+                                            Atenciones vs Metas Institucionales</h6>
+                                        <span class="badge bg-light text-secondary border">Tendencia</span>
+                                    </div>
+                                    <div style="height: 260px; position: relative;">
+                                        <canvas id="chartReporteEvolucion"></canvas>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-lg-6">
+                                <div class="card border p-3 h-100 shadow-sm rounded-3 bg-white">
+                                    <div class="d-flex justify-content-between align-items-center mb-3">
+                                        <h6 class="fw-bold mb-0 text-dark"><i
+                                                class="bi bi-list-stars text-warning me-2"></i>Top Trámites con Mayor
+                                            Demanda Ciudadana</h6>
+                                        <span class="badge bg-light text-secondary border">Ranking</span>
+                                    </div>
+                                    <div style="height: 260px; position: relative;">
+                                        <canvas id="chartReporteTramites"></canvas>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Tabla Detallada Consolidada -->
+                        <div class="card border shadow-sm rounded-3 p-3 bg-white">
+                            <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+                                <div>
+                                    <h6 class="fw-bold mb-0 text-dark"><i
+                                            class="bi bi-table text-secondary me-2"></i>Matriz de Rendimiento y Metas
+                                        por Delegación</h6>
+                                    <small class="text-muted">Desglose de atenciones, tiempos de respuesta y porcentaje
+                                        de cumplimiento</small>
+                                </div>
+                                <button class="btn btn-sm btn-outline-success fw-bold"
+                                    onclick="exportarReportesExcel()">
+                                    <i class="bi bi-download me-1"></i> Descargar Datos CSV/Excel
+                                </button>
+                            </div>
+                            <div class="table-responsive">
+                                <table class="table table-hover align-middle mb-0" id="tablaReportesDelegaciones">
+                                    <thead class="table-light text-secondary small fw-bold">
+                                        <tr>
+                                            <th>Delegación Municipal</th>
+                                            <th class="text-center">Total Atenciones</th>
+                                            <th class="text-center">Resueltas</th>
+                                            <th class="text-center">En Proceso</th>
+                                            <th class="text-center">Tpo. Promedio</th>
+                                            <th class="text-center">Meta Trimestral</th>
+                                            <th class="text-center">% Cumplimiento</th>
+                                            <th class="text-center">Calificación</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="small" id="tablaReportesBody">
+                                        <tr>
+                                            <td class="fw-bold text-dark"><i
+                                                    class="bi bi-building me-1 text-primary"></i> La Serena Centro</td>
+                                            <td class="text-center fw-bold">5.420</td>
+                                            <td class="text-center text-success fw-bold">5.180</td>
+                                            <td class="text-center text-warning fw-bold">240</td>
+                                            <td class="text-center">11 min</td>
+                                            <td class="text-center">5.000</td>
+                                            <td class="text-center"><span class="badge bg-success">108.4%</span></td>
+                                            <td class="text-center text-warning fw-bold">★ 4.9</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="fw-bold text-dark"><i
+                                                    class="bi bi-building me-1 text-primary"></i> Norte (Las Compañías)
+                                            </td>
+                                            <td class="text-center fw-bold">4.890</td>
+                                            <td class="text-center text-success fw-bold">4.610</td>
+                                            <td class="text-center text-warning fw-bold">280</td>
+                                            <td class="text-center">13 min</td>
+                                            <td class="text-center">4.500</td>
+                                            <td class="text-center"><span class="badge bg-success">108.6%</span></td>
+                                            <td class="text-center text-warning fw-bold">★ 4.8</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="fw-bold text-dark"><i
+                                                    class="bi bi-building me-1 text-primary"></i> Sur (La Pampa)</td>
+                                            <td class="text-center fw-bold">2.310</td>
+                                            <td class="text-center text-success fw-bold">2.190</td>
+                                            <td class="text-center text-warning fw-bold">120</td>
+                                            <td class="text-center">12 min</td>
+                                            <td class="text-center">2.200</td>
+                                            <td class="text-center"><span class="badge bg-success">105.0%</span></td>
+                                            <td class="text-center text-warning fw-bold">★ 4.9</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="fw-bold text-dark"><i
+                                                    class="bi bi-building me-1 text-primary"></i> Oriente (San Joaquín /
+                                                La Antena)</td>
+                                            <td class="text-center fw-bold">1.840</td>
+                                            <td class="text-center text-success fw-bold">1.750</td>
+                                            <td class="text-center text-warning fw-bold">90</td>
+                                            <td class="text-center">10 min</td>
+                                            <td class="text-center">1.800</td>
+                                            <td class="text-center"><span class="badge bg-success">102.2%</span></td>
+                                            <td class="text-center text-warning fw-bold">★ 4.9</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="fw-bold text-dark"><i class="bi bi-tree me-1 text-success"></i>
+                                                Sector Rural (Algarrobito / Lambert)</td>
+                                            <td class="text-center fw-bold">1.382</td>
+                                            <td class="text-center text-success fw-bold">1.290</td>
+                                            <td class="text-center text-warning fw-bold">92</td>
+                                            <td class="text-center">16 min</td>
+                                            <td class="text-center">1.400</td>
+                                            <td class="text-center"><span class="badge bg-primary">98.7%</span></td>
+                                            <td class="text-center text-warning fw-bold">★ 4.7</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="fw-bold text-dark"><i class="bi bi-water me-1 text-info"></i>
+                                                Avenida del Mar / Costanera</td>
+                                            <td class="text-center fw-bold">850</td>
+                                            <td class="text-center text-success fw-bold">774</td>
+                                            <td class="text-center text-warning fw-bold">76</td>
+                                            <td class="text-center">12 min</td>
+                                            <td class="text-center">800</td>
+                                            <td class="text-center"><span class="badge bg-success">106.3%</span></td>
+                                            <td class="text-center text-warning fw-bold">★ 4.8</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- =========================================================
+                         SUBVISTA 2: COMPARATIVA 1 VS 1 (FRENTE A FRENTE)
+                         ========================================================= -->
+                    <div class="subvista-reportes" id="subvistaReporte1vs1">
+                        <!-- Barra de Selección de Delegaciones Frente a Frente -->
+                        <div class="p-3 bg-light rounded-4 border mb-4 shadow-sm">
+                            <div class="row g-3 align-items-center">
+                                <div class="col-md-5">
+                                    <div class="delegacion-compare-box team-a">
+                                        <div class="d-flex align-items-center justify-content-between mb-2">
+                                            <span class="badge bg-danger text-white px-2 py-1 small fw-bold">DELEGACIÓN
+                                                A</span>
+                                            <span class="text-muted small" id="compareSubA">Casco Urbano</span>
+                                        </div>
+                                        <select class="form-select form-select-lg fw-bold text-dark border-0 bg-light"
+                                            id="selectCompareDelA" onchange="actualizarComparativa1vs1()">
+                                            <option value="centro" selected>Delegación Centro Histórico</option>
+                                            <option value="companias">Delegación Las Compañías</option>
+                                            <option value="pampa">Delegación La Pampa</option>
+                                            <option value="antena">Delegación La Antena / San Joaquín</option>
+                                            <option value="costa">Delegación Avenida del Mar</option>
+                                            <option value="rural">Delegación Sector Rural</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div class="col-md-2 text-center">
+                                    <div class="d-flex flex-column align-items-center justify-content-center">
+                                        <div class="vs-badge-circle mb-1">VS</div>
+                                        <span class="text-secondary small fw-bold text-uppercase"
+                                            style="letter-spacing: 0.5px;">Comparación Directa</span>
+                                    </div>
+                                </div>
+
+                                <div class="col-md-5">
+                                    <div class="delegacion-compare-box team-b">
+                                        <div class="d-flex align-items-center justify-content-between mb-2">
+                                            <span class="badge bg-primary text-white px-2 py-1 small fw-bold"
+                                                style="background: var(--muni-navy) !important;">DELEGACIÓN B</span>
+                                            <span class="text-muted small" id="compareSubB">Zona Norte</span>
+                                        </div>
+                                        <select class="form-select form-select-lg fw-bold text-dark border-0 bg-light"
+                                            id="selectCompareDelB" onchange="actualizarComparativa1vs1()">
+                                            <option value="centro">Delegación Centro Histórico</option>
+                                            <option value="companias" selected>Delegación Las Compañías</option>
+                                            <option value="pampa">Delegación La Pampa</option>
+                                            <option value="antena">Delegación La Antena / San Joaquín</option>
+                                            <option value="costa">Delegación Avenida del Mar</option>
+                                            <option value="rural">Delegación Sector Rural</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Grilla de Métricas Comparadas Cara a Cara -->
+                        <div class="row g-3 mb-4" id="gridMetricas1vs1">
+                            <!-- Inyectado dinámicamente con las diferencias calculadas -->
+                        </div>
+
+                        <!-- Gráficos de Comparación 1 vs 1 -->
+                        <div class="row g-3 mb-4">
+                            <div class="col-lg-6">
+                                <div class="card border p-3 h-100 shadow-sm rounded-3 bg-white">
+                                    <div class="d-flex justify-content-between align-items-center mb-3">
+                                        <h6 class="fw-bold mb-0 text-dark"><i
+                                                class="bi bi-radar text-primary me-2"></i>Radar de Rendimiento
+                                            Multidimensional</h6>
+                                        <span class="badge bg-light text-secondary border">5 Ejes Clave</span>
+                                    </div>
+                                    <div style="height: 320px; position: relative;">
+                                        <canvas id="chartCompareRadar"></canvas>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-lg-6">
+                                <div class="card border p-3 h-100 shadow-sm rounded-3 bg-white">
+                                    <div class="d-flex justify-content-between align-items-center mb-3">
+                                        <h6 class="fw-bold mb-0 text-dark"><i
+                                                class="bi bi-bar-chart-steps text-danger me-2"></i>Comparativa de
+                                            Trámites Solicitados</h6>
+                                        <span class="badge bg-light text-secondary border">Demanda por Delegación</span>
+                                    </div>
+                                    <div style="height: 320px; position: relative;">
+                                        <canvas id="chartCompareTramites"></canvas>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Cuadro de Diagnóstico Ejecutivo en Lenguaje Claro -->
+                        <div class="p-3 rounded-3 border bg-white shadow-sm mb-4"
+                            style="border-left: 5px solid var(--muni-navy) !important;">
+                            <div class="d-flex align-items-center gap-2 mb-2">
+                                <i class="bi bi-lightbulb-fill text-warning fs-5"></i>
+                                <h6 class="fw-bold mb-0 text-dark">Diagnóstico Ejecutivo Automatizado (Para Toma de
+                                    Decisiones)</h6>
+                            </div>
+                            <p class="text-secondary mb-0 small" id="conclusion1vs1"
+                                style="line-height: 1.6; font-size: 0.90rem;">
+                                Cargando análisis comparativo...
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- =========================================================
+                         SUBVISTA 3: COMPARATIVA TODAS CONTRA TODAS
+                         ========================================================= -->
+                    <div class="subvista-reportes" id="subvistaReporteMulti">
+                        <!-- Podio Municipal de Honor (Rendimiento Destacado) -->
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-3">
+                                <div
+                                    class="p-3 rounded-4 bg-white border shadow-sm text-center position-relative overflow-hidden">
+                                    <div
+                                        style="height: 4px; background: #EAB308; position: absolute; top:0; left:0; right:0;">
+                                    </div>
+                                    <div class="fs-3 text-warning mb-1">🥇</div>
+                                    <div class="small text-muted fw-semibold">Mayor Satisfacción</div>
+                                    <div class="fw-bold text-dark fs-5">San Joaquín</div>
+                                    <div class="badge bg-warning-subtle text-dark border mt-1">★ 4.9 (98.2%)</div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div
+                                    class="p-3 rounded-4 bg-white border shadow-sm text-center position-relative overflow-hidden">
+                                    <div
+                                        style="height: 4px; background: #0D6EFD; position: absolute; top:0; left:0; right:0;">
+                                    </div>
+                                    <div class="fs-3 text-primary mb-1">⚡</div>
+                                    <div class="small text-muted fw-semibold">Atención Más Rápida</div>
+                                    <div class="fw-bold text-dark fs-5">La Serena Centro</div>
+                                    <div class="badge bg-primary-subtle text-primary border mt-1">11 min promedio</div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div
+                                    class="p-3 rounded-4 bg-white border shadow-sm text-center position-relative overflow-hidden">
+                                    <div
+                                        style="height: 4px; background: #16A34A; position: absolute; top:0; left:0; right:0;">
+                                    </div>
+                                    <div class="fs-3 text-success mb-1">🏆</div>
+                                    <div class="small text-muted fw-semibold">Mayor Cumplimiento</div>
+                                    <div class="fw-bold text-dark fs-5">Las Compañías</div>
+                                    <div class="badge bg-success-subtle text-success border mt-1">108.6% de la Meta
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div
+                                    class="p-3 rounded-4 bg-white border shadow-sm text-center position-relative overflow-hidden">
+                                    <div
+                                        style="height: 4px; background: #C41230; position: absolute; top:0; left:0; right:0;">
+                                    </div>
+                                    <div class="fs-3 text-danger mb-1">👥</div>
+                                    <div class="small text-muted fw-semibold">Mayor Cobertura Vecinal</div>
+                                    <div class="fw-bold text-dark fs-5">Las Compañías</div>
+                                    <div class="badge bg-danger-subtle text-danger border mt-1">110.000 vecinos</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Gráficos de Comparación Global (Todas las Delegaciones) -->
+                        <div class="row g-3 mb-4">
+                            <div class="col-lg-7">
+                                <div class="card border p-3 h-100 shadow-sm rounded-3 bg-white">
+                                    <div class="d-flex justify-content-between align-items-center mb-3">
+                                        <h6 class="fw-bold mb-0 text-dark"><i
+                                                class="bi bi-bar-chart-fill text-primary me-2"></i>Ranking de
+                                            Cumplimiento de Metas (Las 6 Delegaciones)</h6>
+                                        <span class="badge bg-light text-secondary border">Meta vs Real</span>
+                                    </div>
+                                    <div style="height: 290px; position: relative;">
+                                        <canvas id="chartMultiRanking"></canvas>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-lg-5">
+                                <div class="card border p-3 h-100 shadow-sm rounded-3 bg-white">
+                                    <div class="d-flex justify-content-between align-items-center mb-3">
+                                        <h6 class="fw-bold mb-0 text-dark"><i
+                                                class="bi bi-clock-fill text-warning me-2"></i>Tiempos de Espera Comunal
+                                            Comparados</h6>
+                                        <span class="badge bg-light text-secondary border">Minutos promedio</span>
+                                    </div>
+                                    <div style="height: 290px; position: relative;">
+                                        <canvas id="chartMultiTiempos"></canvas>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Gráficos de Satisfacción Global -->
+                        <div class="card border p-3 mb-4 shadow-sm rounded-3 bg-white">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h6 class="fw-bold mb-0 text-dark"><i
+                                        class="bi bi-star-fill text-warning me-2"></i>Índice de Satisfacción Ciudadana
+                                    por Delegación (Escala 1 a 5)</h6>
+                                <span class="badge bg-light text-secondary border">Evaluación Vecinal</span>
+                            </div>
+                            <div style="height: 250px; position: relative;">
+                                <canvas id="chartMultiSatisfaccion"></canvas>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- =========================================================
+                         TRANSMISIÓN EN TIEMPO REAL: ACTIVIDAD CIUDADANA EN VIVO
+                         ========================================================= -->
+                    <div class="mt-4 p-3 bg-white rounded-3 border shadow-sm">
+                        <div class="d-flex justify-content-between align-items-center mb-2 flex-wrap gap-2">
+                            <div class="d-flex align-items-center gap-2">
+                                <span class="live-dot"></span>
+                                <h6 class="fw-bold mb-0 text-dark" style="font-size: 0.90rem;">Feed en Vivo de
+                                    Atenciones Ciudadanas (Red Territorial La Serena)</h6>
+                            </div>
+                            <span class="text-muted small" id="liveFeedCount">Actualizaciones automáticas cada 5s</span>
+                        </div>
+                        <div class="live-feed-ticker" id="liveFeedTicker">
+                            <!-- Items inyectados dinámicamente con la hora actual -->
+                            <div class="live-feed-item">
+                                <div class="d-flex align-items-center gap-2">
+                                    <span class="badge bg-primary-subtle text-primary border"
+                                        style="font-size: 0.75rem;">Centro Histórico</span>
+                                    <span class="text-dark fw-medium">Trámite de Registro Social de Hogares resuelto
+                                        satisfactoriamente</span>
+                                </div>
+                                <span class="text-muted small font-monospace">Hace unos momentos</span>
+                            </div>
+                            <div class="live-feed-item">
+                                <div class="d-flex align-items-center gap-2">
+                                    <span class="badge bg-danger-subtle text-danger border"
+                                        style="font-size: 0.75rem;">Las Compañías</span>
+                                    <span class="text-dark fw-medium">Operativo en terreno: Atención a comités vecinales
+                                        y retiro de escombros</span>
+                                </div>
+                                <span class="text-muted small font-monospace">Hace 1 min</span>
+                            </div>
+                            <div class="live-feed-item">
+                                <div class="d-flex align-items-center gap-2">
+                                    <span class="badge bg-success-subtle text-success border" style="font-size: 0.75rem;">La Pampa</span>
+                                    <span class="text-dark fw-medium">Solicitud de mantención de luminarias canalizada a cuadrilla técnica</span>
+                                </div>
+                                <span class="text-muted small font-monospace">Hace 2 min</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>

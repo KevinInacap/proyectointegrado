@@ -1,0 +1,36 @@
+<!-- ==========================================================================
+     DRAWER LATERAL DE EDICIÓN RÁPIDA (SLIDE-OVER PANEL EN VIDRIO ESMERILADO)
+     ========================================================================== -->
+<div class="admin-slide-drawer-overlay" id="adminSlideDrawerOverlay" onclick="cerrarAdminDrawer()"></div>
+
+<aside class="admin-slide-drawer" id="adminSlideDrawer" aria-hidden="true">
+    <div class="drawer-header">
+        <div class="drawer-title-box">
+            <div class="drawer-icon-wrap" id="drawerIconWrap">
+                <i class="bi bi-pencil-square" id="drawerHeaderIcon"></i>
+            </div>
+            <div>
+                <h3 class="drawer-title" id="drawerHeaderTitle">Ficha de Edición</h3>
+                <p class="drawer-subtitle" id="drawerHeaderSubtitle">Actualización de datos institucionales</p>
+            </div>
+        </div>
+        <button type="button" class="btn-close" onclick="cerrarAdminDrawer()" aria-label="Cerrar panel"></button>
+    </div>
+
+    <div class="drawer-body" id="drawerBodyContent">
+        <!-- Contenido dinámico inyectado por JS según el mantenedor activo -->
+        <div class="text-center py-5 text-muted">
+            <div class="spinner-border spinner-border-sm text-primary mb-2" role="status"></div>
+            <div>Cargando información del registro...</div>
+        </div>
+    </div>
+
+    <div class="drawer-footer">
+        <button type="button" class="btn btn-outline-secondary rounded-pill px-3 py-1 fw-semibold small" onclick="cerrarAdminDrawer()">
+            Cancelar
+        </button>
+        <button type="button" class="btn btn-primary rounded-pill px-4 py-1 fw-semibold small" id="btnDrawerGuardar" onclick="ejecutarGuardadoDrawer()">
+            <i class="bi bi-check-lg me-1"></i> Guardar Cambios
+        </button>
+    </div>
+</aside>

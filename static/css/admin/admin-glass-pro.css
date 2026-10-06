@@ -1,0 +1,1150 @@
+/* ==========================================================================
+   SISTEMA DE DISEÑO: LIQUID GLASSMORPHISM INSTITUCIONAL PRO — LA SERENA
+   Estilo Apple macOS Sonoma / VisionOS (100% Pantalla Completa + Capas Ópticas)
+   ========================================================================== */
+
+:root {
+    /* 1. Paleta Oficial Ilustre Municipalidad de La Serena */
+    --muni-red: #C41230;
+    --muni-red-hover: #A00E26;
+    --muni-red-subtle: rgba(196, 18, 48, 0.08);
+    --muni-red-border: rgba(196, 18, 48, 0.22);
+    
+    --muni-navy: #1B365D;
+    --muni-navy-dark: #0F172A;
+    --muni-navy-slate: #1E293B;
+    --muni-navy-subtle: rgba(27, 54, 93, 0.07);
+
+    /* 2. Vidrio Óptico Selectivo */
+    --glass-header-bg: rgba(255, 255, 255, 0.85);
+    --glass-header-blur: blur(20px) saturate(180%);
+    --glass-header-border: 1px solid rgba(226, 235, 246, 0.90);
+
+    --glass-card-bg: linear-gradient(135deg, rgba(255, 255, 255, 0.88) 0%, rgba(248, 250, 252, 0.72) 100%);
+    --glass-card-blur: blur(24px) saturate(190%);
+    --glass-card-border: 1px solid rgba(255, 255, 255, 0.95);
+    --glass-card-shadow: 0 14px 34px -8px rgba(27, 54, 93, 0.07), inset 0 1px 0 rgba(255, 255, 255, 1);
+
+    --glass-floating-bg: rgba(15, 23, 42, 0.92);
+    --glass-floating-blur: blur(22px) saturate(180%);
+    --glass-floating-border: 1px solid rgba(255, 255, 255, 0.16);
+    --glass-floating-shadow: 0 20px 40px -10px rgba(15, 23, 42, 0.45), 0 0 0 1px rgba(255, 255, 255, 0.08);
+
+    --glass-drawer-bg: rgba(255, 255, 255, 0.95);
+    --glass-drawer-blur: blur(28px) saturate(190%);
+    --glass-drawer-border: 1px solid rgba(226, 232, 240, 0.90);
+    --glass-drawer-shadow: -15px 0 45px -10px rgba(15, 23, 42, 0.18);
+
+    /* 3. Superficies de Datos */
+    --surface-card: #FFFFFF;
+    --surface-border: #E2E8F0;
+    --surface-text-main: #0F172A;
+    --surface-text-muted: #64748B;
+    
+    /* 4. Curvas de Movimiento Suaves */
+    --spring-motion: cubic-bezier(0.16, 1, 0.3, 1);
+    --transition-fast: 0.18s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-smooth: 0.32s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* ==========================================================================
+   1. CORRECCIÓN CRUCIAL: LAYOUT 100% PANTALLA COMPLETA (SIN GAPS NI RECORTES)
+   ========================================================================== */
+html,
+body {
+    width: 100% !important;
+    min-width: 100% !important;
+    max-width: 100% !important;
+    min-height: 100vh !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow-x: hidden !important;
+    display: block !important; /* Desactiva flexbox en body para evitar el doble cálculo de 260px */
+    background-color: #F4F8FC !important;
+    background-image: 
+        radial-gradient(at 10% 10%, rgba(27, 54, 93, 0.05) 0px, transparent 45%),
+        radial-gradient(at 90% 90%, rgba(196, 18, 48, 0.04) 0px, transparent 40%) !important;
+    background-attachment: fixed !important;
+    color: var(--surface-text-main) !important;
+    box-sizing: border-box !important;
+}
+
+*, *::before, *::after {
+    box-sizing: border-box !important;
+}
+
+/* Sidebar Fijo con scroll */
+.sidebar {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    bottom: 0 !important;
+    width: 260px !important;
+    z-index: 1040 !important;
+}
+
+/* Contenedor Principal Ocupa Exactamente el 100% de la Pantalla restante de borde a borde */
+.main-wrapper {
+    margin-left: 260px !important;
+    width: calc(100% - 260px) !important;
+    min-width: calc(100% - 260px) !important;
+    max-width: calc(100% - 260px) !important;
+    min-height: 100vh !important;
+    display: flex !important;
+    flex-direction: column !important;
+    box-sizing: border-box !important;
+    background: transparent !important;
+    position: relative !important;
+}
+
+/* Barra Superior: Ocupa todo el ancho sin cortes a la derecha */
+.top-header {
+    width: 100% !important;
+    box-sizing: border-box !important;
+    padding: 0 2.25rem !important;
+    height: 68px !important;
+    background: var(--glass-header-bg) !important;
+    -webkit-backdrop-filter: var(--glass-header-blur) !important;
+    backdrop-filter: var(--glass-header-blur) !important;
+    border-bottom: 3px solid var(--muni-red) !important;
+    box-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.05) !important;
+}
+
+/* Área de Contenido Principal: Ocupa el 100% y respira con márgenes ejecutivos */
+.content-body {
+    width: 100% !important;
+    max-width: 100% !important;
+    flex-grow: 1 !important;
+    padding: 1.75rem 2.25rem 3.5rem 2.25rem !important;
+    box-sizing: border-box !important;
+}
+
+.maintainer-view,
+.maintainer-view.active {
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+}
+
+/* ==========================================================================
+   2. REDISEÑO TOTAL DEL DASHBOARD / INICIO: LIQUID GLASS INSTITUCIONAL
+   Layout Propietario de Alta Gama (Sin Clichés de IA y Simétrico)
+   ========================================================================== */
+
+/* 2.1 Cinta Superior Ejecutiva de 4 Tarjetas Simétricas */
+.civic-kpi-quad-grid {
+    display: grid !important;
+    grid-template-columns: repeat(4, 1fr) !important;
+    gap: 1.35rem !important;
+    margin-bottom: 1.75rem !important;
+    width: 100% !important;
+}
+
+@media (max-width: 1200px) {
+    .civic-kpi-quad-grid {
+        grid-template-columns: repeat(2, 1fr) !important;
+    }
+}
+
+@media (max-width: 650px) {
+    .civic-kpi-quad-grid {
+        grid-template-columns: 1fr !important;
+    }
+}
+
+/* Tarjeta KPI SGR Individual de Cristal Óptico */
+.sgr-kpi-card {
+    background: rgba(255, 255, 255, 0.92) !important;
+    -webkit-backdrop-filter: blur(20px) saturate(180%) !important;
+    backdrop-filter: blur(20px) saturate(180%) !important;
+    border: 1px solid rgba(255, 255, 255, 0.95) !important;
+    border-radius: 20px !important;
+    padding: 1.45rem 1.6rem !important;
+    box-shadow: 0 8px 26px -4px rgba(27, 54, 93, 0.06), inset 0 1px 0 #FFFFFF !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: space-between !important;
+    transition: all 0.28s var(--spring-motion) !important;
+    cursor: pointer !important;
+    position: relative !important;
+    overflow: hidden !important;
+}
+
+.sgr-kpi-card:hover {
+    transform: translateY(-3px) !important;
+    box-shadow: 0 18px 40px -8px rgba(27, 54, 93, 0.12), inset 0 1px 0 #FFFFFF !important;
+    border-color: rgba(27, 54, 93, 0.22) !important;
+}
+
+.sgr-kpi-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: transparent;
+    transition: background 0.25s ease;
+}
+
+.sgr-kpi-card.kpi-navy::before { background: var(--muni-navy); }
+.sgr-kpi-card.kpi-blue::before { background: #0D6EFD; }
+.sgr-kpi-card.kpi-emerald::before { background: #059669; }
+.sgr-kpi-card.kpi-amber::before { background: #D97706; }
+
+.sgr-kpi-header {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    margin-bottom: 0.9rem !important;
+}
+
+.sgr-kpi-icon-wrap {
+    width: 48px !important;
+    height: 48px !important;
+    border-radius: 14px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    font-size: 1.4rem !important;
+    flex-shrink: 0 !important;
+    transition: transform 0.2s ease !important;
+}
+
+.sgr-kpi-card:hover .sgr-kpi-icon-wrap {
+    transform: scale(1.08) !important;
+}
+
+.sgr-kpi-icon-wrap.icon-navy {
+    background: rgba(27, 54, 93, 0.10) !important;
+    color: var(--muni-navy) !important;
+    border: 1px solid rgba(27, 54, 93, 0.20) !important;
+}
+
+.sgr-kpi-icon-wrap.icon-blue {
+    background: rgba(13, 110, 253, 0.10) !important;
+    color: #0D6EFD !important;
+    border: 1px solid rgba(13, 110, 253, 0.20) !important;
+}
+
+.sgr-kpi-icon-wrap.icon-emerald {
+    background: rgba(5, 150, 105, 0.10) !important;
+    color: #059669 !important;
+    border: 1px solid rgba(5, 150, 105, 0.20) !important;
+}
+
+.sgr-kpi-icon-wrap.icon-amber {
+    background: rgba(217, 119, 6, 0.10) !important;
+    color: #D97706 !important;
+    border: 1px solid rgba(217, 119, 6, 0.20) !important;
+}
+
+.sgr-kpi-label {
+    font-size: 0.82rem !important;
+    font-weight: 800 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.04em !important;
+    color: #475569 !important;
+    margin-bottom: 0.35rem !important;
+}
+
+.sgr-kpi-number-row {
+    display: flex !important;
+    align-items: baseline !important;
+    gap: 10px !important;
+    flex-wrap: wrap !important;
+    margin-bottom: 0.45rem !important;
+}
+
+.sgr-kpi-number {
+    font-size: 2.35rem !important;
+    font-weight: 800 !important;
+    color: var(--muni-navy) !important;
+    line-height: 1 !important;
+    letter-spacing: -0.03em !important;
+}
+
+.sgr-kpi-desc {
+    font-size: 0.86rem !important;
+    color: #475569 !important;
+    line-height: 1.4 !important;
+    margin: 0 !important;
+}
+
+/* 2.2 Grilla Central: División Equilibrada de Canales y Semáforo SGR */
+.civic-middle-split {
+    display: grid !important;
+    grid-template-columns: minmax(0, 5.2fr) minmax(0, 4.8fr) !important;
+    gap: 1.5rem !important;
+    margin-bottom: 1.75rem !important;
+    width: 100% !important;
+}
+
+@media (max-width: 1100px) {
+    .civic-middle-split {
+        grid-template-columns: 1fr !important;
+    }
+}
+
+/* Tarjetas de Canales de Atención Reacomodados */
+.channel-stat-grid {
+    display: grid !important;
+    grid-template-columns: repeat(3, 1fr) !important;
+    gap: 0.85rem !important;
+    margin-bottom: 1.25rem !important;
+}
+
+@media (max-width: 768px) {
+    .channel-stat-grid {
+        grid-template-columns: 1fr !important;
+    }
+}
+
+.channel-stat-box {
+    background: rgba(255, 255, 255, 0.85) !important;
+    border: 1px solid rgba(226, 232, 240, 0.95) !important;
+    border-radius: 16px !important;
+    padding: 1.1rem 1.15rem !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: space-between !important;
+    box-shadow: 0 4px 12px rgba(27, 54, 93, 0.03) !important;
+    transition: all 0.2s ease !important;
+}
+
+.channel-stat-box:hover {
+    transform: translateY(-2px) !important;
+    box-shadow: 0 8px 20px rgba(27, 54, 93, 0.08) !important;
+}
+
+.channel-stat-title {
+    font-size: 0.82rem !important;
+    font-weight: 700 !important;
+    color: #475569 !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+    margin-bottom: 0.35rem !important;
+}
+
+.channel-stat-val {
+    font-size: 1.6rem !important;
+    font-weight: 800 !important;
+    color: var(--muni-navy) !important;
+    line-height: 1 !important;
+    margin-bottom: 0.25rem !important;
+}
+
+.channel-stat-pct {
+    font-size: 0.80rem !important;
+    font-weight: 700 !important;
+    padding: 0.15rem 0.5rem !important;
+    border-radius: 50px !important;
+    display: inline-block !important;
+    width: fit-content !important;
+}
+
+.channel-stat-sub {
+    font-size: 0.78rem !important;
+    color: #64748B !important;
+    margin-top: 0.35rem !important;
+    line-height: 1.3 !important;
+}
+
+/* 2.3 Matriz Semafórica Territorial SGR */
+.sgr-semaforo-list {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 0.75rem !important;
+}
+
+.sgr-delegacion-row {
+    background: rgba(255, 255, 255, 0.85) !important;
+    border: 1px solid rgba(226, 232, 240, 0.95) !important;
+    border-radius: 14px !important;
+    padding: 0.85rem 1.15rem !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    gap: 14px !important;
+    transition: all 0.2s ease !important;
+}
+
+.sgr-delegacion-row:hover {
+    background: #FFFFFF !important;
+    transform: translateX(3px) !important;
+    box-shadow: 0 6px 16px rgba(27, 54, 93, 0.05) !important;
+    border-color: rgba(27, 54, 93, 0.20) !important;
+}
+
+.sgr-delegacion-meta-bar {
+    height: 7px !important;
+    background: #E2E8F0 !important;
+    border-radius: 6px !important;
+    overflow: hidden !important;
+    margin-top: 4px !important;
+}
+
+.sgr-bar-fill-verde {
+    background: linear-gradient(90deg, #10B981, #059669) !important;
+    height: 100% !important;
+    border-radius: 6px !important;
+}
+
+.sgr-bar-fill-ambar {
+    background: linear-gradient(90deg, #F59E0B, #D97706) !important;
+    height: 100% !important;
+    border-radius: 6px !important;
+}
+
+.sgr-bar-fill-rojo {
+    background: linear-gradient(90deg, #EF4444, #DC2626) !important;
+    height: 100% !important;
+    border-radius: 6px !important;
+}
+
+/* 2.4 Grilla Inferior (Tabla de Atenciones + Mapa Territorial) */
+.civic-bottom-split {
+    display: grid !important;
+    grid-template-columns: minmax(0, 5fr) minmax(0, 5fr) !important;
+    gap: 1.5rem !important;
+    width: 100% !important;
+    margin-bottom: 2rem !important;
+}
+
+@media (max-width: 1100px) {
+    .civic-bottom-split {
+        grid-template-columns: 1fr !important;
+    }
+}
+
+/* ==========================================================================
+   3. GRILLA DE GRÁFICOS Y TABLAS (100% ANCHO FLUIDO)
+   ========================================================================== */
+.charts-tables-grid {
+    display: grid !important;
+    grid-template-columns: minmax(0, 4.4fr) minmax(0, 5.6fr) !important;
+    gap: 1.5rem !important;
+    width: 100% !important;
+    margin-bottom: 2rem !important;
+}
+
+@media (max-width: 1024px) {
+    .charts-tables-grid {
+        grid-template-columns: 1fr !important;
+    }
+}
+
+.dashboard-panel {
+    background: rgba(255, 255, 255, 0.90) !important;
+    -webkit-backdrop-filter: blur(24px) saturate(180%) !important;
+    backdrop-filter: blur(24px) saturate(180%) !important;
+    border: 1px solid rgba(255, 255, 255, 0.95) !important;
+    border-radius: 24px !important;
+    box-shadow: 0 10px 30px -5px rgba(27, 54, 93, 0.08), 0 2px 6px -1px rgba(27, 54, 93, 0.04), inset 0 1px 0 #FFFFFF !important;
+    padding: 1.85rem !important;
+    transition: all 0.25s ease !important;
+}
+
+.dashboard-panel:hover {
+    box-shadow: 0 18px 42px -8px rgba(27, 54, 93, 0.12), inset 0 1px 0 #FFFFFF !important;
+}
+
+.dashboard-panel table tbody tr {
+    transition: background 0.15s ease !important;
+}
+
+.dashboard-panel table tbody tr:hover {
+    background: rgba(241, 245, 249, 0.75) !important;
+}
+
+.panel-header {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    margin-bottom: 1.25rem !important;
+}
+
+.panel-title-box h3 {
+    font-size: 1.25rem !important;
+    font-weight: 800 !important;
+    color: var(--muni-navy) !important;
+    margin: 0 !important;
+    letter-spacing: -0.2px !important;
+}
+
+.panel-title-box span {
+    font-size: 0.88rem !important;
+    color: #475569 !important;
+    font-weight: 500 !important;
+}
+
+/* Tarjeta y Paneles del Mapa Comunal */
+.civic-map-card {
+    background: rgba(255, 255, 255, 0.90) !important;
+    -webkit-backdrop-filter: blur(24px) saturate(180%) !important;
+    backdrop-filter: blur(24px) saturate(180%) !important;
+    border: 1px solid rgba(255, 255, 255, 0.95) !important;
+    border-radius: 24px !important;
+    box-shadow: 0 10px 30px -5px rgba(27, 54, 93, 0.08), 0 2px 6px -1px rgba(27, 54, 93, 0.04), inset 0 1px 0 #FFFFFF !important;
+}
+
+.map-focus-panel {
+    background: rgba(255, 255, 255, 0.92) !important;
+    border: 1px solid rgba(226, 232, 240, 0.95) !important;
+    border-radius: 20px !important;
+    box-shadow: 0 8px 24px -4px rgba(27, 54, 93, 0.06), inset 0 1px 0 #FFFFFF !important;
+}
+
+/* ==========================================================================
+   4. TIME CAPSULE PILLS (CÁPSULAS DE CONTROL TEMPORAL ESTILO APPLE)
+   ========================================================================== */
+.executive-time-bar {
+    display: flex !important;
+    align-items: center !important;
+    gap: 12px !important;
+    flex-wrap: wrap !important;
+}
+
+.pill-capsule-group {
+    background: rgba(255, 255, 255, 0.85) !important;
+    -webkit-backdrop-filter: blur(16px) !important;
+    backdrop-filter: blur(16px) !important;
+    border: 1px solid rgba(226, 232, 240, 0.95) !important;
+    border-radius: 50px !important;
+    padding: 3px !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 2px !important;
+    box-shadow: 0 2px 8px rgba(27, 54, 93, 0.04) !important;
+}
+
+.pill-capsule-btn {
+    border: none !important;
+    background: transparent !important;
+    color: var(--surface-text-muted) !important;
+    padding: 0.35rem 0.85rem !important;
+    border-radius: 50px !important;
+    font-size: 0.80rem !important;
+    font-weight: 600 !important;
+    cursor: pointer !important;
+    transition: all 0.2s ease !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 5px !important;
+}
+
+.pill-capsule-btn:hover {
+    color: var(--muni-navy) !important;
+    background: rgba(27, 54, 93, 0.05) !important;
+}
+
+.pill-capsule-btn.active {
+    background: var(--muni-navy) !important;
+    color: #FFFFFF !important;
+    box-shadow: 0 4px 12px rgba(27, 54, 93, 0.25) !important;
+}
+
+.btn-exportar-pdf-oficial {
+    background: linear-gradient(135deg, var(--muni-red) 0%, #A00E26 100%) !important;
+    color: #FFFFFF !important;
+    border: 1px solid rgba(255, 255, 255, 0.2) !important;
+    border-radius: 50px !important;
+    padding: 0.45rem 1.15rem !important;
+    font-size: 0.82rem !important;
+    font-weight: 700 !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 7px !important;
+    box-shadow: 0 4px 16px rgba(196, 18, 48, 0.30) !important;
+    cursor: pointer !important;
+    transition: all 0.2s ease !important;
+}
+
+.btn-exportar-pdf-oficial:hover {
+    transform: translateY(-1px) !important;
+    box-shadow: 0 8px 22px rgba(196, 18, 48, 0.40) !important;
+}
+
+.executive-sync-widget {
+    background: rgba(255, 255, 255, 0.85) !important;
+    -webkit-backdrop-filter: blur(16px) !important;
+    backdrop-filter: blur(16px) !important;
+    border: 1px solid rgba(226, 232, 240, 0.95) !important;
+    border-radius: 50px !important;
+    padding: 0.40rem 1rem !important;
+    font-size: 0.80rem !important;
+    font-weight: 600 !important;
+    color: var(--muni-navy) !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+    box-shadow: 0 2px 8px rgba(27, 54, 93, 0.04) !important;
+}
+
+/* ==========================================================================
+   5. DRAWER LATERAL DESLIZANTE & BARRA FLOTANTE
+   ========================================================================== */
+.admin-slide-drawer-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(15, 23, 42, 0.15);
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+    z-index: 1055;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity var(--transition-smooth);
+}
+
+.admin-slide-drawer-overlay.active {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.admin-slide-drawer {
+    position: fixed;
+    top: 0;
+    right: 0;
+    width: 520px;
+    max-width: 92vw;
+    height: 100vh;
+    background: var(--glass-drawer-bg);
+    -webkit-backdrop-filter: var(--glass-drawer-blur);
+    backdrop-filter: var(--glass-drawer-blur);
+    border-left: var(--glass-drawer-border);
+    box-shadow: var(--glass-drawer-shadow);
+    z-index: 1060;
+    transform: translateX(105%);
+    transition: transform var(--spring-motion) 0.38s;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.admin-slide-drawer.active {
+    transform: translateX(0);
+}
+
+.drawer-header {
+    padding: 1.25rem 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid rgba(226, 232, 240, 0.85);
+    background: rgba(255, 255, 255, 0.65);
+    flex-shrink: 0;
+}
+
+.drawer-title-box {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.drawer-icon-wrap {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    background: var(--muni-red-subtle);
+    color: var(--muni-red);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+    border: 1px solid var(--muni-red-border);
+}
+
+.drawer-title {
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: var(--muni-navy);
+    margin: 0;
+    line-height: 1.2;
+}
+
+.drawer-subtitle {
+    font-size: 0.80rem;
+    color: var(--surface-text-muted);
+    margin: 0;
+}
+
+.drawer-body {
+    padding: 1.5rem;
+    flex-grow: 1;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+}
+
+.drawer-footer {
+    padding: 1rem 1.5rem;
+    border-top: 1px solid rgba(226, 232, 240, 0.85);
+    background: rgba(255, 255, 255, 0.80);
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 10px;
+    flex-shrink: 0;
+}
+
+/* Barra Flotante de Acciones por Lote */
+.admin-floating-batch-bar {
+    position: fixed;
+    bottom: 2rem;
+    left: 50%;
+    transform: translate(-50%, 150%);
+    background: var(--glass-floating-bg);
+    -webkit-backdrop-filter: var(--glass-floating-blur);
+    backdrop-filter: var(--glass-floating-blur);
+    border: var(--glass-floating-border);
+    box-shadow: var(--glass-floating-shadow);
+    color: #FFFFFF;
+    padding: 0.65rem 1.25rem;
+    border-radius: 50px;
+    z-index: 1050;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.25s ease;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.admin-floating-batch-bar.active {
+    transform: translate(-50%, 0);
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.batch-count-pill {
+    background: var(--muni-red);
+    color: #FFFFFF;
+    font-weight: 700;
+    font-size: 0.80rem;
+    padding: 0.3rem 0.75rem;
+    border-radius: 50px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.batch-btn {
+    background: rgba(255, 255, 255, 0.10);
+    color: #FFFFFF;
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    border-radius: 50px;
+    padding: 0.40rem 0.90rem;
+    font-size: 0.82rem;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.2s ease;
+    cursor: pointer;
+    text-decoration: none;
+}
+
+.batch-btn:hover {
+    background: rgba(255, 255, 255, 0.20);
+    color: #FFFFFF;
+    transform: translateY(-1px);
+}
+
+.batch-btn-danger {
+    background: rgba(220, 38, 38, 0.25);
+    border-color: rgba(220, 38, 38, 0.45);
+    color: #FCA5A5;
+}
+
+.batch-btn-danger:hover {
+    background: #DC2626;
+    color: #FFFFFF;
+}
+
+.batch-dismiss-btn {
+    background: transparent;
+    border: none;
+    color: rgba(255, 255, 255, 0.65);
+    font-size: 1.1rem;
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 50%;
+    transition: color 0.2s ease;
+}
+
+.batch-dismiss-btn:hover {
+    color: #FFFFFF;
+}
+
+/* ==========================================================================
+   6. TABLAS Y MANTENEDORES
+   ========================================================================== */
+.table-responsive {
+    border-radius: 14px !important;
+    border: 1px solid rgba(226, 232, 240, 0.9) !important;
+    background: #FFFFFF !important;
+}
+
+.custom-clean-table {
+    width: 100% !important;
+    margin-bottom: 0 !important;
+    border-collapse: separate !important;
+    border-spacing: 0 !important;
+}
+
+.custom-clean-table thead th {
+    background: #F8FAFC !important;
+    color: #475569 !important;
+    font-weight: 700 !important;
+    font-size: 0.78rem !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.04em !important;
+    padding: 0.85rem 1rem !important;
+    border-bottom: 1px solid var(--surface-border) !important;
+    white-space: nowrap !important;
+}
+
+.custom-clean-table tbody tr {
+    transition: background-color 0.15s ease !important;
+}
+
+.custom-clean-table tbody tr:hover {
+    background-color: #F8FAFC !important;
+}
+
+.custom-clean-table tbody tr.row-selected {
+    background-color: rgba(196, 18, 48, 0.04) !important;
+}
+
+.custom-clean-table tbody td {
+    padding: 0.85rem 1rem !important;
+    font-size: 0.85rem !important;
+    color: var(--surface-text-main) !important;
+    border-bottom: 1px solid #F1F5F9 !important;
+    vertical-align: middle !important;
+}
+
+/* Facet Pills */
+.facet-pill-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.facet-pill {
+    border: 1px solid rgba(226, 232, 240, 0.95);
+    background: rgba(255, 255, 255, 0.9);
+    color: var(--surface-text-muted);
+    border-radius: 50px;
+    padding: 0.35rem 0.85rem;
+    font-size: 0.80rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.18s ease;
+}
+
+.facet-pill:hover {
+    border-color: var(--muni-navy);
+    color: var(--muni-navy);
+    background: #FFFFFF;
+}
+
+.facet-pill.active {
+    background: var(--muni-navy);
+    color: #FFFFFF;
+    border-color: var(--muni-navy);
+    box-shadow: 0 2px 8px rgba(27, 54, 93, 0.20);
+}
+
+/* Empty State */
+.empty-state-pro {
+    padding: 3rem 1.5rem;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.empty-state-icon {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: var(--muni-red-subtle);
+    color: var(--muni-red);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.75rem;
+    margin-bottom: 1rem;
+    border: 1px solid var(--muni-red-border);
+}
+
+.empty-state-title {
+    font-size: 1.10rem;
+    font-weight: 700;
+    color: var(--muni-navy);
+    margin-bottom: 0.35rem;
+}
+
+.empty-state-desc {
+    font-size: 0.85rem;
+    color: var(--surface-text-muted);
+    max-width: 360px;
+    margin-bottom: 1.25rem;
+}
+
+/* ==========================================================================
+   6. HERO BANNER DE IDENTIDAD SERENENSE & TABLÓN CÍVICO CON FOTOS HD (LIQUID GLASS PURO)
+   ========================================================================== */
+.serena-hero-glass-banner {
+    position: relative;
+    border-radius: 26px;
+    overflow: hidden;
+    margin-bottom: 1.75rem;
+    background: #E2E8F0;
+    box-shadow: 0 16px 40px -10px rgba(27, 54, 93, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.9);
+    border: 1.5px solid rgba(255, 255, 255, 0.9);
+    min-height: 220px;
+    display: flex;
+    align-items: center;
+}
+
+.serena-hero-bg-img {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center 36%;
+    filter: brightness(0.97) contrast(1.05) saturate(1.15);
+    transform: scale(1.01);
+}
+
+/* Panel flotante de Vidrio Líquido Real sobre la foto */
+.serena-hero-content {
+    position: relative;
+    z-index: 2;
+    width: 100%;
+    margin: 1.25rem 1.5rem;
+    padding: 1.85rem 2.25rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 2rem;
+    flex-wrap: wrap;
+    background: rgba(255, 255, 255, 0.82) !important;
+    -webkit-backdrop-filter: blur(28px) saturate(200%) !important;
+    backdrop-filter: blur(28px) saturate(200%) !important;
+    border: 1.5px solid rgba(255, 255, 255, 0.95) !important;
+    border-radius: 22px !important;
+    box-shadow: 0 20px 45px -10px rgba(27, 54, 93, 0.16), inset 0 1.5px 0.5px #FFFFFF !important;
+}
+
+.serena-weather-glass-card {
+    background: rgba(255, 255, 255, 0.88) !important;
+    -webkit-backdrop-filter: blur(20px) saturate(180%) !important;
+    backdrop-filter: blur(20px) saturate(180%) !important;
+    border: 1.5px solid rgba(255, 255, 255, 0.95) !important;
+    border-radius: 20px !important;
+    padding: 1rem 1.45rem !important;
+    color: var(--muni-navy) !important;
+    box-shadow: 0 10px 28px -5px rgba(27, 54, 93, 0.10), inset 0 1px 0 #FFFFFF !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 16px !important;
+    min-width: 280px !important;
+}
+
+/* ==========================================================================
+   7. MAPA Y SEDES TERRITORIALES (ESPACIOSO, SIN CORTES NI COLAPSO)
+   ========================================================================== */
+.serena-sedes-pills-bar {
+    display: flex !important;
+    align-items: center !important;
+    gap: 0.65rem !important;
+    overflow-x: auto !important;
+    padding-bottom: 0.6rem !important;
+    margin-bottom: 1.25rem !important;
+    scrollbar-width: thin !important;
+}
+
+.serena-sede-pill {
+    background: rgba(255, 255, 255, 0.92) !important;
+    -webkit-backdrop-filter: blur(14px) !important;
+    backdrop-filter: blur(14px) !important;
+    border: 1px solid rgba(226, 232, 240, 0.95) !important;
+    border-radius: 50px !important;
+    padding: 0.55rem 1.15rem !important;
+    font-size: 0.84rem !important;
+    font-weight: 700 !important;
+    color: var(--muni-navy) !important;
+    cursor: pointer !important;
+    white-space: nowrap !important;
+    transition: all 0.22s var(--spring-motion) !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 0.5rem !important;
+    box-shadow: 0 2px 8px rgba(27, 54, 93, 0.04) !important;
+    text-decoration: none !important;
+}
+
+.serena-sede-pill:hover {
+    background: #FFFFFF !important;
+    border-color: var(--muni-navy) !important;
+    transform: translateY(-2px) !important;
+    box-shadow: 0 6px 16px rgba(27, 54, 93, 0.10) !important;
+}
+
+.serena-sede-pill.active {
+    background: var(--muni-navy) !important;
+    color: #FFFFFF !important;
+    border-color: var(--muni-navy) !important;
+    box-shadow: 0 6px 18px rgba(27, 54, 93, 0.22) !important;
+}
+
+.serena-sede-pill .pill-dot {
+    width: 8px !important;
+    height: 8px !important;
+    border-radius: 50% !important;
+    background: #94A3B8 !important;
+    transition: background 0.2s ease !important;
+}
+
+.serena-sede-pill.active .pill-dot {
+    background: #F59E0B !important;
+}
+
+.serena-map-layout {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr) !important;
+    gap: 1.75rem !important;
+    align-items: stretch !important;
+}
+
+@media (max-width: 992px) {
+    .serena-map-layout {
+        grid-template-columns: 1fr !important;
+    }
+}
+
+.serena-map-svg-panel {
+    background: #F8FAFC !important;
+    border-radius: 20px !important;
+    padding: 1.25rem !important;
+    border: 1px solid rgba(226, 232, 240, 0.9) !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: center !important;
+    box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.02) !important;
+}
+
+.serena-map-detail-card {
+    background: rgba(255, 255, 255, 0.94) !important;
+    -webkit-backdrop-filter: blur(24px) saturate(180%) !important;
+    backdrop-filter: blur(24px) saturate(180%) !important;
+    border: 1.5px solid rgba(255, 255, 255, 0.95) !important;
+    border-radius: 22px !important;
+    box-shadow: 0 12px 32px rgba(27, 54, 93, 0.08), inset 0 1.5px 0 #FFFFFF !important;
+    padding: 1.5rem !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: space-between !important;
+    transition: all 0.28s ease !important;
+}
+
+.serena-map-photo-wrap {
+    width: 100% !important;
+    height: 180px !important;
+    border-radius: 14px !important;
+    overflow: hidden !important;
+    position: relative !important;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.1) !important;
+    margin-bottom: 1.15rem !important;
+}
+
+.serena-map-photo-img {
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: cover !important;
+    transition: transform 0.4s ease !important;
+}
+
+.serena-map-detail-card:hover .serena-map-photo-img {
+    transform: scale(1.04) !important;
+}
+
+.civic-news-grid {
+    display: grid !important;
+    grid-template-columns: repeat(3, 1fr) !important;
+    gap: 1.35rem !important;
+    margin-top: 1rem !important;
+}
+
+@media (max-width: 992px) {
+    .civic-news-grid {
+        grid-template-columns: 1fr !important;
+    }
+}
+
+.civic-news-card {
+    background: rgba(255, 255, 255, 0.94) !important;
+    -webkit-backdrop-filter: blur(20px) saturate(180%) !important;
+    backdrop-filter: blur(20px) saturate(180%) !important;
+    border: 1px solid rgba(255, 255, 255, 0.95) !important;
+    border-radius: 22px !important;
+    overflow: hidden !important;
+    box-shadow: 0 10px 30px -5px rgba(27, 54, 93, 0.06), inset 0 1px 0 #FFFFFF !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: space-between !important;
+    transition: all 0.3s var(--spring-motion) !important;
+}
+
+.civic-news-card:hover {
+    transform: translateY(-4px) !important;
+    box-shadow: 0 20px 42px -8px rgba(27, 54, 93, 0.14), inset 0 1px 0 #FFFFFF !important;
+}
+
+.civic-news-img-wrap {
+    position: relative;
+    width: 100%;
+    height: 195px;
+    overflow: hidden;
+}
+
+.civic-news-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.45s ease;
+}
+
+.civic-news-card:hover .civic-news-img {
+    transform: scale(1.06);
+}
+
+.civic-news-badge {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    background: rgba(15, 23, 42, 0.82);
+    -webkit-backdrop-filter: blur(10px);
+    backdrop-filter: blur(10px);
+    color: #FFFFFF;
+    font-size: 0.72rem;
+    font-weight: 800;
+    padding: 0.32rem 0.8rem;
+    border-radius: 50px;
+    letter-spacing: 0.05em;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}

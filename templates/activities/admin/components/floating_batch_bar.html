@@ -1,0 +1,25 @@
+<!-- ==========================================================================
+     BARRA FLOTANTE DE ACCIONES POR LOTE (FLOATING BATCH ACTION BAR)
+     ========================================================================== -->
+<div class="admin-floating-batch-bar" id="adminFloatingActionBar" role="toolbar" aria-label="Acciones por lote">
+    <div class="batch-count-pill" id="batchCountBadge">
+        <i class="bi bi-check2-circle"></i>
+        <span id="batchCountNumber">0 seleccionados</span>
+    </div>
+
+    <div class="d-flex align-items-center gap-2">
+        <button type="button" class="batch-btn" onclick="ejecutarAccionLote('toggle-status')" title="Alternar estado Activo / Inactivo">
+            <i class="bi bi-toggle-on text-success"></i> Cambiar Estado
+        </button>
+        <button type="button" class="batch-btn" onclick="ejecutarAccionLote('export-excel')" title="Descargar filas seleccionadas en Excel">
+            <i class="bi bi-file-earmark-excel text-warning"></i> Exportar
+        </button>
+        <button type="button" class="batch-btn batch-btn-danger" onclick="ejecutarAccionLote('delete')" title="Eliminar registros seleccionados">
+            <i class="bi bi-trash"></i> Eliminar
+        </button>
+    </div>
+
+    <button type="button" class="batch-dismiss-btn" onclick="deseleccionarTodoFilas()" title="Deseleccionar todo (Esc)">
+        <i class="bi bi-x-lg"></i>
+    </button>
+</div>

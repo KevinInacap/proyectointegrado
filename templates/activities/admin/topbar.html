@@ -1,0 +1,123 @@
+<!-- Top Header con Línea Institucional Roja de 3px -->
+<header class="top-header">
+            <div class="header-left">
+                <button class="btn-hamburger" onclick="toggleSidebar()" title="Alternar menú lateral">
+                    <i class="bi bi-list"></i>
+                </button>
+                <div class="header-title-wrapper">
+                    <span class="header-sys-name">Sistema Municipal</span>
+                    <span class="header-sys-divider">|</span>
+                    <span class="header-sub-name">Gestión de Atención Ciudadana</span>
+                </div>
+            </div>
+
+            <div class="header-right">
+                <!-- Toggle Modo Oscuro / Claro -->
+                <button class="btn-theme-toggle" id="btnToggleDarkMode" onclick="toggleDarkMode()" title="Alternar Modo Oscuro / Claro">
+                    <i class="bi bi-moon-stars-fill" id="themeToggleIcon"></i>
+                </button>
+
+                <!-- Dropdown de Notificaciones Administrativas & Seguridad de Personal -->
+                <div class="dropdown">
+                    <button class="btn-notification" type="button" data-bs-toggle="dropdown" aria-expanded="false" title="Centro de Notificaciones Administrativas">
+                        <i class="bi bi-bell"></i>
+                        <span class="badge-count" id="adminNotifBadge">3</span>
+                    </button>
+                    <div class="dropdown-menu dropdown-menu-end shadow-lg border-0 rounded-4 mt-2 p-0 admin-notif-dropdown" style="min-width: 360px; max-width: 400px;">
+                        <div class="notif-header d-flex align-items-center justify-content-between p-3 border-bottom">
+                            <div>
+                                <h6 class="m-0 fw-bold" style="color: var(--muni-navy); font-size: 0.9rem;">
+                                    <i class="bi bi-shield-lock-fill text-danger me-1"></i> Alertas de Funcionarios
+                                </h6>
+                                <span class="text-muted" style="font-size: 0.72rem;">Seguridad y credenciales de trabajadores</span>
+                            </div>
+                            <button class="btn btn-sm btn-link text-decoration-none p-0 fw-semibold" onclick="marcarNotificacionesLeidas()" style="font-size: 0.75rem; color: var(--muni-blue-action);">
+                                Marcar leídas
+                            </button>
+                        </div>
+                        <div class="notif-list-body" id="adminNotifList" style="max-height: 320px; overflow-y: auto;">
+                            <!-- Notificación 1: Clave -->
+                            <div class="notif-item p-3 border-bottom d-flex gap-3 align-items-start unread">
+                                <div class="notif-icon-circle bg-danger-subtle text-danger">
+                                    <i class="bi bi-key-fill"></i>
+                                </div>
+                                <div class="flex-grow-1">
+                                    <div class="d-flex justify-content-between align-items-center mb-1">
+                                        <strong style="font-size: 0.8rem; color: #1E293B;">Recuperación de Clave</strong>
+                                        <span class="text-muted" style="font-size: 0.7rem;">Hace 12 min</span>
+                                    </div>
+                                    <p class="m-0 text-secondary" style="font-size: 0.76rem; line-height: 1.35;">
+                                        El gestor <strong>Rodrigo Araya</strong> (Delegación Las Compañías) solicitó restablecer su contraseña de acceso institucional.
+                                    </p>
+                                    <div class="mt-2">
+                                        <button class="btn btn-sm btn-outline-danger rounded-pill px-2 py-0" style="font-size: 0.72rem;" onclick="abrirModalPassword(2, 'Rodrigo Araya')">
+                                            <i class="bi bi-shield-check me-1"></i> Resetear Clave
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- Notificación 2: Correo -->
+                            <div class="notif-item p-3 border-bottom d-flex gap-3 align-items-start unread">
+                                <div class="notif-icon-circle bg-primary-subtle text-primary">
+                                    <i class="bi bi-envelope-exclamation-fill"></i>
+                                </div>
+                                <div class="flex-grow-1">
+                                    <div class="d-flex justify-content-between align-items-center mb-1">
+                                        <strong style="font-size: 0.8rem; color: #1E293B;">Cambio de Correo Oficial</strong>
+                                        <span class="text-muted" style="font-size: 0.7rem;">Hace 45 min</span>
+                                    </div>
+                                    <p class="m-0 text-secondary" style="font-size: 0.76rem; line-height: 1.35;">
+                                        La funcionaria <strong>Camila Sepúlveda</strong> solicitó actualizar su correo oficial a <code>c.sepulveda@laserena.cl</code>.
+                                    </p>
+                                </div>
+                            </div>
+                            <!-- Notificación 3: Alta de funcionario -->
+                            <div class="notif-item p-3 d-flex gap-3 align-items-start unread">
+                                <div class="notif-icon-circle bg-warning-subtle text-warning">
+                                    <i class="bi bi-person-plus-fill"></i>
+                                </div>
+                                <div class="flex-grow-1">
+                                    <div class="d-flex justify-content-between align-items-center mb-1">
+                                        <strong style="font-size: 0.8rem; color: #1E293B;">Nuevo Gestor en Espera</strong>
+                                        <span class="text-muted" style="font-size: 0.7rem;">Hace 2 horas</span>
+                                    </div>
+                                    <p class="m-0 text-secondary" style="font-size: 0.76rem; line-height: 1.35;">
+                                        Se registró nuevo gestor territorial (Delegación La Pampa). Pendiente validar asignación de roles.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="notif-footer p-2 text-center bg-light rounded-bottom-4">
+                            <a href="javascript:void(0)" onclick="abrirModalAuditoria()" class="small text-decoration-none fw-semibold" style="color: var(--muni-navy); font-size: 0.75rem;">
+                                Ver Registro de Trazabilidad <i class="bi bi-arrow-right"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="dropdown">
+                    <button class="user-dropdown-btn" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=120&q=80"
+                            alt="Avatar" class="user-avatar-img">
+                        <span class="user-info-text d-none d-sm-inline">Administrador Municipal</span>
+                        <i class="bi bi-chevron-down text-muted ms-1" style="font-size: 0.72rem;"></i>
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end shadow-sm border-0 rounded-3 mt-2"
+                        style="min-width: 200px;">
+                        <li><span class="dropdown-header text-uppercase small fw-bold text-danger">Municipalidad La
+                                Serena</span></li>
+                        <li><a class="dropdown-item py-2 fw-semibold text-secondary" href="javascript:void(0)"
+                                onclick="abrirModalPerfil()"><i class="bi bi-person-badge-fill me-2 text-primary"></i>
+                                Mi Perfil</a></li>
+                        <li><a class="dropdown-item py-2 fw-semibold text-secondary" href="javascript:void(0)"
+                                onclick="abrirModalAuditoria()"><i class="bi bi-clock-history me-2 text-primary"></i>
+                                Auditoría de Cambios</a></li>
+                        <li>
+                            <hr class="dropdown-divider">
+                        </li>
+                        <li><a class="dropdown-item py-2 fw-semibold text-danger" href="{% url 'core:logout' %}"><i
+                                    class="bi bi-box-arrow-right me-2"></i> Cerrar Sesión</a></li>
+                    </ul>
+                </div>
+            </div>
+        </header>

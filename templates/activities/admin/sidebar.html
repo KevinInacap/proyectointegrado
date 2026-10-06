@@ -1,0 +1,79 @@
+{% load static %}
+    <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
+
+    <!-- ==========================================================================
+        SIDEBAR: LOGO GRANDE + ESCUDO + SCROLL INTERNO + FARO EN GLASSMORPHISM
+        ========================================================================== -->
+    <aside class="sidebar" id="sidebar">
+        <!-- Logo Oficial La Serena (Manual de Normas Gráficas laserena.cl) -->
+        <div class="sidebar-brand-box">
+            <button class="sidebar-collapse-btn" onclick="toggleSidebar()" title="Colapsar menú lateral"
+                aria-label="Menú">
+                <i class="bi bi-list"></i>
+            </button>
+            <a href="javascript:void(0)" onclick="switchView('dashboard')" class="sidebar-brand-link"
+                title="Portal Municipal - Ilustre Municipalidad de La Serena">
+                <img src="{% static 'images/horizontal-blanco.svg' %}" alt="Ilustre Municipalidad de La Serena"
+                    class="sidebar-official-logo">
+            </a>
+        </div>
+
+        <!-- Menú de Navegación con Scroll Independiente -->
+        <nav class="sidebar-menu-scrollable">
+            <!-- 1. Inicio (Dashboard) - Resaltado con Degradado Azul y Glow (Referencia Visual) -->
+            <button class="nav-item-btn active" id="nav-btn-dashboard" onclick="switchView('dashboard')">
+                <i class="bi bi-house-door-fill main-icon"></i>
+                <span>Inicio</span>
+            </button>
+
+            <!-- 2. Mantenedores (Sin espacio excesivo a la izquierda) -->
+            <div class="accordion-item-custom">
+                <button class="nav-item-btn" id="nav-btn-mantenedores" onclick="toggleSubmenu('mantenedores-sub')">
+                    <i class="bi bi-building-gear main-icon"></i>
+                    <span>Mantenedores</span>
+                    <i class="bi bi-chevron-down ms-auto" id="submenu-chevron"
+                        style="font-size: 0.8rem; transition: transform 0.25s ease;"></i>
+                </button>
+                <div class="sidebar-submenu" id="mantenedores-sub" style="display: block;">
+                    <button class="submenu-item-btn" id="sub-delegaciones"
+                        onclick="switchView('delegaciones')">Delegaciones Municipales</button>
+                    <button class="submenu-item-btn" id="sub-usuarios"
+                        onclick="switchView('usuarios')">Usuarios</button>
+                    <button class="submenu-item-btn" id="sub-roles" onclick="switchView('roles')">Roles</button>
+                    <button class="submenu-item-btn" id="sub-metas" onclick="switchView('metas')">Metas</button>
+                    <button class="submenu-item-btn" id="sub-tipo-atencion" onclick="switchView('tipo-atencion')">Tipo
+                        de Atención</button>
+                    <button class="submenu-item-btn" id="sub-sub-atencion" onclick="switchView('sub-atencion')">Sub
+                        Atención</button>
+                    <button class="submenu-item-btn" id="sub-atenciones"
+                        onclick="switchView('atenciones')">Atenciones</button>
+                    <button class="submenu-item-btn" id="sub-tipo-gestion" onclick="switchView('tipo-gestion')">Tipo de
+                        Gestión</button>
+                    <button class="submenu-item-btn" id="sub-vecinos" onclick="switchView('vecinos')">Vecinos</button>
+                </div>
+            </div>
+
+            <!-- 3. Reportes y Estadísticas -->
+            <button class="nav-item-btn" id="nav-btn-reportes" onclick="switchView('reportes')">
+                <i class="bi bi-bar-chart-line-fill main-icon"></i>
+                <span>Reportes y Estadísticas</span>
+                <i class="bi bi-chevron-right ms-auto" style="font-size: 0.8rem; opacity: 0.6;"></i>
+            </button>
+        </nav>
+
+        <!-- Fotografía Real del Faro Monumental integrada armónicamente al fondo del Sidebar -->
+        <div class="sidebar-faro-footer">
+            <div class="sidebar-faro-image-wrap">
+                <img src="{% static 'img/faro_real_sunset.jpg' %}"
+                    data-fallback="{% static 'img/faro_laserena_bg.jpg' %}"
+                    onerror="this.onerror=null; if(this.dataset.fallback) this.src=this.dataset.fallback;"
+                    alt="Faro Monumental de La Serena al Atardecer" class="sidebar-faro-bg-img">
+                <div class="sidebar-faro-fade-layer"></div>
+            </div>
+            <div class="sidebar-faro-caption">
+                <div class="sidebar-faro-title">La Serena</div>
+                <div class="sidebar-faro-lema">Siempre cerca de ti</div>
+            </div>
+        </div>
+    </aside>
+

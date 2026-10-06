@@ -1,0 +1,94 @@
+<section id="view-delegaciones" class="maintainer-view">
+                <div class="maintainer-card p-4">
+                    <!-- Header Oficial de Delegaciones -->
+                    <div
+                        class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4 pb-3 border-bottom">
+                        <div>
+                            <div class="d-flex align-items-center gap-2 mb-1">
+                                <span class="badge"
+                                    style="background: rgba(196, 18, 48, 0.12); color: #C41230; font-weight: 700; font-size: 0.75rem; border: 1px solid rgba(196, 18, 48, 0.25);">
+                                    <i class="bi bi-geo-alt-fill me-1"></i> RED TERRITORIAL DESCENTRALIZADA
+                                </span>
+                                <span class="badge"
+                                    style="background: rgba(13, 110, 253, 0.1); color: #0D6EFD; font-weight: 600; font-size: 0.75rem;">
+                                    <i class="bi bi-buildings-fill me-1"></i> 6 DELEGACIONES OPERATIVAS
+                                </span>
+                            </div>
+                            <h2 class="m-0 fw-bold" style="color: var(--muni-navy); font-family: var(--font-heading);">
+                                Delegaciones Municipales de La Serena</h2>
+                            <p class="text-secondary m-0" style="font-size: 0.88rem;">
+                                Seleccione una delegación para inspeccionar su dotación funcionaria, estadísticas
+                                territoriales y cobertura en tiempo real
+                            </p>
+                        </div>
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="text-secondary small fw-medium">
+                                <i class="bi bi-cursor-fill text-primary me-1"></i> Haga clic en una delegación para ver
+                                sus datos
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- Indicadores KPI Generales de Delegaciones -->
+                    <div class="row g-3 mb-4">
+                        <div class="col-sm-6 col-xl-3">
+                            <div class="p-3 rounded-3 border bg-white shadow-sm d-flex align-items-center gap-3">
+                                <div
+                                    style="width: 44px; height: 44px; border-radius: 10px; background: rgba(13, 110, 253, 0.12); color: #0D6EFD; display: flex; align-items: center; justify-content: center; font-size: 1.3rem;">
+                                    <i class="bi bi-buildings"></i>
+                                </div>
+                                <div>
+                                    <div class="text-muted small fw-semibold">Delegaciones Activas</div>
+                                    <div class="fs-4 fw-bold text-dark">6 de 6</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-sm-6 col-xl-3">
+                            <div class="p-3 rounded-3 border bg-white shadow-sm d-flex align-items-center gap-3">
+                                <div
+                                    style="width: 44px; height: 44px; border-radius: 10px; background: rgba(22, 163, 74, 0.12); color: #16A34A; display: flex; align-items: center; justify-content: center; font-size: 1.3rem;">
+                                    <i class="bi bi-graph-up-arrow"></i>
+                                </div>
+                                <div>
+                                    <div class="text-muted small fw-semibold">Cumplimiento Comunal</div>
+                                    <div class="fs-4 fw-bold text-success">88.4%</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-sm-6 col-xl-3">
+                            <div class="p-3 rounded-3 border bg-white shadow-sm d-flex align-items-center gap-3">
+                                <div
+                                    style="width: 44px; height: 44px; border-radius: 10px; background: rgba(124, 58, 237, 0.12); color: #7C3AED; display: flex; align-items: center; justify-content: center; font-size: 1.3rem;">
+                                    <i class="bi bi-people-fill"></i>
+                                </div>
+                                <div>
+                                    <div class="text-muted small fw-semibold">Población Cobertura</div>
+                                    <div class="fs-4 fw-bold text-dark">~248.900</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-sm-6 col-xl-3">
+                            <div class="p-3 rounded-3 border bg-white shadow-sm d-flex align-items-center gap-3">
+                                <div
+                                    style="width: 44px; height: 44px; border-radius: 10px; background: rgba(196, 18, 48, 0.12); color: #C41230; display: flex; align-items: center; justify-content: center; font-size: 1.3rem;">
+                                    <i class="bi bi-person-badge"></i>
+                                </div>
+                                <div>
+                                    <div class="text-muted small fw-semibold">Dotación en Terreno</div>
+                                    <div class="fs-4 fw-bold text-dark">47 funcionarios</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- GRID DE LAS 6 DELEGACIONES CON FOTOGRAFÍA REAL Y GLASSMORPHISM -->
+                    <div class="delegacion-grid" id="delegacionesCardsGrid">
+                        <!-- Las 6 tarjetas se renderizan vía JS con sus fotos y badges Glassmorphic -->
+                    </div>
+
+                    <!-- PANEL DE DETALLE EXCLUSIVO DE LA DELEGACIÓN SELECCIONADA -->
+                    <div id="panelDetalleDelegacion" class="delegacion-detail-panel" style="display: none;">
+                        <!-- Contenido cargado dinámicamente al seleccionar cualquier delegación -->
+                    </div>
+                </div>
+            </section>

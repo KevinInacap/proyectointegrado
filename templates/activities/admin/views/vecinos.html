@@ -1,0 +1,222 @@
+<section id="view-vecinos" class="maintainer-view">
+                <div class="maintainer-card">
+                    <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
+                        <div>
+                            <h2>Vecinos</h2>
+                            <p class="text-secondary m-0">CRUD y ficha de atención de vecinos de La Serena</p>
+                        </div>
+                        <div class="d-flex align-items-center gap-2">
+                            <button class="btn btn-outline-secondary rounded-pill px-3 py-1 fw-semibold small"
+                                onclick="abrirModalImportarExcel()">
+                                <i class="bi bi-file-earmark-arrow-up text-primary"></i> Importar Excel
+                            </button>
+                            <button class="btn-muni-red" onclick="abrirModalVecino('nuevo')">
+                                <i class="bi bi-plus-lg"></i> + Nuevo Vecino
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="table-meta-indicators">
+                        <div class="meta-stat-group">
+                            <span class="meta-stat-item"><i class="bi bi-database me-1 text-primary"></i> <strong
+                                    id="lblTotalVecinos">12.458</strong> vecinos</span>
+                            <span class="meta-stat-item"><i class="bi bi-check2-circle me-1 text-success"></i> <strong
+                                    id="lblActivosVecinos">12.102</strong> activos</span>
+                            <span class="meta-stat-item"><i class="bi bi-dash-circle me-1 text-danger"></i> <strong
+                                    id="lblInactivosVecinos">356</strong> inactivos</span>
+                        </div>
+                        <div>
+                            <i class="bi bi-clock-history me-1"></i> Sincronizado: <strong>01/10/2026 16:32</strong>
+                        </div>
+                    </div>
+
+                    <div class="excel-toolbar">
+                        <div class="excel-toolbar-left">
+                            <div class="input-group input-group-sm" style="max-width: 240px;">
+                                <span class="input-group-text bg-white border-end-0"><i
+                                        class="bi bi-search text-muted"></i></span>
+                                <input type="text" class="form-control border-start-0" id="searchVecinosInput"
+                                    onkeyup="ejecutarFiltroCompletoVecinos()" placeholder="Buscar vecino...">
+                            </div>
+
+                            <button class="btn-toolbar-excel" id="btnToggleFiltros" onclick="togglePanelFiltros()">
+                                <i class="bi bi-funnel"></i> Filtros <span
+                                    class="badge bg-primary text-white rounded-pill ms-1" id="badgeFiltrosActivos"
+                                    style="display:none;">0</span>
+                            </button>
+
+                            <div class="dropdown">
+                                <button class="btn-toolbar-excel dropdown-toggle" type="button"
+                                    data-bs-toggle="dropdown" aria-expanded="false">
+                                    <i class="bi bi-layout-three-columns"></i> Columnas
+                                </button>
+                                <div class="dropdown-menu p-3 shadow-sm border-0 rounded-3" style="min-width: 200px;"
+                                    onclick="event.stopPropagation()">
+                                    <span
+                                        class="dropdown-header px-0 text-uppercase fw-bold small text-primary">Columnas</span>
+                                    <div class="form-check mb-1"><input class="form-check-input" type="checkbox"
+                                            id="colRUT" checked onchange="toggleColumna('col-rut', this.checked)"><label
+                                            class="form-check-label small" for="colRUT">RUT</label></div>
+                                    <div class="form-check mb-1"><input class="form-check-input" type="checkbox"
+                                            id="colDireccion" checked
+                                            onchange="toggleColumna('col-dir', this.checked)"><label
+                                            class="form-check-label small" for="colDireccion">Dirección</label></div>
+                                    <div class="form-check mb-1"><input class="form-check-input" type="checkbox"
+                                            id="colTelefono" checked
+                                            onchange="toggleColumna('col-tel', this.checked)"><label
+                                            class="form-check-label small" for="colTelefono">Teléfono</label></div>
+                                    <div class="form-check mb-1"><input class="form-check-input" type="checkbox"
+                                            id="colTerritorio" checked
+                                            onchange="toggleColumna('col-terr', this.checked)"><label
+                                            class="form-check-label small" for="colTerritorio">Territorio</label></div>
+                                    <div class="form-check mb-1"><input class="form-check-input" type="checkbox"
+                                            id="colGestion" checked
+                                            onchange="toggleColumna('col-gest', this.checked)"><label
+                                            class="form-check-label small" for="colGestion">Gestión</label></div>
+                                    <div class="form-check mb-1"><input class="form-check-input" type="checkbox"
+                                            id="colEstado" checked
+                                            onchange="toggleColumna('col-est', this.checked)"><label
+                                            class="form-check-label small" for="colEstado">Estado</label></div>
+                                </div>
+                            </div>
+
+                            <button class="btn-toolbar-excel" onclick="descargarPlantillaExcelVecinos()"
+                                title="Plantilla oficial">
+                                <i class="bi bi-file-earmark-ruled text-success"></i> Plantilla
+                            </button>
+                        </div>
+
+                        <div class="excel-toolbar-right">
+                            <button class="btn-toolbar-excel text-success fw-bold"
+                                onclick="exportarExcelRealVecinos()"><i class="bi bi-file-earmark-excel-fill"></i>
+                                Excel</button>
+                            <button class="btn-toolbar-excel text-danger fw-bold"
+                                onclick="exportarPDFInstitucionalVecinos()"><i class="bi bi-file-earmark-pdf-fill"></i>
+                                PDF</button>
+                            <button class="btn-toolbar-excel" onclick="window.print()"><i class="bi bi-printer"></i>
+                                Imprimir</button>
+                        </div>
+                    </div>
+
+                    <!-- Filtros Rápidos de Sector Comunal -->
+                    <div class="d-flex align-items-center gap-2 mb-3 flex-wrap p-2 bg-light rounded-3 border">
+                        <span class="text-secondary small fw-bold"><i class="bi bi-geo-alt-fill text-danger me-1"></i> Sectores Comunales:</span>
+                        <button class="btn btn-sm btn-white border rounded-pill px-3 py-1 small fw-semibold shadow-xs" onclick="filtrarSectorVecinoRapido('')">Todos</button>
+                        <button class="btn btn-sm btn-white border rounded-pill px-3 py-1 small fw-semibold shadow-xs" onclick="filtrarSectorVecinoRapido('Centro')">La Serena Centro</button>
+                        <button class="btn btn-sm btn-white border rounded-pill px-3 py-1 small fw-semibold shadow-xs" onclick="filtrarSectorVecinoRapido('Las Compañías')">Las Compañías - El Brillador</button>
+                        <button class="btn btn-sm btn-white border rounded-pill px-3 py-1 small fw-semibold shadow-xs" onclick="filtrarSectorVecinoRapido('La Pampa')">La Pampa - Vista Hermosa</button>
+                        <button class="btn btn-sm btn-white border rounded-pill px-3 py-1 small fw-semibold shadow-xs" onclick="filtrarSectorVecinoRapido('Tierras Blancas')">Tierras Blancas - Sector B</button>
+                        <button class="btn btn-sm btn-white border rounded-pill px-3 py-1 small fw-semibold shadow-xs" onclick="filtrarSectorVecinoRapido('Rural')">Sector Rural - Valle de Elqui</button>
+                    </div>
+
+                    <!-- Panel de Filtros -->
+                    <div class="advanced-filters-panel" id="panelFiltrosAvanzados">
+                        <div class="row g-2">
+                            <div class="col-md-3">
+                                <label class="form-label small fw-bold">Estado</label>
+                                <select class="form-select form-select-sm" id="filtroEstadoVecino"
+                                    onchange="ejecutarFiltroCompletoVecinos()">
+                                    <option value="">Todos los Estados</option>
+                                    <option value="Activo">Activo</option>
+                                    <option value="Inactivo">Inactivo</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label small fw-bold">Territorio / Delegación</label>
+                                <select class="form-select form-select-sm" id="filtroTerritorioVecino"
+                                    onchange="ejecutarFiltroCompletoVecinos()">
+                                    <option value="">Todas las Delegaciones</option>
+                                    <option value="Centro">La Serena Centro</option>
+                                    <option value="Norte">Norte (Las Compañías)</option>
+                                    <option value="Sur">Sur (La Pampa)</option>
+                                    <option value="Oriente">Oriente (San Joaquín)</option>
+                                    <option value="Rural">Sector Rural</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label small fw-bold">Tipo de Gestión</label>
+                                <select class="form-select form-select-sm" id="filtroGestionVecino"
+                                    onchange="ejecutarFiltroCompletoVecinos()">
+                                    <option value="">Todas las Gestiones</option>
+                                    <option value="Solicitud">Solicitud</option>
+                                    <option value="Reclamo">Reclamo</option>
+                                    <option value="Consulta">Consulta</option>
+                                    <option value="Orientación">Orientación</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3 d-flex align-items-end gap-2">
+                                <button class="btn btn-sm btn-primary w-100 fw-bold"
+                                    onclick="ejecutarFiltroCompletoVecinos()">Aplicar</button>
+                                <button class="btn btn-sm btn-outline-secondary" onclick="limpiarFiltrosVecinos()"><i
+                                        class="bi bi-arrow-counterclockwise"></i></button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="active-filter-chips" id="contenedorChipsFiltros"></div>
+
+                    <!-- Barra de Acciones Masivas -->
+                    <div class="bulk-actions-bar" id="bulkActionsBar">
+                        <div class="d-flex align-items-center gap-2">
+                            <i class="bi bi-check2-all fs-5 text-warning"></i>
+                            <span class="fw-bold small" id="bulkCountText">0 seleccionados</span>
+                        </div>
+                        <div class="d-flex align-items-center gap-2">
+                            <button class="btn btn-sm btn-outline-light py-0 px-2"
+                                onclick="exportarSeleccionadosExcel()"><i class="bi bi-file-earmark-excel"></i>
+                                Excel</button>
+                            <button class="btn btn-sm btn-outline-light py-0 px-2"
+                                onclick="cambiarEstadoSeleccionados()"><i class="bi bi-toggle-on"></i> Estado</button>
+                            <button class="btn btn-sm btn-danger py-0 px-2 fw-bold"
+                                onclick="eliminarSeleccionadosMasivo()"><i class="bi bi-trash"></i> Eliminar</button>
+                        </div>
+                    </div>
+
+                    <!-- Tabla de Vecinos -->
+                    <div class="excel-table-wrapper">
+                        <div class="table-responsive">
+                            <table class="custom-clean-table" id="tablaVecinos">
+                                <thead>
+                                    <tr>
+                                        <th style="width: 36px;" class="text-center">
+                                            <input type="checkbox" class="form-check-input" id="checkAllVecinos"
+                                                onchange="toggleSeleccionarTodosVecinos(this.checked)">
+                                        </th>
+                                        <th style="width: 45px;">#</th>
+                                        <th class="sortable" onclick="ordenarTablaVecinos('nombre')">Nombre Completo <i
+                                                class="bi bi-arrow-down-up sort-icon"></i></th>
+                                        <th class="col-rut sortable" onclick="ordenarTablaVecinos('rut')">RUT <i
+                                                class="bi bi-arrow-down-up sort-icon"></i></th>
+                                        <th class="col-dir">Dirección</th>
+                                        <th class="col-tel">Teléfono</th>
+                                        <th class="col-terr sortable" onclick="ordenarTablaVecinos('territorio')">
+                                            Territorio <i class="bi bi-arrow-down-up sort-icon"></i></th>
+                                        <th class="col-gest">Gestión</th>
+                                        <th class="col-est sortable" onclick="ordenarTablaVecinos('estado')">Estado <i
+                                                class="bi bi-arrow-down-up sort-icon"></i></th>
+                                        <th class="text-end" style="width: 110px;">Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tablaVecinosBody"></tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Paginador -->
+                    <div class="table-pagination-footer">
+                        <div class="d-flex align-items-center gap-2">
+                            <span>Mostrar</span>
+                            <select class="form-select form-select-sm" style="width: 70px;" id="selectFilasPorPagina"
+                                onchange="cambiarFilasPorPagina(this.value)">
+                                <option value="10">10</option>
+                                <option value="25">25</option>
+                                <option value="50">50</option>
+                            </select>
+                            <span id="lblRegistrosInfo" class="small">Mostrando 4 registros</span>
+                        </div>
+                        <div class="pagination-pills" id="paginadorPills">
+                            <button class="page-pill active">1</button>
+                        </div>
+                    </div>
+                </div>
+            </section>
