@@ -26,11 +26,12 @@
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
     <!-- Hojas de Estilo Modulares: Base Oficial + Glassmorphism Pro -->
-    <link rel="stylesheet" href="{% static 'css/admin/admin-bundle.css' %}?v=2026100806">
-    <link rel="stylesheet" href="{% static 'css/admin/admin-glass-pro.css' %}?v=2026100806">
+    <link rel="stylesheet" href="{% static 'css/admin/admin-bundle.css' %}?v=2026100814">
+    <link rel="stylesheet" href="{% static 'css/admin/admin-glass-pro.css' %}?v=2026100816">
 </head>
 
 <body>
+    {% csrf_token %}
 
     <!-- 1. Menú Lateral (Sidebar Oficial La Serena) -->
     {% include 'activities/admin/sidebar.html' %}
@@ -46,6 +47,7 @@
             {% include 'activities/admin/views/vecinos.html' %}
             {% include 'activities/admin/views/usuarios.html' %}
             {% include 'activities/admin/views/delegaciones.html' %}
+            {% include 'activities/admin/views/cargos.html' %}
             {% include 'activities/admin/views/roles.html' %}
             {% include 'activities/admin/views/metas.html' %}
             {% include 'activities/admin/views/atenciones.html' %}
@@ -66,7 +68,7 @@
 
     <!-- 5. Scripts del Sistema -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="{% static 'js/admin/admin-bundle.js' %}?v=2026100808"></script>
+    <script src="{% static 'js/admin/admin-bundle.js' %}?v=2026100812"></script>
     <script src="{% static 'js/admin/admin-mantenedores-pro.js' %}?v=2026100808"></script>
 </body>
 

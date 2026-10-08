@@ -4,6 +4,7 @@ __pycache__/
 *.py[cod]
 .env
 db.sqlite3
+sgr_municipal
 .vscode/
 *.swp
 .DS_Store

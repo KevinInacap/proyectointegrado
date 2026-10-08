@@ -1,5 +1,6 @@
 from django.db import models
 from django.conf import settings
+from django.utils import timezone
 
 class BaseModel(models.Model):
     """
@@ -48,3 +49,20 @@ class AuditLog(BaseModel):
 
     def __str__(self):
         return f"[{self.action}] {self.affected_table} #{self.affected_record_id} por {self.user}"
+
+
+class PasswordRecoveryCode(BaseModel):
+    """Código temporal para recuperar el acceso sin almacenar el código en claro."""
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='password_recovery_codes')
+    code_hash = models.CharField(max_length=128)
+    expires_at = models.DateTimeField()
+    attempts = models.PositiveSmallIntegerField(default=0)
+    used_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        db_table = 'codigo_recuperacion_clave'
+        ordering = ['-created_at']
+
+    @property
+    def is_valid(self):
+        return self.used_at is None and timezone.now() < self.expires_at and self.attempts < 5

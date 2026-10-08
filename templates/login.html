@@ -425,15 +425,15 @@
         .btn-submit-muni {
             width: 100%;
             height: 44px;
-            background: linear-gradient(165deg,
-                    var(--muni-red-vivid) 0%,
-                    var(--muni-red) 48%,
-                    var(--muni-red-deep) 100%);
+            background: linear-gradient(90deg,
+                    #C51643 0%,
+                    #A30F32 48%,
+                    #71001D 100%);
             border: none;
             border-radius: 12px;
             box-shadow:
-                0 7px 20px -2px rgba(184, 0, 3, 0.45),
-                0 2px 6px rgba(0, 0, 0, 0.20);
+                0 10px 24px rgba(70, 5, 20, 0.24),
+                inset 0 1px 0 rgba(255, 255, 255, 0.14);
             font-family: var(--font-display);
             font-weight: 650;
             font-size: 13.5px;
@@ -452,10 +452,10 @@
         }
 
         .btn-submit-muni:hover {
-            background: linear-gradient(165deg,
-                    #F02444 0%,
-                    #C80D2C 48%,
-                    #7D0003 100%);
+            background: linear-gradient(90deg,
+                    #D51A4B 0%,
+                    #B7133A 48%,
+                    #7C0324 100%);
             box-shadow:
                 0 9px 24px -2px rgba(230, 25, 55, 0.50),
                 0 4px 10px rgba(0, 0, 0, 0.24);
@@ -464,7 +464,7 @@
         }
 
         .btn-submit-muni:active {
-            background: linear-gradient(165deg, #B80003 0%, #5E0002 100%);
+            background: linear-gradient(90deg, #A30F32 0%, #650018 100%);
             transform: translateY(0.5px);
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
         }
@@ -675,7 +675,7 @@
 
                     <!-- Campo RUT / Usuario -->
                     <div class="form-field-group">
-                        <label class="form-field-label" for="username">Usuario o RUT</label>
+                        <label class="form-field-label" for="username">Usuario, RUT o nombre</label>
                         <div class="input-glass-container">
                             <i class="bi bi-person input-prefix-icon" aria-hidden="true"></i>
                             <input type="text" id="username" name="username" class="form-control-glass"
@@ -704,8 +704,7 @@
                             <input type="checkbox" id="rememberMe" name="remember_me">
                             <span>Recordarme</span>
                         </label>
-                        <a href="#" class="forgot-pwd-link"
-                            onclick="Swal.fire({icon: 'info', title: 'Recuperación de Contraseña', text: 'Contacta al Departamento de Tecnologías de la Información (DTI): soporte@laserena.cl', confirmButtonColor: '#B80003', background: '#0F172A', color: '#ffffff'}); return false;">
+                        <a href="{% url 'core:password_recovery' %}" class="forgot-pwd-link">
                             ¿Olvidaste tu contraseña?
                         </a>
                     </div>
@@ -788,10 +787,10 @@
                         return;
                     }
 
-                    const rutPattern = /^[0-9kK\.\-]+$/;
+                    const identifierPattern = /^[A-Za-zÁÉÍÓÚÜÑáéíóúüñ0-9kK._\-\s]+$/;
                     const suspiciousPattern = /[<>'";`]|--|\/\*|\*\/|\b(script|union|select|insert|update|delete|drop|alert)\b/i;
 
-                    if (!rutPattern.test(rut) || suspiciousPattern.test(rut) || suspiciousPattern.test(password)) {
+                    if (!identifierPattern.test(rut) || rut.length > 150 || suspiciousPattern.test(rut) || suspiciousPattern.test(password)) {
                         Swal.fire({
                             icon: 'warning',
                             title: 'Carácter no permitido',
