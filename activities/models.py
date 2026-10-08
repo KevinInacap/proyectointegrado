@@ -214,3 +214,18 @@ class Validation(BaseModel):
 
     def __str__(self):
         return f"{self.activity.activity_code} - {self.decision}"
+class Vecino(BaseModel):
+    nombre = models.CharField(max_length=150, verbose_name="Nombre completo")
+    rut = models.CharField(max_length=15, unique=True, verbose_name="RUT")
+    direccion = models.CharField(max_length=255, blank=True, null=True, verbose_name="Dirección")
+    telefono = models.CharField(max_length=20, blank=True, null=True, verbose_name="Teléfono")
+    territorio = models.CharField(max_length=100, blank=True, null=True, verbose_name="Territorio")
+    estado = models.CharField(max_length=20, default="Activo", verbose_name="Estado")
+
+    class Meta:
+        verbose_name = "Vecino"
+        verbose_name_plural = "Vecinos"
+        ordering = ['nombre']
+
+    def __str__(self):
+        return self.nombre

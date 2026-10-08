@@ -160,160 +160,285 @@
         </div>
     </div>
 
-    <!-- MODAL CREAR / EDITAR USUARIO (CON PRIVILEGIOS DE ADMINISTRADOR) -->
+    <!-- MODAL CREAR / EDITAR USUARIO (COMPACTO SIN SCROLL) -->
     <div class="modal fade" id="modalUsuario" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-dialog modal-dialog-centered modal-xl">
             <div class="modal-content shadow-lg border-0" style="border-radius: 16px; overflow: hidden;">
-                <div class="modal-header text-white"
-                    style="background: linear-gradient(135deg, var(--muni-navy) 0%, #102447 100%); border-top: 4px solid var(--muni-red); padding: 1.15rem 1.5rem;">
+                <div class="modal-header text-white py-2 px-4"
+                    style="background: linear-gradient(135deg, var(--muni-navy) 0%, #102447 100%); border-top: 4px solid var(--muni-red);">
                     <div class="d-flex align-items-center gap-2">
-                        <div
-                            style="background: rgba(196,18,48,0.25); border: 1px solid rgba(196,18,48,0.4); width: 36px; height: 36px; border-radius: 9px; display: flex; align-items: center; justify-content: center;">
-                            <i class="bi bi-person-fill-gear text-white fs-5"></i>
+                        <div style="background: rgba(196,18,48,0.25); border: 1px solid rgba(196,18,48,0.4); width: 34px; height: 34px; border-radius: 9px; display: flex; align-items: center; justify-content: center;">
+                            <i class="bi bi-person-fill-gear text-white fs-6"></i>
                         </div>
                         <div>
-                            <h5 class="modal-title fw-bold m-0 text-white" id="modalUsuarioTitle"
-                                style="color: #FFFFFF !important;">Registrar Nuevo Funcionario</h5>
-                            <small class="text-white-50"
-                                style="color: rgba(255, 255, 255, 0.75) !important;">Configuración de credenciales y
-                                roles institucionales SGR</small>
+                            <h5 class="modal-title fw-bold m-0 text-white fs-6" id="modalUsuarioTitle" style="color: #FFFFFF !important;">Registrar Nuevo Funcionario</h5>
+                            <small class="text-white-50" style="font-size: 0.75rem;">Configuración de credenciales y roles institucionales SGR La Serena</small>
                         </div>
                     </div>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
-                        aria-label="Cerrar"></button>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
                 </div>
-                <div class="modal-body p-4">
+                <div class="modal-body p-3">
                     <form id="formUsuarioDB" onsubmit="event.preventDefault(); guardarUsuarioDB();">
                         <input type="hidden" id="usuarioEditId" value="">
 
-                        <!-- Alerta informativa -->
-                        <div class="alert alert-light border d-flex align-items-center gap-2 py-2 px-3 mb-3 small"
-                            style="border-radius: 10px; background: #F8FAFC;">
-                            <i class="bi bi-shield-lock-fill text-danger fs-5"></i>
-                            <div>Los cambios realizados se guardan de forma directa en la base de datos municipal y
-                                quedan registrados en la auditoría general.</div>
-                        </div>
-
                         <div class="row g-3">
-                            <!-- Nombre Completo -->
-                            <div class="col-md-6">
-                                <label class="form-label small fw-bold">Nombre Completo <span
-                                        class="text-danger">*</span></label>
-                                <input type="text" class="form-control" id="usrFullName"
-                                    placeholder="Ej: Marcela Contreras Vega" required>
-                            </div>
-
-                            <!-- RUT -->
-                            <div class="col-md-6">
-                                <label class="form-label small fw-bold">RUT Institucional <span
-                                        class="text-danger">*</span></label>
-                                <input type="text" class="form-control" id="usrRut" placeholder="Ej: 15.678.901-2"
-                                    required onblur="formatearRutInput(this)">
-                            </div>
-
-                            <!-- Username -->
-                            <div class="col-md-6">
-                                <label class="form-label small fw-bold">Nombre de Usuario (Login) <span
-                                        class="text-danger">*</span></label>
-                                <div class="input-group">
-                                    <span class="input-group-text bg-light text-muted">@</span>
-                                    <input type="text" class="form-control" id="usrUsername"
-                                        placeholder="marcela_contreras" required>
-                                </div>
-                            </div>
-
-                            <!-- Correo Institucional -->
-                            <div class="col-md-6">
-                                <label class="form-label small fw-bold">Correo Institucional <span
-                                        class="text-danger">*</span></label>
-                                <input type="email" class="form-control" id="usrEmail"
-                                    placeholder="mcontreras@laserena.cl" required>
-                            </div>
-
-                            <!-- Contraseña -->
-                            <div class="col-md-6" id="wrapperPasswordUsuario">
-                                <label class="form-label small fw-bold" id="lblPasswordUsuario">Contraseña de Acceso
-                                    <span class="text-danger">*</span></label>
-                                <div class="input-group">
-                                    <input type="password" class="form-control" id="usrPassword"
-                                        placeholder="Mínimo 6 caracteres">
-                                    <button class="btn btn-outline-secondary" type="button"
-                                        onclick="togglePasswordVisibility('usrPassword', this)">
-                                        <i class="bi bi-eye"></i>
-                                    </button>
-                                </div>
-                                <small class="text-muted" id="helpPasswordUsuario" style="font-size: 0.72rem;">Por
-                                    defecto se asigna 'MuniLaSerena2026!' si se deja en blanco.</small>
-                            </div>
-
-                            <!-- Estado -->
-                            <div class="col-md-6">
-                                <label class="form-label small fw-bold">Estado de la Cuenta</label>
-                                <select class="form-select" id="usrStatus">
-                                    <option value="Activo">Activo (Habilitado para ingresar)</option>
-                                    <option value="Inactivo">Inactivo (Inhabilitado temporalmente)</option>
-                                </select>
-                            </div>
-
-                            <!-- Delegación Asignada -->
-                            <div class="col-md-6">
-                                <label class="form-label small fw-bold">Delegación Municipal Asignada</label>
-                                <select class="form-select" id="usrDelegation">
-                                    <option value="">Sin delegación específica</option>
-                                </select>
-                            </div>
-
-                            <!-- Cargo -->
-                            <div class="col-md-6">
-                                <label class="form-label small fw-bold">Cargo / Función</label>
-                                <select class="form-select" id="usrPosition">
-                                    <option value="">Sin cargo específico</option>
-                                </select>
-                            </div>
-
-                            <!-- Roles y Permisos -->
-                            <div class="col-12">
-                                <label class="form-label small fw-bold d-block mb-1">Roles y Permisos Autorizados en
-                                    SGR</label>
-                                <div class="p-3 border rounded-3 bg-light" id="rolesCheckboxesContainer"
-                                    style="max-height: 140px; overflow-y: auto;">
-                                    <!-- Generado dinámicamente desde la BD -->
-                                </div>
-                            </div>
-
-                            <!-- Privilegios de Superusuario / Administrador -->
-                            <div class="col-12">
-                                <div class="p-3 rounded-3"
-                                    style="background: #FFF1F2; border: 1px solid rgba(196, 18, 48, 0.2);">
-                                    <div class="form-check form-switch mb-1">
-                                        <input class="form-check-input" type="checkbox" id="usrIsSuperuser"
-                                            style="cursor: pointer;">
-                                        <label class="form-check-label fw-bold text-danger" for="usrIsSuperuser"
-                                            style="cursor: pointer;">
-                                            <i class="bi bi-shield-fill-check me-1"></i> Otorgar Privilegios Totales de
-                                            Administrador (Superusuario / Staff)
-                                        </label>
+                            <!-- Columna Izquierda: Datos del Funcionario y Credenciales -->
+                            <div class="col-lg-7">
+                                <div class="p-3 border rounded-3 bg-white h-100">
+                                    <div class="d-flex align-items-center gap-2 mb-2 pb-1 border-bottom">
+                                        <i class="bi bi-person-lines-fill text-primary"></i>
+                                        <span class="small fw-bold text-dark text-uppercase">Datos Personales y Acceso</span>
                                     </div>
-                                    <small class="text-muted d-block" style="font-size: 0.76rem;">
-                                        Permite acceso irrestricto a la gestión de usuarios, auditoría, configuración de
-                                        metas y parámetros municipales.
-                                    </small>
+                                    <div class="row g-2">
+                                        <!-- Nombre Completo -->
+                                        <div class="col-md-6">
+                                            <label class="form-label small fw-bold mb-1">Nombre Completo <span class="text-danger">*</span></label>
+                                            <input type="text" class="form-control form-control-sm" id="usrFullName" placeholder="Ej: Marcela Contreras Vega" required>
+                                        </div>
+
+                                        <!-- RUT -->
+                                        <div class="col-md-6">
+                                            <label class="form-label small fw-bold mb-1">RUT Institucional <span class="text-danger">*</span></label>
+                                            <input type="text" class="form-control form-control-sm" id="usrRut" placeholder="Ej: 15.678.901-2" required onblur="formatearRutInput(this)">
+                                        </div>
+
+                                        <!-- Username -->
+                                        <div class="col-md-6">
+                                            <label class="form-label small fw-bold mb-1">Usuario (Login) <span class="text-danger">*</span></label>
+                                            <div class="input-group input-group-sm">
+                                                <span class="input-group-text bg-light text-muted">@</span>
+                                                <input type="text" class="form-control form-control-sm" id="usrUsername" placeholder="marcela_contreras" required>
+                                            </div>
+                                        </div>
+
+                                        <!-- Correo Institucional -->
+                                        <div class="col-md-6">
+                                            <label class="form-label small fw-bold mb-1">Correo Institucional <span class="text-danger">*</span></label>
+                                            <input type="email" class="form-control form-control-sm" id="usrEmail" placeholder="mcontreras@laserena.cl" required>
+                                        </div>
+
+                                        <!-- Contraseña -->
+                                        <div class="col-md-6" id="wrapperPasswordUsuario">
+                                            <label class="form-label small fw-bold mb-1" id="lblPasswordUsuario">Contraseña <span class="text-danger">*</span></label>
+                                            <div class="input-group input-group-sm">
+                                                <input type="password" class="form-control form-control-sm" id="usrPassword" placeholder="Mínimo 6 caracteres">
+                                                <button class="btn btn-outline-secondary" type="button" onclick="togglePasswordVisibility('usrPassword', this)">
+                                                    <i class="bi bi-eye"></i>
+                                                </button>
+                                            </div>
+                                            <small class="text-muted d-block" id="helpPasswordUsuario" style="font-size: 0.68rem; line-height: 1.1;">Por defecto: MuniLaSerena2026!</small>
+                                        </div>
+
+                                        <!-- Estado -->
+                                        <div class="col-md-6">
+                                            <label class="form-label small fw-bold mb-1">Estado de la Cuenta</label>
+                                            <select class="form-select form-select-sm" id="usrStatus">
+                                                <option value="Activo">Activo (Habilitado)</option>
+                                                <option value="Inactivo">Inactivo (Suspendido)</option>
+                                            </select>
+                                        </div>
+
+                                        <!-- Delegación Asignada -->
+                                        <div class="col-md-6">
+                                            <label class="form-label small fw-bold mb-1">Delegación Asignada</label>
+                                            <select class="form-select form-select-sm" id="usrDelegation">
+                                                <option value="">Sin delegación específica</option>
+                                            </select>
+                                        </div>
+
+                                        <!-- Cargo -->
+                                        <div class="col-md-6">
+                                            <label class="form-label small fw-bold mb-1">Cargo / Función</label>
+                                            <select class="form-select form-select-sm" id="usrPosition">
+                                                <option value="">Sin cargo específico</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Columna Derecha: Roles, Permisos y Privilegios Especiales -->
+                            <div class="col-lg-5">
+                                <div class="p-3 border rounded-3 bg-white h-100 d-flex flex-column justify-content-between">
+                                    <div>
+                                        <div class="d-flex align-items-center justify-content-between mb-2 pb-1 border-bottom">
+                                            <div class="d-flex align-items-center gap-2">
+                                                <i class="bi bi-shield-check text-success"></i>
+                                                <span class="small fw-bold text-dark text-uppercase">Roles y Perfiles SGR</span>
+                                            </div>
+                                            <span class="badge bg-light text-secondary border small" style="font-size: 0.68rem;">RBAC</span>
+                                        </div>
+                                        <div class="p-2 border rounded-3 bg-light mb-2" id="rolesCheckboxesContainer" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 4px;">
+                                            <!-- Generado dinámicamente desde la BD -->
+                                        </div>
+                                    </div>
+
+                                    <!-- Privilegios Superusuario -->
+                                    <div class="p-2 rounded-3 mt-2" style="background: #FFF1F2; border: 1px solid rgba(196, 18, 48, 0.25);">
+                                        <div class="form-check form-switch mb-1">
+                                            <input class="form-check-input" type="checkbox" id="usrIsSuperuser" style="cursor: pointer;">
+                                            <label class="form-check-label fw-bold text-danger small" for="usrIsSuperuser" style="cursor: pointer;">
+                                                <i class="bi bi-shield-fill-check me-1"></i> Privilegios Totales de Administrador
+                                            </label>
+                                        </div>
+                                        <small class="text-muted d-block" style="font-size: 0.70rem; line-height: 1.2;">
+                                            Otorga acceso total a usuarios, auditoría general y configuración municipal.
+                                        </small>
+                                    </div>
                                 </div>
                             </div>
                         </div>
 
-                        <div class="d-flex justify-content-end gap-2 mt-4 pt-3 border-top">
-                            <button type="button" class="btn btn-outline-secondary rounded-pill px-4"
-                                data-bs-dismiss="modal">Cancelar</button>
-                            <button type="submit" class="btn btn-muni-red rounded-pill px-4 fw-bold"
-                                id="btnGuardarUsuarioDB">
-                                <span class="spinner-border spinner-border-sm me-1" id="spinnerGuardarUsuario"
-                                    style="display:none;" role="status"></span>
-                                <i class="bi bi-cloud-arrow-up-fill me-1" id="iconGuardarUsuario"></i> Guardar en Base
-                                de Datos
+                        <div class="d-flex justify-content-end gap-2 mt-3 pt-2 border-top">
+                            <button type="button" class="btn btn-outline-secondary rounded-pill px-3 py-1 btn-sm" data-bs-dismiss="modal">Cancelar</button>
+                            <button type="submit" class="btn btn-muni-red rounded-pill px-4 py-1 btn-sm fw-bold shadow-xs" id="btnGuardarUsuarioDB">
+                                <span class="spinner-border spinner-border-sm me-1" id="spinnerGuardarUsuario" style="display:none;" role="status"></span>
+                                <i class="bi bi-cloud-arrow-up-fill me-1" id="iconGuardarUsuario"></i> Guardar en Base de Datos
                             </button>
                         </div>
                     </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL REGISTRAR NUEVA ATENCIÓN CIUDADANA (COMPACTO SIN SCROLL) -->
+    <div class="modal fade" id="modalNuevaAtencion" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content shadow-lg border-0" style="border-radius: 16px; overflow: hidden;">
+                <div class="modal-header text-white py-2 px-3"
+                    style="background: linear-gradient(135deg, var(--muni-navy) 0%, #102447 100%); border-top: 4px solid var(--muni-red);">
+                    <div class="d-flex align-items-center gap-2">
+                        <div style="background: rgba(196,18,48,0.25); border: 1px solid rgba(196,18,48,0.4); width: 34px; height: 34px; border-radius: 9px; display: flex; align-items: center; justify-content: center;">
+                            <i class="bi bi-headset text-white fs-6"></i>
+                        </div>
+                        <div>
+                            <h5 class="modal-title fw-bold m-0 text-white fs-6" id="modalAtencionTitle">Registrar Nueva Atención Ciudadana</h5>
+                            <small class="text-white-50" style="font-size: 0.75rem;">Ingreso de prestación vecinal y evidencia conforme a RN-012</small>
+                        </div>
+                    </div>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                </div>
+                <div class="modal-body p-3">
+                    <form id="formAtencionDB" onsubmit="event.preventDefault(); guardarAtencionDB();">
+                        <input type="hidden" id="atencionEditId" value="">
+                        
+                        <div class="row g-2">
+                            <div class="col-md-6">
+                                <label class="form-label small fw-bold mb-1">Nombre Vecino(a) / Contacto <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control form-control-sm" id="txtAtencionNombre" placeholder="Ej: Patricia Soto Cárdenas" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label small fw-bold mb-1">Teléfono o RUT de Contacto</label>
+                                <input type="text" class="form-control form-control-sm" id="txtAtencionTelefono" placeholder="+56 9 8452 1102">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label small fw-bold mb-1">Delegación Municipal <span class="text-danger">*</span></label>
+                                <select class="form-select form-select-sm" id="selAtencionDelegacion" required>
+                                    <option value="Centro Histórico">Delegación Centro Histórico</option>
+                                    <option value="Las Compañías">Delegación Las Compañías</option>
+                                    <option value="La Pampa">Delegación La Pampa</option>
+                                    <option value="La Antena">Delegación La Antena</option>
+                                    <option value="Avenida del Mar">Delegación Avenida del Mar</option>
+                                    <option value="Sector Rural">Delegación Sector Rural</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label small fw-bold mb-1">Estado de Validación Técnica</label>
+                                <select class="form-select form-select-sm" id="selAtencionEstado">
+                                    <option value="Approved">Aprobada (Aporta al indicador)</option>
+                                    <option value="Pending">En Revisión Técnica</option>
+                                    <option value="Requires correction">Requiere Corrección</option>
+                                </select>
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label small fw-bold mb-1">Descripción del Requerimiento / Solicitud <span class="text-danger">*</span></label>
+                                <textarea class="form-control form-control-sm" id="txtAtencionProblema" rows="2" placeholder="Describa el motivo de la atención ciudadana o caso social..." required></textarea>
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label small fw-bold mb-1">Acción Ejecutada en Terreno / Derivación <span class="text-danger">*</span></label>
+                                <textarea class="form-control form-control-sm" id="txtAtencionAccion" rows="2" placeholder="Acción realizada, revisión de antecedentes o derivación técnica..." required></textarea>
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-end gap-2 mt-3 pt-2 border-top">
+                            <button type="button" class="btn btn-outline-secondary rounded-pill px-3 py-1 btn-sm" data-bs-dismiss="modal">Cancelar</button>
+                            <button type="submit" class="btn btn-primary rounded-pill px-4 py-1 btn-sm fw-bold shadow-xs" style="background: var(--muni-navy); border: none;" id="btnGuardarAtencionDB">
+                                <i class="bi bi-check-lg me-1"></i> Guardar Atención
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL VER DETALLE / EXPEDIENTE DE ATENCIÓN (BOTÓN OJO) -->
+    <div class="modal fade" id="modalExpedienteAtencion" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content shadow-lg border-0" style="border-radius: 16px; overflow: hidden;">
+                <div class="modal-header text-white py-2 px-3"
+                    style="background: linear-gradient(135deg, var(--muni-navy) 0%, #102447 100%); border-top: 4px solid var(--muni-red);">
+                    <div class="d-flex align-items-center gap-2">
+                        <div style="background: rgba(255,255,255,0.15); width: 34px; height: 34px; border-radius: 9px; display: flex; align-items: center; justify-content: center;">
+                            <i class="bi bi-file-earmark-person-fill text-white fs-6"></i>
+                        </div>
+                        <div>
+                            <h5 class="modal-title fw-bold m-0 text-white fs-6" id="lblExpedienteCodigo">Expediente de Atención</h5>
+                            <small class="text-white-50" style="font-size: 0.75rem;">Detalle técnico, evidencia fotográfica y trazabilidad comunal</small>
+                        </div>
+                    </div>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                </div>
+                <div class="modal-body p-3">
+                    <div class="row g-2 mb-2">
+                        <div class="col-md-6">
+                            <div class="p-2 border rounded-3 bg-light">
+                                <span class="text-muted small d-block" style="font-size: 0.72rem;">Vecino(a) Solicitante</span>
+                                <strong class="text-dark d-block" id="lblExpedienteVecino">--</strong>
+                                <span class="text-muted small" style="font-size: 0.75rem;" id="lblExpedienteContacto">--</span>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="p-2 border rounded-3 bg-light">
+                                <span class="text-muted small d-block" style="font-size: 0.72rem;">Delegación & Estado</span>
+                                <strong class="text-primary d-block" id="lblExpedienteDelegacion">--</strong>
+                                <span id="lblExpedienteBadgeEstado" class="badge rounded-pill mt-1">--</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="p-2 border rounded-3 bg-white mb-2">
+                        <span class="text-muted small d-block fw-bold text-uppercase" style="font-size: 0.72rem;">Requerimiento / Problema</span>
+                        <p class="m-0 text-dark small" id="lblExpedienteProblema">--</p>
+                    </div>
+
+                    <div class="p-2 border rounded-3 bg-white mb-2">
+                        <span class="text-muted small d-block fw-bold text-uppercase" style="font-size: 0.72rem;">Acción Ejecutada en Terreno</span>
+                        <p class="m-0 text-dark small" id="lblExpedienteAccion">--</p>
+                    </div>
+
+                    <div class="p-2 border rounded-3 bg-light d-flex align-items-center justify-content-between">
+                        <div>
+                            <span class="text-muted small d-block" style="font-size: 0.72rem;">Observación de Verificador</span>
+                            <span class="small fw-semibold text-secondary" id="lblExpedienteObservacion">--</span>
+                        </div>
+                        <div class="d-flex gap-1" id="accionesValidacionAtencion">
+                            <button class="btn btn-sm btn-outline-success rounded-pill px-2 py-0 fw-bold" onclick="cambiarEstadoAtencionRapido('Approved')" title="Aprobar evidencia">
+                                <i class="bi bi-check-circle"></i> Aprobar
+                            </button>
+                            <button class="btn btn-sm btn-outline-warning rounded-pill px-2 py-0 fw-bold" onclick="cambiarEstadoAtencionRapido('Requires correction')" title="Solicitar corrección">
+                                <i class="bi bi-exclamation-triangle"></i> Observar
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="d-flex justify-content-end gap-2 mt-3 pt-2 border-top">
+                        <button type="button" class="btn btn-light rounded-pill px-3 py-1 btn-sm" data-bs-dismiss="modal">Cerrar</button>
+                        <button type="button" class="btn btn-outline-primary rounded-pill px-3 py-1 btn-sm fw-bold" onclick="window.print()">
+                            <i class="bi bi-printer me-1"></i> Imprimir Expediente
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -394,7 +519,7 @@
 
     <!-- MODAL HISTORIAL DE AUDITORÍA Y TRAZABILIDAD (LOG DE ADMINISTRADOR) -->
     <div class="modal fade" id="modalAuditoria" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered modal-xl modal-dialog-scrollable">
+        <div class="modal-dialog modal-dialog-centered modal-xl">
             <div class="modal-content shadow-lg border-0" style="border-radius: 16px; overflow: hidden;">
                 <div class="modal-header text-white py-3 px-4"
                     style="background: linear-gradient(135deg, #1B365D 0%, #102447 100%); border-top: 4px solid #C41230;">
@@ -451,7 +576,7 @@
 
                     <!-- Tabla del Log de Auditoría -->
                     <div class="bg-white rounded-3 border shadow-sm overflow-hidden">
-                        <div class="table-responsive" style="max-height: 480px;">
+                        <div class="table-responsive">
                             <table class="table table-hover align-middle mb-0" id="tablaAuditoria">
                                 <thead class="table-light sticky-top"
                                     style="font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.5px; z-index: 1;">
@@ -489,7 +614,7 @@
          MODAL: MI PERFIL INSTITUCIONAL (ACTUALIZACIÓN DE FOTO Y DATOS OFICIALES)
          ========================================================================== -->
     <div class="modal fade" id="modalPerfilUsuario" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
             <div class="modal-content shadow-lg border-0"
                 style="border-radius: 20px; overflow: hidden; background: #FFFFFF;">
                 <!-- Header Institucional -->
@@ -724,7 +849,7 @@
 
     <!-- MODAL 1: CREAR / EDITAR ROL Y MATRIZ DE PERMISOS -->
     <div class="modal fade" id="modalRol" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered modal-xl modal-dialog-scrollable">
+        <div class="modal-dialog modal-dialog-centered modal-xl">
             <div class="modal-content shadow-lg border-0"
                 style="border-radius: 20px; overflow: hidden; background: rgba(255, 255, 255, 0.96); backdrop-filter: blur(20px);">
                 <div class="modal-header text-white py-3 px-4"
@@ -902,7 +1027,7 @@
 
     <!-- MODAL 3: MATRIZ DE PERMISOS -->
     <div class="modal fade" id="modalMatrizMyAdmin" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered modal-fullscreen-lg-down modal-xl modal-dialog-scrollable">
+        <div class="modal-dialog modal-dialog-centered modal-fullscreen-lg-down modal-xl">
             <div class="modal-content shadow-lg border-0" style="border-radius: 20px; overflow: hidden;">
                 <div class="modal-header text-white py-3 px-4"
                     style="background: linear-gradient(135deg, var(--muni-navy) 0%, #0F172A 100%); border-bottom: 3px solid var(--muni-red);">
@@ -996,7 +1121,7 @@
 
     <!-- MODAL 5: VER DETALLES Y FICHA DE PRIVILEGIOS DE ROL -->
     <div class="modal fade" id="modalVerPermisosRol" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
             <div class="modal-content shadow-lg border-0" style="border-radius: 18px; overflow: hidden;">
                 <div class="modal-header text-white py-3 px-4"
                     style="background: linear-gradient(135deg, var(--muni-navy) 0%, #0F172A 100%); border-bottom: 3px solid var(--muni-red);">

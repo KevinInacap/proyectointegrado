@@ -8,6 +8,7 @@ urlpatterns = [
     path('', include('core.urls')),
     path('activities/', include('activities.urls')),
     path('organization/', include(('organization.urls', 'organization_direct'), namespace='organization_direct')),
+    path('api/', include('activities.urls')),
     path('api/', include('organization.urls')),
 ]
 

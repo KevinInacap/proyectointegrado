@@ -869,7 +869,7 @@ html, body {
 
 .glass-modal-body {
     padding: 2rem 2.25rem;
-    overflow-y: auto;
+    overflow-y: visible ;
     flex: 1;
 }
 
@@ -1322,8 +1322,8 @@ html, body {
 .cases-table-container {
     flex: 1;
     max-height: calc(88vh - 145px);
-    overflow-y: auto;
-    overflow-x: auto;
+    overflow-y: visible ;
+    overflow-x: visible ;
     border: 1px solid rgba(255, 255, 255, 0.14);
     border-radius: 10px;
     background: rgba(13, 20, 36, 0.65);
@@ -1649,7 +1649,7 @@ html, body {
     box-shadow: 0 24px 70px rgba(0, 0, 0, 0.65), inset 0 1px 1.5px rgba(255, 255, 255, 0.45) !important;
     display: flex !important;
     flex-direction: column !important;
-    overflow-y: auto !important;
+    overflow-y: visible !important;
 }
 
 .rendimiento-kpis-grid {
@@ -1725,7 +1725,7 @@ html, body {
 
     .sidebar-nav-list {
         flex-direction: row;
-        overflow-x: auto;
+        overflow-x: visible ;
     }
 
     .hub-header {
@@ -1734,3 +1734,6 @@ html, body {
         gap: 1rem;
     }
 }
+
+/* Global scroll overrides */
+.modal-body, .offcanvas-body, .admin-drawer-body, .admin-slide-drawer-body, [id*="drawer"], [id*="Drawer"], .modal-dialog-scrollable .modal-body { overflow-y: visible !important; overflow-x: visible !important; max-height: none !important; height: auto !important; }

@@ -320,44 +320,35 @@
                                 Calendario Municipal
                             </h3>
                         </div>
-                        <span class="badge bg-primary-subtle text-primary px-3 py-1 fw-bold rounded-pill" style="font-size: 0.82rem;">
-                            <i class="bi bi-clock-history me-1"></i> Lunes, 5 de Octubre
+                        <span class="badge bg-primary-subtle text-primary px-3 py-1 fw-bold rounded-pill" style="font-size: 0.82rem;" id="badgeHoyCalendario">
+                            <i class="bi bi-clock-history me-1"></i> <span id="lblDiaHoyTexto">Hoy</span>
                         </span>
                     </div>
 
-                    <!-- Mini Calendario Visual de Octubre 2026 -->
+                    <!-- Mini Calendario Visual Dinámico e Interactivo -->
                     <div class="p-3 rounded-4 mb-3" style="background: rgba(248, 250, 252, 0.9); border: 1px solid rgba(226, 232, 240, 0.9);">
                         <div class="d-flex justify-content-between align-items-center mb-2 px-1">
-                            <strong style="color: var(--muni-navy); font-size: 0.92rem;">
-                                <i class="bi bi-calendar3 text-primary me-1"></i> Octubre 2026
-                            </strong>
-                            <span class="text-muted small fw-semibold">Atención Territorial Activa</span>
+                            <div class="d-flex align-items-center gap-2">
+                                <button type="button" class="btn btn-sm btn-light rounded-circle border shadow-2xs" onclick="cambiarMesCalendario(-1)" title="Mes anterior" style="width: 26px; height: 26px; display: inline-flex; align-items: center; justify-content: center; padding: 0;">
+                                    <i class="bi bi-chevron-left" style="font-size: 0.72rem;"></i>
+                                </button>
+                                <strong style="color: var(--muni-navy); font-size: 0.92rem;" id="lblMesAnoCalendario">
+                                    <i class="bi bi-calendar3 text-primary me-1"></i> Calendario
+                                </strong>
+                                <button type="button" class="btn btn-sm btn-light rounded-circle border shadow-2xs" onclick="cambiarMesCalendario(1)" title="Mes siguiente" style="width: 26px; height: 26px; display: inline-flex; align-items: center; justify-content: center; padding: 0;">
+                                    <i class="bi bi-chevron-right" style="font-size: 0.72rem;"></i>
+                                </button>
+                            </div>
+                            <span class="badge bg-success-subtle text-success small fw-bold" id="lblEstadoAtencionCalendario">Atención Territorial Activa</span>
                         </div>
 
                         <!-- Días de la semana -->
                         <div style="display: grid; grid-template-columns: repeat(7, 1fr); text-align: center; font-size: 0.74rem; font-weight: 700; color: #64748B; margin-bottom: 6px;">
                             <span>Lu</span><span>Ma</span><span>Mi</span><span>Ju</span><span>Vi</span><span>Sá</span><span>Do</span>
                         </div>
-                        <!-- Días del mes con el día de hoy destacado -->
-                        <div style="display: grid; grid-template-columns: repeat(7, 1fr); text-align: center; gap: 4px; font-size: 0.82rem; font-weight: 600;">
-                            <span class="text-muted p-1">28</span>
-                            <span class="text-muted p-1">29</span>
-                            <span class="text-muted p-1">30</span>
-                            <span class="p-1 rounded-2 text-dark">1</span>
-                            <span class="p-1 rounded-2 text-dark">2</span>
-                            <span class="p-1 rounded-2 text-muted">3</span>
-                            <span class="p-1 rounded-2 text-muted">4</span>
-
-                            <!-- Hoy es 5 de Octubre -->
-                            <span class="p-1 rounded-3 text-white fw-bold shadow-sm" style="background: var(--muni-navy); border: 2px solid var(--muni-red);" title="Hoy: Lunes 5 de Octubre">
-                                5
-                            </span>
-                            <span class="p-1 rounded-2 text-dark">6</span>
-                            <span class="p-1 rounded-2 text-dark">7</span>
-                            <span class="p-1 rounded-2 text-dark">8</span>
-                            <span class="p-1 rounded-2 text-dark">9</span>
-                            <span class="p-1 rounded-2 text-muted">10</span>
-                            <span class="p-1 rounded-2 text-muted">11</span>
+                        <!-- Días del mes con el día real destacado e interactivo -->
+                        <div id="gridDiasCalendario" style="display: grid; grid-template-columns: repeat(7, 1fr); text-align: center; gap: 4px; font-size: 0.82rem; font-weight: 600;">
+                            <!-- Inyectado dinámicamente con la fecha real del sistema -->
                         </div>
                     </div>
                 </div>
@@ -367,7 +358,7 @@
                     <button class="btn btn-primary rounded-pill flex-grow-1 fw-bold py-2 shadow-sm" style="background: var(--muni-navy); border: none; font-size: 0.86rem;" onclick="switchView('vecinos')">
                         <i class="bi bi-search me-1"></i> Buscar Vecino en Padrón
                     </button>
-                    <button class="btn btn-outline-primary rounded-pill fw-bold py-2 px-3" style="font-size: 0.86rem;" onclick="switchView('atenciones')">
+                    <button class="btn btn-outline-primary rounded-pill fw-bold py-2 px-3" style="font-size: 0.86rem;" onclick="abrirModalNuevaAtencion()">
                         <i class="bi bi-plus-circle me-1"></i> Registrar Atención
                     </button>
                 </div>

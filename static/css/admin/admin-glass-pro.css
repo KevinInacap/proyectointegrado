@@ -675,7 +675,7 @@ body {
 .drawer-body {
     padding: 1.5rem;
     flex-grow: 1;
-    overflow-y: auto;
+    overflow-y: visible ;
     display: flex;
     flex-direction: column;
     gap: 1.25rem;
@@ -972,7 +972,7 @@ body {
     display: flex !important;
     align-items: center !important;
     gap: 0.65rem !important;
-    overflow-x: auto !important;
+    overflow-x: visible !important;
     padding-bottom: 0.6rem !important;
     margin-bottom: 1.25rem !important;
     scrollbar-width: thin !important;
@@ -1001,15 +1001,16 @@ body {
 .serena-sede-pill:hover {
     background: #FFFFFF !important;
     border-color: var(--muni-navy) !important;
-    transform: translateY(-2px) !important;
-    box-shadow: 0 6px 16px rgba(27, 54, 93, 0.10) !important;
+    transform: none !important;
+    box-shadow: 0 4px 12px rgba(27, 54, 93, 0.10) !important;
 }
 
 .serena-sede-pill.active {
     background: var(--muni-navy) !important;
     color: #FFFFFF !important;
     border-color: var(--muni-navy) !important;
-    box-shadow: 0 6px 18px rgba(27, 54, 93, 0.22) !important;
+    transform: none !important;
+    box-shadow: 0 4px 14px rgba(27, 54, 93, 0.22) !important;
 }
 
 .serena-sede-pill .pill-dot {
@@ -1175,7 +1176,7 @@ body {
     display: flex !important;
     align-items: center !important;
     gap: 0.65rem !important;
-    overflow-x: auto !important;
+    overflow-x: visible !important;
     padding-bottom: 0.5rem !important;
     margin-bottom: 1.5rem !important;
     scrollbar-width: thin !important;
@@ -1203,15 +1204,20 @@ body {
 .delegacion-filter-pill:hover {
     background: #FFFFFF !important;
     border-color: var(--muni-navy) !important;
-    transform: translateY(-2px) !important;
-    box-shadow: 0 6px 14px rgba(27, 54, 93, 0.08) !important;
+    transform: none !important;
+    box-shadow: 0 4px 12px rgba(27, 54, 93, 0.08) !important;
 }
 
 .delegacion-filter-pill.active {
     background: var(--muni-navy) !important;
     color: #FFFFFF !important;
     border-color: var(--muni-navy) !important;
-    box-shadow: 0 6px 18px rgba(27, 54, 93, 0.2) !important;
+    transform: none !important;
+    box-shadow: 0 4px 14px rgba(27, 54, 93, 0.2) !important;
+}
+
+.delegacion-filter-pill:active {
+    transform: scale(0.98) !important;
 }
 
 .delegacion-grid {
@@ -1394,7 +1400,7 @@ body {
     display: flex !important;
     align-items: center !important;
     gap: 0.65rem !important;
-    overflow-x: auto !important;
+    overflow-x: visible !important;
     padding-bottom: 0.5rem !important;
     margin-bottom: 1.25rem !important;
     scrollbar-width: thin !important;
@@ -1422,15 +1428,20 @@ body {
 .usuario-filter-pill:hover {
     background: #FFFFFF !important;
     border-color: var(--muni-navy) !important;
-    transform: translateY(-2px) !important;
-    box-shadow: 0 6px 14px rgba(27, 54, 93, 0.08) !important;
+    transform: none !important;
+    box-shadow: 0 4px 12px rgba(27, 54, 93, 0.08) !important;
 }
 
 .usuario-filter-pill.active {
     background: var(--muni-navy) !important;
     color: #FFFFFF !important;
     border-color: var(--muni-navy) !important;
-    box-shadow: 0 6px 18px rgba(27, 54, 93, 0.2) !important;
+    transform: none !important;
+    box-shadow: 0 4px 14px rgba(27, 54, 93, 0.2) !important;
+}
+
+.usuario-filter-pill:active {
+    transform: scale(0.98) !important;
 }
 
 .usuarios-glass-toolbar {
@@ -1519,4 +1530,129 @@ body {
     box-shadow: 0 16px 42px -8px rgba(27, 54, 93, 0.14), inset 0 1.5px 0.5px #FFFFFF !important;
     margin-bottom: 1.5rem !important;
 }
+
+
+/* ==========================================================================
+   SUPRESIÓN TOTAL Y ABSOLUTA DE SCROLLBARS EN FORMULARIOS Y MODALES
+   ========================================================================== */
+.modal {
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    scrollbar-width: none !important;
+    -ms-overflow-style: none !important;
+}
+
+.modal::-webkit-scrollbar,
+.modal-dialog::-webkit-scrollbar,
+.modal-content::-webkit-scrollbar,
+.modal-body::-webkit-scrollbar,
+.modal-dialog-scrollable::-webkit-scrollbar,
+.modal-dialog-scrollable .modal-body::-webkit-scrollbar,
+form::-webkit-scrollbar,
+.modal form::-webkit-scrollbar,
+.maintainer-card::-webkit-scrollbar,
+.liquid-glass-card::-webkit-scrollbar {
+    display: none !important;
+    width: 0 !important;
+    height: 0 !important;
+    background: transparent !important;
+}
+
+.modal,
+.modal-dialog,
+.modal-content,
+.modal-body,
+.modal-dialog-scrollable,
+.modal-dialog-scrollable .modal-body,
+form,
+.modal form,
+.maintainer-card,
+.liquid-glass-card {
+    scrollbar-width: none !important;
+    -ms-overflow-style: none !important;
+}
+
+.modal-dialog {
+    margin: 1.25rem auto !important;
+    max-height: calc(100vh - 2.5rem) !important;
+}
+
+.modal-dialog-centered {
+    min-height: calc(100% - 2.5rem) !important;
+}
+
+.modal-content {
+    max-height: calc(100vh - 2.5rem) !important;
+    display: flex !important;
+    flex-direction: column !important;
+    overflow: hidden !important;
+}
+
+.modal-body {
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    max-height: calc(100vh - 150px) !important;
+}
+
+body.modal-open {
+    overflow: hidden !important;
+    padding-right: 0 !important;
+}
+
+/* ==========================================================================
+   SUPRESIÓN TOTAL DE SCROLL LATERAL EN TABLAS, FORMULARIOS Y CONTENEDORES
+   ========================================================================== */
+html,
+body,
+.main-wrapper,
+.content-body,
+.maintainer-view,
+.maintainer-card,
+.liquid-glass-card {
+    overflow-x: hidden !important;
+    max-width: 100vw !important;
+}
+
+.table-responsive,
+.table-responsive-sm,
+.table-responsive-md,
+.table-responsive-lg,
+.table-responsive-xl,
+.table-responsive-xxl,
+.table-container-noscroll,
+.excel-table-wrapper {
+    overflow-x: hidden !important;
+    max-width: 100% !important;
+    scrollbar-width: none !important;
+    -ms-overflow-style: none !important;
+}
+
+.table-responsive::-webkit-scrollbar,
+.excel-table-wrapper::-webkit-scrollbar,
+.table-container-noscroll::-webkit-scrollbar,
+table::-webkit-scrollbar,
+.table::-webkit-scrollbar {
+    display: none !important;
+    width: 0 !important;
+    height: 0 !important;
+    background: transparent !important;
+}
+
+table,
+.table {
+    max-width: 100% !important;
+    overflow-x: hidden !important;
+}
+
+.atenciones-fixed-table {
+    table-layout: fixed !important;
+    width: 100% !important;
+}
+
+.atenciones-fixed-table td,
+.atenciones-fixed-table th {
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+}
+
 

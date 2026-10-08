@@ -38,21 +38,21 @@
                             </div>
                             <p class="text-secondary small mb-2" style="font-size:0.76rem; line-height:1.35;">Control absoluto de infraestructura, logs, credenciales y gobernanza de la plataforma municipal.</p>
                             <div class="role-perm-matrix-bar">
-                                <div class="role-perm-pill-toggle">
+                                <div class="role-perm-pill-toggle" title="Permiso de Lectura: Visualización de expedientes y estadísticas">
                                     <span>Lectura</span>
-                                    <label class="perm-mini-switch"><input type="checkbox" checked disabled><span class="perm-mini-slider"></span></label>
+                                    <label class="perm-mini-switch"><input type="checkbox" checked onchange="toggleRolPermisoCard('Superadministrador', 'lectura', this)"><span class="perm-mini-slider"></span></label>
                                 </div>
-                                <div class="role-perm-pill-toggle">
+                                <div class="role-perm-pill-toggle" title="Permiso de Edición: Creación y modificación de registros">
                                     <span>Edición</span>
-                                    <label class="perm-mini-switch"><input type="checkbox" checked disabled><span class="perm-mini-slider"></span></label>
+                                    <label class="perm-mini-switch"><input type="checkbox" checked onchange="toggleRolPermisoCard('Superadministrador', 'edicion', this)"><span class="perm-mini-slider"></span></label>
                                 </div>
-                                <div class="role-perm-pill-toggle">
+                                <div class="role-perm-pill-toggle" title="Permiso de Derivación: Reasignación territorial e interdepartamental">
                                     <span>Derivación</span>
-                                    <label class="perm-mini-switch"><input type="checkbox" checked disabled><span class="perm-mini-slider"></span></label>
+                                    <label class="perm-mini-switch"><input type="checkbox" checked onchange="toggleRolPermisoCard('Superadministrador', 'derivacion', this)"><span class="perm-mini-slider"></span></label>
                                 </div>
-                                <div class="role-perm-pill-toggle">
+                                <div class="role-perm-pill-toggle" title="Permiso de Cierre: Dictamen final de aprobación según RN-012">
                                     <span>Cierre</span>
-                                    <label class="perm-mini-switch"><input type="checkbox" checked disabled><span class="perm-mini-slider"></span></label>
+                                    <label class="perm-mini-switch"><input type="checkbox" checked onchange="toggleRolPermisoCard('Superadministrador', 'cierre', this)"><span class="perm-mini-slider"></span></label>
                                 </div>
                             </div>
                         </div>
@@ -75,21 +75,21 @@
                             </div>
                             <p class="text-secondary small mb-2" style="font-size:0.76rem; line-height:1.35;">Coordinación territorial de sedes, resolución en terreno y asignación de requerimientos vecinales.</p>
                             <div class="role-perm-matrix-bar">
-                                <div class="role-perm-pill-toggle">
+                                <div class="role-perm-pill-toggle" title="Permiso de Lectura: Visualización de expedientes y estadísticas">
                                     <span>Lectura</span>
-                                    <label class="perm-mini-switch"><input type="checkbox" checked onchange="mostrarToast('Permiso de lectura actualizado')"><span class="perm-mini-slider"></span></label>
+                                    <label class="perm-mini-switch"><input type="checkbox" checked onchange="toggleRolPermisoCard('Gestor Territorial', 'lectura', this)"><span class="perm-mini-slider"></span></label>
                                 </div>
-                                <div class="role-perm-pill-toggle">
+                                <div class="role-perm-pill-toggle" title="Permiso de Edición: Creación y modificación de registros">
                                     <span>Edición</span>
-                                    <label class="perm-mini-switch"><input type="checkbox" checked onchange="mostrarToast('Permiso de edición actualizado')"><span class="perm-mini-slider"></span></label>
+                                    <label class="perm-mini-switch"><input type="checkbox" checked onchange="toggleRolPermisoCard('Gestor Territorial', 'edicion', this)"><span class="perm-mini-slider"></span></label>
                                 </div>
-                                <div class="role-perm-pill-toggle">
+                                <div class="role-perm-pill-toggle" title="Permiso de Derivación: Reasignación territorial e interdepartamental">
                                     <span>Derivación</span>
-                                    <label class="perm-mini-switch"><input type="checkbox" checked onchange="mostrarToast('Permiso de derivación actualizado')"><span class="perm-mini-slider"></span></label>
+                                    <label class="perm-mini-switch"><input type="checkbox" checked onchange="toggleRolPermisoCard('Gestor Territorial', 'derivacion', this)"><span class="perm-mini-slider"></span></label>
                                 </div>
-                                <div class="role-perm-pill-toggle">
+                                <div class="role-perm-pill-toggle" title="Permiso de Cierre: Dictamen final de aprobación según RN-012">
                                     <span>Cierre</span>
-                                    <label class="perm-mini-switch"><input type="checkbox" onchange="mostrarToast('Permiso de cierre actualizado')"><span class="perm-mini-slider"></span></label>
+                                    <label class="perm-mini-switch"><input type="checkbox" onchange="toggleRolPermisoCard('Gestor Territorial', 'cierre', this)"><span class="perm-mini-slider"></span></label>
                                 </div>
                             </div>
                         </div>
@@ -112,21 +112,21 @@
                             </div>
                             <p class="text-secondary small mb-2" style="font-size:0.76rem; line-height:1.35;">Ingreso en ventanilla, tipificación de trámites, atención telefónica y registro de audiencias.</p>
                             <div class="role-perm-matrix-bar">
-                                <div class="role-perm-pill-toggle">
+                                <div class="role-perm-pill-toggle" title="Permiso de Lectura: Visualización de expedientes y estadísticas">
                                     <span>Lectura</span>
-                                    <label class="perm-mini-switch"><input type="checkbox" checked onchange="mostrarToast('Permiso de lectura actualizado')"><span class="perm-mini-slider"></span></label>
+                                    <label class="perm-mini-switch"><input type="checkbox" checked onchange="toggleRolPermisoCard('Operador de Casos', 'lectura', this)"><span class="perm-mini-slider"></span></label>
                                 </div>
-                                <div class="role-perm-pill-toggle">
+                                <div class="role-perm-pill-toggle" title="Permiso de Edición: Creación y modificación de registros">
                                     <span>Edición</span>
-                                    <label class="perm-mini-switch"><input type="checkbox" checked onchange="mostrarToast('Permiso de edición actualizado')"><span class="perm-mini-slider"></span></label>
+                                    <label class="perm-mini-switch"><input type="checkbox" checked onchange="toggleRolPermisoCard('Operador de Casos', 'edicion', this)"><span class="perm-mini-slider"></span></label>
                                 </div>
-                                <div class="role-perm-pill-toggle">
+                                <div class="role-perm-pill-toggle" title="Permiso de Derivación: Reasignación territorial e interdepartamental">
                                     <span>Derivación</span>
-                                    <label class="perm-mini-switch"><input type="checkbox" onchange="mostrarToast('Permiso de derivación actualizado')"><span class="perm-mini-slider"></span></label>
+                                    <label class="perm-mini-switch"><input type="checkbox" onchange="toggleRolPermisoCard('Operador de Casos', 'derivacion', this)"><span class="perm-mini-slider"></span></label>
                                 </div>
-                                <div class="role-perm-pill-toggle">
+                                <div class="role-perm-pill-toggle" title="Permiso de Cierre: Dictamen final de aprobación según RN-012">
                                     <span>Cierre</span>
-                                    <label class="perm-mini-switch"><input type="checkbox" onchange="mostrarToast('Permiso de cierre actualizado')"><span class="perm-mini-slider"></span></label>
+                                    <label class="perm-mini-switch"><input type="checkbox" onchange="toggleRolPermisoCard('Operador de Casos', 'cierre', this)"><span class="perm-mini-slider"></span></label>
                                 </div>
                             </div>
                         </div>
@@ -149,21 +149,21 @@
                             </div>
                             <p class="text-secondary small mb-2" style="font-size:0.76rem; line-height:1.35;">Supervisión de tiempos de respuesta, bitácoras de auditoría y reportes para Concejo Municipal.</p>
                             <div class="role-perm-matrix-bar">
-                                <div class="role-perm-pill-toggle">
+                                <div class="role-perm-pill-toggle" title="Permiso de Lectura: Visualización de expedientes y estadísticas">
                                     <span>Lectura</span>
-                                    <label class="perm-mini-switch"><input type="checkbox" checked onchange="mostrarToast('Permiso de lectura actualizado')"><span class="perm-mini-slider"></span></label>
+                                    <label class="perm-mini-switch"><input type="checkbox" checked onchange="toggleRolPermisoCard('Auditor Municipal', 'lectura', this)"><span class="perm-mini-slider"></span></label>
                                 </div>
-                                <div class="role-perm-pill-toggle">
+                                <div class="role-perm-pill-toggle" title="Permiso de Edición: Creación y modificación de registros">
                                     <span>Edición</span>
-                                    <label class="perm-mini-switch"><input type="checkbox" onchange="mostrarToast('Permiso de edición denegado para auditor')"><span class="perm-mini-slider"></span></label>
+                                    <label class="perm-mini-switch"><input type="checkbox" onchange="toggleRolPermisoCard('Auditor Municipal', 'edicion', this)"><span class="perm-mini-slider"></span></label>
                                 </div>
-                                <div class="role-perm-pill-toggle">
+                                <div class="role-perm-pill-toggle" title="Permiso de Derivación: Reasignación territorial e interdepartamental">
                                     <span>Derivación</span>
-                                    <label class="perm-mini-switch"><input type="checkbox" onchange="mostrarToast('Permiso de derivación actualizado')"><span class="perm-mini-slider"></span></label>
+                                    <label class="perm-mini-switch"><input type="checkbox" onchange="toggleRolPermisoCard('Auditor Municipal', 'derivacion', this)"><span class="perm-mini-slider"></span></label>
                                 </div>
-                                <div class="role-perm-pill-toggle">
+                                <div class="role-perm-pill-toggle" title="Permiso de Cierre: Dictamen final de aprobación según RN-012">
                                     <span>Cierre</span>
-                                    <label class="perm-mini-switch"><input type="checkbox" onchange="mostrarToast('Permiso de cierre actualizado')"><span class="perm-mini-slider"></span></label>
+                                    <label class="perm-mini-switch"><input type="checkbox" onchange="toggleRolPermisoCard('Auditor Municipal', 'cierre', this)"><span class="perm-mini-slider"></span></label>
                                 </div>
                             </div>
                         </div>

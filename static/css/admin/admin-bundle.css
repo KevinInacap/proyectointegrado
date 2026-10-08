@@ -179,7 +179,7 @@
         .sidebar-menu-scrollable {
             padding: 0.65rem 0.75rem 2.5rem 0.75rem;
             flex-grow: 1;
-            overflow-y: auto;
+            overflow-y: visible ;
             overflow-x: hidden;
             display: flex;
             flex-direction: column;
@@ -2029,7 +2029,7 @@
             border-radius: 12px;
             padding: 0.75rem 1rem;
             max-height: 160px;
-            overflow-y: auto;
+            overflow-y: visible ;
         }
 
         .live-feed-item {
@@ -2408,8 +2408,7 @@
 
         .liquid-glass-btn-primary:hover {
             background: linear-gradient(135deg, #0b5ed7 0%, #1e40af 100%);
-            box-shadow: 0 6px 20px rgba(13, 110, 253, 0.45);
-            transform: translateY(-2px);
+            box-shadow: 0 4px 14px rgba(13, 110, 253, 0.35);
             color: #FFFFFF;
         }
 
@@ -2430,8 +2429,7 @@
         }
 
         .liquid-glass-btn-red:hover {
-            box-shadow: 0 6px 20px rgba(196, 18, 48, 0.45);
-            transform: translateY(-2px);
+            box-shadow: 0 4px 14px rgba(196, 18, 48, 0.35);
             color: #FFFFFF;
         }
 
@@ -2455,7 +2453,6 @@
             color: #FFFFFF;
             border-color: var(--muni-navy);
             box-shadow: 0 4px 14px rgba(27, 54, 93, 0.25);
-            transform: translateY(-2px);
         }
 
         .liquid-stat-pill {
@@ -2655,7 +2652,7 @@
         }
 
         .myadmin-matrix-wrap {
-            overflow-x: auto;
+            overflow-x: visible ;
             border-radius: 12px;
             border: 1px solid var(--muni-border);
             background: #FFFFFF;
@@ -3553,7 +3550,7 @@
             box-shadow: -15px 0 45px rgba(27, 54, 93, 0.15);
             z-index: 1060;
             transition: right 0.38s cubic-bezier(0.16, 1, 0.3, 1);
-            overflow-y: auto;
+            overflow-y: visible ;
             display: flex;
             flex-direction: column;
         }

@@ -4,6 +4,7 @@
             { id: 3, nombre: 'María Castillo Vergara', rut: '15.234.567-1', direccion: 'Pasaje Los Pinos 89', telefono: '+56 9 6543 2109', territorio: 'Sur', gestion: 'Consulta', estado: 'Inactivo' },
             { id: 4, nombre: 'Luis Herrera Alfaro', rut: '17.456.789-0', direccion: 'Av. El Faro 230', telefono: '+56 9 5432 1098', territorio: 'Oriente', gestion: 'Orientación', estado: 'Activo' }
         ];
+        window.datasetVecinos = datasetVecinos;
 
         let filasFiltradasVecinos = [...datasetVecinos];
         let seleccionadosIds = new Set();
@@ -12,12 +13,19 @@
         let ordenAsc = true;
         let bsModalVecino, bsModalFicha, bsModalImportar, bsModalAuditoria, bsModalPerfil, chartInstance;
 
-        /* Variables Globales de Gestión de Usuarios */
+        /* Variables Globales de Gestión de Usuarios y Atenciones */
         let bsModalUsuario, bsModalEliminarUsuario, bsModalPasswordUsuario;
+        let bsModalNuevaAtencion, bsModalExpedienteAtencion;
+        let datasetAtenciones = [], atencionSeleccionadaId = null;
+        window.datasetAtenciones = datasetAtenciones;
         let datasetUsuarios = [], filasFiltradasUsuarios = [];
+        window.datasetUsuarios = datasetUsuarios;
         let rolesCatalog = [], delegationsCatalog = [], positionsCatalog = [];
         let filasPorPaginaUsuarios = 10, paginaActualUsuarios = 1, ordenAscUsuarios = true, campoOrdenUsuarios = 'full_name';
         let usuarioAEliminarId = null, usuarioAPasswordId = null;
+
+        let calFechaActual = new Date();
+        let calFechaHoy = new Date();
 
         function actualizarFechaActual() {
             const elFecha = document.getElementById('currentDateDisplay');
@@ -28,9 +36,115 @@
             }
         }
 
+        function renderCalendarioMunicipal() {
+            const lblBadgeHoy = document.getElementById('lblDiaHoyTexto');
+            const lblMesAno = document.getElementById('lblMesAnoCalendario');
+            const gridDias = document.getElementById('gridDiasCalendario');
+            if (!gridDias) return;
+
+            const diasSemana = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+            const meses = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+
+            // 1. Mostrar la fecha REAL de hoy en el badge superior
+            if (lblBadgeHoy) {
+                const diaNom = diasSemana[calFechaHoy.getDay()];
+                const mesNom = meses[calFechaHoy.getMonth()];
+                lblBadgeHoy.textContent = `${diaNom}, ${calFechaHoy.getDate()} de ${mesNom}`;
+            }
+
+            // 2. Mes y Año del calendario mostrado
+            const ano = calFechaActual.getFullYear();
+            const mes = calFechaActual.getMonth();
+            if (lblMesAno) {
+                lblMesAno.innerHTML = `<i class="bi bi-calendar3 text-primary me-1"></i> ${meses[mes]} ${ano}`;
+            }
+
+            // 3. Generar la cuadrícula del mes
+            const primerDiaMes = new Date(ano, mes, 1);
+            const ultimoDiaMes = new Date(ano, mes + 1, 0);
+            const totalDiasMes = ultimoDiaMes.getDate();
+
+            // Lunes = 0, ..., Domingo = 6
+            let primerDiaSemana = primerDiaMes.getDay() - 1;
+            if (primerDiaSemana === -1) primerDiaSemana = 6;
+
+            const ultimoDiaMesAnterior = new Date(ano, mes, 0).getDate();
+            let html = '';
+
+            for (let i = primerDiaSemana - 1; i >= 0; i--) {
+                const d = ultimoDiaMesAnterior - i;
+                html += `<span class="text-muted p-1 rounded-2" style="opacity: 0.35; cursor: pointer;" onclick="cambiarMesCalendario(-1)">${d}</span>`;
+            }
+
+            const esMesActual = (calFechaHoy.getFullYear() === ano && calFechaHoy.getMonth() === mes);
+            const diaHoyNum = calFechaHoy.getDate();
+
+            for (let d = 1; d <= totalDiasMes; d++) {
+                const esHoy = esMesActual && (d === diaHoyNum);
+                const fechaDia = new Date(ano, mes, d);
+                const esFinDeSemana = (fechaDia.getDay() === 0 || fechaDia.getDay() === 6);
+
+                if (esHoy) {
+                    html += `
+                        <span class="p-1 rounded-3 text-white fw-bold shadow-sm dia-calendario-item hoy-destacado" 
+                              style="background: var(--muni-navy); border: 2.5px solid var(--muni-red); cursor: pointer; transition: transform 0.15s;" 
+                              title="¡Hoy: ${d} de ${meses[mes]} de ${ano}!" 
+                              onclick="seleccionarDiaCalendario(${d}, ${mes}, ${ano})">
+                            ${d}
+                        </span>`;
+                } else {
+                    const colorClase = esFinDeSemana ? 'text-muted' : 'text-dark';
+                    html += `
+                        <span class="p-1 rounded-2 dia-calendario-item ${colorClase}" 
+                              style="cursor: pointer; transition: all 0.15s;" 
+                              title="${d} de ${meses[mes]} ${ano}" 
+                              onmouseover="this.style.background='rgba(27,54,93,0.08)'" 
+                              onmouseout="if(!this.classList.contains('seleccionado')) this.style.background='transparent'" 
+                              onclick="seleccionarDiaCalendario(${d}, ${mes}, ${ano})">
+                            ${d}
+                        </span>`;
+                }
+            }
+
+            const celdasUsadas = primerDiaSemana + totalDiasMes;
+            const celdasRestantes = (7 - (celdasUsadas % 7)) % 7;
+            for (let d = 1; d <= celdasRestantes; d++) {
+                html += `<span class="text-muted p-1 rounded-2" style="opacity: 0.35; cursor: pointer;" onclick="cambiarMesCalendario(1)">${d}</span>`;
+            }
+
+            gridDias.innerHTML = html;
+        }
+
+        function cambiarMesCalendario(delta) {
+            calFechaActual.setMonth(calFechaActual.getMonth() + delta);
+            renderCalendarioMunicipal();
+        }
+
+        function seleccionarDiaCalendario(dia, mes, ano) {
+            const meses = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+            const fechaStr = `${String(dia).padStart(2, '0')}/${String(mes + 1).padStart(2, '0')}/${ano}`;
+            
+            document.querySelectorAll('.dia-calendario-item').forEach(el => {
+                el.classList.remove('seleccionado');
+                if (!el.classList.contains('hoy-destacado')) el.style.background = 'transparent';
+            });
+            
+            if (typeof Swal !== 'undefined') {
+                Swal.fire({
+                    toast: true,
+                    position: 'top-end',
+                    showConfirmButton: false,
+                    timer: 2500,
+                    icon: 'info',
+                    title: `Día seleccionado: ${dia} de ${meses[mes]} (${fechaStr})`
+                });
+            }
+        }
+
         document.addEventListener('DOMContentLoaded', function () {
             // Actualización Dinámica de Fecha Institucional respecto al día actual
             actualizarFechaActual();
+            try { renderCalendarioMunicipal(); } catch (e) { console.warn("Calendario error:", e); }
 
             const elVec = document.getElementById('modalVecino');
             if (elVec && window.bootstrap) bsModalVecino = new bootstrap.Modal(elVec);
@@ -68,10 +182,17 @@
             if (elModalNuevaFunc && window.bootstrap) bsModalNuevaFuncion = new bootstrap.Modal(elModalNuevaFunc);
             const elModalVerPerms = document.getElementById('modalVerPermisosRol');
             if (elModalVerPerms && window.bootstrap) bsModalVerPermisosRol = new bootstrap.Modal(elModalVerPerms);
+            
+            /* Modales de Gestión de Atenciones Ciudadanas */
+            const elModalNuevaAt = document.getElementById('modalNuevaAtencion');
+            if (elModalNuevaAt && window.bootstrap) bsModalNuevaAtencion = new bootstrap.Modal(elModalNuevaAt);
+            const elModalExpAt = document.getElementById('modalExpedienteAtencion');
+            if (elModalExpAt && window.bootstrap) bsModalExpedienteAtencion = new bootstrap.Modal(elModalExpAt);
 
             try { renderAtencionesChart(); } catch (e) { console.warn("Chart atenciones error:", e); }
             try { renderTablaVecinos(); } catch (e) { console.warn("Tabla vecinos error:", e); }
             try { cargarUsuariosDesdeDB(false); } catch (e) { console.warn("Cargar usuarios error:", e); }
+            try { cargarAtencionesDB(); } catch (e) { console.warn("Cargar atenciones error:", e); }
             try { initDelegacionesView(); } catch (e) { console.warn("Delegaciones init error:", e); }
             try { initRolesView(false); } catch (e) { console.warn("Roles init error:", e); }
 
@@ -288,12 +409,21 @@
         }
 
         function eliminarSeleccionadosMasivo() {
-            if (confirm(`¿Eliminar los ${seleccionadosIds.size} seleccionados?`)) {
-                datasetVecinos = datasetVecinos.filter(v => !seleccionadosIds.has(v.id));
-                seleccionadosIds.clear();
-                ejecutarFiltroCompletoVecinos();
-                mostrarToast('Registros eliminados');
-            }
+            Swal.fire({
+                title: '¿Estás seguro?',
+                text: `¿Eliminar los ${seleccionadosIds.size} seleccionados?`,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: 'Eliminar',
+                cancelButtonText: 'Cancelar'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    datasetVecinos = datasetVecinos.filter(v => !seleccionadosIds.has(v.id));
+                    seleccionadosIds.clear();
+                    ejecutarFiltroCompletoVecinos();
+                    mostrarToast('Registros eliminados');
+                }
+            });
         }
 
         function exportarSeleccionadosExcel() {
@@ -494,12 +624,30 @@
         function guardarVecino(e) {
             e.preventDefault();
             const id = document.getElementById('vecinoId').value;
+            const nom = document.getElementById('vecinoNombre').value.trim();
+            const rutVal = document.getElementById('vecinoRut').value.trim();
+            const dir = document.getElementById('vecinoDireccion').value.trim();
+
+            if (!nom || !rutVal || !dir) {
+                Swal.fire({ icon: 'warning', title: 'Campos requeridos', text: 'Nombre, RUT y Dirección son obligatorios y no pueden estar vacíos.' });
+                return;
+            }
+
+            if (typeof validarRutChileno === 'function' && !validarRutChileno(rutVal)) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'RUT Chileno Inválido',
+                    text: `El RUT "${rutVal}" no es válido según el algoritmo del Módulo 11 chileno.`
+                });
+                return;
+            }
+
             const nuevo = {
                 id: id ? parseInt(id) : datasetVecinos.length + 1,
-                nombre: document.getElementById('vecinoNombre').value,
-                rut: document.getElementById('vecinoRut').value,
-                direccion: document.getElementById('vecinoDireccion').value,
-                telefono: document.getElementById('vecinoTelefono').value,
+                nombre: typeof sanitizarTexto === 'function' ? sanitizarTexto(nom) : nom,
+                rut: typeof formatearRutChileno === 'function' ? formatearRutChileno(rutVal) : rutVal,
+                direccion: typeof sanitizarTexto === 'function' ? sanitizarTexto(dir) : dir,
+                telefono: document.getElementById('vecinoTelefono').value.trim(),
                 territorio: document.getElementById('vecinoTerritorio').value,
                 gestion: 'Solicitud',
                 estado: document.getElementById('vecinoEstado').value
@@ -517,11 +665,11 @@
 
         function eliminarVecino(id) {
             const v = datasetVecinos.find(item => item.id === id);
-            if (v && confirm(`¿Eliminar a "${v.nombre}"?`)) {
+            if (v) Swal.fire({title: "¿Estás seguro?", text: `¿Eliminar a "${v.nombre}"?`, icon: "warning", showCancelButton: true, confirmButtonText: "Eliminar", cancelButtonText: "Cancelar"}).then((res) => { if (res.isConfirmed) {
                 datasetVecinos = datasetVecinos.filter(item => item.id !== id);
                 ejecutarFiltroCompletoVecinos();
                 mostrarToast('✓ Vecino eliminado');
-            }
+            } });
         }
 
         function actualizarIndicadoresDiscretos() {
@@ -2132,7 +2280,7 @@
            ========================================================================== */
         function exportarReportesExcel() {
             if (!window.XLSX) {
-                alert('La librería XLSX está cargando.');
+                Swal.fire('La librería XLSX está cargando.');
                 return;
             }
 
@@ -2207,7 +2355,7 @@
 
         function generarReportePDFOficial() {
             if (!window.jspdf) {
-                alert('La librería PDF está cargando.');
+                Swal.fire('La librería PDF está cargando.');
                 return;
             }
             const { jsPDF } = window.jspdf;
@@ -2344,6 +2492,7 @@
                 if (!data.success) throw new Error(data.message || 'Error al consultar base de datos');
 
                 datasetUsuarios = data.users || [];
+                window.datasetUsuarios = datasetUsuarios;
                 rolesCatalog = data.roles || [];
                 delegationsCatalog = data.delegations || [];
                 positionsCatalog = data.positions || [];
@@ -2997,15 +3146,37 @@
             });
 
             if (!fullName || !rut || !email) {
-                mostrarToast('⚠ Por favor complete todos los campos requeridos.');
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Campos requeridos',
+                    text: 'Nombre, RUT y Correo Institucional son obligatorios y no pueden quedar en blanco.'
+                });
+                return;
+            }
+
+            if (typeof validarRutChileno === 'function' && !validarRutChileno(rut)) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'RUT Chileno Inválido',
+                    text: `El RUT ingresado "${rut}" no es válido según el algoritmo del Módulo 11 chileno.`
+                });
+                return;
+            }
+
+            if (typeof validarEmail === 'function' && !validarEmail(email)) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Correo Inválido',
+                    text: `El correo "${email}" no tiene un formato válido (debe contener @ y un dominio como .cl o .com).`
+                });
                 return;
             }
 
             const payload = {
-                full_name: fullName,
-                rut: rut,
+                full_name: typeof sanitizarTexto === 'function' ? sanitizarTexto(fullName) : fullName,
+                rut: typeof formatearRutChileno === 'function' ? formatearRutChileno(rut) : rut,
                 username: username,
-                email: email,
+                email: email.trim().toLowerCase(),
                 password: password,
                 status: status,
                 delegation_id: delegationId ? parseInt(delegationId) : null,
@@ -3183,7 +3354,7 @@
 
         function exportarExcelUsuarios() {
             if (!window.XLSX) {
-                alert('La librería XLSX está cargando, intente nuevamente en unos segundos.');
+                Swal.fire('La librería XLSX está cargando, intente nuevamente en unos segundos.');
                 return;
             }
             const dataToExport = filasFiltradasUsuarios.map(u => ({
@@ -3209,7 +3380,7 @@
 
         function exportarPDFUsuarios() {
             if (!window.jspdf) {
-                alert('La librería PDF está cargando.');
+                Swal.fire('La librería PDF está cargando.');
                 return;
             }
             const { jsPDF } = window.jspdf;
@@ -4542,7 +4713,7 @@
             const description = (elDesc && elDesc.value) ? elDesc.value.trim() : '';
 
             if (!name) {
-                alert('El nombre del rol es obligatorio.');
+                Swal.fire('El nombre del rol es obligatorio.');
                 return;
             }
 
@@ -4836,7 +5007,7 @@
             const desc = (elDesc && elDesc.value) ? elDesc.value.trim() : '';
 
             if (!code || !name) {
-                alert('Código y nombre de la función son requeridos.');
+                Swal.fire('Código y nombre de la función son requeridos.');
                 return;
             }
 
@@ -5081,10 +5252,1074 @@
 
         let toastT;
         function mostrarToast(msg) {
-            const t = document.getElementById('muniToast');
-            document.getElementById('toastMessage').textContent = msg;
-            t.classList.add('show');
-            clearTimeout(toastT);
-            toastT = setTimeout(() => cerrarToast(), 3500);
+            let iconType = 'success';
+            if (msg.includes('⚠') || msg.toLowerCase().includes('error')) {
+                iconType = 'error';
+            } else if (msg.includes('Info') || msg.includes('Cargando') || msg.includes('Descargando') || msg.includes('Generando')) {
+                iconType = 'info';
+            } else if (msg.includes('⏸') || msg.includes('Aviso')) {
+                iconType = 'warning';
+            }
+            if (typeof Swal !== 'undefined') {
+                Swal.fire({
+                    toast: true,
+                    position: 'top-end',
+                    showConfirmButton: false,
+                    timer: 3500,
+                    timerProgressBar: true,
+                    icon: iconType,
+                    title: msg.replace(/✓ |⚠ |⏸ /g, '')
+                });
+            } else {
+                console.log('[Toast]:', msg);
+            }
         }
-        function cerrarToast() { document.getElementById('muniToast').classList.remove('show'); }
+        function cerrarToast() { }
+
+        /* ==========================================================================
+           MÓDULO: ATENCIONES CIUDADANAS Y CASOS SOCIALES (PERSISTENCIA MYSQL REAL)
+           ========================================================================== */
+        async function cargarAtencionesDB() {
+            try {
+                const resp = await fetch('/api/atenciones/');
+                if (!resp.ok) throw new Error('Error al consultar atenciones');
+                const data = await resp.json();
+                if (data.success && Array.isArray(data.atenciones)) {
+                    datasetAtenciones = data.atenciones;
+                    window.datasetAtenciones = datasetAtenciones;
+                    renderTablaAtenciones(datasetAtenciones);
+                }
+            } catch (err) {
+                console.error('Error cargando atenciones desde MySQL:', err);
+            }
+        }
+
+        function renderTablaAtenciones(items) {
+            const tbody = document.getElementById('tablaAtencionesBody');
+            const totalLbl = document.getElementById('lblTotalAtenciones');
+            if (!tbody) return;
+
+            if (totalLbl) totalLbl.textContent = items.length;
+
+            if (items.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="8" class="text-center py-4 text-muted">
+                            <i class="bi bi-inbox fs-2 d-block mb-1 text-secondary"></i>
+                            No se encontraron atenciones ciudadanas registradas.
+                        </td>
+                    </tr>`;
+                return;
+            }
+
+            tbody.innerHTML = items.map((a) => {
+                const badgeClass = a.status === 'Approved' ? 'bg-success-subtle text-success border-success-subtle' :
+                                   a.status === 'Requires correction' ? 'bg-danger-subtle text-danger border-danger-subtle' :
+                                   'bg-warning-subtle text-warning-emphasis border-warning-subtle';
+                const badgeIcon = a.status === 'Approved' ? 'bi-check-circle-fill' :
+                                  a.status === 'Requires correction' ? 'bi-exclamation-triangle-fill' : 'bi-hourglass-split';
+                const statusName = a.status === 'Approved' ? 'Aprobada' :
+                                   a.status === 'Requires correction' ? 'Req. Corrección' : 'En Revisión';
+                const stageText = a.stage ? `Etapa ${a.stage} de 3` : 'Etapa 1 de 3';
+                const dateText = a.date || '10/09/2026';
+                const initials = (a.contact_name || 'Vecino').split(' ').slice(0, 2).map(n => n[0]).join('').toUpperCase() || 'VC';
+
+                return `
+                    <tr style="border-bottom: 1px solid #E2E8F0;">
+                        <td class="py-2.5 px-2 text-truncate">
+                            <span class="badge bg-light text-dark border px-1.5 py-1 font-monospace fw-bold" style="font-size: 0.74rem;">
+                                ${a.evidence_code || ('EVI-2026-' + String(a.id).padStart(4, '0'))}
+                            </span>
+                        </td>
+                        <td class="py-2.5 px-2">
+                            <div class="d-flex align-items-center gap-1.5" style="min-width: 0;">
+                                <div style="width: 28px; height: 28px; min-width: 28px; border-radius: 50%; background: rgba(27, 54, 93, 0.12); color: var(--muni-navy); font-weight: 800; display: flex; align-items: center; justify-content: center; font-size: 0.72rem;">
+                                    ${initials}
+                                </div>
+                                <div class="text-truncate" style="min-width: 0;">
+                                    <strong class="d-block text-truncate" style="color: #0F172A; font-size: 0.82rem;">${a.contact_name || 'Ciudadano SGR'}</strong>
+                                    <span class="d-block text-muted text-truncate" style="font-size: 0.70rem;">${a.contact_phone ? a.contact_phone : 'Sin teléfono'}</span>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="py-2.5 px-2 text-truncate">
+                            <span class="fw-semibold text-dark text-truncate d-block" style="font-size: 0.78rem;" title="${a.delegation || 'Centro'}">
+                                <i class="bi bi-geo-alt-fill text-danger me-1"></i>${(a.delegation || 'Centro').replace('Delegación ', '')}
+                            </span>
+                        </td>
+                        <td class="py-2.5 px-2 text-truncate">
+                            <span class="fw-semibold text-dark d-block text-truncate" style="font-size: 0.80rem;">${a.service || a.title || 'Atención'}</span>
+                            <span class="d-block text-muted text-truncate" style="font-size: 0.70rem;">${a.description || 'Seguimiento técnico'}</span>
+                        </td>
+                        <td class="py-2.5 px-1 text-center text-truncate">
+                            <span class="badge rounded-pill bg-primary-subtle text-primary border border-primary-subtle fw-bold" style="font-size: 0.70rem; padding: 3px 6px;">
+                                ${stageText}
+                            </span>
+                        </td>
+                        <td class="py-2.5 px-1 text-center text-muted" style="font-size: 0.74rem;">
+                            ${dateText}
+                        </td>
+                        <td class="py-2.5 px-2 text-center text-truncate">
+                            <span class="badge rounded-pill fw-bold border ${badgeClass}" style="font-size: 0.72rem; padding: 4px 8px; display: inline-flex; align-items: center; gap: 3px;">
+                                <i class="bi ${badgeIcon}"></i><span>${statusName}</span>
+                            </span>
+                        </td>
+                        <td class="py-2.5 px-2 text-center">
+                            <button class="btn btn-sm btn-outline-primary rounded-pill fw-bold shadow-2xs" onclick="verExpedienteAtencion(${a.id})" title="Ver Expediente de Atención" style="font-size: 0.80rem; width: 34px; height: 28px; display: inline-flex; align-items: center; justify-content: center; margin: 0 auto;">
+                                <i class="bi bi-eye"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function abrirModalNuevaAtencion() {
+            const form = document.getElementById('formAtencionDB');
+            if (form) form.reset();
+            const editId = document.getElementById('atencionEditId');
+            if (editId) editId.value = '';
+            if (bsModalNuevaAtencion) {
+                bsModalNuevaAtencion.show();
+            } else {
+                const el = document.getElementById('modalNuevaAtencion');
+                if (el && window.bootstrap) {
+                    bsModalNuevaAtencion = new bootstrap.Modal(el);
+                    bsModalNuevaAtencion.show();
+                }
+            }
+        }
+
+        async function guardarAtencionDB() {
+            const contact_name = document.getElementById('txtAtencionNombre')?.value?.trim();
+            const contact_phone = document.getElementById('txtAtencionTelefono')?.value?.trim();
+            const delegation = document.getElementById('selAtencionDelegacion')?.value;
+            const status = document.getElementById('selAtencionEstado')?.value || 'Approved';
+            const title = document.getElementById('txtAtencionProblema')?.value?.trim();
+            const description = document.getElementById('txtAtencionAccion')?.value?.trim();
+
+            if (!contact_name || !title || !description) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Campos requeridos',
+                    text: 'Por favor complete el nombre del vecino, la descripción del problema y la acción ejecutada.'
+                });
+                return;
+            }
+
+            const btn = document.getElementById('btnGuardarAtencionDB');
+            if (btn) btn.disabled = true;
+
+            try {
+                const resp = await fetch('/api/atenciones/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': getCookie('csrftoken') || ''
+                    },
+                    body: JSON.stringify({
+                        title: title,
+                        description: description,
+                        delegation: delegation,
+                        status: status,
+                        contact_name: contact_name,
+                        contact_phone: contact_phone,
+                        stage: 1
+                    })
+                });
+
+                const data = await resp.json();
+                if (data.success) {
+                    if (bsModalNuevaAtencion) bsModalNuevaAtencion.hide();
+                    await cargarAtencionesDB();
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Atención Guardada',
+                        text: 'El caso social ha sido guardado exitosamente en la base de datos MySQL.',
+                        timer: 2500,
+                        showConfirmButton: false
+                    });
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error al guardar',
+                        text: data.error || 'No se pudo guardar la atención en la base de datos.'
+                    });
+                }
+            } catch (err) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error de red',
+                    text: err.message
+                });
+            } finally {
+                if (btn) btn.disabled = false;
+            }
+        }
+
+        function verExpedienteAtencion(id) {
+            const a = datasetAtenciones.find(item => item.id === id);
+            if (!a) {
+                Swal.fire({ icon: 'info', title: 'Atención no encontrada' });
+                return;
+            }
+
+            atencionSeleccionadaId = id;
+            const elCod = document.getElementById('lblExpedienteCodigo');
+            const elVec = document.getElementById('lblExpedienteVecino');
+            const elCont = document.getElementById('lblExpedienteContacto');
+            const elDel = document.getElementById('lblExpedienteDelegacion');
+            const elBadge = document.getElementById('lblExpedienteBadgeEstado');
+            const elProb = document.getElementById('lblExpedienteProblema');
+            const elAcc = document.getElementById('lblExpedienteAccion');
+            const elObs = document.getElementById('lblExpedienteObservacion');
+
+            if (elCod) elCod.textContent = `Expediente: ${a.evidence_code || ('EVI-2026-' + a.id)}`;
+            if (elVec) elVec.textContent = a.contact_name || 'Ciudadano Municipal';
+            if (elCont) elCont.textContent = a.contact_phone ? `Contacto: ${a.contact_phone}` : 'Sin teléfono registrado';
+            if (elDel) elDel.textContent = a.delegation || 'Delegación La Serena';
+            
+            if (elBadge) {
+                const badgeClass = a.status === 'Approved' ? 'bg-success text-white' :
+                                   a.status === 'Requires correction' ? 'bg-danger text-white' : 'bg-warning text-dark';
+                const statusName = a.status === 'Approved' ? 'Aprobada' :
+                                   a.status === 'Requires correction' ? 'Req. Corrección' : 'En Revisión';
+                elBadge.className = `badge rounded-pill mt-1 ${badgeClass}`;
+                elBadge.textContent = statusName;
+            }
+
+            if (elProb) elProb.textContent = a.title || a.service || 'Requerimiento registrado en ventanilla territorial.';
+            if (elAcc) elAcc.textContent = a.description || 'Gestión técnica y derivación comunal.';
+            if (elObs) elObs.textContent = a.verifier_notes || 'Verificación conforme a reglas de negocio RN-012.';
+
+            if (bsModalExpedienteAtencion) {
+                bsModalExpedienteAtencion.show();
+            } else {
+                const el = document.getElementById('modalExpedienteAtencion');
+                if (el && window.bootstrap) {
+                    bsModalExpedienteAtencion = new bootstrap.Modal(el);
+                    bsModalExpedienteAtencion.show();
+                }
+            }
+        }
+
+        async function cambiarEstadoAtencionRapido(newStatus) {
+            if (!atencionSeleccionadaId) return;
+
+            try {
+                const resp = await fetch(`/api/atenciones/${atencionSeleccionadaId}/`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': getCookie('csrftoken') || ''
+                    },
+                    body: JSON.stringify({ status: newStatus })
+                });
+
+                const data = await resp.json();
+                if (data.success) {
+                    const item = datasetAtenciones.find(it => it.id === atencionSeleccionadaId);
+                    if (item) item.status = newStatus;
+                    renderTablaAtenciones(datasetAtenciones);
+
+                    const elBadge = document.getElementById('lblExpedienteBadgeEstado');
+                    if (elBadge) {
+                        const badgeClass = newStatus === 'Approved' ? 'bg-success text-white' :
+                                           newStatus === 'Requires correction' ? 'bg-danger text-white' : 'bg-warning text-dark';
+                        const statusName = newStatus === 'Approved' ? 'Aprobada' :
+                                           newStatus === 'Requires correction' ? 'Req. Corrección' : 'En Revisión';
+                        elBadge.className = `badge rounded-pill mt-1 ${badgeClass}`;
+                        elBadge.textContent = statusName;
+                    }
+
+                    Swal.fire({
+                        toast: true,
+                        position: 'top-end',
+                        showConfirmButton: false,
+                        timer: 2500,
+                        icon: 'success',
+                        title: `Estado actualizado a "${newStatus}" en la base de datos.`
+                    });
+                }
+            } catch (err) {
+                Swal.fire({ icon: 'error', title: 'Error al cambiar estado', text: err.message });
+            }
+        }
+
+        function filtrarAtenciones() {
+            const query = (document.getElementById('txtBuscarAtencion')?.value || '').toLowerCase().trim();
+            const delegacion = (document.getElementById('selFiltroDelegacionAtencion')?.value || '').trim();
+            const validacion = (document.getElementById('selFiltroValidacionAtencion')?.value || '').trim();
+
+            const filtradas = datasetAtenciones.filter(a => {
+                const matchTexto = !query ||
+                    (a.contact_name && a.contact_name.toLowerCase().includes(query)) ||
+                    (a.evidence_code && a.evidence_code.toLowerCase().includes(query)) ||
+                    (a.title && a.title.toLowerCase().includes(query)) ||
+                    (a.description && a.description.toLowerCase().includes(query));
+
+                const matchDelegacion = !delegacion || (a.delegation && a.delegation.includes(delegacion));
+                const matchValidacion = !validacion || (a.status === validacion);
+
+                return matchTexto && matchDelegacion && matchValidacion;
+            });
+
+            renderTablaAtenciones(filtradas);
+        }
+
+        function exportarAtencionesExcel() {
+            if (!datasetAtenciones || datasetAtenciones.length === 0) {
+                Swal.fire({ icon: 'info', title: 'No hay datos para exportar' });
+                return;
+            }
+
+            const rows = datasetAtenciones.map(a => ({
+                'Código Evidencia': a.evidence_code || a.id,
+                'Vecino / RUT': a.contact_name || '',
+                'Teléfono': a.contact_phone || '',
+                'Delegación': a.delegation || '',
+                'Servicio / Requerimiento': a.title || a.service || '',
+                'Acción Ejecutada': a.description || '',
+                'Etapa': a.stage ? `Etapa ${a.stage}` : 'Etapa 1',
+                'Fecha': a.date || '',
+                'Estado Validación': a.status === 'Approved' ? 'Aprobada' : a.status === 'Requires correction' ? 'Req. Corrección' : 'En Revisión'
+            }));
+
+            const ws = XLSX.utils.json_to_sheet(rows);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "Atenciones");
+            XLSX.writeFile(wb, `Atenciones_Ciudadanas_LaSerena_${new Date().toISOString().slice(0, 10)}.xlsx`);
+            mostrarToast("✓ Bitácora de atenciones exportada en Excel");
+        }
+
+        /* ==========================================================================
+           MÓDULO: GESTIÓN INTERACTIVA DE PERMISOS DE ROLES (TARJETAS + MYSQL)
+           ========================================================================== */
+        async function toggleRolPermisoCard(rolName, permiso, switchEl) {
+            const activo = switchEl.checked;
+            try {
+                const resp = await fetch('/api/roles/toggle-permiso/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': getCookie('csrftoken') || ''
+                    },
+                    body: JSON.stringify({ rol_name: rolName, permiso: permiso, enabled: activo })
+                });
+
+                const data = await resp.json();
+                if (data.success) {
+                    Swal.fire({
+                        toast: true,
+                        position: 'top-end',
+                        showConfirmButton: false,
+                        timer: 2500,
+                        icon: 'success',
+                        title: data.message || `Permiso de ${permiso.toUpperCase()} ${activo ? 'activado' : 'desactivado'}`
+                    });
+                } else {
+                    switchEl.checked = !activo;
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'Aviso de seguridad',
+                        text: data.message || 'No se pudo modificar el permiso del rol en la base de datos.'
+                    });
+                }
+            } catch (err) {
+                switchEl.checked = !activo;
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error de conexión',
+                    text: err.message
+                });
+            }
+        }
+
+        /* ==========================================================================
+           MÓDULO: SEGURIDAD, VALIDACIONES INSTITUCIONALES Y ANTI-INYECCIÓN
+           ========================================================================== */
+
+        // 1. Sanitizador universal contra XSS y ataques de inyección de código
+        function sanitizarTexto(input) {
+            if (typeof input !== 'string') return input;
+            return input
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#x27;')
+                .replace(/\//g, '&#x2F;')
+                .trim();
+        }
+        window.sanitizarTexto = sanitizarTexto;
+
+        // 2. Validador de RUT Chileno (Algoritmo Oficial Módulo 11)
+        function validarRutChileno(rutCompleto) {
+            if (!rutCompleto || typeof rutCompleto !== 'string') return false;
+            let valor = rutCompleto.replace(/\./g, '').replace(/-/g, '').trim().toUpperCase();
+            if (valor.length < 8 || valor.length > 9) return false;
+            
+            let cuerpo = valor.slice(0, -1);
+            let dv = valor.slice(-1);
+            
+            if (!/^\d+$/.test(cuerpo)) return false;
+            
+            let suma = 0;
+            let multiplo = 2;
+            for (let i = cuerpo.length - 1; i >= 0; i--) {
+                suma += parseInt(cuerpo.charAt(i), 10) * multiplo;
+                multiplo = (multiplo === 7) ? 2 : multiplo + 1;
+            }
+            
+            let dvEsperado = 11 - (suma % 11);
+            let dvCalculado = (dvEsperado === 11) ? '0' : (dvEsperado === 10) ? 'K' : String(dvEsperado);
+            
+            return dv === dvCalculado;
+        }
+        window.validarRutChileno = validarRutChileno;
+
+        // Formateador automático de RUT chileno (ej: 12.345.678-9)
+        function formatearRutChileno(rut) {
+            if (!rut) return '';
+            let valor = rut.replace(/[^0-9kK]/g, '').toUpperCase();
+            if (valor.length <= 1) return valor;
+            let cuerpo = valor.slice(0, -1);
+            let dv = valor.slice(-1);
+            let formateado = '';
+            while (cuerpo.length > 3) {
+                formateado = '.' + cuerpo.slice(-3) + formateado;
+                cuerpo = cuerpo.slice(0, -3);
+            }
+            return cuerpo + formateado + '-' + dv;
+        }
+        window.formatearRutChileno = formatearRutChileno;
+
+        // 3. Validador de Correo Electrónico Institucional y General
+        function validarEmail(email) {
+            if (!email || typeof email !== 'string') return false;
+            const regex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+            return regex.test(email.trim());
+        }
+        window.validarEmail = validarEmail;
+
+        // 4. Bloqueo de números en campos de texto (Nombres, Apellidos, Títulos)
+        function bloquearNumerosInput(e) {
+            if (e.key && e.key.length === 1 && /[0-9]/.test(e.key)) {
+                e.preventDefault();
+                return false;
+            }
+        }
+        window.bloquearNumerosInput = bloquearNumerosInput;
+
+        // 5. Drawer Lateral de Edición Rápida (drawer_editor.html)
+        let drawerActivoTipo = null;
+        let drawerActivoId = null;
+
+        function abrirAdminDrawer(tipo, id) {
+            drawerActivoTipo = tipo;
+            drawerActivoId = id;
+            const drawer = document.getElementById('adminSlideDrawer');
+            const overlay = document.getElementById('adminSlideDrawerOverlay');
+            const titleEl = document.getElementById('drawerHeaderTitle');
+            const subEl = document.getElementById('drawerHeaderSubtitle');
+            const bodyEl = document.getElementById('drawerBodyContent');
+            if (!drawer || !bodyEl) return;
+
+            if (tipo === 'vecino') {
+                const v = datasetVecinos.find(item => item.id === id);
+                if (!v) return;
+                if (titleEl) titleEl.textContent = 'Editar Vecino: ' + v.nombre;
+                if (subEl) subEl.textContent = `RUT: ${v.rut} • Sede: ${v.territorio}`;
+                bodyEl.innerHTML = `
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold">Nombre Completo</label>
+                        <input type="text" class="form-control" id="drawerInputNombre" value="${v.nombre}" onkeypress="bloquearNumerosInput(event)">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold">RUT Chileno</label>
+                        <input type="text" class="form-control" id="drawerInputRut" value="${v.rut}" readonly>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold">Dirección</label>
+                        <input type="text" class="form-control" id="drawerInputDireccion" value="${v.direccion}">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold">Teléfono Móvil</label>
+                        <input type="text" class="form-control" id="drawerInputTelefono" value="${v.telefono}">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold">Territorio / Delegación</label>
+                        <select class="form-select" id="drawerSelectTerritorio">
+                            <option value="Centro" ${v.territorio === 'Centro' ? 'selected' : ''}>Centro Histórico</option>
+                            <option value="Norte" ${v.territorio === 'Norte' ? 'selected' : ''}>Las Compañías</option>
+                            <option value="Sur" ${v.territorio === 'Sur' ? 'selected' : ''}>La Pampa</option>
+                            <option value="Oriente" ${v.territorio === 'Oriente' ? 'selected' : ''}>La Antena - La Florida</option>
+                            <option value="Costa" ${v.territorio === 'Costa' ? 'selected' : ''}>Avenida del Mar</option>
+                            <option value="Rural" ${v.territorio === 'Rural' ? 'selected' : ''}>Sector Rural</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold">Estado</label>
+                        <select class="form-select" id="drawerSelectEstado">
+                            <option value="Activo" ${v.estado === 'Activo' ? 'selected' : ''}>Activo</option>
+                            <option value="Inactivo" ${v.estado === 'Inactivo' ? 'selected' : ''}>Inactivo</option>
+                        </select>
+                    </div>
+                `;
+            } else if (tipo === 'usuario') {
+                const u = datasetUsuarios.find(item => item.id === id);
+                if (!u) return;
+                if (titleEl) titleEl.textContent = 'Editar Funcionario: ' + u.full_name;
+                if (subEl) subEl.textContent = `Cuenta institucional: ${u.email}`;
+                bodyEl.innerHTML = `
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold">Nombre Funcionario</label>
+                        <input type="text" class="form-control" id="drawerInputNombre" value="${u.full_name}" onkeypress="bloquearNumerosInput(event)">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold">Correo Institucional</label>
+                        <input type="email" class="form-control" id="drawerInputEmail" value="${u.email}">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold">Estado del Funcionario</label>
+                        <select class="form-select" id="drawerSelectEstado">
+                            <option value="Activo" ${u.status === 'Activo' ? 'selected' : ''}>Activo</option>
+                            <option value="Inactivo" ${u.status === 'Inactivo' ? 'selected' : ''}>Inactivo</option>
+                        </select>
+                    </div>
+                `;
+            } else {
+                bodyEl.innerHTML = `<p class="text-muted text-center py-4">Seleccione un registro para editar en el panel lateral.</p>`;
+            }
+
+            drawer.classList.add('open');
+            if (overlay) overlay.classList.add('active');
+        }
+        window.abrirAdminDrawer = abrirAdminDrawer;
+
+        function cerrarAdminDrawer() {
+            const drawer = document.getElementById('adminSlideDrawer');
+            const overlay = document.getElementById('adminSlideDrawerOverlay');
+            if (drawer) drawer.classList.remove('open');
+            if (overlay) overlay.classList.remove('active');
+            drawerActivoTipo = null;
+            drawerActivoId = null;
+        }
+        window.cerrarAdminDrawer = cerrarAdminDrawer;
+
+        function ejecutarGuardadoDrawer() {
+            if (!drawerActivoTipo || !drawerActivoId) {
+                cerrarAdminDrawer();
+                return;
+            }
+
+            if (drawerActivoTipo === 'vecino') {
+                const v = datasetVecinos.find(item => item.id === drawerActivoId);
+                if (v) {
+                    const nuevoNombre = document.getElementById('drawerInputNombre')?.value?.trim();
+                    const nuevaDir = document.getElementById('drawerInputDireccion')?.value?.trim();
+                    const nuevoTel = document.getElementById('drawerInputTelefono')?.value?.trim();
+                    const nuevoTer = document.getElementById('drawerSelectTerritorio')?.value;
+                    const nuevoEst = document.getElementById('drawerSelectEstado')?.value;
+
+                    if (!nuevoNombre || !nuevaDir) {
+                        Swal.fire({ icon: 'warning', title: 'Campos requeridos', text: 'El nombre y la dirección son obligatorios y no pueden quedar vacíos.' });
+                        return;
+                    }
+
+                    v.nombre = sanitizarTexto(nuevoNombre);
+                    v.direccion = sanitizarTexto(nuevaDir);
+                    v.telefono = sanitizarTexto(nuevoTel);
+                    v.territorio = nuevoTer;
+                    v.estado = nuevoEst;
+
+                    ejecutarFiltroCompletoVecinos();
+                    cerrarAdminDrawer();
+                    Swal.fire({
+                        toast: true,
+                        position: 'top-end',
+                        icon: 'success',
+                        title: '✓ Vecino actualizado desde el panel lateral',
+                        showConfirmButton: false,
+                        timer: 2000
+                    });
+                }
+            } else if (drawerActivoTipo === 'usuario') {
+                const u = datasetUsuarios.find(item => item.id === drawerActivoId);
+                if (u) {
+                    const nuevoNombre = document.getElementById('drawerInputNombre')?.value?.trim();
+                    const nuevoEmail = document.getElementById('drawerInputEmail')?.value?.trim();
+                    const nuevoEst = document.getElementById('drawerSelectEstado')?.value;
+
+                    if (!validarEmail(nuevoEmail)) {
+                        Swal.fire({ icon: 'warning', title: 'Correo Inválido', text: 'Por favor ingrese un formato de correo válido.' });
+                        return;
+                    }
+
+                    fetch(`/api/users/${u.id}/update/`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': getCookie('csrftoken') || ''
+                        },
+                        body: JSON.stringify({
+                            full_name: sanitizarTexto(nuevoNombre),
+                            email: nuevoEmail,
+                            status: nuevoEst
+                        })
+                    }).then(r => r.json()).then(data => {
+                        if (data.success) {
+                            cerrarAdminDrawer();
+                            cargarUsuariosDesdeDB(false);
+                            Swal.fire({
+                                toast: true,
+                                position: 'top-end',
+                                icon: 'success',
+                                title: '✓ Funcionario actualizado en tiempo real en la BD',
+                                showConfirmButton: false,
+                                timer: 2500
+                            });
+                        } else {
+                            Swal.fire({ icon: 'error', title: 'Error', text: data.message });
+                        }
+                    });
+                }
+            }
+        }
+        window.ejecutarGuardadoDrawer = ejecutarGuardadoDrawer;
+
+        // 6. Barra Flotante de Acciones en Lote (floating_batch_bar.html)
+        function actualizarBarraLoteUI() {
+            const bar = document.getElementById('adminFloatingActionBar');
+            const badge = document.getElementById('batchCountNumber');
+            if (!bar) return;
+            const cant = seleccionadosIds ? seleccionadosIds.size : 0;
+            if (cant > 0) {
+                if (badge) badge.textContent = `${cant} seleccionado${cant > 1 ? 's' : ''}`;
+                bar.classList.add('visible');
+            } else {
+                bar.classList.remove('visible');
+            }
+        }
+        window.actualizarBarraLoteUI = actualizarBarraLoteUI;
+
+        function deseleccionarTodoFilas() {
+            if (seleccionadosIds) seleccionadosIds.clear();
+            const checkHeader = document.getElementById('checkAllVecinos');
+            if (checkHeader) checkHeader.checked = false;
+            document.querySelectorAll('.fila-check').forEach(chk => { chk.checked = false; });
+            actualizarBarraLoteUI();
+            mostrarToast('✓ Selección desmarcada');
+        }
+        window.deseleccionarTodoFilas = deseleccionarTodoFilas;
+
+        function ejecutarAccionLote(accion) {
+            if (!seleccionadosIds || seleccionadosIds.size === 0) {
+                Swal.fire({ icon: 'info', title: 'Sin selección', text: 'No hay filas seleccionadas.' });
+                return;
+            }
+
+            if (accion === 'toggle-status') {
+                cambiarEstadoSeleccionados();
+            } else if (accion === 'export-excel') {
+                exportarSeleccionadosExcel();
+            } else if (accion === 'delete') {
+                eliminarSeleccionadosMasivo();
+            }
+        }
+        window.ejecutarAccionLote = ejecutarAccionLote;
+
+        // 7. Módulo de Metas Institucionales SGR (metas.html)
+        function exportarMetasExcel() {
+            try {
+                if (typeof XLSX === 'undefined') throw new Error("Librería SheetJS XLSX no disponible");
+                const metasData = [
+                    { 'Cargo Municipal': 'Territorial OO.CC.', 'Ítem Medible': 'Operativos Vecinales y Terreno', 'Ponderador (%)': 35, 'Meta Trimestral': '45 operativos', 'Avance Real': '41 ops.', 'Cumplimiento (%)': '91.1%', 'Semáforo': 'Verde' },
+                    { 'Cargo Municipal': 'Gestor Social', 'Ítem Medible': 'Atenciones RSH y Fichas Sociales', 'Ponderador (%)': 30, 'Meta Trimestral': '130 atenciones', 'Avance Real': '118 aten.', 'Cumplimiento (%)': '90.8%', 'Semáforo': 'Verde' },
+                    { 'Cargo Municipal': 'Prevención y Seguridad', 'Ítem Medible': 'Comités Vecinales de Seguridad', 'Ponderador (%)': 20, 'Meta Trimestral': '25 reuniones', 'Avance Real': '22 com.', 'Cumplimiento (%)': '88.0%', 'Semáforo': 'Verde' },
+                    { 'Cargo Municipal': 'Medio Ambiente / Obras', 'Ítem Medible': 'Fiscalización y Retiro de Escombros', 'Ponderador (%)': 15, 'Meta Trimestral': '30 inspecciones', 'Avance Real': '18 insp.', 'Cumplimiento (%)': '60.0%', 'Semáforo': 'Ámbar' }
+                ];
+                const ws = XLSX.utils.json_to_sheet(metasData);
+                const wb = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(wb, ws, "Metas_SGR");
+                XLSX.writeFile(wb, `Metas_Institucionales_SGR_LaSerena_${new Date().toISOString().slice(0, 10)}.xlsx`);
+                mostrarToast("✓ Metas institucionales exportadas a Excel.");
+            } catch (err) {
+                Swal.fire({ icon: 'error', title: 'Error de exportación', text: err.message });
+            }
+        }
+        window.exportarMetasExcel = exportarMetasExcel;
+
+        function abrirModalNuevaMeta() {
+            Swal.fire({
+                title: 'Definir Nueva Meta SGR (RF-007)',
+                html: `
+                    <div class="text-start">
+                        <div class="mb-3">
+                            <label class="form-label small fw-bold text-dark">Cargo Municipal</label>
+                            <select class="form-select" id="swalMetaCargo">
+                                <option value="Territorial OO.CC.">Territorial OO.CC.</option>
+                                <option value="Gestor Social">Gestor Social</option>
+                                <option value="Prevención y Seguridad">Prevención y Seguridad</option>
+                                <option value="Medio Ambiente / Obras">Medio Ambiente / Obras</option>
+                                <option value="Delegado Municipal">Delegado Municipal</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label small fw-bold text-dark">Ítem Medible Evaluado</label>
+                            <input type="text" class="form-control" id="swalMetaItem" placeholder="Ej: Talleres Barriales Comunitarios">
+                        </div>
+                        <div class="row g-2 mb-3">
+                            <div class="col-6">
+                                <label class="form-label small fw-bold text-dark">Ponderador (%)</label>
+                                <input type="number" class="form-control" id="swalMetaPond" min="1" max="100" value="25">
+                            </div>
+                            <div class="col-6">
+                                <label class="form-label small fw-bold text-dark">Meta Cantidad (T3)</label>
+                                <input type="number" class="form-control" id="swalMetaValor" min="1" value="50">
+                            </div>
+                        </div>
+                    </div>
+                `,
+                showCancelButton: true,
+                confirmButtonText: '<i class="bi bi-save me-1"></i> Guardar Meta',
+                cancelButtonText: 'Cancelar',
+                confirmButtonColor: '#1B365D',
+                preConfirm: () => {
+                    const cargo = document.getElementById('swalMetaCargo').value;
+                    const item = document.getElementById('swalMetaItem').value.trim();
+                    const pond = parseFloat(document.getElementById('swalMetaPond').value);
+                    const metaVal = parseInt(document.getElementById('swalMetaValor').value);
+
+                    if (!item) {
+                        Swal.showValidationMessage('El nombre del ítem medible es obligatorio.');
+                        return false;
+                    }
+                    if (isNaN(pond) || pond <= 0 || pond > 100) {
+                        Swal.showValidationMessage('El ponderador debe ser entre 1% y 100%.');
+                        return false;
+                    }
+                    return { cargo, item, pond, metaVal };
+                }
+            }).then((res) => {
+                if (res.isConfirmed) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Meta Registrada',
+                        text: `La meta para '${res.value.item}' (${res.value.cargo}) ha sido registrada con un ponderador del ${res.value.pond}%.`,
+                        timer: 2500,
+                        showConfirmButton: false
+                    });
+                }
+            });
+        }
+        window.abrirModalNuevaMeta = abrirModalNuevaMeta;
+
+        function editarMeta(cargo, item, pond, metaVal) {
+            Swal.fire({
+                title: 'Editar Meta SGR',
+                html: `
+                    <div class="text-start">
+                        <div class="mb-2">
+                            <small class="text-muted d-block">Cargo:</small>
+                            <strong class="text-dark">${cargo}</strong>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label small fw-bold text-dark">Ítem Medible</label>
+                            <input type="text" class="form-control" id="swalEditItem" value="${item}">
+                        </div>
+                        <div class="row g-2">
+                            <div class="col-6">
+                                <label class="form-label small fw-bold text-dark">Ponderación (%)</label>
+                                <input type="number" class="form-control" id="swalEditPond" value="${pond}" min="1" max="100">
+                            </div>
+                            <div class="col-6">
+                                <label class="form-label small fw-bold text-dark">Meta del Período</label>
+                                <input type="text" class="form-control" id="swalEditMetaVal" value="${metaVal}">
+                            </div>
+                        </div>
+                    </div>
+                `,
+                showCancelButton: true,
+                confirmButtonText: 'Actualizar',
+                cancelButtonText: 'Cancelar',
+                confirmButtonColor: '#1B365D'
+            }).then((res) => {
+                if (res.isConfirmed) {
+                    Swal.fire({
+                        toast: true,
+                        position: 'top-end',
+                        icon: 'success',
+                        title: `✓ Meta '${item}' actualizada correctamente`,
+                        showConfirmButton: false,
+                        timer: 2000
+                    });
+                }
+            });
+        }
+        window.editarMeta = editarMeta;
+
+        // 8. Módulo de Tipos de Atención (tipo_atencion.html)
+        function abrirModalNuevoTipoAtencion() {
+            Swal.fire({
+                title: 'Nuevo Tipo de Atención (RF-004)',
+                html: `
+                    <div class="text-start">
+                        <div class="mb-3">
+                            <label class="form-label small fw-bold text-dark">Código Institucional</label>
+                            <input type="text" class="form-control font-monospace" id="swalTipoCod" value="CAT-COM-05">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label small fw-bold text-dark">Nombre del Servicio / Atención</label>
+                            <input type="text" class="form-control" id="swalTipoNom" placeholder="Ej: Alumbrado Público y Eficiencia Energética">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label small fw-bold text-dark">Dirección / Área Responsable</label>
+                            <input type="text" class="form-control" id="swalTipoArea" placeholder="Ej: Dirección de Servicios a la Comunidad">
+                        </div>
+                    </div>
+                `,
+                showCancelButton: true,
+                confirmButtonText: 'Guardar en Catálogo',
+                cancelButtonText: 'Cancelar',
+                confirmButtonColor: '#1B365D',
+                preConfirm: () => {
+                    const nom = document.getElementById('swalTipoNom').value.trim();
+                    if (!nom) {
+                        Swal.showValidationMessage('El nombre de la atención es obligatorio.');
+                        return false;
+                    }
+                    return { nom, cod: document.getElementById('swalTipoCod').value, area: document.getElementById('swalTipoArea').value };
+                }
+            }).then((res) => {
+                if (res.isConfirmed) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Tipo de Atención Creado',
+                        text: `Se agregó '${res.value.nom}' con código ${res.value.cod} al catálogo municipal.`,
+                        timer: 2500,
+                        showConfirmButton: false
+                    });
+                }
+            });
+        }
+        window.abrirModalNuevoTipoAtencion = abrirModalNuevoTipoAtencion;
+
+        function abrirModalNuevaSubAtencion() {
+            Swal.fire({
+                title: 'Nueva Subatención por Categoría',
+                html: `
+                    <div class="text-start">
+                        <div class="mb-3">
+                            <label class="form-label small fw-bold text-dark">Nombre de la Subatención</label>
+                            <input type="text" class="form-control" id="swalSubNom" placeholder="Ej: Certificado de Residencia Comunal">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label small fw-bold text-dark">Tipo de Atención Principal</label>
+                            <select class="form-select" id="swalSubCat">
+                                <option value="Atención Social (CAT-SOC-01)">Atención Social (CAT-SOC-01)</option>
+                                <option value="Operativos Vecinales (CAT-TER-02)">Operativos Vecinales (CAT-TER-02)</option>
+                                <option value="Seguridad Ciudadana (CAT-SEG-03)">Seguridad Ciudadana (CAT-SEG-03)</option>
+                                <option value="Medio Ambiente / Obras (CAT-OBR-04)">Medio Ambiente / Obras (CAT-OBR-04)</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label small fw-bold text-dark">Plazo Máximo de Resolución</label>
+                            <input type="text" class="form-control" id="swalSubPlazo" value="5 días hábiles">
+                        </div>
+                    </div>
+                `,
+                showCancelButton: true,
+                confirmButtonText: 'Registrar Subatención',
+                cancelButtonText: 'Cancelar',
+                confirmButtonColor: '#1B365D',
+                preConfirm: () => {
+                    const nom = document.getElementById('swalSubNom').value.trim();
+                    if (!nom) {
+                        Swal.showValidationMessage('El nombre es obligatorio.');
+                        return false;
+                    }
+                    return { nom, cat: document.getElementById('swalSubCat').value, plazo: document.getElementById('swalSubPlazo').value };
+                }
+            }).then((res) => {
+                if (res.isConfirmed) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Subatención Registrada',
+                        text: `Se vinculó '${res.value.nom}' a '${res.value.cat}'.`,
+                        timer: 2500,
+                        showConfirmButton: false
+                    });
+                }
+            });
+        }
+        window.abrirModalNuevaSubAtencion = abrirModalNuevaSubAtencion;
+
+        function abrirModalNuevoTipoGestion() {
+            Swal.fire({
+                title: 'Nuevo Tipo de Gestión (RN-012)',
+                html: `
+                    <div class="text-start">
+                        <div class="mb-3">
+                            <label class="form-label small fw-bold text-dark">Etapa del Proceso</label>
+                            <select class="form-select" id="swalGestEtapa">
+                                <option value="Etapa 1">Etapa 1: Ingreso y Recepción</option>
+                                <option value="Etapa 2">Etapa 2: Visita en Terreno / Derivación</option>
+                                <option value="Etapa 3">Etapa 3: Cierre y Resolución</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label small fw-bold text-dark">Nombre de la Gestión</label>
+                            <input type="text" class="form-control" id="swalGestNom" placeholder="Ej: Informe Técnico Social Favorable">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label small fw-bold text-dark">Descripción Operativa</label>
+                            <textarea class="form-control" id="swalGestDesc" rows="2" placeholder="Detalle técnico de la acción ejecutada..."></textarea>
+                        </div>
+                    </div>
+                `,
+                showCancelButton: true,
+                confirmButtonText: 'Guardar Gestión',
+                cancelButtonText: 'Cancelar',
+                confirmButtonColor: '#1B365D'
+            }).then((res) => {
+                if (res.isConfirmed) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Gestión Registrada',
+                        text: 'La nueva etapa operativa quedó registrada en el flujo de atenciones.',
+                        timer: 2000,
+                        showConfirmButton: false
+                    });
+                }
+            });
+        }
+        window.abrirModalNuevoTipoGestion = abrirModalNuevoTipoGestion;
+
+        function editarTipoAtencion(codigo, nombre, area) {
+            Swal.fire({
+                title: `Editar Tipo de Atención: ${codigo}`,
+                html: `
+                    <div class="text-start">
+                        <div class="mb-3">
+                            <label class="form-label small fw-bold text-dark">Nombre de la Atención</label>
+                            <input type="text" class="form-control" id="swalEditTipoNom" value="${nombre}">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label small fw-bold text-dark">Área Responsable</label>
+                            <input type="text" class="form-control" id="swalEditTipoArea" value="${area}">
+                        </div>
+                    </div>
+                `,
+                showCancelButton: true,
+                confirmButtonText: 'Actualizar',
+                cancelButtonText: 'Cancelar',
+                confirmButtonColor: '#1B365D'
+            }).then((res) => {
+                if (res.isConfirmed) {
+                    mostrarToast(`✓ Categoría ${codigo} actualizada en catálogo.`);
+                }
+            });
+        }
+        window.editarTipoAtencion = editarTipoAtencion;
+
+        function editarSubAtencion(nombre, cat, plazo) {
+            Swal.fire({
+                title: `Editar Subatención`,
+                html: `
+                    <div class="text-start">
+                        <div class="mb-3">
+                            <label class="form-label small fw-bold text-dark">Nombre</label>
+                            <input type="text" class="form-control" id="swalEditSubNom" value="${nombre}">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label small fw-bold text-dark">Categoría Principal</label>
+                            <input type="text" class="form-control" readonly value="${cat}">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label small fw-bold text-dark">Plazo Máximo</label>
+                            <input type="text" class="form-control" id="swalEditSubPlazo" value="${plazo}">
+                        </div>
+                    </div>
+                `,
+                showCancelButton: true,
+                confirmButtonText: 'Actualizar',
+                cancelButtonText: 'Cancelar',
+                confirmButtonColor: '#1B365D'
+            }).then((res) => {
+                if (res.isConfirmed) {
+                    mostrarToast(`✓ Subatención actualizada.`);
+                }
+            });
+        }
+        window.editarSubAtencion = editarSubAtencion;
+
+        function editarTipoGestion(etapa, nombre, desc) {
+            Swal.fire({
+                title: `Editar Etapa ${etapa} de Gestión`,
+                html: `
+                    <div class="text-start">
+                        <div class="mb-3">
+                            <label class="form-label small fw-bold text-dark">Nombre de la Gestión</label>
+                            <input type="text" class="form-control" id="swalEditGestNom" value="${nombre}">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label small fw-bold text-dark">Descripción</label>
+                            <textarea class="form-control" id="swalEditGestDesc" rows="2">${desc}</textarea>
+                        </div>
+                    </div>
+                `,
+                showCancelButton: true,
+                confirmButtonText: 'Actualizar',
+                cancelButtonText: 'Cancelar',
+                confirmButtonColor: '#1B365D'
+            }).then((res) => {
+                if (res.isConfirmed) {
+                    mostrarToast(`✓ Flujo de gestión para Etapa ${etapa} actualizado.`);
+                }
+            });
+        }
+        window.editarTipoGestion = editarTipoGestion;
+
+        // 9. Enlace automático de validaciones institucionales y eventos al cargar el documento
+        document.addEventListener('DOMContentLoaded', function() {
+            // A. Campos donde NO se permite escribir números (Nombres, Apellidos, Cargos)
+            const camposSinNumeros = ['usrFullName', 'vecinoNombre', 'txtAtencionNombre', 'modalRolNombre'];
+            camposSinNumeros.forEach(id => {
+                const el = document.getElementById(id);
+                if (el) {
+                    el.addEventListener('keypress', bloquearNumerosInput);
+                    el.addEventListener('input', function() {
+                        this.value = this.value.replace(/[0-9]/g, '');
+                    });
+                }
+            });
+
+            // B. Campos de RUT chileno: formateo automático con puntos y guion al desenfocar o escribir
+            const camposRut = ['usrRut', 'vecinoRut'];
+            camposRut.forEach(id => {
+                const el = document.getElementById(id);
+                if (el) {
+                    el.addEventListener('blur', function() {
+                        if (this.value) {
+                            this.value = formatearRutChileno(this.value);
+                        }
+                    });
+                }
+            });
+
+            // C. Monitorear selección de checkboxes de vecinos para mostrar/ocultar barra flotante de lote
+            const checkHeader = document.getElementById('checkAllVecinos');
+            if (checkHeader) {
+                checkHeader.addEventListener('change', function() {
+                    setTimeout(actualizarBarraLoteUI, 50);
+                });
+            }
+
+            document.addEventListener('change', function(e) {
+                if (e.target && e.target.classList.contains('fila-check')) {
+                    actualizarBarraLoteUI();
+                }
+            });
+        });
+
+

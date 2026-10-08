@@ -196,7 +196,7 @@ function ejecutarGuardadoDrawer() {
     }
 }
 
-function guardarUsuarioDesdeDrawer(id) {
+async function guardarUsuarioDesdeDrawer(id) {
     const nombre = document.getElementById('drawerUserFullName').value;
     const rut = document.getElementById('drawerUserRut').value;
     const email = document.getElementById('drawerUserEmail').value;
@@ -204,32 +204,43 @@ function guardarUsuarioDesdeDrawer(id) {
     const delegation = document.getElementById('drawerUserDelegation').value;
     const position = document.getElementById('drawerUserPosition').value;
 
-    if (id && window.datasetUsuarios) {
-        const u = window.datasetUsuarios.find(item => item.id == id);
-        if (u) {
-            u.full_name = nombre;
-            u.rut = rut;
-            u.email = email;
-            u.status = status;
-            u.delegation_name = delegation;
-            u.position_name = position;
-        }
-    } else if (window.datasetUsuarios) {
-        window.datasetUsuarios.unshift({
-            id: Date.now(),
-            full_name: nombre,
-            rut: rut,
-            email: email,
-            status: status,
-            delegation_name: delegation,
-            position_name: position,
-            roles: ['Gestor']
-        });
+    const payload = {
+        full_name: nombre,
+        rut: rut,
+        username: rut,
+        email: email,
+        status: status,
+        delegation_name: delegation,
+        position_name: position
+    };
+
+    let url = '/api/users/create/';
+    if (id) {
+        url = `/api/users/${id}/update/`;
     }
 
-    cerrarAdminDrawer();
-    if (typeof renderTablaUsuarios === 'function') renderTablaUsuarios();
-    if (typeof mostrarToast === 'function') mostrarToast('Funcionario guardado correctamente');
+    try {
+        const res = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+        const data = await res.json();
+        
+        if (data.success) {
+            Swal.fire('¡Éxito!', data.message || 'Funcionario guardado correctamente', 'success');
+            cerrarAdminDrawer();
+            if (typeof initUsuariosView === 'function') {
+                initUsuariosView(); // recargar
+            } else if (typeof renderTablaUsuarios === 'function') {
+                renderTablaUsuarios();
+            }
+        } else {
+            Swal.fire('Error', data.message || 'Error al guardar', 'error');
+        }
+    } catch (err) {
+        Swal.fire('Error', 'No se pudo conectar con el servidor.', 'error');
+    }
 }
 
 function guardarVecinoDesdeDrawer(id) {
@@ -328,14 +339,16 @@ function ejecutarAccionLote(accion) {
         }
         deseleccionarTodoFilas();
     } else if (accion === 'delete') {
-        if (confirm(`¿Está seguro de eliminar los ${selectedTableRows.size} registros seleccionados? Esta acción requiere privilegios de Administrador Central.`)) {
-            if (window.datasetVecinos) {
-                window.datasetVecinos = window.datasetVecinos.filter(v => !selectedTableRows.has(v.id));
-                if (typeof renderTablaVecinos === 'function') renderTablaVecinos();
+        Swal.fire({title: "¿Estás seguro?", text: `¿Está seguro de eliminar los ${selectedTableRows.size} registros seleccionados? Esta acción requiere privilegios de Administrador Central.`, icon: "warning", showCancelButton: true, confirmButtonText: "Eliminar", cancelButtonText: "Cancelar"}).then((res) => { 
+            if (res.isConfirmed) {
+                if (window.datasetVecinos) {
+                    window.datasetVecinos = window.datasetVecinos.filter(v => !selectedTableRows.has(v.id));
+                    if (typeof renderTablaVecinos === 'function') renderTablaVecinos();
+                }
+                if (typeof mostrarToast === 'function') mostrarToast(`Se eliminaron ${selectedTableRows.size} registros`);
+                deseleccionarTodoFilas();
             }
-            if (typeof mostrarToast === 'function') mostrarToast(`Se eliminaron ${selectedTableRows.size} registros`);
-            deseleccionarTodoFilas();
-        }
+        });
     }
 }
 
@@ -347,31 +360,6 @@ document.addEventListener('keydown', function(e) {
     }
 });
 
-// 4. FILTROS RÁPIDOS POR FACETAS (FACET PILLS) PARA USUARIOS
-function filtrarUsuariosFacet(valor, btn) {
-    if (btn) {
-        btn.closest('.facet-pill-group').querySelectorAll('.facet-pill').forEach(p => p.classList.remove('active'));
-        btn.classList.add('active');
-    }
-    const searchInput = document.getElementById('searchUsuariosInput');
-    const selectEstado = document.getElementById('filtroEstadoUsuario');
-    const selectRol = document.getElementById('filtroRolUsuario');
-    const selectDelegacion = document.getElementById('filtroDelegacionUsuario');
-
-    if (!valor) {
-        if (selectEstado) selectEstado.value = '';
-        if (selectRol) selectRol.value = '';
-        if (selectDelegacion) selectDelegacion.value = '';
-        if (searchInput) searchInput.value = '';
-    } else if (valor === 'Activo' || valor === 'Inactivo') {
-        if (selectEstado) selectEstado.value = valor;
-    } else if (valor === 'admin') {
-        if (searchInput) searchInput.value = 'admin';
-    } else {
-        if (selectDelegacion) selectDelegacion.value = valor;
-    }
-    if (typeof filtrarUsuarios === 'function') filtrarUsuarios();
-}
 
 function toggleSeleccionarTodosUsuarios(checked) {
     selectedTableRows.clear();

@@ -2,6 +2,7 @@ import datetime
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from .models import Activity, Evidence, Validation
+from organization.models import Delegation
 
 def get_or_create_initial_sample_data():
     if Activity.objects.exists():
@@ -635,3 +636,199 @@ def activity_validate_view(request, pk):
         messages.success(request, f"La actividad {activity.activity_code} ha sido marcada como '{decision_label}'.")
 
     return redirect('activities:dashboard')
+
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+import json
+from .models import Vecino
+
+@csrf_exempt
+def api_vecinos(request):
+    if request.method == 'GET':
+        vecinos = list(Vecino.objects.values('id', 'nombre', 'rut', 'direccion', 'telefono', 'territorio', 'estado'))
+        return JsonResponse({'success': True, 'vecinos': vecinos})
+    elif request.method == 'POST':
+        data = json.loads(request.body)
+        vecino = Vecino.objects.create(**data)
+        return JsonResponse({'success': True, 'message': 'Vecino creado', 'id': vecino.id})
+
+@csrf_exempt
+def api_vecino_detail(request, pk):
+    try:
+        vecino = Vecino.objects.get(pk=pk)
+    except Vecino.DoesNotExist:
+        return JsonResponse({'success': False, 'message': 'Vecino no encontrado'})
+        
+    if request.method == 'PUT' or request.method == 'POST':
+        data = json.loads(request.body)
+        for k, v in data.items():
+            setattr(vecino, k, v)
+        vecino.save()
+        return JsonResponse({'success': True, 'message': 'Vecino actualizado'})
+    elif request.method == 'DELETE':
+        vecino.delete()
+        return JsonResponse({'success': True, 'message': 'Vecino eliminado'})
+
+@csrf_exempt
+def api_atenciones(request):
+    """
+    CRUD API para Atenciones y Casos Sociales en el Dashboard de Administrador (RN-012, RF-011)
+    """
+    if request.method == 'GET':
+        atenciones_qs = Activity.objects.all().order_by('-activity_date', '-created_at')
+        atenciones = []
+        for a in atenciones_qs:
+            evid = a.evidences.first()
+            val = a.validations.first()
+            atenciones.append({
+                'id': a.id,
+                'activity_code': a.activity_code,
+                'evidence_code': evid.evidence_code if evid else f"EVI-{a.activity_code}",
+                'contact_name': a.contact_name or 'Vecino(a) Comunal',
+                'contact_phone': a.contact_phone or '+56 9 8452 1102',
+                'delegation': a.delegation.name if a.delegation else 'Centro Histórico',
+                'service': a.problem_description[:45] + ('...' if len(a.problem_description) > 45 else ''),
+                'title': a.problem_description,
+                'description': a.executed_action,
+                'problem_description': a.problem_description,
+                'executed_action': a.executed_action,
+                'stage': 2 if a.is_collective_agenda else 1,
+                'date': a.activity_date.strftime('%d/%m/%Y') if a.activity_date else '',
+                'activity_date': a.activity_date.strftime('%d/%m/%Y') if a.activity_date else '',
+                'status': a.validation_status or 'Pending',
+                'validation_status': a.validation_status or 'Pending',
+                'verifier_notes': val.observations if val else 'Pendiente de revisión técnica en terreno',
+                'observation': val.observations if val else 'Pendiente de revisión técnica en terreno'
+            })
+        return JsonResponse({'success': True, 'atenciones': atenciones})
+
+    elif request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            code = data.get('activity_code')
+            if not code:
+                count = Activity.objects.count() + 844
+                code = f"ACT-2026-{count:04d}"
+
+            # Delegación
+            del_obj = None
+            del_name = data.get('delegation')
+            if del_name:
+                del_obj = Delegation.objects.filter(name__icontains=del_name.replace('Delegación', '').strip()).first()
+
+            prob_desc = data.get('problem_description') or data.get('title') or 'Atención ciudadana ingresada vía portal municipal'
+            exec_act = data.get('executed_action') or data.get('description') or 'Gestión social y derivación a unidad correspondiente'
+            val_stat = data.get('validation_status') or data.get('status') or 'Approved'
+
+            act = Activity.objects.create(
+                activity_code=code,
+                activity_date=datetime.date.today(),
+                problem_description=prob_desc,
+                executed_action=exec_act,
+                contact_name=data.get('contact_name', 'Vecino Comunal'),
+                contact_phone=data.get('contact_phone', ''),
+                is_collective_agenda=bool(data.get('is_collective_agenda', True)),
+                validation_status=val_stat,
+                delegation=del_obj
+            )
+
+            Evidence.objects.create(
+                activity=act,
+                evidence_code=f"EVI-{act.activity_code}",
+                file_path=f"evidencias/{act.activity_code}.jpg",
+                file_name=f"{act.activity_code}.jpg"
+            )
+
+            if act.validation_status == 'Approved':
+                Validation.objects.create(
+                    activity=act,
+                    decision='Approved',
+                    observations='Validación técnica inmediata registrada en el sistema de administración.'
+                )
+
+            return JsonResponse({'success': True, 'message': f'Atención {act.activity_code} guardada con éxito', 'id': act.id})
+        except Exception as e:
+            return JsonResponse({'success': False, 'message': str(e)}, status=500)
+
+@csrf_exempt
+def api_atencion_detail(request, pk):
+    try:
+        a = Activity.objects.get(pk=pk)
+    except Activity.DoesNotExist:
+        return JsonResponse({'success': False, 'message': 'Atención no encontrada'}, status=404)
+
+    if request.method == 'GET':
+        evid = a.evidences.first()
+        val = a.validations.first()
+        return JsonResponse({
+            'success': True,
+            'atencion': {
+                'id': a.id,
+                'activity_code': a.activity_code,
+                'evidence_code': evid.evidence_code if evid else f"EVI-{a.activity_code}",
+                'contact_name': a.contact_name or 'Vecino(a) Comunal',
+                'contact_phone': a.contact_phone or '+56 9 8452 1102',
+                'delegation': a.delegation.name if a.delegation else 'Delegación Centro Histórico',
+                'problem_description': a.problem_description,
+                'executed_action': a.executed_action,
+                'stage': 'Etapa 2 de 3' if a.is_collective_agenda else 'Etapa 1 de 3',
+                'activity_date': a.activity_date.strftime('%d/%m/%Y') if a.activity_date else '',
+                'validation_status': a.validation_status or 'Pending',
+                'observation': val.observations if val else 'Sin observaciones registradas'
+            }
+        })
+    elif request.method in ['PUT', 'POST']:
+        data = json.loads(request.body)
+        if 'problem_description' in data: a.problem_description = data['problem_description']
+        if 'executed_action' in data: a.executed_action = data['executed_action']
+        if 'contact_name' in data: a.contact_name = data['contact_name']
+        if 'contact_phone' in data: a.contact_phone = data['contact_phone']
+        if 'validation_status' in data: 
+            a.validation_status = data['validation_status']
+            Validation.objects.update_or_create(
+                activity=a,
+                defaults={'decision': a.validation_status, 'observations': data.get('observation', 'Actualizado por Administrador')}
+            )
+        a.save()
+        return JsonResponse({'success': True, 'message': 'Atención actualizada correctamente'})
+    elif request.method == 'DELETE':
+        a.delete()
+        return JsonResponse({'success': True, 'message': 'Atención eliminada de la base de datos'})
+
+@csrf_exempt
+def api_toggle_rol_permiso(request):
+    """
+    Permite activar/desactivar permisos (lectura, edicion, derivacion, cierre) en los roles
+    y persistirlos directamente en la base de datos MySQL (tabla: rol).
+    """
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'message': 'Método no permitido'}, status=405)
+    
+    from organization.models import Role
+    data = json.loads(request.body)
+    rol_name = data.get('rol_name', '').strip()
+    permiso = data.get('permiso', '').strip().lower()
+    enabled = bool(data.get('enabled', False))
+
+    rol = Role.objects.filter(name__iexact=rol_name).first()
+    if not rol:
+        # Si no existe por nombre exacto, buscar coincidencia parcial o crearlo
+        rol = Role.objects.filter(name__icontains=rol_name.split()[0]).first()
+        if not rol:
+            rol = Role.objects.create(name=rol_name, description=f"Rol de {rol_name}", permissions_data=[])
+
+    perms = set(p.lower() for p in (rol.permissions_data or []))
+    if enabled:
+        perms.add(permiso)
+    else:
+        perms.discard(permiso)
+
+    rol.permissions_data = list(perms)
+    rol.save()
+
+    return JsonResponse({
+        'success': True,
+        'message': f"Permiso de {permiso.capitalize()} {'activado' if enabled else 'desactivado'} para '{rol.name}' en la base de datos.",
+        'permissions': list(perms)
+    })
+
