@@ -74,8 +74,8 @@ def _permission_denied(permission):
 
 def _session_role_required(request, allowed_roles):
     """Devuelve una redirección si no existe una sesión demo/autenticada válida."""
-    role = request.session.get('user_role')
-    if role not in allowed_roles:
+    profile = _actor(request)
+    if not profile or not profile.roles.filter(name__in=allowed_roles, deleted_at__isnull=True).exists():
         return redirect('core:login')
     return None
 
@@ -152,20 +152,61 @@ def get_or_create_initial_sample_data():
             )
 
 def dashboard_view(request):
-    role = request.session.get('user_role', '')
-    if 'Administrador' in role or 'Alcaldía' in role:
+    profile = _actor(request)
+    if not profile:
+        return redirect('core:login')
+    roles = set(profile.roles.filter(deleted_at__isnull=True).values_list('name', flat=True))
+    if _is_admin(request):
         return redirect('activities:dashboard_admin')
-    elif 'Supervisor' in role or 'Verificador' in role:
+    if 'Coordinador del Sistema' in roles:
+        return redirect('activities:dashboard_coordinador')
+    if 'Delegado Municipal' in roles:
+        return redirect('activities:dashboard_delegado')
+    if 'Usuario de Consulta' in roles:
+        return redirect('activities:dashboard_consulta')
+    if roles.intersection({'Verificador Técnico', 'Verificador'}):
         return redirect('activities:dashboard_verificador')
-    else:
+    if roles.intersection({'Gestor Territorial', 'Funcionario', 'Funcionario / Gestor Territorial'}):
         return redirect('activities:dashboard_gestor')
+    return redirect('core:login')
+
+
+def _readonly_landing(request, role_name, title):
+    from django.http import HttpResponse
+    from django.utils.html import escape
+    profile = _actor(request)
+    if not profile or not profile.roles.filter(name=role_name, deleted_at__isnull=True).exists():
+        return redirect('core:login')
+    count = _activity_scope(request).count()
+    name = escape(profile.full_name)
+    territory = escape(profile.delegation.name if profile.delegation else 'Sin delegación')
+    return HttpResponse(
+        '<!doctype html><html lang="es"><meta charset="utf-8">'
+        '<title>' + escape(title) + '</title>'
+        '<main style="font:16px system-ui;max-width:50rem;margin:3rem auto;padding:1rem">'
+        '<nav><a href="/">Inicio</a> · <a href="/logout/">Cerrar sesión</a></nav>'
+        '<h1>' + escape(title) + '</h1>'
+        '<p>Usuario: ' + name + '</p><p>Delegación: ' + territory + '</p>'
+        '<section aria-label="Resumen"><h2>Atenciones visibles</h2><p>' + str(count) + '</p></section>'
+        '<p>Vista de consulta para este rol.</p></main></html>'
+    )
+
+
+def dashboard_coordinador_view(request):
+    return _readonly_landing(request, 'Coordinador del Sistema', 'Coordinación del Sistema')
+
+
+def dashboard_delegado_view(request):
+    return _readonly_landing(request, 'Delegado Municipal', 'Delegación Municipal')
+
+
+def dashboard_consulta_view(request):
+    return _readonly_landing(request, 'Usuario de Consulta', 'Consulta')
+
 
 def dashboard_admin_view(request):
-    access_denied = _session_role_required(request, {'Administrador General'})
-    if access_denied:
-        return access_denied
-
-    get_or_create_initial_sample_data()
+    if not _is_admin(request):
+        return redirect('core:login')
 
     delegations = [
         {'name': 'Centro Histórico', 'compliance': 95.0, 'color': '#10B981', 'status': 'Verde'},
@@ -271,8 +312,6 @@ def dashboard_verificador_view(request):
     if access_denied:
         return access_denied
 
-    get_or_create_initial_sample_data()
-
     evidence_queue = [
         {
             'code': 'COM1761',
@@ -373,8 +412,6 @@ def dashboard_gestor_view(request):
     access_denied = _session_role_required(request, {'Gestor Territorial', 'Funcionario', 'Funcionario / Gestor Territorial'})
     if access_denied:
         return access_denied
-
-    get_or_create_initial_sample_data()
 
     tubo_trabajo = [
         {
