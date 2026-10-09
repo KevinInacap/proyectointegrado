@@ -7,16 +7,62 @@ from organization.models import Delegation
 from core.models import AuditLog
 
 
+def _actor(request):
+    """Identity and permissions come from the authenticated profile, never session claims."""
+    from organization.models import UserProfile
+    if not request.user.is_authenticated or not request.user.is_active:
+        return None
+    return UserProfile.objects.select_related('delegation').filter(
+        user=request.user, status='Activo', deleted_at__isnull=True
+    ).first()
+
+
+def _is_admin(request):
+    profile = _actor(request)
+    return bool(profile and (
+        request.user.is_superuser or profile.roles.filter(
+            name='Administrador General', deleted_at__isnull=True
+        ).exists()
+    ))
+
+
 def _has_matrix_permission(request, permission):
-    """Valida el permiso operativo guardado en Role.permissions_data."""
-    if request.session.get('user_role') == 'Administrador General':
-        return True
-    role_name = (request.session.get('user_role') or '').strip()
-    if not role_name:
+    profile = _actor(request)
+    if not profile:
         return False
-    from organization.models import Role
-    role = Role.objects.filter(name__iexact=role_name, deleted_at__isnull=True).first()
-    return bool(role and permission.lower() in {p.lower() for p in (role.permissions_data or [])})
+    if _is_admin(request):
+        return True
+    return any(
+        permission.lower() in {str(p).lower() for p in (role.permissions_data or [])}
+        for role in profile.roles.filter(deleted_at__isnull=True)
+    )
+
+
+def _activity_scope(request):
+    profile = _actor(request)
+    qs = Activity.objects.filter(deleted_at__isnull=True)
+    if _is_admin(request):
+        return qs
+    if not profile or not profile.delegation_id or profile.delegation.status != 'Activo':
+        return qs.none()
+    return qs.filter(delegation_id=profile.delegation_id)
+
+
+def _delegation_for_write(request, value):
+    profile = _actor(request)
+    if not profile:
+        return None
+    requested = str(value or '').strip()
+    if not requested and not _is_admin(request):
+        return profile.delegation if profile.delegation and profile.delegation.status == 'Activo' else None
+    if not requested:
+        return None
+    # Names and IDs must match exactly. Never use substring matching for access control.
+    qs = Delegation.objects.filter(status='Activo', deleted_at__isnull=True)
+    delegation = qs.filter(pk=int(requested)).first() if requested.isdecimal() else qs.filter(name__iexact=requested).first()
+    if delegation and (_is_admin(request) or delegation.pk == profile.delegation_id):
+        return delegation
+    return None
 
 
 def _permission_denied(permission):
@@ -604,58 +650,43 @@ def dashboard_gestor_view(request):
     return render(request, 'activities/dashboard_gestor.html', context)
 
 def activity_create_view(request):
-    if request.method == 'POST':
-        activity_code = request.POST.get('activity_code', '').strip()
-        activity_date = request.POST.get('activity_date')
-        problem_description = request.POST.get('problem_description', '').strip()
-        executed_action = request.POST.get('executed_action', '').strip()
-        contact_name = request.POST.get('contact_name', '').strip()
-        contact_phone = request.POST.get('contact_phone', '').strip()
-        is_collective_agenda = bool(request.POST.get('is_collective_agenda'))
+    if not _has_matrix_permission(request, 'edicion'):
+        return _permission_denied('edicion')
+    if request.method == 'GET':
+        return render(request, 'activities/activity_form.html', {
+            'generated_code': '', 'today_date': timezone.localdate().isoformat(),
+        })
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'message': 'Método no permitido.'}, status=405)
 
-        if not activity_code:
-            next_num = Activity.objects.count() + 844
-            activity_code = f"ACT-2026-{next_num:04d}"
+    delegation = _delegation_for_write(request, request.POST.get('delegation'))
+    if not delegation:
+        return JsonResponse({'success': False, 'message': 'Delegación no autorizada.'}, status=403)
+    problem = request.POST.get('problem_description', '').strip()
+    action = request.POST.get('executed_action', '').strip()
+    contact = request.POST.get('contact_name', '').strip()
+    phone = request.POST.get('contact_phone', '').strip()
+    try:
+        date = datetime.date.fromisoformat(request.POST.get('activity_date', ''))
+    except ValueError:
+        return JsonResponse({'success': False, 'message': 'Fecha inválida.'}, status=400)
+    if not all((problem, action, contact)) or len(contact) > 150 or len(phone) > 20:
+        return JsonResponse({'success': False, 'message': 'Faltan datos obligatorios o exceden su límite.'}, status=400)
+    if date > timezone.localdate():
+        return JsonResponse({'success': False, 'message': 'La fecha no puede ser futura.'}, status=400)
+    from uuid import uuid4
+    act = Activity(
+        activity_code=f"ACT-{timezone.now():%Y%m%d}-{uuid4().hex[:12].upper()}",
+        activity_date=date, problem_description=problem, executed_action=action,
+        contact_name=contact, contact_phone=phone,
+        is_collective_agenda=request.POST.get('is_collective_agenda') in {'1', 'true', 'on'},
+        validation_status='Pending', delegation=delegation, user=request.user,
+    )
+    act.full_clean()
+    act.save()
+    messages.success(request, f"Actividad {act.activity_code} registrada.")
+    return redirect('activities:dashboard')
 
-        if not activity_date:
-            activity_date = datetime.date.today()
-
-        activity = Activity.objects.create(
-            activity_code=activity_code,
-            activity_date=activity_date,
-            problem_description=problem_description,
-            executed_action=executed_action,
-            contact_name=contact_name,
-            contact_phone=contact_phone,
-            is_collective_agenda=is_collective_agenda,
-            validation_status='Pending'
-        )
-
-        evidence_file = request.FILES.get('evidence_file')
-        file_name = evidence_file.name if evidence_file else f"{activity_code}_respaldo.jpg"
-
-        Evidence.objects.create(
-            activity=activity,
-            evidence_code=f"EVI-{activity_code}",
-            file_path=f"evidencias/{file_name}",
-            file_name=file_name
-        )
-
-        messages.success(
-            request, 
-            f"¡Actividad {activity_code} registrada exitosamente!"
-        )
-        return redirect('activities:dashboard')
-
-    next_num = Activity.objects.count() + 844
-    generated_code = f"ACT-2026-{next_num:04d}"
-    today_date = datetime.date.today().strftime('%Y-%m-%d')
-
-    context = {
-        'generated_code': generated_code,
-        'today_date': today_date,
-    }
-    return render(request, 'activities/activity_form.html', context)
 
 def activity_validate_view(request, pk):
     activity = get_object_or_404(Activity, pk=pk)
@@ -736,6 +767,16 @@ def _serialize_vecino(vecino):
         'estado': vecino.estado,
     }
 
+def _vecino_scope(request):
+    profile = _actor(request)
+    qs = Vecino.objects.filter(deleted_at__isnull=True)
+    if _is_admin(request):
+        return qs
+    if not profile or not profile.delegation_id or profile.delegation.status != 'Activo':
+        return qs.none()
+    return qs.filter(territorio__iexact=profile.delegation.name)
+
+
 def api_vecinos(request):
     if request.method not in {'GET', 'POST'}:
         return JsonResponse({'success': False, 'message': 'Método no permitido.'}, status=405)
@@ -747,7 +788,7 @@ def api_vecinos(request):
         return _permission_denied(required_permission)
 
     if request.method == 'GET':
-        vecinos = [_serialize_vecino(v) for v in Vecino.objects.filter(deleted_at__isnull=True).order_by('nombre')]
+        vecinos = [_serialize_vecino(v) for v in _vecino_scope(request).order_by('nombre')]
         return JsonResponse({'success': True, 'vecinos': vecinos})
     elif request.method == 'POST':
         try:
@@ -755,13 +796,17 @@ def api_vecinos(request):
         except (TypeError, ValueError):
             return JsonResponse({'success': False, 'message': 'Solicitud JSON inválida.'}, status=400)
         payload = _vecino_payload(data)
+        if not _is_admin(request):
+            profile = _actor(request)
+            if payload['territorio'].casefold() != profile.delegation.name.casefold():
+                return JsonResponse({'success': False, 'message': 'Territorio no autorizado.'}, status=403)
         if not payload['nombre'] or not payload['rut'] or not payload['direccion']:
             return JsonResponse({'success': False, 'message': 'Nombre, RUT y dirección son obligatorios.'}, status=400)
         if not _valid_vecino_rut(payload['rut']):
             return JsonResponse({'success': False, 'message': 'RUT inválido. Revisa el número y el dígito verificador.'}, status=400)
         if payload['estado'] not in {'Activo', 'Inactivo'}:
             return JsonResponse({'success': False, 'message': 'Estado de vecino no válido.'}, status=400)
-        if any(_normalize_vecino_rut(v.rut) == _normalize_vecino_rut(payload['rut']) for v in Vecino.objects.filter(deleted_at__isnull=True)):
+        if any(_normalize_vecino_rut(v.rut) == _normalize_vecino_rut(payload['rut']) for v in _vecino_scope(request)):
             return JsonResponse({'success': False, 'message': 'Ya existe un vecino registrado con ese RUT.'}, status=400)
         vecino = Vecino.objects.create(**payload)
         AuditLog.objects.create(
@@ -781,21 +826,27 @@ def api_vecino_detail(request, pk):
         return _permission_denied(required_permission)
 
     try:
-        vecino = Vecino.objects.get(pk=pk)
+        vecino = _vecino_scope(request).get(pk=pk)
     except Vecino.DoesNotExist:
         return JsonResponse({'success': False, 'message': 'Vecino no encontrado'}, status=404)
         
+    if request.method == 'GET':
+        return JsonResponse({'success': True, 'vecino': _serialize_vecino(vecino)})
     if request.method == 'PUT' or request.method == 'POST':
         try:
             data = json.loads(request.body)
         except (TypeError, ValueError):
             return JsonResponse({'success': False, 'message': 'Solicitud JSON inválida.'}, status=400)
         payload = _vecino_payload(data)
+        if not _is_admin(request):
+            profile = _actor(request)
+            if payload['territorio'].casefold() != profile.delegation.name.casefold():
+                return JsonResponse({'success': False, 'message': 'Territorio no autorizado.'}, status=403)
         if not payload['nombre'] or not payload['rut'] or not payload['direccion']:
             return JsonResponse({'success': False, 'message': 'Nombre, RUT y dirección son obligatorios.'}, status=400)
         if not _valid_vecino_rut(payload['rut']):
             return JsonResponse({'success': False, 'message': 'RUT inválido. Revisa el número y el dígito verificador.'}, status=400)
-        duplicate = any(_normalize_vecino_rut(v.rut) == _normalize_vecino_rut(payload['rut']) for v in Vecino.objects.filter(deleted_at__isnull=True).exclude(pk=vecino.pk))
+        duplicate = any(_normalize_vecino_rut(v.rut) == _normalize_vecino_rut(payload['rut']) for v in _vecino_scope(request).exclude(pk=vecino.pk))
         if duplicate:
             return JsonResponse({'success': False, 'message': 'Ya existe otro vecino registrado con ese RUT.'}, status=400)
         previous = _serialize_vecino(vecino)
@@ -818,150 +869,189 @@ def api_vecino_detail(request, pk):
             previous_value=previous, source_ip=request.META.get('REMOTE_ADDR'))
         return JsonResponse({'success': True, 'message': 'Vecino dado de baja y conservado en auditoría.'})
 
+def _attention_payload(request):
+    try:
+        data = json.loads(request.body)
+    except (TypeError, ValueError, UnicodeDecodeError):
+        return None
+    return data if isinstance(data, dict) else None
+
+
+def _attention_text(data, key, limit, required=False):
+    value = data.get(key, '')
+    if not isinstance(value, str):
+        return None
+    value = value.strip()
+    if (required and not value) or len(value) > limit:
+        return None
+    return value
+
+
+def _attention_catalog(data):
+    from .models import ServiceCatalog
+    catalog_id = data.get('catalog_id')
+    attention_type = data.get('attention_type')
+    subattention_type = data.get('subattention_type')
+    if not any((catalog_id, attention_type, subattention_type)):
+        return None, None
+    qs = ServiceCatalog.objects.filter(status='Activo', deleted_at__isnull=True)
+    if catalog_id is not None:
+        try:
+            catalog = qs.get(pk=int(catalog_id))
+        except (ValueError, TypeError, ServiceCatalog.DoesNotExist):
+            return None, 'Tipo de atención no válido.'
+    else:
+        if not isinstance(attention_type, str) or not isinstance(subattention_type, str):
+            return None, 'Tipo y subatención no válidos.'
+        matches = qs.filter(attention_type__iexact=attention_type.strip(),
+                            subattention_type__iexact=subattention_type.strip())
+        if matches.count() != 1:
+            return None, 'La combinación Tipo/Sub Atención no es válida.'
+        catalog = matches.first()
+    if attention_type and (not isinstance(attention_type, str) or catalog.attention_type.casefold() != attention_type.strip().casefold()):
+        return None, 'El tipo no corresponde al catálogo.'
+    if subattention_type and (not isinstance(subattention_type, str) or catalog.subattention_type.casefold() != subattention_type.strip().casefold()):
+        return None, 'La subatención no corresponde al tipo.'
+    return catalog, None
+
+
+def _attention_result(a):
+    evid = a.evidences.first()
+    val = a.validations.first()
+    return {
+        'id': a.id, 'activity_code': a.activity_code,
+        'evidence_code': evid.evidence_code if evid else '',
+        'contact_name': a.contact_name, 'contact_phone': a.contact_phone,
+        'delegation': a.delegation.name if a.delegation else '',
+        'catalog_id': a.catalog_id,
+        'attention_type': a.catalog.attention_type if a.catalog else '',
+        'subattention_type': a.catalog.subattention_type if a.catalog else '',
+        'service': a.catalog.service if a.catalog else '',
+        'title': a.problem_description, 'description': a.executed_action,
+        'problem_description': a.problem_description,
+        'executed_action': a.executed_action,
+        'stage': 2 if a.is_collective_agenda else 1,
+        'date': a.activity_date.strftime('%d/%m/%Y'),
+        'activity_date': a.activity_date.strftime('%d/%m/%Y'),
+        'status': a.validation_status, 'validation_status': a.validation_status,
+        'observation': val.observations if val else '',
+        'verifier_notes': val.observations if val else '',
+    }
+
+
 def api_atenciones(request):
-    """
-    CRUD API para Atenciones y Casos Sociales en el Dashboard de Administrador (RN-012, RF-011)
-    """
     if request.method not in {'GET', 'POST'}:
         return JsonResponse({'success': False, 'message': 'Método no permitido.'}, status=405)
-
-    required_permission = 'lectura' if request.method == 'GET' else 'edicion'
-    if not _has_matrix_permission(request, required_permission):
-        return _permission_denied(required_permission)
-
+    permission = 'lectura' if request.method == 'GET' else 'edicion'
+    if not _has_matrix_permission(request, permission):
+        return _permission_denied(permission)
     if request.method == 'GET':
-        atenciones_qs = Activity.objects.all().order_by('-activity_date', '-created_at')
-        atenciones = []
-        for a in atenciones_qs:
-            evid = a.evidences.first()
-            val = a.validations.first()
-            atenciones.append({
-                'id': a.id,
-                'activity_code': a.activity_code,
-                'evidence_code': evid.evidence_code if evid else f"EVI-{a.activity_code}",
-                'contact_name': a.contact_name or 'Vecino(a) Comunal',
-                'contact_phone': a.contact_phone or '+56 9 8452 1102',
-                'delegation': a.delegation.name if a.delegation else 'Centro Histórico',
-                'service': a.problem_description[:45] + ('...' if len(a.problem_description) > 45 else ''),
-                'title': a.problem_description,
-                'description': a.executed_action,
-                'problem_description': a.problem_description,
-                'executed_action': a.executed_action,
-                'stage': 2 if a.is_collective_agenda else 1,
-                'date': a.activity_date.strftime('%d/%m/%Y') if a.activity_date else '',
-                'activity_date': a.activity_date.strftime('%d/%m/%Y') if a.activity_date else '',
-                'status': a.validation_status or 'Pending',
-                'validation_status': a.validation_status or 'Pending',
-                'verifier_notes': val.observations if val else 'Pendiente de revisión técnica en terreno',
-                'observation': val.observations if val else 'Pendiente de revisión técnica en terreno'
-            })
-        return JsonResponse({'success': True, 'atenciones': atenciones})
+        qs = _activity_scope(request).select_related('delegation', 'catalog').prefetch_related('evidences', 'validations')
+        return JsonResponse({'success': True, 'atenciones': [_attention_result(a) for a in qs.order_by('-activity_date', '-created_at')]})
 
-    elif request.method == 'POST':
-        try:
-            data = json.loads(request.body)
-            code = data.get('activity_code')
-            if not code:
-                count = Activity.objects.count() + 844
-                code = f"ACT-2026-{count:04d}"
+    data = _attention_payload(request)
+    if data is None:
+        return JsonResponse({'success': False, 'message': 'Solicitud JSON inválida.'}, status=400)
+    delegation = _delegation_for_write(request, data.get('delegation'))
+    if not delegation:
+        return JsonResponse({'success': False, 'message': 'Delegación no autorizada o inactiva.'}, status=403)
+    catalog, error = _attention_catalog(data)
+    if error:
+        return JsonResponse({'success': False, 'message': error}, status=400)
+    contact = _attention_text(data, 'contact_name', 150, required=True)
+    phone = _attention_text(data, 'contact_phone', 20)
+    problem = _attention_text(data, 'problem_description', 10000) if 'problem_description' in data else _attention_text(data, 'title', 10000, required=True)
+    action = _attention_text(data, 'executed_action', 10000) if 'executed_action' in data else _attention_text(data, 'description', 10000, required=True)
+    if not contact or phone is None or not problem or not action:
+        return JsonResponse({'success': False, 'message': 'Solicitante, problema o acción inválidos.'}, status=400)
+    # Estado enviado por la interfaz no autoriza una aprobación.
+    if 'is_collective_agenda' in data and not isinstance(data['is_collective_agenda'], bool):
+        return JsonResponse({'success': False, 'message': 'Agenda colectiva inválida.'}, status=400)
+    code = _attention_text(data, 'activity_code', 50) if 'activity_code' in data else ''
+    if code is None or (code and not re.fullmatch(r'[A-Za-z0-9-]+', code)):
+        return JsonResponse({'success': False, 'message': 'Código inválido.'}, status=400)
+    from django.db import transaction
+    from django.db.models import Q
+    from uuid import uuid4
+    with transaction.atomic():
+        # Lock the actor on databases that support row locks. A retry with the same
+        # client code returns the existing record instead of creating another.
+        type(request.user).objects.select_for_update().get(pk=request.user.pk)
+        if code:
+            existing = Activity.objects.filter(activity_code=code).first()
+            if existing:
+                if (existing.user_id == request.user.pk and existing.deleted_at is None
+                        and existing.contact_name == contact and existing.problem_description == problem
+                        and existing.executed_action == action and existing.delegation_id == delegation.id):
+                    return JsonResponse({'success': True, 'id': existing.id, 'message': 'Atención ya registrada.'})
+                return JsonResponse({'success': False, 'message': 'Código ya utilizado.'}, status=409)
+        else:
+            cutoff = timezone.now() - datetime.timedelta(seconds=30)
+            existing = _activity_scope(request).filter(
+                user=request.user, delegation=delegation, contact_name=contact,
+                problem_description=problem, executed_action=action,
+                created_at__gte=cutoff
+            ).first()
+            if existing:
+                return JsonResponse({'success': True, 'id': existing.id, 'message': 'Atención ya registrada.'})
+            code = f"ACT-{timezone.now():%Y%m%d}-{uuid4().hex[:12].upper()}"
+        act = Activity.objects.create(
+            activity_code=code, activity_date=timezone.localdate(),
+            problem_description=problem, executed_action=action,
+            contact_name=contact, contact_phone=phone,
+            is_collective_agenda=data.get('is_collective_agenda', False),
+            validation_status='Pending', delegation=delegation,
+            catalog=catalog, user=request.user
+        )
+    return JsonResponse({'success': True, 'id': act.id, 'message': f'Atención {code} registrada.'}, status=201)
 
-            # Delegación
-            del_obj = None
-            del_name = data.get('delegation')
-            if del_name:
-                del_obj = Delegation.objects.filter(name__icontains=del_name.replace('Delegación', '').strip()).first()
-
-            prob_desc = data.get('problem_description') or data.get('title') or 'Atención ciudadana ingresada vía portal municipal'
-            exec_act = data.get('executed_action') or data.get('description') or 'Gestión social y derivación a unidad correspondiente'
-            val_stat = data.get('validation_status') or data.get('status') or 'Approved'
-
-            act = Activity.objects.create(
-                activity_code=code,
-                activity_date=datetime.date.today(),
-                problem_description=prob_desc,
-                executed_action=exec_act,
-                contact_name=data.get('contact_name', 'Vecino Comunal'),
-                contact_phone=data.get('contact_phone', ''),
-                is_collective_agenda=bool(data.get('is_collective_agenda', True)),
-                validation_status=val_stat,
-                delegation=del_obj
-            )
-
-            Evidence.objects.create(
-                activity=act,
-                evidence_code=f"EVI-{act.activity_code}",
-                file_path=f"evidencias/{act.activity_code}.jpg",
-                file_name=f"{act.activity_code}.jpg"
-            )
-
-            if act.validation_status == 'Approved':
-                Validation.objects.create(
-                    activity=act,
-                    decision='Approved',
-                    observations='Validación técnica inmediata registrada en el sistema de administración.'
-                )
-
-            return JsonResponse({'success': True, 'message': f'Atención {act.activity_code} guardada con éxito', 'id': act.id})
-        except Exception as e:
-            return JsonResponse({'success': False, 'message': str(e)}, status=500)
 
 def api_atencion_detail(request, pk):
     if request.method not in {'GET', 'POST', 'PUT', 'DELETE'}:
         return JsonResponse({'success': False, 'message': 'Método no permitido.'}, status=405)
-
-    required_permission = 'lectura' if request.method == 'GET' else ('cierre' if request.method == 'DELETE' else 'edicion')
-    if not _has_matrix_permission(request, required_permission):
-        return _permission_denied(required_permission)
-
-    try:
-        a = Activity.objects.get(pk=pk)
-    except Activity.DoesNotExist:
-        return JsonResponse({'success': False, 'message': 'Atención no encontrada'}, status=404)
-
+    permission = 'lectura' if request.method == 'GET' else ('cierre' if request.method == 'DELETE' else 'edicion')
+    if not _has_matrix_permission(request, permission):
+        return _permission_denied(permission)
+    a = _activity_scope(request).select_related('delegation', 'catalog').filter(pk=pk).first()
+    if not a:
+        return JsonResponse({'success': False, 'message': 'Atención no encontrada.'}, status=404)
     if request.method == 'GET':
-        evid = a.evidences.first()
-        val = a.validations.first()
-        return JsonResponse({
-            'success': True,
-            'atencion': {
-                'id': a.id,
-                'activity_code': a.activity_code,
-                'evidence_code': evid.evidence_code if evid else f"EVI-{a.activity_code}",
-                'contact_name': a.contact_name or 'Vecino(a) Comunal',
-                'contact_phone': a.contact_phone or '+56 9 8452 1102',
-                'delegation': a.delegation.name if a.delegation else 'Delegación Centro Histórico',
-                'problem_description': a.problem_description,
-                'executed_action': a.executed_action,
-                'stage': 'Etapa 2 de 3' if a.is_collective_agenda else 'Etapa 1 de 3',
-                'activity_date': a.activity_date.strftime('%d/%m/%Y') if a.activity_date else '',
-                'validation_status': a.validation_status or 'Pending',
-                'observation': val.observations if val else 'Sin observaciones registradas'
-            }
-        })
-    elif request.method in ['PUT', 'POST']:
-        data = json.loads(request.body)
-        if 'problem_description' in data: a.problem_description = data['problem_description']
-        if 'executed_action' in data: a.executed_action = data['executed_action']
-        if 'contact_name' in data: a.contact_name = data['contact_name']
-        if 'contact_phone' in data: a.contact_phone = data['contact_phone']
-        if 'validation_status' in data: 
-            a.validation_status = data['validation_status']
-            Validation.objects.update_or_create(
-                activity=a,
-                defaults={'decision': a.validation_status, 'observations': data.get('observation', 'Actualizado por Administrador')}
-            )
-        a.save()
-        return JsonResponse({'success': True, 'message': 'Atención actualizada correctamente'})
-    elif request.method == 'DELETE':
-        a.delete()
-        return JsonResponse({'success': True, 'message': 'Atención eliminada de la base de datos'})
+        return JsonResponse({'success': True, 'atencion': _attention_result(a)})
+    if request.method == 'DELETE':
+        a.deleted_at = timezone.now()
+        a.save(update_fields=['deleted_at', 'updated_at'])
+        return JsonResponse({'success': True, 'message': 'Atención dada de baja.'})
+    data = _attention_payload(request)
+    if data is None:
+        return JsonResponse({'success': False, 'message': 'Solicitud JSON inválida.'}, status=400)
+    if 'validation_status' in data:
+        return JsonResponse({'success': False, 'message': 'La validación corresponde al verificador.'}, status=403)
+    if 'delegation' in data:
+        delegation = _delegation_for_write(request, data['delegation'])
+        if not delegation:
+            return JsonResponse({'success': False, 'message': 'Delegación no autorizada.'}, status=403)
+        a.delegation = delegation
+    if any(key in data for key in ('catalog_id', 'attention_type', 'subattention_type')):
+        catalog, error = _attention_catalog(data)
+        if error or not catalog:
+            return JsonResponse({'success': False, 'message': error or 'Tipo de atención inválido.'}, status=400)
+        a.catalog = catalog
+    for key, limit in (('contact_name', 150), ('contact_phone', 20), ('problem_description', 10000), ('executed_action', 10000)):
+        if key in data:
+            value = _attention_text(data, key, limit, required=key != 'contact_phone')
+            if value is None:
+                return JsonResponse({'success': False, 'message': f'{key} inválido.'}, status=400)
+            setattr(a, key, value)
+    a.save()
+    return JsonResponse({'success': True, 'message': 'Atención actualizada.'})
+
 
 def api_toggle_rol_permiso(request):
     """
     Permite activar/desactivar permisos (lectura, edicion, derivacion, cierre) en los roles
     y persistirlos directamente en la base de datos MySQL (tabla: rol).
     """
-    if request.session.get('user_role') != 'Administrador General':
+    if not _is_admin(request):
         return JsonResponse({'success': False, 'message': 'Se requiere el rol Administrador General.'}, status=403)
 
     if request.method != 'POST':
