@@ -90,3 +90,40 @@ class AttentionApiSecurityTests(TestCase):
         self.role.save()
         self.assertEqual(self.client.get(self.url).status_code, 403)
         self.assertEqual(self.post().status_code, 403)
+
+
+class DashboardAccessTests(TestCase):
+    def setUp(self):
+        self.delegation = Delegation.objects.create(name='Centro de prueba', scope='Centro')
+        self.user = get_user_model().objects.create_user(username='rol-prueba', password='test-pass')
+        self.profile = UserProfile.objects.create(
+            user=self.user, rut='87654321-K', full_name='Usuario Rol',
+            email='rol-prueba@example.com', delegation=self.delegation,
+        )
+        self.client.force_login(self.user)
+
+    def test_session_role_does_not_grant_admin_dashboard(self):
+        session = self.client.session
+        session['user_role'] = 'Administrador General'
+        session.save()
+        self.assertNotEqual(self.client.get(reverse('activities:dashboard_admin')).status_code, 200)
+
+    def test_readonly_role_landing_is_distinct_and_restricted(self):
+        for role_name, route in (
+            ('Coordinador del Sistema', 'dashboard_coordinador'),
+            ('Delegado Municipal', 'dashboard_delegado'),
+            ('Usuario de Consulta', 'dashboard_consulta'),
+        ):
+            self.profile.roles.clear()
+            self.profile.roles.add(Role.objects.create(name=role_name))
+            response = self.client.get(reverse('activities:' + route))
+            self.assertEqual(response.status_code, 200)
+            self.assertContains(response, 'Atenciones visibles')
+            for other in {'dashboard_coordinador', 'dashboard_delegado', 'dashboard_consulta'} - {route}:
+                self.assertNotEqual(self.client.get(reverse('activities:' + other)).status_code, 200)
+
+    def test_admin_dashboard_get_does_not_seed_activities(self):
+        self.profile.roles.add(Role.objects.create(name='Administrador General'))
+        before = Activity.objects.count()
+        self.client.get(reverse('activities:dashboard_admin'))
+        self.assertEqual(Activity.objects.count(), before)
