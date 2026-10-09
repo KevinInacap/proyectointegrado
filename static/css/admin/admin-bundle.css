@@ -3853,15 +3853,7 @@
             opacity: 1 !important;
         }
 
-        /* Cuando un formulario se escala para caber, su cabecera debe permanecer visible. */
-        .modal-fit-viewport .modal-dialog {
-            margin: 12px auto !important;
-            min-height: 0 !important;
-        }
-
-        .modal-fit-viewport .modal-dialog-centered {
-            align-items: flex-start !important;
-        }
+        #adminCurrentView { display: none; }
 
         #modalRolTitle,
         #modalRolTitle i,
