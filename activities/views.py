@@ -952,6 +952,40 @@ def _attention_catalog(data):
     return catalog, None
 
 
+def _typed_attention_selection(data):
+    """Validate the exact active type/subtype pair supplied by the client."""
+    type_id = data.get('attention_type_id')
+    sub_id = data.get('subattention_id')
+    if type_id is None and sub_id is None:
+        return None, None, None
+    if type_id is None or sub_id is None:
+        return None, None, 'Debe seleccionar Tipo y Sub Atención.'
+    try:
+        from metrics.models import AttentionType, SubAttention
+    except ImportError:
+        return None, None, 'Catálogo de tipos no disponible.'
+    try:
+        type_pk, sub_pk = int(type_id), int(sub_id)
+    except (TypeError, ValueError):
+        return None, None, 'IDs de Tipo/Sub Atención inválidos.'
+    attention_type = AttentionType.objects.filter(pk=type_pk, deleted_at__isnull=True).first()
+    subattention = SubAttention.objects.filter(pk=sub_pk, deleted_at__isnull=True).first()
+    if not attention_type or not subattention:
+        return None, None, 'Tipo o Sub Atención inexistente.'
+    if (getattr(attention_type, 'status', 'Activo') != 'Activo'
+            or getattr(subattention, 'status', 'Activo') != 'Activo'):
+        return None, None, 'Tipo o Sub Atención inactivo.'
+    if subattention.attention_type_id != attention_type.pk:
+        return None, None, 'La Sub Atención no pertenece al Tipo seleccionado.'
+    return attention_type, subattention, None
+
+
+def _attention_has_typed_fields():
+    return {'attention_type', 'subattention'}.issubset(
+        {field.name for field in Activity._meta.fields}
+    )
+
+
 def _attention_result(a):
     evid = a.evidences.first()
     val = a.validations.first()
@@ -961,6 +995,8 @@ def _attention_result(a):
         'contact_name': a.contact_name, 'contact_phone': a.contact_phone,
         'delegation': a.delegation.name if a.delegation else '',
         'catalog_id': a.catalog_id,
+        'attention_type_id': getattr(a, 'attention_type_id', None),
+        'subattention_id': getattr(a, 'subattention_id', None),
         'attention_type': a.catalog.attention_type if a.catalog else '',
         'subattention_type': a.catalog.subattention_type if a.catalog else '',
         'service': a.catalog.service if a.catalog else '',
@@ -993,6 +1029,11 @@ def api_atenciones(request):
     if not delegation:
         return JsonResponse({'success': False, 'message': 'Delegación no autorizada o inactiva.'}, status=403)
     catalog, error = _attention_catalog(data)
+    attention_type, subattention, typed_error = _typed_attention_selection(data)
+    if typed_error:
+        return JsonResponse({'success': False, 'message': typed_error}, status=400)
+    if attention_type and not _attention_has_typed_fields():
+        return JsonResponse({'success': False, 'message': 'Persistencia Tipo/Sub Atención aún no disponible.'}, status=503)
     if error:
         return JsonResponse({'success': False, 'message': error}, status=400)
     contact = _attention_text(data, 'contact_name', 150, required=True)
@@ -1032,13 +1073,14 @@ def api_atenciones(request):
             if existing:
                 return JsonResponse({'success': True, 'id': existing.id, 'message': 'Atención ya registrada.'})
             code = f"ACT-{timezone.now():%Y%m%d}-{uuid4().hex[:12].upper()}"
+        typed_fields = {'attention_type': attention_type, 'subattention': subattention} if attention_type else {}
         act = Activity.objects.create(
             activity_code=code, activity_date=timezone.localdate(),
             problem_description=problem, executed_action=action,
             contact_name=contact, contact_phone=phone,
             is_collective_agenda=data.get('is_collective_agenda', False),
             validation_status='Pending', delegation=delegation,
-            catalog=catalog, user=request.user
+            catalog=catalog, user=request.user, **typed_fields
         )
     return JsonResponse({'success': True, 'id': act.id, 'message': f'Atención {code} registrada.'}, status=201)
 
@@ -1073,6 +1115,14 @@ def api_atencion_detail(request, pk):
         if error or not catalog:
             return JsonResponse({'success': False, 'message': error or 'Tipo de atención inválido.'}, status=400)
         a.catalog = catalog
+    if 'attention_type_id' in data or 'subattention_id' in data:
+        attention_type, subattention, typed_error = _typed_attention_selection(data)
+        if typed_error or not attention_type:
+            return JsonResponse({'success': False, 'message': typed_error or 'Selección inválida.'}, status=400)
+        if not _attention_has_typed_fields():
+            return JsonResponse({'success': False, 'message': 'Persistencia Tipo/Sub Atención aún no disponible.'}, status=503)
+        a.attention_type = attention_type
+        a.subattention = subattention
     for key, limit in (('contact_name', 150), ('contact_phone', 20), ('problem_description', 10000), ('executed_action', 10000)):
         if key in data:
             value = _attention_text(data, key, limit, required=key != 'contact_phone')
