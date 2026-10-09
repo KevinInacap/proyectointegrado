@@ -967,7 +967,8 @@ body {
 
 /* El menú lateral debe mostrarse completo: se compacta, no se oculta tras un scroll. */
 .sidebar-menu-scrollable {
-    overflow: visible !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
     padding-bottom: 0.35rem !important;
     gap: 1px !important;
 }
@@ -1489,14 +1490,14 @@ body {
     backdrop-filter: blur(24px) saturate(180%) !important;
     border: 1.5px solid rgba(255, 255, 255, 0.95) !important;
     border-radius: 20px !important;
-    overflow-x: hidden !important;
+    overflow-x: auto !important;
     width: 100% !important;
     box-shadow: 0 12px 32px -6px rgba(27, 54, 93, 0.08), inset 0 1px 0 #FFFFFF !important;
     margin-bottom: 1.5rem !important;
 }
 
 .usuario-table-container .table-responsive {
-    overflow-x: hidden !important;
+    overflow-x: auto !important;
     width: 100% !important;
 }
 
@@ -1580,77 +1581,18 @@ body {
 }
 
 
-/* ==========================================================================
-   SUPRESIÓN TOTAL Y ABSOLUTA DE SCROLLBARS EN FORMULARIOS Y MODALES
-   ========================================================================== */
-.modal {
-    overflow-y: hidden !important;
-    overflow-x: hidden !important;
-    scrollbar-width: none !important;
-    -ms-overflow-style: none !important;
+/* Los formularios largos mantienen cabecera y acciones visibles. */
+.modal { overflow-y: auto !important; overflow-x: hidden !important; }
+.modal-dialog { margin: 1rem auto !important; max-height: none !important; }
+.modal-dialog-scrollable { max-height: calc(100dvh - 2rem) !important; }
+.modal-content { max-height: calc(100dvh - 2rem) !important; display: flex !important; flex-direction: column !important; }
+.modal-body, .modal-dialog-scrollable .modal-body {
+    min-height: 0;
+    overflow-y: auto !important;
+    overflow-x: auto !important;
+    scrollbar-width: auto !important;
 }
-
-.modal::-webkit-scrollbar,
-.modal-dialog::-webkit-scrollbar,
-.modal-content::-webkit-scrollbar,
-.modal-body::-webkit-scrollbar,
-.modal-dialog-scrollable::-webkit-scrollbar,
-.modal-dialog-scrollable .modal-body::-webkit-scrollbar,
-form::-webkit-scrollbar,
-.modal form::-webkit-scrollbar,
-.maintainer-card::-webkit-scrollbar,
-.liquid-glass-card::-webkit-scrollbar {
-    display: none !important;
-    width: 0 !important;
-    height: 0 !important;
-    background: transparent !important;
-}
-
-.modal,
-.modal-dialog,
-.modal-content,
-.modal-body,
-.modal-dialog-scrollable,
-.modal-dialog-scrollable .modal-body,
-form,
-.modal form,
-.maintainer-card,
-.liquid-glass-card {
-    scrollbar-width: none !important;
-    -ms-overflow-style: none !important;
-}
-
-.modal-dialog {
-    margin: 1.25rem auto !important;
-    max-height: calc(100vh - 2.5rem) !important;
-}
-
-.modal-dialog-centered {
-    min-height: calc(100% - 2.5rem) !important;
-}
-
-.modal-content {
-    max-height: none !important;
-    display: flex !important;
-    flex-direction: column !important;
-    overflow: hidden !important;
-}
-
-.modal-body {
-    overflow-y: hidden !important;
-    overflow-x: hidden !important;
-    max-height: none !important;
-}
-
-/* El contenido se escala al abrirse para caber completo, sin barras de scroll. */
-.modal.modal-fit-viewport .modal-dialog {
-    overflow: visible !important;
-}
-
-.modal.modal-fit-viewport .modal-content {
-    transform-origin: top center;
-    will-change: transform;
-}
+.modal-header, .modal-footer { flex-shrink: 0; }
 
 /* Mi Perfil: aprovecha el ancho y evita una columna vertical innecesariamente larga. */
 #modalPerfilUsuario .modal-dialog {
@@ -1711,50 +1653,18 @@ body.modal-open {
     padding-right: 0 !important;
 }
 
-/* ==========================================================================
-   SUPRESIÓN TOTAL DE SCROLL LATERAL EN TABLAS, FORMULARIOS Y CONTENEDORES
-   ========================================================================== */
-html,
-body,
-.main-wrapper,
-.content-body,
-.maintainer-view,
-.maintainer-card,
-.liquid-glass-card {
-    overflow-x: hidden !important;
-    max-width: 100vw !important;
-}
-
-.table-responsive,
-.table-responsive-sm,
-.table-responsive-md,
-.table-responsive-lg,
-.table-responsive-xl,
-.table-responsive-xxl,
-.table-container-noscroll,
-.excel-table-wrapper {
-    overflow-x: hidden !important;
+/* Las tablas anchas se desplazan dentro de su contenedor sin recortar acciones. */
+.main-wrapper, .content-body, .maintainer-view { min-width: 0 !important; }
+.table-responsive, .table-responsive-sm, .table-responsive-md,
+.table-responsive-lg, .table-responsive-xl, .table-responsive-xxl,
+.table-container-noscroll, .excel-table-wrapper,
+.usuario-table-container, .usuario-table-container .table-responsive {
     max-width: 100% !important;
-    scrollbar-width: none !important;
-    -ms-overflow-style: none !important;
+    overflow-x: auto !important;
+    scrollbar-width: auto !important;
+    -webkit-overflow-scrolling: touch;
 }
-
-.table-responsive::-webkit-scrollbar,
-.excel-table-wrapper::-webkit-scrollbar,
-.table-container-noscroll::-webkit-scrollbar,
-table::-webkit-scrollbar,
-.table::-webkit-scrollbar {
-    display: none !important;
-    width: 0 !important;
-    height: 0 !important;
-    background: transparent !important;
-}
-
-table,
-.table {
-    max-width: 100% !important;
-    overflow-x: hidden !important;
-}
+.table-responsive table, .excel-table-wrapper table { max-width: none !important; }
 
 .atenciones-fixed-table {
     table-layout: fixed !important;
@@ -1768,3 +1678,17 @@ table,
 }
 
 
+
+@media (max-width: 767.98px) {
+    .top-header { padding: 0 .75rem !important; gap: .5rem; }
+    .header-sys-name, .header-sys-divider, .header-sub-name { display: none !important; }
+    .header-title-wrapper { min-width: 0; }
+    #adminCurrentView { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 700; }
+    .user-identity { display: flex !important; max-width: 130px; }
+    .user-info-text, .user-context-text { max-width: 130px; }
+    .user-avatar-img { display: none; }
+    .admin-notif-dropdown { min-width: 0 !important; width: min(360px, calc(100vw - 1rem)); }
+    .content-body { padding: 1rem .75rem 2rem !important; }
+    .modal-dialog { width: calc(100% - 1rem) !important; margin: .5rem auto !important; }
+    .modal-content { max-height: calc(100dvh - 1rem) !important; }
+}
