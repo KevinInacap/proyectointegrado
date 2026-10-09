@@ -1,13 +1,14 @@
 <!-- Top Header con Línea Institucional Roja de 3px -->
 <header class="top-header">
             <div class="header-left">
-                <button class="btn-hamburger" onclick="toggleSidebar()" title="Alternar menú lateral">
+                <button class="btn-hamburger" onclick="toggleSidebar()" title="Alternar menú lateral" aria-label="Alternar menú lateral" aria-controls="sidebar" aria-expanded="false">
                     <i class="bi bi-list"></i>
                 </button>
                 <div class="header-title-wrapper">
                     <span class="header-sys-name">Sistema Municipal</span>
                     <span class="header-sys-divider">|</span>
                     <span class="header-sub-name">Gestión de Atención Ciudadana</span>
+                    <span id="adminCurrentView" aria-live="polite">Inicio</span>
                 </div>
             </div>
 
@@ -94,7 +95,7 @@
                     <button class="user-dropdown-btn" type="button" data-bs-toggle="dropdown" aria-expanded="false">
                         <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=120&q=80"
                             alt="Avatar" class="user-avatar-img">
-                        <span class="user-identity d-none d-sm-flex">
+                        <span class="user-identity d-flex">
                             <span class="user-info-text">{{ request.session.user_name|default:user_name|default:'Usuario Municipal' }}</span>
                             <span class="user-context-text">
                                 {{ request.session.user_role|default:'Sin rol asignado' }}
