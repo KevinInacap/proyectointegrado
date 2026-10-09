@@ -19,6 +19,9 @@
                 </p>
             </div>
             <div class="d-flex align-items-center gap-2">
+                <button class="btn btn-danger rounded-pill px-3 fw-semibold" onclick="abrirCatalogosOrganizacion('delegaciones')">
+                    <i class="bi bi-plus-lg me-1"></i> Nueva delegación
+                </button>
                 <span class="badge bg-light text-secondary border px-3 py-2 rounded-pill small fw-semibold">
                     <i class="bi bi-clock-history text-primary me-1"></i> Turno Activo: 08:30 - 14:00 hrs
                 </span>
@@ -34,8 +37,8 @@
                     </div>
                     <div>
                         <div class="text-muted small fw-bold text-uppercase" style="font-size: 0.72rem; letter-spacing: 0.04em;">Sedes Activas</div>
-                        <div class="fs-4 fw-bold" style="color: var(--muni-navy); line-height: 1.2;">6 de 6</div>
-                        <span class="text-success small fw-semibold" style="font-size: 0.76rem;"><i class="bi bi-check-circle-fill me-1"></i>100% Operativas</span>
+                        <div class="fs-4 fw-bold" id="kpiDelegacionesActivas" style="color: var(--muni-navy); line-height: 1.2;">—</div>
+                        <span class="text-success small fw-semibold" id="kpiDelegacionesEstado" style="font-size: 0.76rem;"><i class="bi bi-check-circle-fill me-1"></i>Cargando datos</span>
                     </div>
                 </div>
             </div>
@@ -47,7 +50,7 @@
                     </div>
                     <div>
                         <div class="text-muted small fw-bold text-uppercase" style="font-size: 0.72rem; letter-spacing: 0.04em;">Cumplimiento</div>
-                        <div class="fs-4 fw-bold text-success" style="line-height: 1.2;">88.4%</div>
+                        <div class="fs-4 fw-bold text-success" id="kpiDelegacionesCumplimiento" style="line-height: 1.2;">—</div>
                         <span class="text-muted small" style="font-size: 0.76rem;">Meta comunal del período</span>
                     </div>
                 </div>
@@ -60,8 +63,8 @@
                     </div>
                     <div>
                         <div class="text-muted small fw-bold text-uppercase" style="font-size: 0.72rem; letter-spacing: 0.04em;">Cobertura Vecinal</div>
-                        <div class="fs-4 fw-bold" style="color: var(--muni-navy); line-height: 1.2;">~248.900</div>
-                        <span class="text-muted small" style="font-size: 0.76rem;">Habitantes beneficiados</span>
+                        <div class="fs-4 fw-bold" id="kpiDelegacionesVecinos" style="color: var(--muni-navy); line-height: 1.2;">—</div>
+                        <span class="text-muted small" style="font-size: 0.76rem;">Casos vecinales registrados</span>
                     </div>
                 </div>
             </div>
@@ -73,8 +76,8 @@
                     </div>
                     <div>
                         <div class="text-muted small fw-bold text-uppercase" style="font-size: 0.72rem; letter-spacing: 0.04em;">Dotación en Terreno</div>
-                        <div class="fs-4 fw-bold" style="color: var(--muni-navy); line-height: 1.2;">47 Funcionarios</div>
-                        <span class="text-muted small" style="font-size: 0.76rem;">Distribuidos en las 6 sedes</span>
+                        <div class="fs-4 fw-bold" id="kpiDelegacionesFuncionarios" style="color: var(--muni-navy); line-height: 1.2;">—</div>
+                        <span class="text-muted small" id="kpiDelegacionesFuncionariosDetalle" style="font-size: 0.76rem;">Distribución territorial activa</span>
                     </div>
                 </div>
             </div>

@@ -4,6 +4,9 @@
             /* Rojo Colonial Serena Oficial */
             --muni-red-hover: #A00E26;
             --muni-red-vino: #8B1D2C;
+            --muni-red-deep: #68121E;
+            --muni-crimson-glass: linear-gradient(135deg, rgba(196, 18, 48, 0.42) 0%, rgba(139, 29, 44, 0.68) 100%);
+            --muni-crimson-glow: rgba(196, 18, 48, 0.40);
             /* Granate Histórico */
             --muni-red-soft: #FFF1F2;
 
@@ -106,7 +109,7 @@
         .sidebar {
             width: 260px;
             height: 100vh;
-            background: linear-gradient(185deg, var(--muni-navy) 0%, #132742 55%, var(--muni-navy-dark) 100%);
+            background: linear-gradient(180deg, #8B1D2C 0%, #68121E 48%, #4B101A 100%);
             color: #FFFFFF;
             display: flex;
             flex-direction: column;
@@ -128,7 +131,7 @@
             align-items: center;
             border-bottom: 1px solid rgba(255, 255, 255, 0.12);
             flex-shrink: 0;
-            background: rgba(15, 23, 42, 0.35);
+            background: rgba(65, 12, 24, 0.34);
             gap: 12px;
         }
 
@@ -179,6 +182,7 @@
         .sidebar-menu-scrollable {
             padding: 0.65rem 0.75rem 2.5rem 0.75rem;
             flex-grow: 1;
+            min-height: 0;
             overflow-y: auto;
             overflow-x: hidden;
             display: flex;
@@ -251,6 +255,18 @@
             color: #FFFFFF;
         }
 
+        /* La sección Mantenedores también refleja visualmente que está desplegada. */
+        .accordion-item-custom:has(.sidebar-submenu[style*="display: block"]) > .nav-item-btn {
+            background: linear-gradient(90deg, var(--muni-red) 0%, var(--muni-red-deep) 100%);
+            color: #FFFFFF;
+            box-shadow: 0 4px 16px var(--muni-crimson-glow);
+        }
+
+        .accordion-item-custom:has(.sidebar-submenu[style*="display: block"]) > .nav-item-btn .main-icon,
+        .accordion-item-custom:has(.sidebar-submenu[style*="display: block"]) > .nav-item-btn > i:last-child {
+            color: #FFFFFF;
+        }
+
         /* Submenú Mantenedores Sin Espacio Vacío a la Izquierda */
         .sidebar-submenu {
             padding-left: 0.65rem;
@@ -260,7 +276,7 @@
             gap: 1px;
             margin-top: 2px;
             margin-bottom: 3px;
-            border-left: 2px solid rgba(196, 18, 48, 0.55);
+            border-left: 2px solid rgba(255, 255, 255, 0.42);
             margin-left: 1.05rem;
         }
 
@@ -302,21 +318,33 @@
         .submenu-item-btn.active {
             color: #FFFFFF !important;
             font-weight: 700 !important;
-            background: linear-gradient(135deg, rgba(196, 18, 48, 0.42) 0%, rgba(139, 29, 44, 0.68) 100%) !important;
+            background: var(--muni-crimson-glass) !important;
             backdrop-filter: blur(12px) !important;
             -webkit-backdrop-filter: blur(12px) !important;
             border: 1px solid rgba(255, 255, 255, 0.25) !important;
             border-left: 4px solid #C41230 !important;
             border-radius: 8px !important;
-            box-shadow: 0 4px 16px rgba(196, 18, 48, 0.35), inset 0 1px 1px rgba(255, 255, 255, 0.45) !important;
+            box-shadow: 0 4px 16px var(--muni-crimson-glow), inset 0 1px 1px rgba(255, 255, 255, 0.45) !important;
             padding-left: 0.95rem !important;
             transform: translateX(4px);
             transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            animation: sidebar-submenu-activate 0.32s cubic-bezier(0.4, 0, 0.2, 1) both;
         }
 
         .submenu-item-btn.active::before {
             color: #FFFFFF !important;
             text-shadow: 0 0 8px rgba(255, 255, 255, 0.8);
+        }
+
+        .submenu-item-btn:focus-visible {
+            outline: 2px solid rgba(255, 255, 255, 0.82);
+            outline-offset: 2px;
+            box-shadow: 0 0 0 4px rgba(196, 18, 48, 0.34);
+        }
+
+        @keyframes sidebar-submenu-activate {
+            from { opacity: 0.72; transform: translateX(0); }
+            to { opacity: 1; transform: translateX(4px); }
         }
 
         /* ==========================================================================
@@ -332,6 +360,7 @@
             overflow: hidden;
             border: none;
             background: transparent;
+            padding-top: 0;
         }
 
         .sidebar-faro-image-wrap {
@@ -356,16 +385,18 @@
             transform: scale(1.04);
         }
 
-        /* Capa de degradado profesional multietapa que funde la foto real en el azul institucional */
+        /* Capa de degradado profesional multietapa que funde la foto real en el carmesí institucional */
         .sidebar-faro-fade-layer {
             position: absolute;
             inset: 0;
             background: linear-gradient(180deg,
-                    rgba(19, 39, 66, 1) 0%,
-                    rgba(19, 39, 66, 0.50) 25%,
-                    rgba(15, 23, 42, 0.10) 55%,
-                    rgba(15, 23, 42, 0.85) 88%,
-                    rgba(15, 23, 42, 0.96) 100%);
+                    rgba(104, 18, 30, 1) 0%,
+                    rgba(104, 18, 30, 0.72) 12%,
+                    rgba(104, 18, 30, 0.42) 25%,
+                    rgba(75, 16, 26, 0.10) 30%,
+                    rgba(75, 16, 26, 0.10) 65%,
+                    rgba(45, 10, 18, 0.85) 88%,
+                    rgba(45, 10, 18, 0.96) 100%);
             pointer-events: none;
         }
 
@@ -531,9 +562,12 @@
         }
 
         .user-dropdown-btn {
-            background: #FFFFFF;
-            border: 1px solid var(--muni-border);
-            padding: 4px 12px 4px 5px;
+            min-width: 390px;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.82), rgba(245, 248, 252, 0.58));
+            -webkit-backdrop-filter: blur(18px) saturate(145%);
+            backdrop-filter: blur(18px) saturate(145%);
+            border: 1px solid rgba(203, 213, 225, 0.58);
+            padding: 5px 14px 5px 6px;
             border-radius: var(--radius-pill);
             display: flex;
             align-items: center;
@@ -543,8 +577,8 @@
         }
 
         .user-dropdown-btn:hover {
-            border-color: rgba(13, 110, 253, 0.4);
-            box-shadow: 0 4px 12px rgba(13, 110, 253, 0.08);
+            border-color: rgba(148, 163, 184, 0.58);
+            box-shadow: 0 8px 22px rgba(27, 54, 93, 0.09), inset 0 1px 0 rgba(255, 255, 255, 0.72);
         }
 
         .user-avatar-img {
@@ -559,6 +593,38 @@
             font-weight: 700;
             font-size: 0.88rem;
             color: var(--muni-navy);
+            line-height: 1.15;
+            max-width: 285px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .user-identity {
+            min-width: 0;
+            max-width: 315px;
+            flex: 1;
+            flex-direction: column;
+            align-items: flex-start;
+            text-align: left;
+            gap: 2px;
+        }
+
+        .user-context-text {
+            max-width: 300px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            color: #64748B;
+            font-size: 0.66rem;
+            font-weight: 600;
+            line-height: 1.15;
+        }
+
+        @media (max-width: 767.98px) {
+            .user-dropdown-btn {
+                min-width: auto;
+            }
         }
 
         .content-body {
@@ -2875,6 +2941,10 @@
             color: #FFFFFF !important;
         }
 
+        [data-theme="dark"] .user-context-text {
+            color: rgba(255, 255, 255, 0.66) !important;
+        }
+
         [data-theme="dark"] .flagship-glass-card {
             background: linear-gradient(145deg, rgba(20, 30, 55, 0.85) 0%, rgba(11, 19, 43, 0.92) 100%) !important;
             border: 1px solid rgba(255, 255, 255, 0.12) !important;
@@ -3781,6 +3851,53 @@
         .modal.show .modal-dialog {
             transform: scale(1) !important;
             opacity: 1 !important;
+        }
+
+        /* Cuando un formulario se escala para caber, su cabecera debe permanecer visible. */
+        .modal-fit-viewport .modal-dialog {
+            margin: 12px auto !important;
+            min-height: 0 !important;
+        }
+
+        .modal-fit-viewport .modal-dialog-centered {
+            align-items: flex-start !important;
+        }
+
+        #modalRolTitle,
+        #modalRolTitle i,
+        #tituloCatalogoOrganizacion,
+        #tituloCatalogoOrganizacion i:not(.text-warning) {
+            color: #fff !important;
+        }
+
+        .role-permission-accordion {
+            padding: 0.8rem 1rem !important;
+            min-height: 0 !important;
+        }
+
+        .role-permission-accordion summary {
+            cursor: pointer;
+            list-style: none;
+            user-select: none;
+        }
+
+        .role-permission-accordion summary::-webkit-details-marker {
+            display: none;
+        }
+
+        .role-permission-accordion .permission-chevron {
+            color: #64748b;
+            transition: transform 0.2s ease;
+        }
+
+        .role-permission-accordion[open] .permission-chevron {
+            transform: rotate(180deg);
+        }
+
+        @media (min-width: 768px) {
+            .role-permission-accordion [id^="mod-container-"] > .col-12 {
+                width: 50%;
+            }
         }
 
         /* Expediente Ciudadano en Vidrio Templado */

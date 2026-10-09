@@ -15,6 +15,13 @@ class Delegation(BaseModel):
 
     name = models.CharField(max_length=100, unique=True, verbose_name="Nombre de la delegación")
     scope = models.CharField(max_length=100, verbose_name="Ámbito territorial")
+    address = models.CharField(max_length=200, blank=True, default='', verbose_name="Dirección")
+    phone = models.CharField(max_length=30, blank=True, default='', verbose_name="Teléfono")
+    email = models.EmailField(max_length=120, blank=True, default='', verbose_name="Correo de contacto")
+    schedule = models.CharField(max_length=120, blank=True, default='', verbose_name="Horario de atención")
+    manager_name = models.CharField(max_length=150, blank=True, default='', verbose_name="Delegado o encargado")
+    photo_url = models.CharField(max_length=255, blank=True, default='', verbose_name="Ruta o URL de fotografía")
+    description = models.TextField(blank=True, default='', verbose_name="Descripción territorial")
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='Activo', verbose_name="Estado")
 
     class Meta:
@@ -66,6 +73,22 @@ class Role(BaseModel):
 
     def __str__(self):
         return self.name
+
+
+class PermissionDefinition(BaseModel):
+    """Permiso configurable creado desde el panel administrativo."""
+    module_id = models.CharField(max_length=50, verbose_name="Módulo")
+    code = models.CharField(max_length=100, unique=True, verbose_name="Código")
+    name = models.CharField(max_length=120, verbose_name="Nombre")
+    description = models.CharField(max_length=255, blank=True, default='', verbose_name="Descripción")
+    is_system = models.BooleanField(default=False, verbose_name="Permiso base del sistema")
+
+    class Meta:
+        db_table = 'permiso_definicion'
+        ordering = ['module_id', 'name']
+
+    def __str__(self):
+        return f"{self.code} — {self.name}"
 
 
 class UserProfile(BaseModel):

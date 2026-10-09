@@ -6,6 +6,7 @@ from django.utils import timezone
 
 from core.models import AuditLog
 from organization.models import Delegation, Position, Role, UserProfile
+from organization.views import SYSTEM_PERMISSIONS_CATALOG
 from activities.models import ServiceCatalog, Activity, Evidence, Validation
 from metrics.models import MeasurementPeriod, MeasurementItem, Goal, DailyIndicator, PerformanceAdjustment
 from agenda.models import CollectiveAgenda, CommitmentHistory
@@ -98,9 +99,16 @@ class Command(BaseCommand):
         )
 
         role_admin, _ = Role.objects.get_or_create(
-            name="Administrador",
-            defaults={"description": "Configuración integral, parámetros, usuarios y auditoría transversal."}
+            name="Administrador General",
+            defaults={"description": "Configuración integral, parámetros, usuarios y auditoría transversal.", "is_system": True}
         )
+        role_admin.is_system = True
+        role_admin.permissions_data = [
+            permission['code']
+            for module in SYSTEM_PERMISSIONS_CATALOG
+            for permission in module['permissions']
+        ]
+        role_admin.save(update_fields=['is_system', 'permissions_data', 'updated_at'])
         role_coordinador, _ = Role.objects.get_or_create(
             name="Coordinador",
             defaults={"description": "Supervisión institucional, metas y reportes consolidados comunales."}

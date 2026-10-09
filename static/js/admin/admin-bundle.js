@@ -1,9 +1,4 @@
-        let datasetVecinos = [
-            { id: 1, nombre: 'Ana González Morales', rut: '12.345.678-9', direccion: 'Av. Balmaceda 120', telefono: '+56 9 8765 4321', territorio: 'Centro', gestion: 'Solicitud', estado: 'Activo' },
-            { id: 2, nombre: 'Pedro Rojas Pizarro', rut: '9.876.543-2', direccion: "Calle O'Higgins 455", telefono: '+56 9 7654 3210', territorio: 'Norte', gestion: 'Reclamo', estado: 'Activo' },
-            { id: 3, nombre: 'María Castillo Vergara', rut: '15.234.567-1', direccion: 'Pasaje Los Pinos 89', telefono: '+56 9 6543 2109', territorio: 'Sur', gestion: 'Consulta', estado: 'Inactivo' },
-            { id: 4, nombre: 'Luis Herrera Alfaro', rut: '17.456.789-0', direccion: 'Av. El Faro 230', telefono: '+56 9 5432 1098', territorio: 'Oriente', gestion: 'Orientación', estado: 'Activo' }
-        ];
+        let datasetVecinos = [];
         window.datasetVecinos = datasetVecinos;
 
         let filasFiltradasVecinos = [...datasetVecinos];
@@ -190,7 +185,7 @@
             if (elModalExpAt && window.bootstrap) bsModalExpedienteAtencion = new bootstrap.Modal(elModalExpAt);
 
             try { renderAtencionesChart(); } catch (e) { console.warn("Chart atenciones error:", e); }
-            try { renderTablaVecinos(); } catch (e) { console.warn("Tabla vecinos error:", e); }
+            try { cargarVecinosDesdeDB(false); } catch (e) { console.warn("Tabla vecinos error:", e); }
             try { cargarUsuariosDesdeDB(false); } catch (e) { console.warn("Cargar usuarios error:", e); }
             try { cargarAtencionesDB(); } catch (e) { console.warn("Cargar atenciones error:", e); }
             try { initDelegacionesView(); } catch (e) { console.warn("Delegaciones init error:", e); }
@@ -210,6 +205,52 @@
                     if (typeof updatePillSlider === 'function') updatePillSlider();
                 });
             } catch (e) { console.warn("Micro-interactions init error:", e); }
+        });
+
+        /* Ajuste universal de modales: todo el contenido queda visible sin scroll. */
+        function ajustarModalAlViewport(modal) {
+            if (!modal || !modal.classList.contains('show')) return;
+            const dialog = modal.querySelector('.modal-dialog');
+            const content = modal.querySelector('.modal-content');
+            if (!dialog || !content) return;
+
+            modal.classList.add('modal-fit-viewport');
+            content.style.transform = 'none';
+            dialog.style.height = 'auto';
+            dialog.style.setProperty('align-items', 'flex-start', 'important');
+            dialog.style.setProperty('min-height', '0', 'important');
+            dialog.style.setProperty('margin-top', '12px', 'important');
+            dialog.style.setProperty('margin-bottom', '12px', 'important');
+
+            requestAnimationFrame(() => {
+                const availableHeight = Math.max(280, window.innerHeight - 24);
+                const availableWidth = Math.max(280, window.innerWidth - 24);
+                const naturalHeight = content.scrollHeight;
+                const naturalWidth = content.offsetWidth;
+                const scale = Math.min(1, availableHeight / naturalHeight, availableWidth / naturalWidth);
+
+                content.style.transformOrigin = 'top center';
+                content.style.transform = `scale(${scale})`;
+                dialog.style.height = `${Math.ceil(naturalHeight * scale)}px`;
+            });
+        }
+
+        document.addEventListener('shown.bs.modal', event => ajustarModalAlViewport(event.target));
+        document.addEventListener('hidden.bs.modal', event => {
+            const dialog = event.target.querySelector('.modal-dialog');
+            const content = event.target.querySelector('.modal-content');
+            if (content) content.style.transform = '';
+            if (dialog) {
+                dialog.style.height = '';
+                dialog.style.removeProperty('align-items');
+                dialog.style.removeProperty('min-height');
+                dialog.style.removeProperty('margin-top');
+                dialog.style.removeProperty('margin-bottom');
+            }
+            event.target.classList.remove('modal-fit-viewport');
+        });
+        window.addEventListener('resize', () => {
+            document.querySelectorAll('.modal.show').forEach(ajustarModalAlViewport);
         });
 
         function toggleSidebar() {
@@ -269,8 +310,26 @@
                 }, 50);
             }
             if (viewName === 'usuarios') cargarUsuariosDesdeDB(false);
+            if (viewName === 'vecinos') cargarVecinosDesdeDB(false);
             if (viewName === 'delegaciones') initDelegacionesView();
+            if (viewName === 'cargos') initCargosView();
             if (viewName === 'roles') initRolesView(false);
+        }
+
+        async function cargarVecinosDesdeDB(mostrarAviso = false) {
+            try {
+                const response = await fetch('/api/vecinos/');
+                const data = await response.json();
+                if (!response.ok || !data.success) throw new Error(data.message || 'No fue posible consultar vecinos.');
+                datasetVecinos = data.vecinos || [];
+                window.datasetVecinos = datasetVecinos;
+                seleccionadosIds.clear();
+                ejecutarFiltroCompletoVecinos();
+                if (mostrarAviso) mostrarToast(`✓ ${datasetVecinos.length} vecinos cargados desde la base de datos`);
+            } catch (error) {
+                console.error('Error cargando vecinos:', error);
+                Swal.fire({icon: 'error', title: 'No se pudieron cargar los vecinos', text: error.message, confirmButtonColor: '#A30F32'});
+            }
         }
 
         function renderTablaVecinos() {
@@ -401,11 +460,28 @@
             }
         }
 
-        function cambiarEstadoSeleccionados() {
-            datasetVecinos.forEach(v => { if (seleccionadosIds.has(v.id)) v.estado = v.estado === 'Activo' ? 'Inactivo' : 'Activo'; });
-            seleccionadosIds.clear();
-            ejecutarFiltroCompletoVecinos();
-            mostrarToast('Estados actualizados');
+        async function cambiarEstadoSeleccionados() {
+            const seleccionados = datasetVecinos.filter(v => seleccionadosIds.has(v.id));
+            try {
+                for (const vecino of seleccionados) {
+                    const payload = {...vecino, estado: vecino.estado === 'Activo' ? 'Inactivo' : 'Activo'};
+                    delete payload.id;
+                    delete payload.gestion;
+                    const response = await fetch(`/api/vecinos/${vecino.id}/`, {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken') || ''},
+                        body: JSON.stringify(payload)
+                    });
+                    const data = await response.json();
+                    if (!response.ok || !data.success) throw new Error(data.message || `No se pudo actualizar a ${vecino.nombre}.`);
+                }
+                seleccionadosIds.clear();
+                await cargarVecinosDesdeDB(false);
+                mostrarToast('✓ Estados actualizados en la base de datos');
+            } catch (error) {
+                Swal.fire({icon: 'error', title: 'Actualización incompleta', text: error.message, confirmButtonColor: '#A30F32'});
+                await cargarVecinosDesdeDB(false);
+            }
         }
 
         function eliminarSeleccionadosMasivo() {
@@ -416,12 +492,21 @@
                 showCancelButton: true,
                 confirmButtonText: 'Eliminar',
                 cancelButtonText: 'Cancelar'
-            }).then((result) => {
+            }).then(async (result) => {
                 if (result.isConfirmed) {
-                    datasetVecinos = datasetVecinos.filter(v => !seleccionadosIds.has(v.id));
-                    seleccionadosIds.clear();
-                    ejecutarFiltroCompletoVecinos();
-                    mostrarToast('Registros eliminados');
+                    try {
+                        for (const id of [...seleccionadosIds]) {
+                            const response = await fetch(`/api/vecinos/${id}/`, {method: 'DELETE', headers: {'X-CSRFToken': getCookie('csrftoken') || ''}});
+                            const data = await response.json();
+                            if (!response.ok || !data.success) throw new Error(data.message || `No se pudo dar de baja el registro ${id}.`);
+                        }
+                        seleccionadosIds.clear();
+                        await cargarVecinosDesdeDB(false);
+                        mostrarToast('✓ Registros dados de baja en la base de datos');
+                    } catch (error) {
+                        Swal.fire({icon: 'error', title: 'Baja incompleta', text: error.message, confirmButtonColor: '#A30F32'});
+                        await cargarVecinosDesdeDB(false);
+                    }
                 }
             });
         }
@@ -492,11 +577,33 @@
             reader.readAsArrayBuffer(file);
         }
 
-        function ejecutarImportacionFinal() {
-            datasetVecinos = [...datasetVecinos, ...tempImportados];
-            ejecutarFiltroCompletoVecinos();
-            bsModalImportar.hide();
-            mostrarToast(`✓ ${tempImportados.length} vecinos importados exitosamente`);
+        async function ejecutarImportacionFinal() {
+            let guardados = 0;
+            const errores = [];
+            for (const vecino of tempImportados) {
+                const payload = {...vecino};
+                delete payload.id;
+                delete payload.gestion;
+                try {
+                    const response = await fetch('/api/vecinos/', {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken') || ''},
+                        body: JSON.stringify(payload)
+                    });
+                    const data = await response.json();
+                    if (!response.ok || !data.success) throw new Error(data.message || 'Registro rechazado.');
+                    guardados++;
+                } catch (error) {
+                    errores.push(`${vecino.nombre}: ${error.message}`);
+                }
+            }
+            if (bsModalImportar) bsModalImportar.hide();
+            await cargarVecinosDesdeDB(false);
+            if (errores.length) {
+                Swal.fire({icon: 'warning', title: `${guardados} registros importados`, text: `${errores.length} filas fueron rechazadas. ${errores.slice(0, 3).join(' | ')}`, confirmButtonColor: '#A30F32'});
+            } else {
+                mostrarToast(`✓ ${guardados} vecinos importados en la base de datos`);
+            }
         }
 
         function exportarPDFInstitucionalVecinos() {
@@ -621,7 +728,7 @@
             bsModalVecino.show();
         }
 
-        function guardarVecino(e) {
+        async function guardarVecino(e) {
             e.preventDefault();
             const id = document.getElementById('vecinoId').value;
             const nom = document.getElementById('vecinoNombre').value.trim();
@@ -636,40 +743,51 @@
             if (typeof validarRutChileno === 'function' && !validarRutChileno(rutVal)) {
                 Swal.fire({
                     icon: 'error',
-                    title: 'RUT Chileno Inválido',
-                    text: `El RUT "${rutVal}" no es válido según el algoritmo del Módulo 11 chileno.`
+                    title: 'RUT inválido',
+                    text: 'Revisa el número y el dígito verificador antes de continuar.'
                 });
                 return;
             }
 
-            const nuevo = {
-                id: id ? parseInt(id) : datasetVecinos.length + 1,
+            const payload = {
                 nombre: typeof sanitizarTexto === 'function' ? sanitizarTexto(nom) : nom,
                 rut: typeof formatearRutChileno === 'function' ? formatearRutChileno(rutVal) : rutVal,
                 direccion: typeof sanitizarTexto === 'function' ? sanitizarTexto(dir) : dir,
                 telefono: document.getElementById('vecinoTelefono').value.trim(),
                 territorio: document.getElementById('vecinoTerritorio').value,
-                gestion: 'Solicitud',
                 estado: document.getElementById('vecinoEstado').value
             };
-            if (id) {
-                const idx = datasetVecinos.findIndex(v => v.id === parseInt(id));
-                if (idx !== -1) datasetVecinos[idx] = nuevo;
-            } else {
-                datasetVecinos.unshift(nuevo);
+
+            try {
+                const response = await fetch(id ? `/api/vecinos/${id}/` : '/api/vecinos/', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken') || ''},
+                    body: JSON.stringify(payload)
+                });
+                const data = await response.json();
+                if (!response.ok || !data.success) throw new Error(data.message || 'No fue posible guardar el vecino.');
+                if (bsModalVecino) bsModalVecino.hide();
+                await cargarVecinosDesdeDB(false);
+                mostrarToast('✓ ' + data.message);
+            } catch (error) {
+                Swal.fire({icon: 'error', title: 'No se guardó el vecino', text: error.message, confirmButtonColor: '#A30F32'});
             }
-            ejecutarFiltroCompletoVecinos();
-            bsModalVecino.hide();
-            mostrarToast(id ? '✓ Vecino actualizado' : '✓ Vecino registrado');
         }
 
         function eliminarVecino(id) {
             const v = datasetVecinos.find(item => item.id === id);
-            if (v) Swal.fire({title: "¿Estás seguro?", text: `¿Eliminar a "${v.nombre}"?`, icon: "warning", showCancelButton: true, confirmButtonText: "Eliminar", cancelButtonText: "Cancelar"}).then((res) => { if (res.isConfirmed) {
-                datasetVecinos = datasetVecinos.filter(item => item.id !== id);
-                ejecutarFiltroCompletoVecinos();
-                mostrarToast('✓ Vecino eliminado');
-            } });
+            if (v) Swal.fire({title: "¿Dar de baja al vecino?", text: `Se conservará la auditoría de "${v.nombre}".`, icon: "warning", showCancelButton: true, confirmButtonText: "Dar de baja", cancelButtonText: "Cancelar", confirmButtonColor: '#A30F32'}).then(async (res) => {
+                if (!res.isConfirmed) return;
+                try {
+                    const response = await fetch(`/api/vecinos/${id}/`, {method: 'DELETE', headers: {'X-CSRFToken': getCookie('csrftoken') || ''}});
+                    const data = await response.json();
+                    if (!response.ok || !data.success) throw new Error(data.message || 'No fue posible eliminar el vecino.');
+                    await cargarVecinosDesdeDB(false);
+                    mostrarToast('✓ ' + data.message);
+                } catch (error) {
+                    Swal.fire({icon: 'error', title: 'No se eliminó el vecino', text: error.message, confirmButtonColor: '#A30F32'});
+                }
+            });
         }
 
         function actualizarIndicadoresDiscretos() {
@@ -910,16 +1028,9 @@
         }
 
         function aplicarTemaGuardado() {
-            const savedTheme = localStorage.getItem('sgr_theme_preference');
-            if (savedTheme === 'dark') {
-                document.documentElement.setAttribute('data-theme', 'dark');
-                document.body.setAttribute('data-theme', 'dark');
-                const icon = document.getElementById('themeToggleIcon');
-                if (icon) {
-                    icon.classList.remove('bi-moon-stars-fill');
-                    icon.classList.add('bi-sun-fill');
-                }
-            }
+            localStorage.removeItem('sgr_theme_preference');
+            document.documentElement.removeAttribute('data-theme');
+            document.body.removeAttribute('data-theme');
         }
 
         /* ==========================================================================
@@ -3157,8 +3268,8 @@
             if (typeof validarRutChileno === 'function' && !validarRutChileno(rut)) {
                 Swal.fire({
                     icon: 'error',
-                    title: 'RUT Chileno Inválido',
-                    text: `El RUT ingresado "${rut}" no es válido según el algoritmo del Módulo 11 chileno.`
+                    title: 'RUT inválido',
+                    text: 'Revisa el número y el dígito verificador antes de continuar.'
                 });
                 return;
             }
@@ -3207,7 +3318,12 @@
                 const data = await res.json();
 
                 if (!data.success) {
-                    mostrarToast('⚠ ' + data.message);
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'No se pudo guardar el usuario',
+                        text: data.message || 'Revisa los datos ingresados e inténtalo nuevamente.',
+                        confirmButtonColor: '#A30F32'
+                    });
                     btn.disabled = false;
                     spinner.style.display = 'none';
                     icon.style.display = 'inline-block';
@@ -3220,7 +3336,12 @@
 
             } catch (err) {
                 console.error("Error guardando:", err);
-                mostrarToast('⚠ Error al comunicarse con el servidor.');
+                Swal.fire({
+                    icon: 'error',
+                    title: 'No hay conexión con el servidor',
+                    text: 'No fue posible guardar el usuario. Comprueba la conexión e inténtalo otra vez.',
+                    confirmButtonColor: '#A30F32'
+                });
             } finally {
                 btn.disabled = false;
                 spinner.style.display = 'none';
@@ -3437,6 +3558,212 @@
         }
 
         /* ==========================================================================
+           CATÁLOGOS DE ORGANIZACIÓN (DELEGACIONES Y CARGOS EN BASE DE DATOS)
+           ========================================================================== */
+
+        let catalogoDelegacionesDB = [];
+        let catalogoCargosDB = [];
+        let catalogosOrganizacionInicializados = false;
+
+        function escaparHtmlCatalogo(valor) {
+            const div = document.createElement('div');
+            div.textContent = valor == null ? '' : String(valor);
+            return div.innerHTML;
+        }
+
+        async function cargarCatalogosOrganizacion() {
+            const [resDelegaciones, resCargos] = await Promise.all([
+                fetch('/organization/delegations/'),
+                fetch('/organization/positions/')
+            ]);
+            const [delegaciones, cargos] = await Promise.all([resDelegaciones.json(), resCargos.json()]);
+            if (!resDelegaciones.ok || !delegaciones.success) throw new Error(delegaciones.message || 'No fue posible cargar las delegaciones.');
+            if (!resCargos.ok || !cargos.success) throw new Error(cargos.message || 'No fue posible cargar los cargos.');
+            catalogoDelegacionesDB = delegaciones.delegations || [];
+            catalogoCargosDB = cargos.positions || [];
+            sincronizarDelegacionesVisualesDesdeDB();
+            actualizarKpisDelegacionesReales();
+            renderCatalogosOrganizacion();
+            renderCargosMantenedor();
+            if (document.getElementById('delegacionesCardsGrid')) renderizarDelegacionesCards(filtroZonaActivo);
+        }
+
+        function actualizarKpisDelegacionesReales() {
+            const active = catalogoDelegacionesDB.filter(item => item.status === 'Activo');
+            const measured = active.filter(item => item.compliance_percentage != null);
+            const average = measured.length ? measured.reduce((sum, item) => sum + Number(item.compliance_percentage), 0) / measured.length : null;
+            const neighbors = active.reduce((sum, item) => sum + Number(item.registered_neighbors || 0), 0);
+            const staff = active.reduce((sum, item) => sum + Number(item.users_count || 0), 0);
+            const setText = (id, value) => { const element = document.getElementById(id); if (element) element.textContent = value; };
+            setText('kpiDelegacionesActivas', `${active.length} de ${catalogoDelegacionesDB.length}`);
+            setText('kpiDelegacionesEstado', active.length === catalogoDelegacionesDB.length ? '100% Operativas' : `${catalogoDelegacionesDB.length - active.length} sede(s) inactiva(s)`);
+            setText('kpiDelegacionesCumplimiento', average == null ? 'Sin medición' : `${average.toFixed(1)}%`);
+            setText('kpiDelegacionesVecinos', neighbors.toLocaleString('es-CL'));
+            setText('kpiDelegacionesFuncionarios', `${staff} Funcionario${staff === 1 ? '' : 's'}`);
+            setText('kpiDelegacionesFuncionariosDetalle', `Distribuidos en ${active.length} sede${active.length === 1 ? '' : 's'} activa${active.length === 1 ? '' : 's'}`);
+        }
+
+        function tarjetaCatalogo(item, tipo) {
+            const activo = item.status === 'Activo';
+            const detalle = tipo === 'delegacion' ? item.scope : (item.description || 'Sin descripción registrada');
+            const editar = tipo === 'delegacion' ? `editarDelegacionCatalogo(${item.id})` : `editarCargoCatalogo(${item.id})`;
+            const alternar = tipo === 'delegacion' ? `alternarDelegacionCatalogo(${item.id})` : `alternarCargoCatalogo(${item.id})`;
+            return `<div class="col-md-6" style="min-width:0"><article class="bg-white border rounded-4 p-3 shadow-sm h-100 overflow-hidden" style="min-width:0">
+                <div class="d-flex justify-content-between gap-2" style="min-width:0"><div class="flex-grow-1" style="min-width:0"><div class="fw-bold text-dark text-truncate">${escaparHtmlCatalogo(item.name)}</div><div class="small text-muted text-truncate">${escaparHtmlCatalogo(detalle)}</div></div><span class="badge ${activo ? 'bg-success-subtle text-success' : 'bg-secondary-subtle text-secondary'} align-self-start flex-shrink-0">${item.status}</span></div>
+                <div class="d-flex justify-content-between align-items-center mt-2"><small class="text-muted"><i class="bi bi-people me-1"></i>${item.users_count} usuario(s)</small><div class="btn-group btn-group-sm"><button class="btn btn-outline-primary" type="button" onclick="${editar}" title="Editar"><i class="bi bi-pencil"></i></button><button class="btn btn-outline-${activo ? 'danger' : 'success'}" type="button" onclick="${alternar}" title="${activo ? 'Desactivar' : 'Activar'}"><i class="bi bi-${activo ? 'pause-circle' : 'play-circle'}"></i></button></div></div>
+            </article></div>`;
+        }
+
+        function renderCatalogosOrganizacion() {
+            const delegaciones = document.getElementById('listaCatalogoDelegaciones');
+            const cargos = document.getElementById('listaCatalogoCargos');
+            if (delegaciones) delegaciones.innerHTML = catalogoDelegacionesDB.map(i => tarjetaCatalogo(i, 'delegacion')).join('') || '<p class="text-muted">No hay delegaciones registradas.</p>';
+            if (cargos) cargos.innerHTML = catalogoCargosDB.map(i => tarjetaCatalogo(i, 'cargo')).join('') || '<p class="text-muted">No hay cargos registrados.</p>';
+        }
+
+        async function initCargosView() {
+            try { await cargarCatalogosOrganizacion(); }
+            catch (error) { Swal.fire('No fue posible cargar los cargos', error.message, 'error'); }
+        }
+
+        function renderCargosMantenedor() {
+            const container = document.getElementById('listaCargosMantenedor');
+            if (!container) return;
+            const active = catalogoCargosDB.filter(item => item.status === 'Activo');
+            const assignments = catalogoCargosDB.reduce((sum, item) => sum + Number(item.users_count || 0), 0);
+            const setText = (id, value) => { const el = document.getElementById(id); if (el) el.textContent = value; };
+            setText('kpiCargosTotal', catalogoCargosDB.length);
+            setText('kpiCargosActivos', active.length);
+            setText('kpiCargosAsignaciones', assignments);
+            container.innerHTML = catalogoCargosDB.map(item => {
+                const activo = item.status === 'Activo';
+                return `<div class="col-md-6 col-xl-4"><article class="bg-white border rounded-4 p-3 shadow-sm h-100 overflow-hidden">
+                    <div class="d-flex justify-content-between gap-3 align-items-start"><div style="min-width:0"><h5 class="fw-bold mb-1 text-truncate" style="color:var(--muni-navy)">${escaparHtmlCatalogo(item.name)}</h5><p class="small text-muted mb-0">${escaparHtmlCatalogo(item.description || 'Sin descripción registrada')}</p></div><span class="badge ${activo ? 'bg-success-subtle text-success' : 'bg-secondary-subtle text-secondary'}">${item.status}</span></div>
+                    <div class="d-flex justify-content-between align-items-center mt-3 pt-2 border-top"><small class="text-muted"><i class="bi bi-people-fill me-1"></i>${item.users_count} funcionario(s)</small><div class="btn-group btn-group-sm"><button class="btn btn-outline-primary" onclick="editarCargoDesdeVista(${item.id})"><i class="bi bi-pencil me-1"></i>Editar</button><button class="btn btn-outline-${activo ? 'danger' : 'success'}" onclick="alternarCargoCatalogo(${item.id})"><i class="bi bi-${activo ? 'pause-circle' : 'play-circle'}"></i></button></div></div>
+                </article></div>`;
+            }).join('') || '<div class="col-12 text-center text-muted py-4">No hay cargos registrados.</div>';
+        }
+
+        async function editarCargoDesdeVista(id) {
+            await abrirCatalogosOrganizacion('cargos');
+            editarCargoCatalogo(id);
+        }
+
+        async function abrirCatalogosOrganizacion(pestaña = 'delegaciones') {
+            const modalEl = document.getElementById('modalCatalogosOrganizacion');
+            if (!modalEl) return;
+            if (!catalogosOrganizacionInicializados) {
+                document.getElementById('formCatalogoDelegacion')?.addEventListener('submit', guardarDelegacionCatalogo);
+                document.getElementById('formCatalogoCargo')?.addEventListener('submit', guardarCargoCatalogo);
+                catalogosOrganizacionInicializados = true;
+            }
+            try {
+                await cargarCatalogosOrganizacion();
+                const esCargos = pestaña === 'cargos';
+                const panelDelegaciones = document.getElementById('panelCatalogoDelegaciones');
+                const panelCargos = document.getElementById('panelCatalogoCargos');
+                panelDelegaciones?.classList.toggle('show', !esCargos);
+                panelDelegaciones?.classList.toggle('active', !esCargos);
+                panelCargos?.classList.toggle('show', esCargos);
+                panelCargos?.classList.toggle('active', esCargos);
+                const title = document.getElementById('tituloCatalogoOrganizacion');
+                const subtitle = document.getElementById('subtituloCatalogoOrganizacion');
+                if (title) title.innerHTML = esCargos
+                    ? '<i class="bi bi-person-workspace me-2 text-warning"></i>Gestión de cargos'
+                    : '<i class="bi bi-buildings-fill me-2 text-warning"></i>Delegaciones municipales';
+                if (subtitle) subtitle.textContent = esCargos
+                    ? 'Cargos institucionales disponibles para la asignación de funcionarios.'
+                    : 'Sedes, cobertura y datos de contacto guardados en la base de datos.';
+                bootstrap.Modal.getOrCreateInstance(modalEl).show();
+            } catch (error) {
+                Swal.fire('No fue posible abrir el catálogo', error.message, 'error');
+            }
+        }
+
+        function limpiarFormDelegacion() {
+            document.getElementById('formCatalogoDelegacion')?.reset();
+            document.getElementById('catalogoDelegacionId').value = '';
+            document.getElementById('tituloFormDelegacion').textContent = 'Nueva delegación';
+        }
+
+        function limpiarFormCargo() {
+            document.getElementById('formCatalogoCargo')?.reset();
+            document.getElementById('catalogoCargoId').value = '';
+            document.getElementById('tituloFormCargo').textContent = 'Nuevo cargo';
+        }
+
+        function editarDelegacionCatalogo(id) {
+            const item = catalogoDelegacionesDB.find(i => i.id === id); if (!item) return;
+            document.getElementById('catalogoDelegacionId').value = item.id;
+            document.getElementById('catalogoDelegacionNombre').value = item.name;
+            document.getElementById('catalogoDelegacionAmbito').value = item.scope;
+            document.getElementById('catalogoDelegacionEstado').value = item.status;
+            document.getElementById('catalogoDelegacionDireccion').value = item.address || '';
+            document.getElementById('catalogoDelegacionTelefono').value = item.phone || '';
+            document.getElementById('catalogoDelegacionCorreo').value = item.email || '';
+            document.getElementById('catalogoDelegacionHorario').value = item.schedule || '';
+            document.getElementById('catalogoDelegacionEncargado').value = item.manager_name || '';
+            document.getElementById('catalogoDelegacionFoto').value = item.photo_url || '';
+            document.getElementById('catalogoDelegacionDescripcion').value = item.description || '';
+            document.getElementById('tituloFormDelegacion').textContent = 'Editar delegación';
+        }
+
+        function editarCargoCatalogo(id) {
+            const item = catalogoCargosDB.find(i => i.id === id); if (!item) return;
+            document.getElementById('catalogoCargoId').value = item.id;
+            document.getElementById('catalogoCargoNombre').value = item.name;
+            document.getElementById('catalogoCargoDescripcion').value = item.description || '';
+            document.getElementById('catalogoCargoEstado').value = item.status;
+            document.getElementById('tituloFormCargo').textContent = 'Editar cargo';
+        }
+
+        async function enviarCatalogo(url, payload) {
+            const response = await fetch(url, {method: 'POST', headers: {'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken') || ''}, body: JSON.stringify(payload)});
+            const data = await response.json();
+            if (!response.ok || !data.success) throw new Error(data.message || 'No fue posible guardar el cambio.');
+            await cargarCatalogosOrganizacion();
+            await cargarUsuariosDesdeDB(false);
+            mostrarToast(`✓ ${data.message}`);
+        }
+
+        async function guardarDelegacionCatalogo(event) {
+            event.preventDefault();
+            const id = document.getElementById('catalogoDelegacionId').value;
+            try {
+                await enviarCatalogo(id ? `/organization/delegations/${id}/update/` : '/organization/delegations/', {
+                    name: document.getElementById('catalogoDelegacionNombre').value.trim(),
+                    scope: document.getElementById('catalogoDelegacionAmbito').value.trim(),
+                    status: document.getElementById('catalogoDelegacionEstado').value,
+                    address: document.getElementById('catalogoDelegacionDireccion').value.trim(),
+                    phone: document.getElementById('catalogoDelegacionTelefono').value.trim(),
+                    email: document.getElementById('catalogoDelegacionCorreo').value.trim(),
+                    schedule: document.getElementById('catalogoDelegacionHorario').value.trim(),
+                    manager_name: document.getElementById('catalogoDelegacionEncargado').value.trim(),
+                    photo_url: document.getElementById('catalogoDelegacionFoto').value.trim(),
+                    description: document.getElementById('catalogoDelegacionDescripcion').value.trim()
+                });
+                limpiarFormDelegacion();
+            } catch (error) { Swal.fire('No se pudo guardar', error.message, 'error'); }
+        }
+
+        async function guardarCargoCatalogo(event) {
+            event.preventDefault();
+            const id = document.getElementById('catalogoCargoId').value;
+            try {
+                await enviarCatalogo(id ? `/organization/positions/${id}/update/` : '/organization/positions/', {name: document.getElementById('catalogoCargoNombre').value.trim(), description: document.getElementById('catalogoCargoDescripcion').value.trim(), status: document.getElementById('catalogoCargoEstado').value});
+                limpiarFormCargo();
+            } catch (error) { Swal.fire('No se pudo guardar', error.message, 'error'); }
+        }
+
+        async function alternarDelegacionCatalogo(id) {
+            try { await enviarCatalogo(`/organization/delegations/${id}/toggle-status/`, {}); } catch (error) { Swal.fire('No se pudo cambiar el estado', error.message, 'error'); }
+        }
+
+        async function alternarCargoCatalogo(id) {
+            try { await enviarCatalogo(`/organization/positions/${id}/toggle-status/`, {}); } catch (error) { Swal.fire('No se pudo cambiar el estado', error.message, 'error'); }
+        }
+
+        /* ==========================================================================
            MÓDULO: DELEGACIONES MUNICIPALES (6 DELEGACIONES CON FOTOGRAFÍA REAL & GLASSMORPHISM)
            ========================================================================== */
 
@@ -3637,6 +3964,63 @@
             }
         };
 
+        function claveVisualDelegacion(item) {
+            const texto = `${item.name} ${item.scope}`.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+            if (texto.includes('compania')) return 'companias';
+            if (texto.includes('centro')) return 'centro';
+            if (texto.includes('pampa')) return 'pampa';
+            if (texto.includes('avenida del mar') || texto.includes('borde costero') || texto.includes('costa')) return 'costa';
+            if (texto.includes('antena')) return 'antena';
+            if (texto.includes('rural')) return 'rural';
+            return `db-${item.id}`;
+        }
+
+        function sincronizarDelegacionesVisualesDesdeDB() {
+            if (typeof datasetDelegacionesDetalle === 'undefined') return;
+            Object.values(datasetDelegacionesDetalle).forEach(item => { item.dbStatus = 'Inactivo'; });
+            catalogoDelegacionesDB.forEach(item => {
+                const key = claveVisualDelegacion(item);
+                const base = datasetDelegacionesDetalle[key] || {
+                    id: key, nombre: item.name, sector: item.scope,
+                    foto: '/static/img/faro_real_sunset.jpg', direccion: 'Dirección no registrada',
+                    telefono: 'No registrado', email: 'No registrado', horario: 'Horario no registrado',
+                    delegado: 'Encargado por asignar', cargoDelegado: 'Delegado Municipal',
+                    cumplimiento: 0, statusSemaforo: 'Sin evaluación', colorSemaforo: '#64748B',
+                    atencionesMes: 0, vecinosRegistrados: '0', tuboResueltos: '0%', satisfaccion: 'Sin medición',
+                    barrios: [], resumen: 'Sin descripción territorial registrada.', funcionarios: [], metricasAtencion: []
+                };
+                Object.assign(base, {
+                    dbId: item.id, dbStatus: item.status, nombre: item.name, sector: item.scope,
+                    direccion: item.address || 'Dirección no registrada', telefono: item.phone || 'No registrado',
+                    email: item.email || 'No registrado', horario: item.schedule || 'Horario no registrado',
+                    delegado: item.manager_name || 'Encargado por asignar',
+                    foto: item.photo_url || base.foto || '/static/img/faro_real_sunset.jpg',
+                    resumen: item.description || base.resumen || 'Sin descripción territorial registrada.',
+                    atencionesMes: item.monthly_activities,
+                    vecinosRegistrados: String(item.registered_neighbors ?? 0),
+                    tuboResueltos: item.resolution_rate == null ? 'Sin datos' : `${item.resolution_rate}%`,
+                    cumplimiento: item.compliance_percentage,
+                    satisfaccion: item.satisfaction_percentage == null ? 'Sin medición' : `${item.satisfaction_percentage}%`,
+                    funcionariosDB: item.users_count,
+                    funcionarios: (item.staff || []).map(person => ({
+                        nombre: person.name, rut: person.rut, cargo: person.position,
+                        email: person.email, rol: person.role,
+                        avatar: person.name.split(/\s+/).slice(0, 2).map(part => part[0] || '').join('').toUpperCase()
+                    }))
+                });
+                if (item.compliance_percentage == null) {
+                    base.statusSemaforo = 'Sin medición vigente'; base.colorSemaforo = '#64748B';
+                } else if (item.compliance_percentage >= 85) {
+                    base.statusSemaforo = 'Verde (Conforme)'; base.colorSemaforo = '#10B981';
+                } else if (item.compliance_percentage >= 60) {
+                    base.statusSemaforo = 'Ámbar (Atención)'; base.colorSemaforo = '#F59E0B';
+                } else {
+                    base.statusSemaforo = 'Rojo (Crítico)'; base.colorSemaforo = '#EF4444';
+                }
+                datasetDelegacionesDetalle[key] = base;
+            });
+        }
+
         let delegacionSeleccionadaActiva = null;
         let filtroZonaActivo = 'todas';
 
@@ -3648,7 +4032,9 @@
             renderizarDelegacionesCards(zona);
         }
 
-        function initDelegacionesView() {
+        async function initDelegacionesView() {
+            try { await cargarCatalogosOrganizacion(); }
+            catch (error) { console.warn('No fue posible sincronizar las fichas territoriales:', error); }
             renderizarDelegacionesCards(filtroZonaActivo);
         }
 
@@ -3658,6 +4044,7 @@
             grid.innerHTML = '';
 
             const items = Object.values(datasetDelegacionesDetalle).filter(d => {
+                if (d.dbStatus === 'Inactivo') return false;
                 if (filtro === 'todas') return true;
                 if (filtro === 'urbano') return ['centro', 'companias', 'pampa', 'antena'].includes(d.id);
                 if (filtro === 'costa') return d.id === 'costa';
@@ -3675,7 +4062,10 @@
 
                 let statusBadgeBg = 'rgba(5, 150, 105, 0.90)';
                 let statusLabel = 'Operativa 100%';
-                if (d.cumplimiento >= 85) {
+                if (d.cumplimiento == null) {
+                    statusBadgeBg = 'rgba(71, 85, 105, 0.90)';
+                    statusLabel = 'Sin medición vigente';
+                } else if (d.cumplimiento >= 85) {
                     statusBadgeBg = 'rgba(5, 150, 105, 0.90)';
                     statusLabel = 'Operativa 100%';
                 } else if (d.cumplimiento >= 75) {
@@ -3736,7 +4126,7 @@
                     <div class="p-3 pt-0">
                         <div class="d-flex align-items-center justify-content-between pt-2 border-top">
                             <span class="badge bg-primary-subtle text-primary border border-primary-subtle px-2 py-1" style="font-size: 0.74rem; font-weight: 700;">
-                                <i class="bi bi-folder2-open me-1"></i> ${d.atencionesMes || 420} Casos / mes
+                                <i class="bi bi-folder2-open me-1"></i> ${d.atencionesMes ?? 0} Casos / mes
                             </span>
                             <div class="btn-expediente-sede-link" title="Ver ficha territorial de sede">
                                 <span>Ver Ficha Técnica</span>
@@ -3831,7 +4221,7 @@
                 'costa': '/static/img/delegacion_costa.jpg',
                 'rural': '/static/img/delegacion_rural.jpg'
             };
-            const fotoSede = fotosSedes[id] || '/static/img/faro_real_sunset.jpg';
+            const fotoSede = data.foto || fotosSedes[id] || '/static/img/faro_real_sunset.jpg';
 
             // Actualizar estilo activo en las tarjetas modulares
             document.querySelectorAll('.delegacion-modular-glass-card').forEach(c => c.classList.remove('active-delegacion'));
@@ -3962,9 +4352,9 @@
                         <div class="col-sm-6 col-md-3">
                             <div class="delegacion-detail-kpi-card">
                                 <div class="text-muted small fw-bold text-uppercase" style="font-size: 0.72rem; letter-spacing: 0.04em;">Cumplimiento Operativo</div>
-                                <div class="fs-3 fw-bold my-1" style="color: ${data.colorSemaforo};">${data.cumplimiento}%</div>
+                                <div class="fs-3 fw-bold my-1" style="color: ${data.colorSemaforo};">${data.cumplimiento == null ? 'Sin datos' : `${data.cumplimiento}%`}</div>
                                 <div class="progress" style="height: 6px; border-radius: 4px; background: rgba(226, 232, 240, 0.8);">
-                                    <div class="progress-bar" style="width: ${data.cumplimiento}%; background-color: ${data.colorSemaforo}; border-radius: 4px;"></div>
+                                    <div class="progress-bar" style="width: ${data.cumplimiento || 0}%; background-color: ${data.colorSemaforo}; border-radius: 4px;"></div>
                                 </div>
                             </div>
                         </div>
@@ -4559,9 +4949,9 @@
 
             const selectedSet = new Set(selectedPerms || []);
 
-            datasetCatalogPermisos.forEach(mod => {
+            datasetCatalogPermisos.forEach((mod, moduleIndex) => {
                 const col = document.createElement('div');
-                col.className = 'col-md-6 col-lg-4';
+                col.className = 'col-12';
 
                 // Checkbox items
                 let permsInputs = '';
@@ -4574,7 +4964,7 @@
                     permsInputs += `
                         <div class="col-12">
                             <label class="perm-checkbox-item">
-                                <input type="checkbox" name="rolPermisoCheckbox" value="${p.code}" ${isChecked ? 'checked' : ''} onchange="actualizarContadorPermisosModal()">
+                                <input type="checkbox" name="rolPermisoCheckbox" data-module="${mod.module_id}" value="${p.code}" ${isChecked ? 'checked' : ''} onchange="actualizarContadorPermisosModal()">
                                 <div>
                                     <div class="fw-bold" style="font-size: 0.82rem; color: var(--muni-navy);">${p.name}</div>
                                     <div class="text-muted" style="font-size: 0.72rem; line-height: 1.2;">${p.desc}</div>
@@ -4587,23 +4977,25 @@
                 const allModChecked = (modCheckedCount === modTotalCount && modTotalCount > 0);
 
                 col.innerHTML = `
-                    <div class="perm-module-card h-100 d-flex flex-column">
-                        <div class="d-flex align-items-center justify-content-between pb-2 mb-2 border-bottom">
-                            <div class="d-flex align-items-center gap-2">
+                    <details class="perm-module-card role-permission-accordion" ${moduleIndex === 0 ? 'open' : ''}>
+                        <summary class="d-flex align-items-center justify-content-between gap-3">
+                            <div class="d-flex align-items-center gap-2 flex-grow-1" style="min-width:0">
                                 <i class="bi ${mod.icon || 'bi-folder'} text-primary fs-5"></i>
-                                <div>
+                                <div style="min-width:0">
                                     <h6 class="fw-bold m-0" style="font-size: 0.90rem; color: var(--muni-navy);">${mod.module_name}</h6>
-                                    <span class="text-muted" style="font-size: 0.70rem;">${mod.description}</span>
+                                    <span class="text-muted text-truncate d-block" style="font-size: 0.70rem;">${mod.description}</span>
                                 </div>
                             </div>
-                            <button type="button" class="btn btn-sm btn-link text-decoration-none p-0 fw-semibold small" onclick="toggleModuloCompleto('${mod.module_id}', this)">
+                            <span class="badge bg-light text-primary border flex-shrink-0" id="count-module-${mod.module_id}">${modCheckedCount}/${modTotalCount}</span>
+                            <button type="button" class="btn btn-sm btn-outline-primary rounded-pill px-2 flex-shrink-0" onclick="event.preventDefault(); event.stopPropagation(); toggleModuloCompleto('${mod.module_id}', this)">
                                 ${allModChecked ? 'Desmarcar' : 'Todos'}
                             </button>
-                        </div>
-                        <div class="row g-2 flex-grow-1" id="mod-container-${mod.module_id}">
+                            <i class="bi bi-chevron-down permission-chevron flex-shrink-0"></i>
+                        </summary>
+                        <div class="row g-2 pt-3 mt-2 border-top" id="mod-container-${mod.module_id}">
                             ${permsInputs}
                         </div>
-                    </div>
+                    </details>
                 `;
                 container.appendChild(col);
             });
@@ -4627,6 +5019,11 @@
             const count = checkboxes.length;
             const total = allCheckboxes.length || 40;
             const lbl = document.getElementById('lblModalPermsCount');
+            datasetCatalogPermisos.forEach(mod => {
+                const selected = document.querySelectorAll(`input[name="rolPermisoCheckbox"][data-module="${mod.module_id}"]:checked`).length;
+                const moduleCount = document.getElementById(`count-module-${mod.module_id}`);
+                if (moduleCount) moduleCount.textContent = `${selected}/${mod.permissions.length}`;
+            });
             if (lbl) {
                 lbl.textContent = `${count} de ${total} permisos seleccionados`;
                 if (count === total) {
@@ -4755,16 +5152,6 @@
                     }
                 } else if (data.role) {
                     datasetRoles.push(data.role);
-                } else {
-                    datasetRoles.push({
-                        id: Date.now(),
-                        name: name,
-                        description: description,
-                        is_system: false,
-                        permissions: checkedPerms,
-                        permissions_count: checkedPerms.length,
-                        users_count: 0
-                    });
                 }
 
                 if (bsModalRol) bsModalRol.hide();
@@ -4772,29 +5159,7 @@
                 mostrarToast(data.message || (id ? 'Rol actualizado exitosamente.' : 'Rol creado exitosamente.'));
             } catch (err) {
                 console.error("Error al guardar rol:", err);
-                // Fallback optimista en caso de problemas de red
-                if (id) {
-                    const idx = datasetRoles.findIndex(r => r.id === parseInt(id));
-                    if (idx !== -1) {
-                        datasetRoles[idx].name = name;
-                        datasetRoles[idx].description = description;
-                        datasetRoles[idx].permissions = checkedPerms;
-                        datasetRoles[idx].permissions_count = checkedPerms.length;
-                    }
-                } else {
-                    datasetRoles.push({
-                        id: Date.now(),
-                        name: name,
-                        description: description,
-                        is_system: false,
-                        permissions: checkedPerms,
-                        permissions_count: checkedPerms.length,
-                        users_count: 0
-                    });
-                }
-                if (bsModalRol) bsModalRol.hide();
-                filtrarRoles();
-                mostrarToast(id ? 'Rol actualizado correctamente.' : 'Rol creado correctamente.');
+                Swal.fire({icon: 'error', title: 'No se guardó el rol', text: err.message || 'No fue posible guardar los cambios en la base de datos.', confirmButtonColor: '#A30F32'});
             }
         }
 
@@ -4858,11 +5223,8 @@
                 filtrarRoles();
                 mostrarToast(data.message || 'Rol eliminado exitosamente.');
             } catch (err) {
-                console.warn("Fallo endpoint eliminar rol (fallback local):", err);
-                datasetRoles = datasetRoles.filter(r => r.id !== rolEliminarId);
-                if (bsModalEliminarRol) bsModalEliminarRol.hide();
-                filtrarRoles();
-                mostrarToast('Rol removido del panel.');
+                console.warn("No se pudo eliminar el rol:", err);
+                Swal.fire({icon: 'error', title: 'No se eliminó el rol', text: err.message || 'La base de datos rechazó la operación.', confirmButtonColor: '#A30F32'});
             }
         }
 
@@ -4884,33 +5246,12 @@
                     body: JSON.stringify({ name: `${origen.name} (Copia)` })
                 });
                 const data = await res.json();
-                if (data.success && data.role) {
-                    datasetRoles.push(data.role);
-                } else {
-                    datasetRoles.push({
-                        id: Date.now(),
-                        name: `${origen.name} (Copia)`,
-                        description: `Copia basada en ${origen.name}`,
-                        is_system: false,
-                        permissions: [...(origen.permissions || [])],
-                        permissions_count: (origen.permissions || []).length,
-                        users_count: 0
-                    });
-                }
+                if (!data.success || !data.role) throw new Error(data.message || 'La base de datos no confirmó la duplicación.');
+                datasetRoles.push(data.role);
                 filtrarRoles();
                 mostrarToast(`Rol duplicado como "${origen.name} (Copia)".`);
             } catch (err) {
-                datasetRoles.push({
-                    id: Date.now(),
-                    name: `${origen.name} (Copia)`,
-                    description: `Copia basada en ${origen.name}`,
-                    is_system: false,
-                    permissions: [...(origen.permissions || [])],
-                    permissions_count: (origen.permissions || []).length,
-                    users_count: 0
-                });
-                filtrarRoles();
-                mostrarToast(`Rol duplicado como "${origen.name} (Copia)".`);
+                Swal.fire({icon: 'error', title: 'No se duplicó el rol', text: err.message || 'No fue posible guardar la copia en la base de datos.', confirmButtonColor: '#A30F32'});
             }
         }
 

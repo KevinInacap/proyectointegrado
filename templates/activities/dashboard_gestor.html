@@ -74,8 +74,7 @@
                                 id="nav-evidencias">
                                 <span class="nav-icon-wrap"><i class="bi bi-camera-fill"></i></span>
                                 <span class="nav-link-text">Mis Evidencias y Gestiones</span>
-                                <span class="sidebar-badge badge-green">{{ kpi.my_accumulated_validated|default:"38"
-                                    }}</span>
+                                <span class="sidebar-badge badge-green">{{ kpi.my_accumulated_validated|default:"38" }}</span>
                             </a>
                         </li>
                         <li>
@@ -339,8 +338,7 @@
                             <td><span class="badge-case-due"><i class="bi bi-clock-history"></i> {{
                                     item.due_date|default:"18 Sep 2026" }}</span></td>
                             <td>
-                                {% if item.status == 'Realizado' or item.status == 'Aprobado' or item.status ==
-                                'Aprobada' %}
+                                {% if item.status == 'Realizado' or item.status == 'Aprobado' or item.status == 'Aprobada' %}
                                 <span class="badge-status-mini status-completed"><i class="bi bi-check-circle-fill"></i>
                                     Realizado</span>
                                 {% elif item.status == 'Pendiente' or item.status == 'Observada' %}

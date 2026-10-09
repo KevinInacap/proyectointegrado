@@ -1,8 +1,37 @@
 import datetime
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
+from django.utils import timezone
 from .models import Activity, Evidence, Validation
 from organization.models import Delegation
+from core.models import AuditLog
+
+
+def _has_matrix_permission(request, permission):
+    """Valida el permiso operativo guardado en Role.permissions_data."""
+    if request.session.get('user_role') == 'Administrador General':
+        return True
+    role_name = (request.session.get('user_role') or '').strip()
+    if not role_name:
+        return False
+    from organization.models import Role
+    role = Role.objects.filter(name__iexact=role_name, deleted_at__isnull=True).first()
+    return bool(role and permission.lower() in {p.lower() for p in (role.permissions_data or [])})
+
+
+def _permission_denied(permission):
+    return JsonResponse({
+        'success': False,
+        'message': f'El rol actual no tiene habilitado el permiso de {permission}.',
+    }, status=403)
+
+
+def _session_role_required(request, allowed_roles):
+    """Devuelve una redirección si no existe una sesión demo/autenticada válida."""
+    role = request.session.get('user_role')
+    if role not in allowed_roles:
+        return redirect('core:login')
+    return None
 
 def get_or_create_initial_sample_data():
     if Activity.objects.exists():
@@ -86,6 +115,10 @@ def dashboard_view(request):
         return redirect('activities:dashboard_gestor')
 
 def dashboard_admin_view(request):
+    access_denied = _session_role_required(request, {'Administrador General'})
+    if access_denied:
+        return access_denied
+
     get_or_create_initial_sample_data()
 
     delegations = [
@@ -188,6 +221,10 @@ def dashboard_admin_view(request):
     return render(request, 'activities/dashboard_admin.html', context)
 
 def dashboard_verificador_view(request):
+    access_denied = _session_role_required(request, {'Verificador Técnico', 'Verificador'})
+    if access_denied:
+        return access_denied
+
     get_or_create_initial_sample_data()
 
     evidence_queue = [
@@ -287,6 +324,10 @@ def dashboard_verificador_view(request):
     return render(request, 'activities/dashboard_verificador.html', context)
 
 def dashboard_gestor_view(request):
+    access_denied = _session_role_required(request, {'Gestor Territorial', 'Funcionario', 'Funcionario / Gestor Territorial'})
+    if access_denied:
+        return access_denied
+
     get_or_create_initial_sample_data()
 
     tubo_trabajo = [
@@ -638,42 +679,156 @@ def activity_validate_view(request, pk):
     return redirect('activities:dashboard')
 
 from django.http import JsonResponse
-from django.views.decorators.csrf import csrf_exempt
 import json
+import re
 from .models import Vecino
 
-@csrf_exempt
+
+def _normalize_vecino_rut(value):
+    return re.sub(r'[^0-9kK]', '', value or '').upper()
+
+
+def _format_vecino_rut(value):
+    cleaned = _normalize_vecino_rut(value)
+    if len(cleaned) < 2:
+        return value
+    number, verifier = cleaned[:-1], cleaned[-1]
+    groups = []
+    while number:
+        groups.insert(0, number[-3:])
+        number = number[:-3]
+    return f"{'.'.join(groups)}-{verifier}"
+
+
+def _valid_vecino_rut(value):
+    cleaned = _normalize_vecino_rut(value)
+    if len(cleaned) < 2 or not cleaned[:-1].isdigit():
+        return False
+    total, multiplier = 0, 2
+    for digit in reversed(cleaned[:-1]):
+        total += int(digit) * multiplier
+        multiplier = 2 if multiplier == 7 else multiplier + 1
+    result = 11 - (total % 11)
+    expected = '0' if result == 11 else ('K' if result == 10 else str(result))
+    return cleaned[-1] == expected
+
+
+def _vecino_payload(data):
+    return {
+        'nombre': str(data.get('nombre', '')).strip(),
+        'rut': _format_vecino_rut(str(data.get('rut', '')).strip()),
+        'direccion': str(data.get('direccion', '')).strip(),
+        'telefono': str(data.get('telefono', '')).strip(),
+        'territorio': str(data.get('territorio', '')).strip(),
+        'estado': str(data.get('estado', 'Activo')).strip(),
+    }
+
+
+def _serialize_vecino(vecino):
+    return {
+        'id': vecino.id,
+        'nombre': vecino.nombre,
+        'rut': vecino.rut,
+        'direccion': vecino.direccion or '',
+        'telefono': vecino.telefono or '',
+        'territorio': vecino.territorio or '',
+        'gestion': 'Solicitud',
+        'estado': vecino.estado,
+    }
+
 def api_vecinos(request):
+    if request.method not in {'GET', 'POST'}:
+        return JsonResponse({'success': False, 'message': 'Método no permitido.'}, status=405)
+
+    required_permission = 'lectura' if request.method == 'GET' else 'edicion'
+    if request.method == 'DELETE':
+        required_permission = 'cierre'
+    if not _has_matrix_permission(request, required_permission):
+        return _permission_denied(required_permission)
+
     if request.method == 'GET':
-        vecinos = list(Vecino.objects.values('id', 'nombre', 'rut', 'direccion', 'telefono', 'territorio', 'estado'))
+        vecinos = [_serialize_vecino(v) for v in Vecino.objects.filter(deleted_at__isnull=True).order_by('nombre')]
         return JsonResponse({'success': True, 'vecinos': vecinos})
     elif request.method == 'POST':
-        data = json.loads(request.body)
-        vecino = Vecino.objects.create(**data)
-        return JsonResponse({'success': True, 'message': 'Vecino creado', 'id': vecino.id})
+        try:
+            data = json.loads(request.body)
+        except (TypeError, ValueError):
+            return JsonResponse({'success': False, 'message': 'Solicitud JSON inválida.'}, status=400)
+        payload = _vecino_payload(data)
+        if not payload['nombre'] or not payload['rut'] or not payload['direccion']:
+            return JsonResponse({'success': False, 'message': 'Nombre, RUT y dirección son obligatorios.'}, status=400)
+        if not _valid_vecino_rut(payload['rut']):
+            return JsonResponse({'success': False, 'message': 'RUT inválido. Revisa el número y el dígito verificador.'}, status=400)
+        if payload['estado'] not in {'Activo', 'Inactivo'}:
+            return JsonResponse({'success': False, 'message': 'Estado de vecino no válido.'}, status=400)
+        if any(_normalize_vecino_rut(v.rut) == _normalize_vecino_rut(payload['rut']) for v in Vecino.objects.filter(deleted_at__isnull=True)):
+            return JsonResponse({'success': False, 'message': 'Ya existe un vecino registrado con ese RUT.'}, status=400)
+        vecino = Vecino.objects.create(**payload)
+        AuditLog.objects.create(
+            user=request.user if request.user.is_authenticated else None,
+            affected_table='vecino', affected_record_id=str(vecino.id), action='CREATE',
+            new_value=_serialize_vecino(vecino), source_ip=request.META.get('REMOTE_ADDR'))
+        return JsonResponse({'success': True, 'message': 'Vecino guardado en la base de datos.', 'vecino': _serialize_vecino(vecino)})
 
-@csrf_exempt
 def api_vecino_detail(request, pk):
+    if request.method not in {'GET', 'POST', 'PUT', 'DELETE'}:
+        return JsonResponse({'success': False, 'message': 'Método no permitido.'}, status=405)
+
+    required_permission = 'lectura' if request.method == 'GET' else 'edicion'
+    if request.method == 'DELETE':
+        required_permission = 'cierre'
+    if not _has_matrix_permission(request, required_permission):
+        return _permission_denied(required_permission)
+
     try:
         vecino = Vecino.objects.get(pk=pk)
     except Vecino.DoesNotExist:
-        return JsonResponse({'success': False, 'message': 'Vecino no encontrado'})
+        return JsonResponse({'success': False, 'message': 'Vecino no encontrado'}, status=404)
         
     if request.method == 'PUT' or request.method == 'POST':
-        data = json.loads(request.body)
-        for k, v in data.items():
-            setattr(vecino, k, v)
+        try:
+            data = json.loads(request.body)
+        except (TypeError, ValueError):
+            return JsonResponse({'success': False, 'message': 'Solicitud JSON inválida.'}, status=400)
+        payload = _vecino_payload(data)
+        if not payload['nombre'] or not payload['rut'] or not payload['direccion']:
+            return JsonResponse({'success': False, 'message': 'Nombre, RUT y dirección son obligatorios.'}, status=400)
+        if not _valid_vecino_rut(payload['rut']):
+            return JsonResponse({'success': False, 'message': 'RUT inválido. Revisa el número y el dígito verificador.'}, status=400)
+        duplicate = any(_normalize_vecino_rut(v.rut) == _normalize_vecino_rut(payload['rut']) for v in Vecino.objects.filter(deleted_at__isnull=True).exclude(pk=vecino.pk))
+        if duplicate:
+            return JsonResponse({'success': False, 'message': 'Ya existe otro vecino registrado con ese RUT.'}, status=400)
+        previous = _serialize_vecino(vecino)
+        for field, value in payload.items():
+            setattr(vecino, field, value)
         vecino.save()
-        return JsonResponse({'success': True, 'message': 'Vecino actualizado'})
+        AuditLog.objects.create(
+            user=request.user if request.user.is_authenticated else None,
+            affected_table='vecino', affected_record_id=str(vecino.id), action='UPDATE',
+            previous_value=previous, new_value=_serialize_vecino(vecino), source_ip=request.META.get('REMOTE_ADDR'))
+        return JsonResponse({'success': True, 'message': 'Vecino actualizado en la base de datos.', 'vecino': _serialize_vecino(vecino)})
     elif request.method == 'DELETE':
-        vecino.delete()
-        return JsonResponse({'success': True, 'message': 'Vecino eliminado'})
+        previous = _serialize_vecino(vecino)
+        vecino.deleted_at = timezone.now()
+        vecino.estado = 'Inactivo'
+        vecino.save(update_fields=['deleted_at', 'estado', 'updated_at'])
+        AuditLog.objects.create(
+            user=request.user if request.user.is_authenticated else None,
+            affected_table='vecino', affected_record_id=str(vecino.id), action='DELETE',
+            previous_value=previous, source_ip=request.META.get('REMOTE_ADDR'))
+        return JsonResponse({'success': True, 'message': 'Vecino dado de baja y conservado en auditoría.'})
 
-@csrf_exempt
 def api_atenciones(request):
     """
     CRUD API para Atenciones y Casos Sociales en el Dashboard de Administrador (RN-012, RF-011)
     """
+    if request.method not in {'GET', 'POST'}:
+        return JsonResponse({'success': False, 'message': 'Método no permitido.'}, status=405)
+
+    required_permission = 'lectura' if request.method == 'GET' else 'edicion'
+    if not _has_matrix_permission(request, required_permission):
+        return _permission_denied(required_permission)
+
     if request.method == 'GET':
         atenciones_qs = Activity.objects.all().order_by('-activity_date', '-created_at')
         atenciones = []
@@ -750,8 +905,14 @@ def api_atenciones(request):
         except Exception as e:
             return JsonResponse({'success': False, 'message': str(e)}, status=500)
 
-@csrf_exempt
 def api_atencion_detail(request, pk):
+    if request.method not in {'GET', 'POST', 'PUT', 'DELETE'}:
+        return JsonResponse({'success': False, 'message': 'Método no permitido.'}, status=405)
+
+    required_permission = 'lectura' if request.method == 'GET' else ('cierre' if request.method == 'DELETE' else 'edicion')
+    if not _has_matrix_permission(request, required_permission):
+        return _permission_denied(required_permission)
+
     try:
         a = Activity.objects.get(pk=pk)
     except Activity.DoesNotExist:
@@ -795,27 +956,34 @@ def api_atencion_detail(request, pk):
         a.delete()
         return JsonResponse({'success': True, 'message': 'Atención eliminada de la base de datos'})
 
-@csrf_exempt
 def api_toggle_rol_permiso(request):
     """
     Permite activar/desactivar permisos (lectura, edicion, derivacion, cierre) en los roles
     y persistirlos directamente en la base de datos MySQL (tabla: rol).
     """
+    if request.session.get('user_role') != 'Administrador General':
+        return JsonResponse({'success': False, 'message': 'Se requiere el rol Administrador General.'}, status=403)
+
     if request.method != 'POST':
         return JsonResponse({'success': False, 'message': 'Método no permitido'}, status=405)
     
     from organization.models import Role
-    data = json.loads(request.body)
+    try:
+        data = json.loads(request.body)
+    except (TypeError, ValueError):
+        return JsonResponse({'success': False, 'message': 'La solicitud no contiene JSON válido.'}, status=400)
+
     rol_name = data.get('rol_name', '').strip()
     permiso = data.get('permiso', '').strip().lower()
     enabled = bool(data.get('enabled', False))
 
+    allowed_permissions = {'lectura', 'edicion', 'derivacion', 'cierre'}
+    if permiso not in allowed_permissions:
+        return JsonResponse({'success': False, 'message': 'Permiso no válido para esta matriz.'}, status=400)
+
     rol = Role.objects.filter(name__iexact=rol_name).first()
     if not rol:
-        # Si no existe por nombre exacto, buscar coincidencia parcial o crearlo
-        rol = Role.objects.filter(name__icontains=rol_name.split()[0]).first()
-        if not rol:
-            rol = Role.objects.create(name=rol_name, description=f"Rol de {rol_name}", permissions_data=[])
+        return JsonResponse({'success': False, 'message': 'El rol indicado no existe.'}, status=404)
 
     perms = set(p.lower() for p in (rol.permissions_data or []))
     if enabled:
@@ -823,8 +991,19 @@ def api_toggle_rol_permiso(request):
     else:
         perms.discard(permiso)
 
-    rol.permissions_data = list(perms)
-    rol.save()
+    previous_permissions = sorted(rol.permissions_data or [])
+    rol.permissions_data = sorted(perms)
+    rol.save(update_fields=['permissions_data', 'updated_at'])
+
+    AuditLog.objects.create(
+        user=request.user if getattr(request, 'user', None) and request.user.is_authenticated else None,
+        affected_table='rol',
+        affected_record_id=str(rol.pk),
+        action='UPDATE',
+        previous_value={'role': rol.name, 'permissions': previous_permissions},
+        new_value={'role': rol.name, 'permissions': rol.permissions_data, 'changed_permission': permiso, 'enabled': enabled},
+        source_ip=request.META.get('REMOTE_ADDR'),
+    )
 
     return JsonResponse({
         'success': True,

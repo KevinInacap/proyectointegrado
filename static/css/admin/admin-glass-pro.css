@@ -942,27 +942,55 @@ body {
     align-items: center;
     gap: 2rem;
     flex-wrap: wrap;
-    background: rgba(255, 255, 255, 0.22) !important;
-    -webkit-backdrop-filter: blur(10px) saturate(160%) !important;
-    backdrop-filter: blur(10px) saturate(160%) !important;
-    border: 1.5px solid rgba(255, 255, 255, 0.70) !important;
-    border-radius: 22px !important;
-    box-shadow: 0 12px 36px -8px rgba(27, 54, 93, 0.10), inset 0 1.5px 0.5px rgba(255, 255, 255, 0.9) !important;
+    background: transparent !important;
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
 }
 
 .serena-weather-glass-card {
-    background: rgba(255, 255, 255, 0.52) !important;
-    -webkit-backdrop-filter: blur(18px) saturate(160%) !important;
-    backdrop-filter: blur(18px) saturate(160%) !important;
-    border: 1.5px solid rgba(255, 255, 255, 0.85) !important;
-    border-radius: 20px !important;
+    background: transparent !important;
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+    border: 0 !important;
+    border-radius: 0 !important;
     padding: 1rem 1.45rem !important;
     color: var(--muni-navy) !important;
-    box-shadow: 0 10px 28px -5px rgba(27, 54, 93, 0.10), inset 0 1px 0 #FFFFFF !important;
+    box-shadow: none !important;
     display: flex !important;
     align-items: center !important;
     gap: 16px !important;
     min-width: 280px !important;
+}
+
+/* El menú lateral debe mostrarse completo: se compacta, no se oculta tras un scroll. */
+.sidebar-menu-scrollable {
+    overflow: visible !important;
+    padding-bottom: 0.35rem !important;
+    gap: 1px !important;
+}
+
+.sidebar-menu-scrollable .nav-item-btn {
+    padding-top: 0.38rem !important;
+    padding-bottom: 0.38rem !important;
+}
+
+.sidebar-menu-scrollable .submenu-item-btn {
+    padding-top: 0.17rem !important;
+    padding-bottom: 0.17rem !important;
+    font-size: 0.80rem !important;
+}
+
+.sidebar-faro-footer {
+    height: 145px !important;
+}
+
+/* El hero usa jerarquía tipográfica y contraste; no paneles de vidrio superpuestos. */
+.serena-hero-glass-banner {
+    border: 0 !important;
+    box-shadow: 0 8px 22px rgba(27, 54, 93, 0.08) !important;
 }
 
 /* ==========================================================================
@@ -1505,7 +1533,27 @@ body {
 }
 
 .usuario-clean-table tbody tr.row-selected {
-    background: rgba(27, 54, 93, 0.06) !important;
+    background: rgba(196, 18, 48, 0.14) !important;
+    box-shadow: inset 4px 0 0 var(--muni-red) !important;
+}
+
+/* Selección unificada de mantenedores: el azul de Bootstrap se sustituye por carmesí. */
+.custom-clean-table tbody tr.selected-row,
+.custom-clean-table tbody tr.row-selected {
+    background: rgba(196, 18, 48, 0.14) !important;
+    box-shadow: inset 4px 0 0 var(--muni-red) !important;
+}
+
+.page-pill.active,
+.nav-pills .nav-link.active,
+.delegacion-filter-pill.active,
+.usuario-filter-pill.active,
+.facet-pill.active,
+.btn-check:checked + .btn {
+    background: linear-gradient(135deg, var(--muni-red) 0%, var(--muni-red-deep, #68121E) 100%) !important;
+    color: #FFFFFF !important;
+    border-color: var(--muni-red) !important;
+    box-shadow: 0 4px 14px rgba(196, 18, 48, 0.28) !important;
 }
 
 /* Menús Desplegables 100% Sólidos (Sin transparencias superpuestas) */
@@ -1536,7 +1584,7 @@ body {
    SUPRESIÓN TOTAL Y ABSOLUTA DE SCROLLBARS EN FORMULARIOS Y MODALES
    ========================================================================== */
 .modal {
-    overflow-y: auto !important;
+    overflow-y: hidden !important;
     overflow-x: hidden !important;
     scrollbar-width: none !important;
     -ms-overflow-style: none !important;
@@ -1582,16 +1630,80 @@ form,
 }
 
 .modal-content {
-    max-height: calc(100vh - 2.5rem) !important;
+    max-height: none !important;
     display: flex !important;
     flex-direction: column !important;
     overflow: hidden !important;
 }
 
 .modal-body {
-    overflow-y: auto !important;
+    overflow-y: hidden !important;
     overflow-x: hidden !important;
-    max-height: calc(100vh - 150px) !important;
+    max-height: none !important;
+}
+
+/* El contenido se escala al abrirse para caber completo, sin barras de scroll. */
+.modal.modal-fit-viewport .modal-dialog {
+    overflow: visible !important;
+}
+
+.modal.modal-fit-viewport .modal-content {
+    transform-origin: top center;
+    will-change: transform;
+}
+
+/* Mi Perfil: aprovecha el ancho y evita una columna vertical innecesariamente larga. */
+#modalPerfilUsuario .modal-dialog {
+    max-width: min(1180px, calc(100vw - 2rem)) !important;
+}
+
+#modalPerfilUsuario .modal-header {
+    padding: .8rem 1.25rem !important;
+}
+
+#modalPerfilUsuario .modal-body {
+    display: grid;
+    grid-template-columns: .88fr 1.55fr;
+    grid-template-rows: auto auto;
+    gap: .75rem;
+    padding: .85rem !important;
+}
+
+#modalPerfilUsuario .modal-body > .card:first-child,
+#modalPerfilUsuario .modal-body > .alert {
+    margin: 0 !important;
+    padding: .9rem !important;
+}
+
+#modalPerfilUsuario .modal-body > .card:last-child {
+    grid-column: 2;
+    grid-row: 1 / span 2;
+    margin: 0 !important;
+    padding: 1rem !important;
+}
+
+#modalPerfilUsuario #perfilModalAvatarPreview {
+    width: 78px !important;
+    height: 78px !important;
+}
+
+#modalPerfilUsuario .modal-body > .card:last-child .row {
+    --bs-gutter-y: .65rem;
+}
+
+#modalPerfilUsuario .modal-footer {
+    padding-top: .55rem !important;
+    padding-bottom: .55rem !important;
+}
+
+@media (max-width: 767.98px) {
+    #modalPerfilUsuario .modal-body {
+        display: block;
+    }
+
+    #modalPerfilUsuario .modal-body > * + * {
+        margin-top: .65rem !important;
+    }
 }
 
 body.modal-open {

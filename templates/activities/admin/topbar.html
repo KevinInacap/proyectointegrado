@@ -12,11 +12,6 @@
             </div>
 
             <div class="header-right">
-                <!-- Toggle Modo Oscuro / Claro -->
-                <button class="btn-theme-toggle" id="btnToggleDarkMode" onclick="toggleDarkMode()" title="Alternar Modo Oscuro / Claro">
-                    <i class="bi bi-moon-stars-fill" id="themeToggleIcon"></i>
-                </button>
-
                 <!-- Dropdown de Notificaciones Administrativas & Seguridad de Personal -->
                 <div class="dropdown">
                     <button class="btn-notification" type="button" data-bs-toggle="dropdown" aria-expanded="false" title="Centro de Notificaciones Administrativas">
@@ -99,7 +94,14 @@
                     <button class="user-dropdown-btn" type="button" data-bs-toggle="dropdown" aria-expanded="false">
                         <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=120&q=80"
                             alt="Avatar" class="user-avatar-img">
-                        <span class="user-info-text d-none d-sm-inline">Administrador Municipal</span>
+                        <span class="user-identity d-none d-sm-flex">
+                            <span class="user-info-text">{{ request.session.user_name|default:user_name|default:'Usuario Municipal' }}</span>
+                            <span class="user-context-text">
+                                {{ request.session.user_role|default:'Sin rol asignado' }}
+                                <span aria-hidden="true">•</span>
+                                {{ request.session.user_delegation|default:'Sin delegación asignada' }}
+                            </span>
+                        </span>
                         <i class="bi bi-chevron-down text-muted ms-1" style="font-size: 0.72rem;"></i>
                     </button>
                     <ul class="dropdown-menu dropdown-menu-end shadow-sm border-0 rounded-3 mt-2"

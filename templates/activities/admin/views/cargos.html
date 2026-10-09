@@ -1,0 +1,26 @@
+<section id="view-cargos" class="maintainer-view">
+    <div class="liquid-glass-card">
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4 pb-3 border-bottom">
+            <div>
+                <span class="badge rounded-pill px-3 py-2 mb-2" style="background:rgba(27,54,93,.1);color:var(--muni-navy)">
+                    <i class="bi bi-person-workspace me-1"></i> ESTRUCTURA FUNCIONARIA
+                </span>
+                <h2 class="m-0 fw-bold" style="color:var(--muni-navy);font-size:1.65rem">Cargos institucionales</h2>
+                <p class="text-secondary m-0 small">Administra los cargos disponibles para asignar a funcionarios municipales.</p>
+            </div>
+            <button class="liquid-glass-btn-primary" onclick="abrirCatalogosOrganizacion('cargos')">
+                <i class="bi bi-plus-lg me-1"></i> Nuevo cargo
+            </button>
+        </div>
+
+        <div class="row g-3 mb-4">
+            <div class="col-sm-4"><div class="bg-white border rounded-4 p-3 shadow-sm"><small class="text-muted fw-bold text-uppercase">Total cargos</small><div class="fs-3 fw-bold text-primary" id="kpiCargosTotal">—</div></div></div>
+            <div class="col-sm-4"><div class="bg-white border rounded-4 p-3 shadow-sm"><small class="text-muted fw-bold text-uppercase">Activos</small><div class="fs-3 fw-bold text-success" id="kpiCargosActivos">—</div></div></div>
+            <div class="col-sm-4"><div class="bg-white border rounded-4 p-3 shadow-sm"><small class="text-muted fw-bold text-uppercase">Asignaciones</small><div class="fs-3 fw-bold" style="color:var(--muni-navy)" id="kpiCargosAsignaciones">—</div></div></div>
+        </div>
+
+        <div class="row g-3" id="listaCargosMantenedor">
+            <div class="col-12 text-center text-muted py-4"><span class="spinner-border spinner-border-sm me-2"></span>Cargando cargos...</div>
+        </div>
+    </div>
+</section>
