@@ -1,7 +1,7 @@
 <!-- Top Header con Línea Institucional Roja de 3px -->
 <header class="top-header">
             <div class="header-left">
-                <button class="btn-hamburger" onclick="toggleSidebar()" title="Alternar menú lateral">
+                <button class="btn-hamburger" onclick="toggleSidebar()" title="Alternar menú lateral" aria-label="Alternar menú lateral" aria-controls="sidebar" aria-expanded="false">
                     <i class="bi bi-list"></i>
                 </button>
                 <div class="header-title-wrapper">
@@ -16,7 +16,7 @@
                 <div class="dropdown">
                     <button class="btn-notification" type="button" data-bs-toggle="dropdown" aria-expanded="false" title="Centro de Notificaciones Administrativas">
                         <i class="bi bi-bell"></i>
-                        <span class="badge-count" id="adminNotifBadge">3</span>
+                        <span class="badge-count" id="adminNotifBadge" hidden>0</span>
                     </button>
                     <div class="dropdown-menu dropdown-menu-end shadow-lg border-0 rounded-4 mt-2 p-0 admin-notif-dropdown" style="min-width: 360px; max-width: 400px;">
                         <div class="notif-header d-flex align-items-center justify-content-between p-3 border-bottom">
@@ -30,56 +30,10 @@
                                 Marcar leídas
                             </button>
                         </div>
-                        <div class="notif-list-body" id="adminNotifList" style="max-height: 320px; overflow-y: auto;">
-                            <!-- Notificación 1: Clave -->
-                            <div class="notif-item p-3 border-bottom d-flex gap-3 align-items-start unread">
-                                <div class="notif-icon-circle bg-danger-subtle text-danger">
-                                    <i class="bi bi-key-fill"></i>
-                                </div>
-                                <div class="flex-grow-1">
-                                    <div class="d-flex justify-content-between align-items-center mb-1">
-                                        <strong style="font-size: 0.8rem; color: #1E293B;">Recuperación de Clave</strong>
-                                        <span class="text-muted" style="font-size: 0.7rem;">Hace 12 min</span>
-                                    </div>
-                                    <p class="m-0 text-secondary" style="font-size: 0.76rem; line-height: 1.35;">
-                                        El gestor <strong>Rodrigo Araya</strong> (Delegación Las Compañías) solicitó restablecer su contraseña de acceso institucional.
-                                    </p>
-                                    <div class="mt-2">
-                                        <button class="btn btn-sm btn-outline-danger rounded-pill px-2 py-0" style="font-size: 0.72rem;" onclick="abrirModalPassword(2, 'Rodrigo Araya')">
-                                            <i class="bi bi-shield-check me-1"></i> Resetear Clave
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                            <!-- Notificación 2: Correo -->
-                            <div class="notif-item p-3 border-bottom d-flex gap-3 align-items-start unread">
-                                <div class="notif-icon-circle bg-primary-subtle text-primary">
-                                    <i class="bi bi-envelope-exclamation-fill"></i>
-                                </div>
-                                <div class="flex-grow-1">
-                                    <div class="d-flex justify-content-between align-items-center mb-1">
-                                        <strong style="font-size: 0.8rem; color: #1E293B;">Cambio de Correo Oficial</strong>
-                                        <span class="text-muted" style="font-size: 0.7rem;">Hace 45 min</span>
-                                    </div>
-                                    <p class="m-0 text-secondary" style="font-size: 0.76rem; line-height: 1.35;">
-                                        La funcionaria <strong>Camila Sepúlveda</strong> solicitó actualizar su correo oficial a <code>c.sepulveda@laserena.cl</code>.
-                                    </p>
-                                </div>
-                            </div>
-                            <!-- Notificación 3: Alta de funcionario -->
-                            <div class="notif-item p-3 d-flex gap-3 align-items-start unread">
-                                <div class="notif-icon-circle bg-warning-subtle text-warning">
-                                    <i class="bi bi-person-plus-fill"></i>
-                                </div>
-                                <div class="flex-grow-1">
-                                    <div class="d-flex justify-content-between align-items-center mb-1">
-                                        <strong style="font-size: 0.8rem; color: #1E293B;">Nuevo Gestor en Espera</strong>
-                                        <span class="text-muted" style="font-size: 0.7rem;">Hace 2 horas</span>
-                                    </div>
-                                    <p class="m-0 text-secondary" style="font-size: 0.76rem; line-height: 1.35;">
-                                        Se registró nuevo gestor territorial (Delegación La Pampa). Pendiente validar asignación de roles.
-                                    </p>
-                                </div>
+                        <div class="notif-list-body" id="adminNotifList">
+                            <div class="p-4 text-center text-secondary small">
+                                <i class="bi bi-bell-slash d-block fs-4 mb-2" aria-hidden="true"></i>
+                                No hay notificaciones registradas.
                             </div>
                         </div>
                         <div class="notif-footer p-2 text-center bg-light rounded-bottom-4">
@@ -92,14 +46,13 @@
 
                 <div class="dropdown">
                     <button class="user-dropdown-btn" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                        <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=120&q=80"
-                            alt="Avatar" class="user-avatar-img">
+                        <span class="user-avatar-img" aria-hidden="true">{{ user_name|default:user.get_full_name|default:user.username|slice:":1"|upper }}</span>
                         <span class="user-identity d-none d-sm-flex">
-                            <span class="user-info-text">{{ request.session.user_name|default:user_name|default:'Usuario Municipal' }}</span>
+                            <span class="user-info-text">{{ user_name|default:user.get_full_name|default:user.username|default:'Usuario Municipal' }}</span>
                             <span class="user-context-text">
-                                {{ request.session.user_role|default:'Sin rol asignado' }}
+                                {{ user_role|default:'Sin rol asignado' }}
                                 <span aria-hidden="true">•</span>
-                                {{ request.session.user_delegation|default:'Sin delegación asignada' }}
+                                {{ current_delegation|default:'Sin delegación asignada' }}
                             </span>
                         </span>
                         <i class="bi bi-chevron-down text-muted ms-1" style="font-size: 0.72rem;"></i>

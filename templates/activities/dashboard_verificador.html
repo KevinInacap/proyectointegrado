@@ -575,6 +575,12 @@
     <!-- MAIN CONTENT -->
     <main class="dashboard-container">
 
+        {% if demo_data %}
+        <div class="alert alert-warning" role="note">
+            <strong>Panel demostrativo:</strong> los indicadores y registros de esta vista son datos de ejemplo; no representan operaciones guardadas en la base de datos.
+        </div>
+        {% endif %}
+
         <!-- SUBHEADER BANNER DE SUPERVISIÓN -->
         <div class="verifier-banner">
             <div>
@@ -583,12 +589,12 @@
                     Bandeja de Validación Fotográfica y Semáforo al Día
                 </h2>
                 <p class="verifier-banner-desc">
-                    Control de calidad de terreno, auditoría de medios de verificación y fiscalización diaria de metas (91 días de ciclo).
+                    Control de evidencias enviadas y revisión según los registros existentes en el sistema.
                 </p>
             </div>
             <div class="d-flex align-items-center gap-2">
                 <span class="badge bg-light text-dark px-3 py-2 fw-bold">
-                    <i class="bi bi-calendar-event me-1"></i> Día 56 / 91 (Trimestre T3)
+                    <i class="bi bi-calendar-event me-1"></i> {{ current_period }}
                 </span>
             </div>
         </div>
@@ -605,10 +611,10 @@
                 </div>
                 <div class="kpi-value-row">
                     <span class="kpi-number">{{ kpi.pending_reviews }}</span>
-                    <span class="kpi-meta-badge badge-warning-soft">En cola de revisión</span>
+                    <span class="kpi-meta-badge badge-warning-soft">Registros pendientes</span>
                 </div>
                 <div class="kpi-footer-text">
-                    Requieren auditoría fotográfica antes de 24 hrs
+                    Evidencias asociadas a atenciones pendientes
                 </div>
             </div>
 
@@ -622,10 +628,10 @@
                 </div>
                 <div class="kpi-value-row">
                     <span class="kpi-number">{{ kpi.points_validated_today }}</span>
-                    <span class="kpi-meta-badge badge-success-soft">+1 pt cada una</span>
+                    <span class="kpi-meta-badge badge-success-soft">Revisadas hoy</span>
                 </div>
                 <div class="kpi-footer-text">
-                    Aportan directamente al logro de meta institucional
+                    Total de validaciones aprobadas hoy
                 </div>
             </div>
 
@@ -642,7 +648,7 @@
                     <span class="kpi-meta-badge badge-danger-soft">Con observación</span>
                 </div>
                 <div class="kpi-footer-text">
-                    En proceso de subsanación por gestor en terreno
+                    Registros rechazados o devueltos hoy
                 </div>
             </div>
 
@@ -655,11 +661,11 @@
                     </div>
                 </div>
                 <div class="kpi-value-row">
-                    <span class="kpi-number">{{ kpi.delegation_avg }}%</span>
+                    <span class="kpi-number">{{ kpi.delegation_avg }}</span>
                     <span class="kpi-meta-badge badge-success-soft">{{ kpi.delegation_status }}</span>
                 </div>
                 <div class="kpi-footer-text">
-                    Rendimiento global de funcionarios en Las Compañías
+                    El indicador aparece cuando se configura y registra una medición.
                 </div>
             </div>
         </div>
@@ -678,7 +684,7 @@
                 </div>
                 <div class="d-flex align-items-center gap-2">
                     <span class="badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25 px-2 py-1">
-                        <i class="bi bi-info-circle me-1"></i> La aprobación suma +1 punto de cumplimiento
+                        <i class="bi bi-info-circle me-1"></i> Las acciones se aplican a evidencias registradas
                     </span>
                 </div>
             </div>
@@ -733,6 +739,8 @@
                                 </div>
                             </td>
                         </tr>
+                        {% empty %}
+                        <tr><td colspan="7" class="text-center text-muted py-4">No hay evidencias pendientes de revisión.</td></tr>
                         {% endfor %}
                     </tbody>
                 </table>
@@ -799,6 +807,8 @@
                                 {% endif %}
                             </td>
                         </tr>
+                        {% empty %}
+                        <tr><td colspan="6" class="text-center text-muted py-4">Sin indicadores de funcionarios registrados.</td></tr>
                         {% endfor %}
                     </tbody>
                 </table>
@@ -810,7 +820,7 @@
     <!-- FOOTER INSTITUCIONAL -->
     <footer class="dashboard-footer">
         <div class="container-fluid">
-            <span>Ilustre Municipalidad de La Serena · Módulo de Supervisión y Auditoría SGR · Delegación Las Compañías</span>
+            <span>Ilustre Municipalidad de La Serena · Módulo de Supervisión y Auditoría SGR · {{ current_delegation }}</span>
         </div>
     </footer>
 
@@ -924,7 +934,7 @@
                         <p class="mb-1"><strong>Funcionario:</strong> ${official}</p>
                         <p class="mb-1"><strong>Ítem Medible:</strong> ${item}</p>
                         <p class="mb-1"><strong>Descripción:</strong> ${desc}</p>
-                        <p class="mb-0 text-muted small"><i class="bi bi-geo-alt"></i> Coordenadas GPS verificadas en Delegación Las Compañías.</p>
+                        <p class="mb-0 text-muted small"><i class="bi bi-geo-alt"></i> La ubicación se mostrará cuando exista un registro verificado.</p>
                     </div>
                 `,
                 confirmButtonText: 'Cerrar',

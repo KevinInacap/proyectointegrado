@@ -21,6 +21,7 @@
 
         let calFechaActual = new Date();
         let calFechaHoy = new Date();
+        let calFechaSeleccionada = new Date(calFechaHoy.getFullYear(), calFechaHoy.getMonth(), calFechaHoy.getDate());
 
         function actualizarFechaActual() {
             const elFecha = document.getElementById('currentDateDisplay');
@@ -35,6 +36,7 @@
             const lblBadgeHoy = document.getElementById('lblDiaHoyTexto');
             const lblMesAno = document.getElementById('lblMesAnoCalendario');
             const gridDias = document.getElementById('gridDiasCalendario');
+            const lblFechaSeleccionada = document.getElementById('lblFechaSeleccionadaCalendario');
             if (!gridDias) return;
 
             const diasSemana = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
@@ -53,6 +55,10 @@
             if (lblMesAno) {
                 lblMesAno.innerHTML = `<i class="bi bi-calendar3 text-primary me-1"></i> ${meses[mes]} ${ano}`;
             }
+            if (lblFechaSeleccionada) {
+                const fecha = calFechaSeleccionada;
+                lblFechaSeleccionada.textContent = `Fecha seleccionada: ${fecha.getDate()} de ${meses[fecha.getMonth()]} de ${fecha.getFullYear()}`;
+            }
 
             // 3. Generar la cuadrícula del mes
             const primerDiaMes = new Date(ano, mes, 1);
@@ -68,7 +74,9 @@
 
             for (let i = primerDiaSemana - 1; i >= 0; i--) {
                 const d = ultimoDiaMesAnterior - i;
-                html += `<span class="text-muted p-1 rounded-2" style="opacity: 0.35; cursor: pointer;" onclick="cambiarMesCalendario(-1)">${d}</span>`;
+                const fecha = new Date(ano, mes - 1, d);
+                const selected = fecha.getTime() === calFechaSeleccionada.getTime();
+                html += `<button type="button" class="dia-calendario-item dia-calendario-adyacente${selected ? ' seleccionado' : ''}" aria-label="${d} de ${meses[fecha.getMonth()]} de ${fecha.getFullYear()}" aria-pressed="${selected}" onclick="seleccionarDiaCalendario(${d}, ${mes - 1}, ${ano})">${d}</button>`;
             }
 
             const esMesActual = (calFechaHoy.getFullYear() === ano && calFechaHoy.getMonth() === mes);
@@ -78,68 +86,38 @@
                 const esHoy = esMesActual && (d === diaHoyNum);
                 const fechaDia = new Date(ano, mes, d);
                 const esFinDeSemana = (fechaDia.getDay() === 0 || fechaDia.getDay() === 6);
-
-                if (esHoy) {
-                    html += `
-                        <span class="p-1 rounded-3 text-white fw-bold shadow-sm dia-calendario-item hoy-destacado" 
-                              style="background: var(--muni-navy); border: 2.5px solid var(--muni-red); cursor: pointer; transition: transform 0.15s;" 
-                              title="¡Hoy: ${d} de ${meses[mes]} de ${ano}!" 
-                              onclick="seleccionarDiaCalendario(${d}, ${mes}, ${ano})">
-                            ${d}
-                        </span>`;
-                } else {
-                    const colorClase = esFinDeSemana ? 'text-muted' : 'text-dark';
-                    html += `
-                        <span class="p-1 rounded-2 dia-calendario-item ${colorClase}" 
-                              style="cursor: pointer; transition: all 0.15s;" 
-                              title="${d} de ${meses[mes]} ${ano}" 
-                              onmouseover="this.style.background='rgba(27,54,93,0.08)'" 
-                              onmouseout="if(!this.classList.contains('seleccionado')) this.style.background='transparent'" 
-                              onclick="seleccionarDiaCalendario(${d}, ${mes}, ${ano})">
-                            ${d}
-                        </span>`;
-                }
+                const selected = fechaDia.getTime() === calFechaSeleccionada.getTime();
+                const classes = ['dia-calendario-item', esFinDeSemana ? 'fin-de-semana' : '', esHoy ? 'hoy-destacado' : '', selected ? 'seleccionado' : ''].filter(Boolean).join(' ');
+                html += `<button type="button" class="${classes}" aria-label="${d} de ${meses[mes]} de ${ano}${esHoy ? ', hoy' : ''}" aria-pressed="${selected}" title="${d} de ${meses[mes]} de ${ano}" onclick="seleccionarDiaCalendario(${d}, ${mes}, ${ano})">${d}</button>`;
             }
 
             const celdasUsadas = primerDiaSemana + totalDiasMes;
             const celdasRestantes = (7 - (celdasUsadas % 7)) % 7;
             for (let d = 1; d <= celdasRestantes; d++) {
-                html += `<span class="text-muted p-1 rounded-2" style="opacity: 0.35; cursor: pointer;" onclick="cambiarMesCalendario(1)">${d}</span>`;
+                const fecha = new Date(ano, mes + 1, d);
+                const selected = fecha.getTime() === calFechaSeleccionada.getTime();
+                html += `<button type="button" class="dia-calendario-item dia-calendario-adyacente${selected ? ' seleccionado' : ''}" aria-label="${d} de ${meses[fecha.getMonth()]} de ${fecha.getFullYear()}" aria-pressed="${selected}" onclick="seleccionarDiaCalendario(${d}, ${mes + 1}, ${ano})">${d}</button>`;
             }
 
             gridDias.innerHTML = html;
         }
 
         function cambiarMesCalendario(delta) {
-            calFechaActual.setMonth(calFechaActual.getMonth() + delta);
+            calFechaActual = new Date(calFechaActual.getFullYear(), calFechaActual.getMonth() + delta, 1);
             renderCalendarioMunicipal();
         }
 
         function seleccionarDiaCalendario(dia, mes, ano) {
-            const meses = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
-            const fechaStr = `${String(dia).padStart(2, '0')}/${String(mes + 1).padStart(2, '0')}/${ano}`;
-            
-            document.querySelectorAll('.dia-calendario-item').forEach(el => {
-                el.classList.remove('seleccionado');
-                if (!el.classList.contains('hoy-destacado')) el.style.background = 'transparent';
-            });
-            
-            if (typeof Swal !== 'undefined') {
-                Swal.fire({
-                    toast: true,
-                    position: 'top-end',
-                    showConfirmButton: false,
-                    timer: 2500,
-                    icon: 'info',
-                    title: `Día seleccionado: ${dia} de ${meses[mes]} (${fechaStr})`
-                });
-            }
+            calFechaSeleccionada = new Date(ano, mes, dia);
+            calFechaActual = new Date(ano, mes, 1);
+            renderCalendarioMunicipal();
         }
 
         document.addEventListener('DOMContentLoaded', function () {
             // Actualización Dinámica de Fecha Institucional respecto al día actual
             actualizarFechaActual();
             try { renderCalendarioMunicipal(); } catch (e) { console.warn("Calendario error:", e); }
+            inicializarMapaDelegaciones();
 
             const elVec = document.getElementById('modalVecino');
             if (elVec && window.bootstrap) bsModalVecino = new bootstrap.Modal(elVec);
@@ -249,6 +227,17 @@
             }
             event.target.classList.remove('modal-fit-viewport');
         });
+        document.addEventListener('toggle', event => {
+            const section = event.target;
+            if (!(section instanceof HTMLDetailsElement) || !section.closest('#modalRol')) return;
+
+            if (section.open) {
+                section.closest('#contenedorModulosPermisos')
+                    ?.querySelectorAll('details[open]')
+                    .forEach(other => { if (other !== section) other.open = false; });
+            }
+            requestAnimationFrame(() => ajustarModalAlViewport(document.getElementById('modalRol')));
+        }, true);
         window.addEventListener('resize', () => {
             document.querySelectorAll('.modal.show').forEach(ajustarModalAlViewport);
         });
@@ -303,10 +292,7 @@
                 initReportesCharts();
                 setTimeout(() => {
                     if (typeof initSpotlightEffect === 'function') initSpotlightEffect();
-                    const kpiTotal = document.getElementById('kpiRepTotal');
-                    if (kpiTotal && typeof animateNumberTicker === 'function') animateNumberTicker(kpiTotal, '15.842', 500);
-                    const kpiRes = document.getElementById('kpiRepResolucion');
-                    if (kpiRes && typeof animateNumberTicker === 'function') animateNumberTicker(kpiRes, '94.8%', 500);
+                    // Los indicadores se cargan desde la API del módulo, no desde cifras de demostración.
                 }, 50);
             }
             if (viewName === 'usuarios') cargarUsuariosDesdeDB(false);
@@ -563,7 +549,7 @@
                 tempImportados = rows.map((r, i) => ({
                     id: datasetVecinos.length + i + 1,
                     nombre: r['Nombre Completo'] || r['Nombre'] || 'Vecino Importado',
-                    rut: r['RUT'] || r['Rut'] || '11.111.111-1',
+                    rut: r['RUT'] || r['Rut'] || '',
                     direccion: r['Dirección'] || 'La Serena',
                     telefono: r['Teléfono'] || '+56 9 0000 0000',
                     territorio: r['Territorio'] || 'Centro',
@@ -1235,99 +1221,165 @@
            ========================================================================== */
         const delegacionesMapaData = {
             centro: {
-                nombre: 'Centro Histórico',
-                id: 'centro',
-                nombre: 'Centro Histórico',
-                sector: 'Casco Colonial & Edificio Consistorial',
-                direccion: 'Los Carrera #301 (Edificio Consistorial)',
-                foto: '/static/img/delegacion_centro.jpg',
+                nombre: 'Centro',
+                mapa: 'Centro',
+                sector: 'Área urbana central',
                 badge: 'SEDE CENTRAL',
                 badgeColor: '#C41230',
                 badgeText: '#FFFFFF',
-                espera: '6 min',
-                satisfaccion: '95.0%',
-                gestor: 'Alan Von Kretschmann',
-                horario: '08:30 - 14:00 hrs',
-                telefono: '51 220 6600'
             },
             lascompanias: {
                 id: 'companias',
                 nombre: 'Las Compañías',
-                sector: 'Sector Norte Urbano (El Romero / Villa Los Aromos)',
-                direccion: 'Esmeralda #2451 (Sector Norte)',
-                foto: '/static/img/delegacion_companias.jpg',
+                mapa: 'Las Compañías',
+                sector: 'Sector norte de la comuna',
                 badge: 'DELEGACIÓN NORTE',
-                badgeColor: '#1B365D',
-                badgeText: '#FFFFFF',
-                espera: '9 min',
-                satisfaccion: '88.0%',
-                gestor: 'Pablo Cuadra',
-                horario: '08:30 - 14:00 hrs',
-                telefono: '51 220 6700'
+                badgeColor: '#6554C0',
+                badgeText: '#FFFFFF'
             },
             lapampa: {
                 id: 'pampa',
                 nombre: 'La Pampa',
-                sector: 'Sector Sur Urbano & El Milagro',
-                direccion: 'Juana Ross de Edwards #120',
-                foto: '/static/img/delegacion_pampa.jpg',
+                mapa: 'Pampa',
+                sector: 'Sector sur de la comuna',
                 badge: 'DELEGACIÓN SUR',
-                badgeColor: '#2563EB',
-                badgeText: '#FFFFFF',
-                espera: '7 min',
-                satisfaccion: '92.0%',
-                gestor: 'María Soledad Rojas',
-                horario: '08:30 - 14:00 hrs',
-                telefono: '51 220 6820'
+                badgeColor: '#008F8C',
+                badgeText: '#FFFFFF'
             },
             laflorida: {
                 id: 'antena',
-                nombre: 'La Antena - La Florida',
-                sector: 'Sector Oriente & Colina El Pino',
-                direccion: 'Av. El Santo #1050 / 18 de Septiembre',
-                foto: '/static/img/delegacion_antena.jpg',
-                badge: 'DELEGACIÓN ORIENTE',
-                badgeColor: '#059669',
-                badgeText: '#FFFFFF',
-                espera: '8 min',
-                satisfaccion: '84.0%',
-                gestor: 'Elizabeth Villanueva',
-                horario: '08:30 - 14:00 hrs',
-                telefono: '51 220 6750'
+                nombre: 'La Antena',
+                mapa: 'La Antena',
+                sector: 'Sector oriente de la comuna',
+                badge: 'DELEGACIÓN LA ANTENA',
+                badgeColor: '#E28C20',
+                badgeText: '#FFFFFF'
             },
             tierrasblancas: {
                 id: 'costa',
                 nombre: 'Avenida del Mar',
-                sector: 'Borde Costero & Zona Turística',
-                direccion: 'Av. Cuatro Esquinas #1500 (Borde Costero)',
-                foto: '/static/img/delegacion_costa.jpg',
-                badge: 'ZONA TURÍSTICA',
-                badgeColor: '#0284C7',
-                badgeText: '#FFFFFF',
-                espera: '10 min',
-                satisfaccion: '91.0%',
-                gestor: 'Rodrigo Fuenzalida',
-                horario: '08:30 - 14:00 hrs',
-                telefono: '51 220 6900'
+                mapa: 'Avenida del Mar',
+                sector: 'Franja costera de la comuna',
+                badge: 'DELEGACIÓN COSTERA',
+                badgeColor: '#1677A8',
+                badgeText: '#FFFFFF'
             },
             rural: {
                 id: 'rural',
-                nombre: 'Sector Rural y Caletas',
-                sector: 'Valle de Elqui, Algarrobito & Caletas',
-                direccion: 'Ruta 41 Km 8 (Algarrobito)',
-                foto: '/static/img/delegacion_rural.jpg',
-                badge: 'SEDE RURAL',
-                badgeColor: '#D97706',
-                badgeText: '#FFFFFF',
-                espera: '5 min',
-                satisfaccion: '71.4%',
-                gestor: 'Manuel Barraza',
-                horario: '09:00 - 13:30 hrs',
-                telefono: '51 220 6950'
+                nombre: 'Rural',
+                mapa: 'Rural',
+                sector: 'Localidades rurales y caletas',
+                badge: 'DELEGACIÓN RURAL',
+                badgeColor: '#678341',
+                badgeText: '#FFFFFF'
             }
         };
 
         window.currentMapSedeKey = 'centro';
+        let mapaDelegacionesLeaflet = null;
+        let datosSedesDelegaciones = {};
+        let datosPoligonosDelegaciones = {};
+
+        function llaveDelegacionMapa(nombre) {
+            const entry = Object.entries(delegacionesMapaData).find(([, item]) => item.mapa === nombre);
+            return entry ? entry[0] : null;
+        }
+
+        async function inicializarMapaDelegaciones() {
+            const mapElement = document.getElementById('mapaDelegacionesReal');
+            if (!mapElement || mapaDelegacionesLeaflet) return;
+            if (!window.maplibregl) {
+                const status = document.getElementById('mapaDelegacionesLoader');
+                if (status) status.textContent = 'No se pudo iniciar el mapa. Recarga la página para intentarlo de nuevo.';
+                return;
+            }
+
+            mapaDelegacionesLeaflet = new maplibregl.Map({
+                container: mapElement,
+                style: 'https://tiles.openfreemap.org/styles/liberty',
+                center: [-71.24, -29.91],
+                zoom: 10,
+                scrollZoom: false,
+                attributionControl: true
+            });
+            mapaDelegacionesLeaflet.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'top-right');
+
+            try {
+                const response = await fetch('/static/data/delegaciones-la-serena.geojson', {
+                    headers: { Accept: 'application/geo+json, application/json' }
+                });
+                if (!response.ok) throw new Error('No se pudo cargar la cartografía municipal.');
+                const geojson = await response.json();
+                const offices = geojson.features.filter(feature => feature.properties.kind === 'office');
+                offices.forEach(feature => { datosSedesDelegaciones[feature.properties.name] = feature; });
+                geojson.features.filter(feature => feature.properties.kind === 'territory')
+                    .forEach(feature => { datosPoligonosDelegaciones[feature.properties.name] = feature; });
+                const loader = document.getElementById('mapaDelegacionesLoader');
+                if (loader) loader.classList.add('oculto');
+                mapaDelegacionesLeaflet.once('load', () => {
+                    const styleSource = Object.keys(mapaDelegacionesLeaflet.getStyle().sources || {})[0];
+                    const firstSymbolLayer = mapaDelegacionesLeaflet.getStyle().layers?.find(layer => layer.type === 'symbol')?.id;
+                    mapaDelegacionesLeaflet.addSource('delegation-areas', { type: 'geojson', data: geojson });
+                    mapaDelegacionesLeaflet.addLayer({
+                        id: 'delegation-fill', type: 'fill', source: 'delegation-areas',
+                        filter: ['==', ['get', 'kind'], 'territory'],
+                        paint: {
+                            'fill-color': ['match', ['get', 'name'],
+                                'Centro', '#C41230', 'Las Compañías', '#6554C0', 'La Pampa', '#008F8C',
+                                'La Antena', '#E28C20', 'Avenida del Mar', '#1677A8', 'Rural', '#678341', '#64748B'],
+                            'fill-opacity': ['case', ['==', ['get', 'name'], delegacionesMapaData[window.currentMapSedeKey].mapa], 0.34, 0.16]
+                        }
+                    }, firstSymbolLayer);
+                    mapaDelegacionesLeaflet.addLayer({
+                        id: 'delegation-outline', type: 'line', source: 'delegation-areas',
+                        filter: ['==', ['get', 'kind'], 'territory'],
+                        paint: {
+                            'line-color': ['match', ['get', 'name'],
+                                'Centro', '#C41230', 'Las Compañías', '#6554C0', 'La Pampa', '#008F8C',
+                                'La Antena', '#E28C20', 'Avenida del Mar', '#1677A8', 'Rural', '#678341', '#64748B'],
+                            'line-width': ['case', ['==', ['get', 'name'], delegacionesMapaData[window.currentMapSedeKey].mapa], 3, 1.5],
+                            'line-opacity': 0.9
+                        }
+                    }, firstSymbolLayer);
+                    mapaDelegacionesLeaflet.addLayer({
+                        id: 'delegation-offices', type: 'circle', source: 'delegation-areas',
+                        filter: ['==', ['get', 'kind'], 'office'],
+                        paint: {
+                            'circle-radius': 7, 'circle-color': ['match', ['get', 'name'],
+                                'Centro', '#C41230', 'Las Compañías', '#6554C0', 'La Pampa', '#008F8C',
+                                'La Antena', '#E28C20', 'Avenida del Mar', '#1677A8', 'Rural', '#678341', '#64748B'],
+                            'circle-stroke-color': '#fff', 'circle-stroke-width': 2.5
+                        }
+                    }, firstSymbolLayer);
+                    mapaDelegacionesLeaflet.addLayer({
+                        id: 'delegation-labels', type: 'symbol', source: 'delegation-areas',
+                        filter: ['==', ['get', 'kind'], 'office'],
+                        layout: { 'text-field': ['get', 'name'], 'text-size': 11, 'text-offset': [0, 1.4], 'text-anchor': 'top' },
+                        paint: { 'text-color': '#203957', 'text-halo-color': '#fff', 'text-halo-width': 1.5 }
+                    }, firstSymbolLayer);
+                    const bounds = new maplibregl.LngLatBounds();
+                    const extendCoordinates = coordinates => {
+                        if (typeof coordinates[0] === 'number') bounds.extend(coordinates);
+                        else coordinates.forEach(extendCoordinates);
+                    };
+                    geojson.features.filter(feature => feature.properties.kind === 'territory')
+                        .forEach(feature => extendCoordinates(feature.geometry.coordinates));
+                    if (!bounds.isEmpty()) mapaDelegacionesLeaflet.fitBounds(bounds, { padding: 28, maxZoom: 11 });
+                    ['delegation-fill', 'delegation-offices'].forEach(layerId => {
+                        mapaDelegacionesLeaflet.on('click', layerId, event => {
+                            const key = llaveDelegacionMapa(event.features?.[0]?.properties?.name);
+                            if (key) seleccionarDelegacionMapa(key);
+                        });
+                        mapaDelegacionesLeaflet.on('mouseenter', layerId, () => { mapaDelegacionesLeaflet.getCanvas().style.cursor = 'pointer'; });
+                        mapaDelegacionesLeaflet.on('mouseleave', layerId, () => { mapaDelegacionesLeaflet.getCanvas().style.cursor = ''; });
+                    });
+                    seleccionarDelegacionMapa(window.currentMapSedeKey);
+                });
+            } catch (error) {
+                mapElement.innerHTML = '<div class="mapa-error" role="status">No se pudo cargar la cartografía municipal. Comprueba tu conexión e inténtalo de nuevo.</div>';
+                console.error('Error al cargar el mapa de delegaciones:', error);
+            }
+        }
 
         function seleccionarDelegacionMapa(key) {
             const data = delegacionesMapaData[key];
@@ -1338,47 +1390,38 @@
             // Actualizar botones / pills de sedes
             document.querySelectorAll('.serena-sede-pill').forEach(p => p.classList.remove('active'));
             const pillActiva = document.getElementById(`pill-sede-${key}`);
-            if (pillActiva) pillActiva.classList.add('active');
-
-            // Actualizar pines SVG
-            document.querySelectorAll('.delegation-pin-group').forEach(p => p.classList.remove('active'));
-            const pinActivo = document.getElementById(`pin-${key}`);
-            if (pinActivo) pinActivo.classList.add('active');
-
-            // Actualizar panel de detalle
-            const badgeEl = document.getElementById('mapFocusBadge');
-            if (badgeEl) {
-                badgeEl.textContent = data.badge;
-                badgeEl.style.background = data.badgeColor;
-                badgeEl.style.color = data.badgeText;
+            document.querySelectorAll('.serena-sede-pill').forEach(p => p.setAttribute('aria-pressed', 'false'));
+            if (pillActiva) {
+                pillActiva.classList.add('active');
+                pillActiva.setAttribute('aria-pressed', 'true');
             }
 
+            if (mapaDelegacionesLeaflet?.isStyleLoaded() && mapaDelegacionesLeaflet.getLayer('delegation-fill')) {
+                mapaDelegacionesLeaflet.setPaintProperty('delegation-fill', 'fill-opacity',
+                    ['case', ['==', ['get', 'name'], data.mapa], 0.34, 0.16]);
+                mapaDelegacionesLeaflet.setPaintProperty('delegation-outline', 'line-width',
+                    ['case', ['==', ['get', 'name'], data.mapa], 3, 1.5]);
+            }
+
+            // Actualizar panel de detalle
             const titleEl = document.getElementById('mapFocusTitle');
             if (titleEl) titleEl.textContent = data.nombre;
+            const swatchEl = document.getElementById('mapFocusSwatch');
+            if (swatchEl) swatchEl.style.setProperty('--delegation-color', data.badgeColor);
 
             const sectorEl = document.getElementById('mapFocusSector');
             if (sectorEl) sectorEl.textContent = data.sector;
 
             const addrEl = document.getElementById('mapFocusAddress');
-            if (addrEl) addrEl.innerHTML = `<i class="bi bi-geo-alt-fill text-danger me-1"></i> ${data.direccion}`;
+            const addressValue = addrEl?.querySelector('[data-address-value]');
+            const sede = datosSedesDelegaciones[data.mapa];
+            if (addressValue) addressValue.textContent = sede?.properties?.address || 'Dirección no disponible en la cartografía consultada.';
+            const coordinatesEl = document.getElementById('mapFocusCoordinates');
+            if (coordinatesEl && sede) {
+                const [longitude, latitude] = sede.geometry.coordinates;
+                coordinatesEl.textContent = `${latitude.toFixed(5)}, ${longitude.toFixed(5)}`;
+            }
 
-            const waitEl = document.getElementById('mapFocusWaitTime');
-            if (waitEl) waitEl.textContent = data.espera;
-
-            const satEl = document.getElementById('mapFocusSatisfaction');
-            if (satEl) satEl.innerHTML = `<i class="bi bi-star-fill text-warning me-1"></i> ${data.satisfaccion}`;
-
-            const mgrEl = document.getElementById('mapFocusManager');
-            if (mgrEl) mgrEl.textContent = data.gestor;
-
-            const schEl = document.getElementById('mapFocusSchedule');
-            if (schEl) schEl.textContent = data.horario;
-
-            const phoneEl = document.getElementById('mapFocusPhone');
-            if (phoneEl) phoneEl.innerHTML = `<i class="bi bi-telephone-fill text-primary me-1"></i> ${data.telefono}`;
-
-            const photoEl = document.getElementById('mapFocusPhoto');
-            if (photoEl && data.foto) photoEl.src = data.foto;
         }
 
         function irADetalleDelegacionDesdeMapa() {
@@ -1599,139 +1642,19 @@
         // Subvista activa ('general', '1vs1', 'multi')
         let subvistaReportesActiva = 'general';
 
-        // Catálogo de métricas por delegación para comparaciones
+        // Catálogo territorial de referencia; no contiene métricas inventadas.
         const catalogoMetricasDelegaciones = {
-            'centro': {
-                id: 'centro',
-                nombre: 'La Serena Centro (Centro Histórico)',
-                sector: 'Casco Fundacional Urbano',
-                atenciones: 5420,
-                meta: 5000,
-                cumplimiento: 108.4,
-                resueltas: 5180,
-                resueltasPct: 95.6,
-                enProceso: 240,
-                tiempoMin: 11,
-                csat: 4.9,
-                personal: 4,
-                tramites: {
-                    'Registro Social Hogares': 420,
-                    'Subsidios Municipales': 260,
-                    'Certif. de Residencia': 190,
-                    'Permisos y Patentes': 110,
-                    'Operativos Comunitarios': 85
-                }
-            },
-            'companias': {
-                id: 'companias',
-                nombre: 'Norte (Las Compañías)',
-                sector: 'Zona Norte del Río Elqui',
-                atenciones: 4890,
-                meta: 4500,
-                cumplimiento: 108.6,
-                resueltas: 4610,
-                resueltasPct: 94.3,
-                enProceso: 280,
-                tiempoMin: 13,
-                csat: 4.8,
-                personal: 4,
-                tramites: {
-                    'Registro Social Hogares': 350,
-                    'Subsidios Municipales': 490,
-                    'Certif. de Residencia': 180,
-                    'Permisos y Patentes': 130,
-                    'Operativos Comunitarios': 95
-                }
-            },
-            'pampa': {
-                id: 'pampa',
-                nombre: 'Sur (La Pampa / El Milagro)',
-                sector: 'Zona Sur Residencial',
-                atenciones: 2310,
-                meta: 2200,
-                cumplimiento: 105.0,
-                resueltas: 2190,
-                resueltasPct: 94.8,
-                enProceso: 120,
-                tiempoMin: 12,
-                csat: 4.9,
-                personal: 3,
-                tramites: {
-                    'Registro Social Hogares': 190,
-                    'Subsidios Municipales': 240,
-                    'Certif. de Residencia': 130,
-                    'Permisos y Patentes': 80,
-                    'Operativos Comunitarios': 65
-                }
-            },
-            'antena': {
-                id: 'antena',
-                nombre: 'Oriente (San Joaquín / La Antena)',
-                sector: 'Colina Oriente y Mirador',
-                atenciones: 1840,
-                meta: 1800,
-                cumplimiento: 102.2,
-                resueltas: 1750,
-                resueltasPct: 95.1,
-                enProceso: 90,
-                tiempoMin: 10,
-                csat: 4.9,
-                personal: 3,
-                tramites: {
-                    'Registro Social Hogares': 180,
-                    'Subsidios Municipales': 150,
-                    'Certif. de Residencia': 95,
-                    'Permisos y Patentes': 65,
-                    'Operativos Comunitarios': 50
-                }
-            },
-            'costa': {
-                id: 'costa',
-                nombre: 'Avenida del Mar / Costanera',
-                sector: 'Borde Costero y Turístico',
-                atenciones: 850,
-                meta: 800,
-                cumplimiento: 106.3,
-                resueltas: 774,
-                resueltasPct: 91.0,
-                enProceso: 76,
-                tiempoMin: 12,
-                csat: 4.8,
-                personal: 3,
-                tramites: {
-                    'Registro Social Hogares': 85,
-                    'Subsidios Municipales': 160,
-                    'Certif. de Residencia': 120,
-                    'Permisos y Patentes': 45,
-                    'Operativos Comunitarios': 30
-                }
-            },
-            'rural': {
-                id: 'rural',
-                nombre: 'Sector Rural (Algarrobito / Lambert)',
-                sector: 'Valle del Elqui Rural y Pueblos',
-                atenciones: 1382,
-                meta: 1400,
-                cumplimiento: 98.7,
-                resueltas: 1290,
-                resueltasPct: 93.3,
-                enProceso: 92,
-                tiempoMin: 16,
-                csat: 4.7,
-                personal: 3,
-                tramites: {
-                    'Registro Social Hogares': 60,
-                    'Subsidios Municipales': 130,
-                    'Certif. de Residencia': 90,
-                    'Permisos y Patentes': 40,
-                    'Operativos Comunitarios': 35
-                }
-            }
+            centro: { nombre: 'Centro Histórico', sector: 'Área central' },
+            companias: { nombre: 'Las Compañías', sector: 'Sector norte' },
+            pampa: { nombre: 'La Pampa', sector: 'Sector sur' },
+            antena: { nombre: 'La Antena / San Joaquín', sector: 'Sector oriente' },
+            costa: { nombre: 'Avenida del Mar', sector: 'Borde costero' },
+            rural: { nombre: 'Sector Rural', sector: 'Localidades rurales' }
         };
 
         // Estado del Tiempo Real (Live Mode)
         let timerLiveReportes = null;
-        let esTiempoRealActivo = true;
+        let esTiempoRealActivo = false;
         let segundosLive = 5;
 
         function initReportesCharts() {
@@ -1741,37 +1664,19 @@
         }
 
         function initChartsGeneralReportes() {
+            const emptyData = { labels: [], datasets: [] };
             // 1. Delegaciones Bar Chart
             const ctxDel = document.getElementById('chartReporteDelegaciones');
             if (ctxDel && !chartRepDelegacionesInstance) {
                 chartRepDelegacionesInstance = new Chart(ctxDel.getContext('2d'), {
                     type: 'bar',
-                    data: {
-                        labels: ['La Serena Centro', 'Las Compañías', 'La Pampa', 'San Joaquín', 'Sector Rural', 'Av. del Mar'],
-                        datasets: [
-                            {
-                                label: 'Atenciones Reales',
-                                data: [5420, 4890, 2310, 1840, 1382, 850],
-                                backgroundColor: '#C41230',
-                                borderRadius: 6
-                            },
-                            {
-                                label: 'Meta Período',
-                                data: [5000, 4500, 2200, 1800, 1400, 800],
-                                backgroundColor: '#1B365D',
-                                borderRadius: 6
-                            }
-                        ]
-                    },
+                    data: emptyData,
                     options: {
                         responsive: true,
                         maintainAspectRatio: false,
-                        plugins: {
-                            legend: { position: 'top', labels: { boxWidth: 12, font: { weight: 600 } } }
-                        },
+                        plugins: { legend: { display: false }, tooltip: { enabled: false } },
                         scales: {
-                            x: { grid: { display: false } },
-                            y: { grid: { color: 'rgba(226, 232, 240, 0.6)' }, ticks: { stepSize: 1000 } }
+                            x: { display: false }, y: { display: false }
                         }
                     }
                 });
@@ -1784,21 +1689,11 @@
             if (ctxCan && !chartRepCanalesInstance) {
                 chartRepCanalesInstance = new Chart(ctxCan.getContext('2d'), {
                     type: 'doughnut',
-                    data: {
-                        labels: ['Presencial (Ventanilla)', 'Telefónico', 'Digital / Web', 'Operativo en Terreno'],
-                        datasets: [{
-                            data: [8540, 4120, 2380, 802],
-                            backgroundColor: ['#1B365D', '#C41230', '#0284C7', '#16A34A'],
-                            borderWidth: 2,
-                            borderColor: '#FFFFFF'
-                        }]
-                    },
+                    data: emptyData,
                     options: {
                         responsive: true,
                         maintainAspectRatio: false,
-                        plugins: {
-                            legend: { position: 'bottom', labels: { boxWidth: 12, padding: 12, font: { weight: 600 } } }
-                        },
+                        plugins: { legend: { display: false }, tooltip: { enabled: false } },
                         cutout: '65%'
                     }
                 });
@@ -1811,39 +1706,13 @@
             if (ctxEvo && !chartRepEvolucionInstance) {
                 chartRepEvolucionInstance = new Chart(ctxEvo.getContext('2d'), {
                     type: 'line',
-                    data: {
-                        labels: ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep'],
-                        datasets: [
-                            {
-                                label: 'Atenciones Registradas',
-                                data: [1200, 1380, 1650, 1540, 1720, 1890, 1780, 1820, 2040],
-                                borderColor: '#C41230',
-                                backgroundColor: 'rgba(196, 18, 48, 0.08)',
-                                borderWidth: 3,
-                                fill: true,
-                                tension: 0.35,
-                                pointBackgroundColor: '#C41230'
-                            },
-                            {
-                                label: 'Meta Proyectada',
-                                data: [1150, 1250, 1400, 1450, 1550, 1600, 1650, 1700, 1750],
-                                borderColor: '#1B365D',
-                                borderDash: [5, 5],
-                                borderWidth: 2,
-                                fill: false,
-                                pointRadius: 2
-                            }
-                        ]
-                    },
+                    data: emptyData,
                     options: {
                         responsive: true,
                         maintainAspectRatio: false,
-                        plugins: {
-                            legend: { position: 'top', labels: { boxWidth: 12 } }
-                        },
+                        plugins: { legend: { display: false }, tooltip: { enabled: false } },
                         scales: {
-                            x: { grid: { display: false } },
-                            y: { grid: { color: 'rgba(226, 232, 240, 0.6)' } }
+                            x: { display: false }, y: { display: false }
                         }
                     }
                 });
@@ -1857,22 +1726,13 @@
                 chartRepTramitesInstance = new Chart(ctxTra.getContext('2d'), {
                     type: 'bar',
                     indexAxis: 'y',
-                    data: {
-                        labels: ['Registro Social Hogares', 'Subsidios Municipales', 'Certif. de Residencia', 'Permisos y Patentes', 'Audiencia Alcaldía'],
-                        datasets: [{
-                            label: 'Solicitudes',
-                            data: [4210, 3180, 2890, 1450, 890],
-                            backgroundColor: ['#1B365D', '#C41230', '#0284C7', '#16A34A', '#F59E0B'],
-                            borderRadius: 6
-                        }]
-                    },
+                    data: emptyData,
                     options: {
                         responsive: true,
                         maintainAspectRatio: false,
-                        plugins: { legend: { display: false } },
+                        plugins: { legend: { display: false }, tooltip: { enabled: false } },
                         scales: {
-                            x: { grid: { color: 'rgba(226, 232, 240, 0.6)' } },
-                            y: { grid: { display: false } }
+                            x: { display: false }, y: { display: false }
                         }
                     }
                 });
@@ -1944,14 +1804,6 @@
             const elSelBInit = document.getElementById('selectCompareDelB');
             let idB = (elSelBInit && elSelBInit.value) ? elSelBInit.value : 'companias';
 
-            // Evitar comparar la misma delegación
-            if (idA === idB) {
-                const keys = Object.keys(catalogoMetricasDelegaciones);
-                idB = keys.find(k => k !== idA) || 'companias';
-                const elSelB = document.getElementById('selectCompareDelB');
-                if (elSelB) elSelB.value = idB;
-            }
-
             const delA = catalogoMetricasDelegaciones[idA] || catalogoMetricasDelegaciones['centro'];
             const delB = catalogoMetricasDelegaciones[idB] || catalogoMetricasDelegaciones['companias'];
 
@@ -1961,300 +1813,24 @@
             const subB = document.getElementById('compareSubB');
             if (subB) subB.textContent = delB.sector;
 
-            // Renderizar Grilla de Métricas Comparativas
             const grid = document.getElementById('gridMetricas1vs1');
-            if (grid) {
-                const difAtenciones = delA.atenciones - delB.atenciones;
-                const liderAtenciones = difAtenciones >= 0 ? delA.nombre.split(' ')[0] : delB.nombre.split(' ')[0];
-
-                const difTiempo = delA.tiempoMin - delB.tiempoMin;
-                const liderRapidez = difTiempo <= 0 ? delA.nombre.split(' ')[0] : delB.nombre.split(' ')[0];
-
-                grid.innerHTML = `
-                    <div class="col-sm-6 col-xl-3">
-                        <div class="p-3 rounded-3 bg-white border shadow-sm h-100">
-                            <span class="text-secondary small fw-semibold">Atenciones Totales</span>
-                            <div class="d-flex align-items-center justify-content-between my-2">
-                                <span class="fw-bold fs-5 text-danger">${delA.atenciones.toLocaleString('es-CL')}</span>
-                                <span class="text-muted small">vs</span>
-                                <span class="fw-bold fs-5 text-primary">${delB.atenciones.toLocaleString('es-CL')}</span>
-                            </div>
-                            <div class="small fw-semibold ${difAtenciones >= 0 ? 'text-danger' : 'text-primary'}">
-                                <i class="bi bi-trophy-fill me-1"></i>Lidera: ${liderAtenciones} (${Math.abs(difAtenciones).toLocaleString('es-CL')} dif)
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="col-sm-6 col-xl-3">
-                        <div class="p-3 rounded-3 bg-white border shadow-sm h-100">
-                            <span class="text-secondary small fw-semibold">Tiempo Medio Espera</span>
-                            <div class="d-flex align-items-center justify-content-between my-2">
-                                <span class="fw-bold fs-5 text-danger">${delA.tiempoMin} min</span>
-                                <span class="text-muted small">vs</span>
-                                <span class="fw-bold fs-5 text-primary">${delB.tiempoMin} min</span>
-                            </div>
-                            <div class="small fw-semibold text-success">
-                                <i class="bi bi-lightning-charge-fill me-1"></i>Más Rápida: ${liderRapidez} (${Math.abs(difTiempo)} min menos)
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="col-sm-6 col-xl-3">
-                        <div class="p-3 rounded-3 bg-white border shadow-sm h-100">
-                            <span class="text-secondary small fw-semibold">Cumplimiento de Meta</span>
-                            <div class="d-flex align-items-center justify-content-between my-2">
-                                <span class="fw-bold fs-5 text-danger">${delA.cumplimiento}%</span>
-                                <span class="text-muted small">vs</span>
-                                <span class="fw-bold fs-5 text-primary">${delB.cumplimiento}%</span>
-                            </div>
-                            <div class="small fw-semibold text-secondary">
-                                Meta Trimestral: ${delA.meta.toLocaleString('es-CL')} vs ${delB.meta.toLocaleString('es-CL')}
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="col-sm-6 col-xl-3">
-                        <div class="p-3 rounded-3 bg-white border shadow-sm h-100">
-                            <span class="text-secondary small fw-semibold">Satisfacción Vecinal (CSAT)</span>
-                            <div class="d-flex align-items-center justify-content-between my-2">
-                                <span class="fw-bold fs-5 text-danger">★ ${delA.csat}</span>
-                                <span class="text-muted small">vs</span>
-                                <span class="fw-bold fs-5 text-primary">★ ${delB.csat}</span>
-                            </div>
-                            <div class="small fw-semibold text-warning-emphasis">
-                                Resolución 1er Contacto: ${delA.resueltasPct}% vs ${delB.resueltasPct}%
-                            </div>
-                        </div>
-                    </div>
-                `;
-            }
-
-            // 1. Radar Chart Comparativo 1 vs 1 (5 ejes normalizados de 0 a 100)
-            const ctxRadar = document.getElementById('chartCompareRadar');
-            if (ctxRadar) {
-                const normAtencA = Math.min(100, Math.round((delA.atenciones / 5500) * 100));
-                const normAtencB = Math.min(100, Math.round((delB.atenciones / 5500) * 100));
-
-                const normRapidezA = Math.max(20, Math.round(100 - (delA.tiempoMin * 4)));
-                const normRapidezB = Math.max(20, Math.round(100 - (delB.tiempoMin * 4)));
-
-                const radarData = {
-                    labels: ['Volumen Demanda', 'Rapidez de Atención', 'Resolución 1er Contacto', 'Cumplimiento Metas', 'Satisfacción Vecinal'],
-                    datasets: [
-                        {
-                            label: delA.nombre,
-                            data: [normAtencA, normRapidezA, delA.resueltasPct, Math.min(100, delA.cumplimiento), delA.csat * 20],
-                            backgroundColor: 'rgba(196, 18, 48, 0.25)',
-                            borderColor: '#C41230',
-                            borderWidth: 2.5,
-                            pointBackgroundColor: '#C41230'
-                        },
-                        {
-                            label: delB.nombre,
-                            data: [normAtencB, normRapidezB, delB.resueltasPct, Math.min(100, delB.cumplimiento), delB.csat * 20],
-                            backgroundColor: 'rgba(27, 54, 93, 0.25)',
-                            borderColor: '#1B365D',
-                            borderWidth: 2.5,
-                            pointBackgroundColor: '#1B365D'
-                        }
-                    ]
-                };
-
-                if (chartCompareRadarInstance) {
-                    chartCompareRadarInstance.data = radarData;
-                    chartCompareRadarInstance.update();
-                } else {
-                    chartCompareRadarInstance = new Chart(ctxRadar.getContext('2d'), {
-                        type: 'radar',
-                        data: radarData,
-                        options: {
-                            responsive: true,
-                            maintainAspectRatio: false,
-                            plugins: {
-                                legend: { position: 'top', labels: { font: { weight: 600 } } }
-                            },
-                            scales: {
-                                r: {
-                                    suggestedMin: 20,
-                                    suggestedMax: 100,
-                                    ticks: { display: false },
-                                    pointLabels: { font: { size: 11, weight: 600 } }
-                                }
-                            }
-                        }
-                    });
-                }
-            }
-
-            // 2. Gráfico de Barras Comparativo de Trámites
-            const ctxTra = document.getElementById('chartCompareTramites');
-            if (ctxTra) {
-                const labelsTramites = Object.keys(delA.tramites);
-                const dataA = labelsTramites.map(t => delA.tramites[t] || 0);
-                const dataB = labelsTramites.map(t => delB.tramites[t] || 0);
-
-                const barData = {
-                    labels: labelsTramites,
-                    datasets: [
-                        {
-                            label: delA.nombre,
-                            data: dataA,
-                            backgroundColor: '#C41230',
-                            borderRadius: 5
-                        },
-                        {
-                            label: delB.nombre,
-                            data: dataB,
-                            backgroundColor: '#1B365D',
-                            borderRadius: 5
-                        }
-                    ]
-                };
-
-                if (chartCompareTramitesInstance) {
-                    chartCompareTramitesInstance.data = barData;
-                    chartCompareTramitesInstance.update();
-                } else {
-                    chartCompareTramitesInstance = new Chart(ctxTra.getContext('2d'), {
-                        type: 'bar',
-                        data: barData,
-                        options: {
-                            responsive: true,
-                            maintainAspectRatio: false,
-                            plugins: {
-                                legend: { position: 'top', labels: { font: { weight: 600 } } }
-                            },
-                            scales: {
-                                x: { grid: { display: false } },
-                                y: { grid: { color: 'rgba(226, 232, 240, 0.6)' } }
-                            }
-                        }
-                    });
-                }
-            }
-
-            // Cuadro de Diagnóstico Ejecutivo en lenguaje simple
             const elConc = document.getElementById('conclusion1vs1');
-            if (elConc) {
-                let ventajaRapidez = delA.tiempoMin < delB.tiempoMin ? `${delA.nombre} registra una respuesta más expedita (${delA.tiempoMin} min vs ${delB.tiempoMin} min)` : `${delB.nombre} registra una respuesta más expedita (${delB.tiempoMin} min vs ${delA.tiempoMin} min)`;
-                let ventajaVolumen = delA.atenciones > delB.atenciones ? `${delA.nombre} atiende un mayor caudal vecinal (${delA.atenciones.toLocaleString('es-CL')} solicitudes)` : `${delB.nombre} atiende un mayor caudal vecinal (${delB.atenciones.toLocaleString('es-CL')} solicitudes)`;
-
-                elConc.innerHTML = `
-                    <strong>Resumen Comparativo para la Jefatura Municipal:</strong> Al contrastar <em>${delA.nombre}</em> con <em>${delB.nombre}</em>, se observa que <strong>${ventajaRapidez}</strong>. En términos de volumen comunitario, <strong>${ventajaVolumen}</strong>. Ambas unidades mantienen niveles de satisfacción ciudadana de excelencia (★ ${delA.csat} y ★ ${delB.csat}), superando el umbral de cumplimiento municipal fijado para este período.
-                `;
-            }
+            if (grid) grid.innerHTML = `<div class="col-12"><div class="dashboard-empty-state p-4 text-center"><strong>${delA.nombre} y ${delB.nombre}</strong><p class="mb-0 mt-1">La comparación aparecerá cuando exista una consulta conectada a registros reales de atención.</p></div></div>`;
+            ['chartCompareRadar', 'chartCompareTramites'].forEach(id => {
+                const canvas = document.getElementById(id);
+                if (canvas && canvas.closest('.card')) canvas.closest('.card').classList.add('d-none');
+            });
+            if (elConc) elConc.textContent = 'Sin una fuente de reportes conectada, no es posible calcular diferencias ni emitir conclusiones.';
         }
 
         /* ==========================================================================
            LÓGICA COMPARATIVA MULTIDELEGACIONAL (TODAS CONTRA TODAS)
            ========================================================================== */
         function initComparativaMultiCharts() {
-            const dels = Object.values(catalogoMetricasDelegaciones);
-
-            // 1. Ranking de Cumplimiento de Metas (Ordenado)
-            const ctxRank = document.getElementById('chartMultiRanking');
-            if (ctxRank) {
-                const sortedCumpl = [...dels].sort((a, b) => b.cumplimiento - a.cumplimiento);
-                const dataRank = {
-                    labels: sortedCumpl.map(d => d.nombre.split(' (')[0]),
-                    datasets: [{
-                        label: '% Cumplimiento Meta',
-                        data: sortedCumpl.map(d => d.cumplimiento),
-                        backgroundColor: sortedCumpl.map(d => d.cumplimiento >= 105 ? '#16A34A' : (d.cumplimiento >= 100 ? '#0D6EFD' : '#F59E0B')),
-                        borderRadius: 6
-                    }]
-                };
-
-                if (chartMultiRankingInstance) {
-                    chartMultiRankingInstance.data = dataRank;
-                    chartMultiRankingInstance.update();
-                } else {
-                    chartMultiRankingInstance = new Chart(ctxRank.getContext('2d'), {
-                        type: 'bar',
-                        data: dataRank,
-                        options: {
-                            responsive: true,
-                            maintainAspectRatio: false,
-                            plugins: {
-                                legend: { display: false }
-                            },
-                            scales: {
-                                x: { grid: { display: false } },
-                                y: { suggestedMin: 80, grid: { color: 'rgba(226, 232, 240, 0.6)' }, ticks: { callback: v => v + '%' } }
-                            }
-                        }
-                    });
-                }
-            }
-
-            // 2. Tiempos de Espera Comunal Comparados (Menor a Mayor)
-            const ctxTiempos = document.getElementById('chartMultiTiempos');
-            if (ctxTiempos) {
-                const sortedTiempos = [...dels].sort((a, b) => a.tiempoMin - b.tiempoMin);
-                const dataTiempos = {
-                    labels: sortedTiempos.map(d => d.nombre.split(' (')[0]),
-                    datasets: [{
-                        label: 'Minutos Promedio de Espera',
-                        data: sortedTiempos.map(d => d.tiempoMin),
-                        backgroundColor: sortedTiempos.map(d => d.tiempoMin <= 12 ? '#0284C7' : '#F97316'),
-                        borderRadius: 6
-                    }]
-                };
-
-                if (chartMultiTiemposInstance) {
-                    chartMultiTiemposInstance.data = dataTiempos;
-                    chartMultiTiemposInstance.update();
-                } else {
-                    chartMultiTiemposInstance = new Chart(ctxTiempos.getContext('2d'), {
-                        type: 'bar',
-                        data: dataTiempos,
-                        options: {
-                            responsive: true,
-                            maintainAspectRatio: false,
-                            plugins: {
-                                legend: { display: false }
-                            },
-                            scales: {
-                                x: { grid: { display: false } },
-                                y: { suggestedMax: 20, grid: { color: 'rgba(226, 232, 240, 0.6)' }, ticks: { callback: v => v + ' min' } }
-                            }
-                        }
-                    });
-                }
-            }
-
-            // 3. Satisfacción Vecinal por Delegación
-            const ctxSat = document.getElementById('chartMultiSatisfaccion');
-            if (ctxSat) {
-                const dataSat = {
-                    labels: dels.map(d => d.nombre.split(' (')[0]),
-                    datasets: [{
-                        label: 'Satisfacción Vecinal (CSAT / 5.0)',
-                        data: dels.map(d => d.csat),
-                        backgroundColor: '#F59E0B',
-                        borderRadius: 6
-                    }]
-                };
-
-                if (chartMultiSatisfaccionInstance) {
-                    chartMultiSatisfaccionInstance.data = dataSat;
-                    chartMultiSatisfaccionInstance.update();
-                } else {
-                    chartMultiSatisfaccionInstance = new Chart(ctxSat.getContext('2d'), {
-                        type: 'bar',
-                        data: dataSat,
-                        options: {
-                            responsive: true,
-                            maintainAspectRatio: false,
-                            plugins: { legend: { display: false } },
-                            scales: {
-                                x: { grid: { display: false } },
-                                y: { min: 4.0, max: 5.0, grid: { color: 'rgba(226, 232, 240, 0.6)' }, ticks: { stepSize: 0.2 } }
-                            }
-                        }
-                    });
-                }
-            }
+            document.querySelectorAll('#subvistaReporteMulti canvas').forEach(canvas => {
+                const card = canvas.closest('.card');
+                if (card) card.classList.add('d-none');
+            });
         }
 
         /* ==========================================================================
@@ -2262,97 +1838,46 @@
            ========================================================================== */
         function iniciarTemporizadorTiempoReal() {
             if (timerLiveReportes) clearInterval(timerLiveReportes);
-            segundosLive = 5;
-
-            timerLiveReportes = setInterval(() => {
-                if (!esTiempoRealActivo) return;
-                segundosLive--;
-                const elSec = document.getElementById('liveCounterSec');
-                if (elSec) elSec.textContent = segundosLive + 's';
-
-                if (segundosLive <= 0) {
-                    segundosLive = 5;
-                    ejecutarTickTiempoReal();
-                }
-            }, 1000);
+            const elSec = document.getElementById('liveCounterSec');
+            if (elSec) elSec.textContent = 'Pausado';
+            const dot = document.getElementById('liveDotIndicator');
+            const txt = document.getElementById('liveTextIndicator');
+            const btnTxt = document.getElementById('btnToggleLiveText');
+            const btnIcon = document.getElementById('btnToggleLiveIcon');
+            if (dot) dot.classList.add('paused');
+            if (txt) txt.textContent = 'Sin conexión en vivo';
+            if (btnTxt) btnTxt.textContent = 'API pendiente';
+            if (btnIcon) {
+                btnIcon.classList.remove('bi-pause-fill');
+                btnIcon.classList.add('bi-plug-fill');
+            }
         }
 
         function toggleTiempoRealReportes() {
-            esTiempoRealActivo = !esTiempoRealActivo;
+            esTiempoRealActivo = false;
             const dot = document.getElementById('liveDotIndicator');
             const txt = document.getElementById('liveTextIndicator');
             const btnTxt = document.getElementById('btnToggleLiveText');
             const btnIcon = document.getElementById('btnToggleLiveIcon');
 
-            if (esTiempoRealActivo) {
-                if (dot) dot.classList.remove('paused');
-                if (txt) txt.textContent = 'Tiempo Real: ACTIVO';
-                if (btnTxt) btnTxt.textContent = 'Pausar';
-                if (btnIcon) {
-                    btnIcon.classList.remove('bi-play-fill');
-                    btnIcon.classList.add('bi-pause-fill');
-                }
-                mostrarToast('✓ Monitoreo en vivo activado.');
-            } else {
-                if (dot) dot.classList.add('paused');
-                if (txt) txt.textContent = 'Tiempo Real: PAUSADO';
-                if (btnTxt) btnTxt.textContent = 'Reanudar';
-                if (btnIcon) {
-                    btnIcon.classList.remove('bi-pause-fill');
-                    btnIcon.classList.add('bi-play-fill');
-                }
-                mostrarToast('⏸ Monitoreo en vivo pausado.');
+            if (dot) dot.classList.add('paused');
+            if (txt) txt.textContent = 'Sin conexión en vivo';
+            if (btnTxt) btnTxt.textContent = 'Disponible al conectar API';
+            if (btnIcon) {
+                btnIcon.classList.remove('bi-pause-fill');
+                btnIcon.classList.add('bi-plug-fill');
             }
+            const btn = document.getElementById('btnToggleLiveReportes');
+            if (btn) btn.disabled = true;
+            mostrarToast('La actualización en vivo se habilitará cuando exista una API de reportes conectada.');
         }
 
         function forzarActualizacionEnVivo() {
-            segundosLive = 5;
-            ejecutarTickTiempoReal();
-            mostrarToast('✓ Datos sincronizados con la red comunal en tiempo real.');
+            mostrarToast('Aún no hay una API de reportes conectada para actualizar estos resultados.');
         }
 
         function ejecutarTickTiempoReal() {
-            // Incrementar contador de atenciones con un flash sutil
-            const elTot = document.getElementById('kpiRepTotal');
-            if (elTot) {
-                let actual = parseInt(elTot.textContent.replace(/\./g, '')) || 15842;
-                actual += Math.floor(Math.random() * 2) + 1;
-                elTot.textContent = actual.toLocaleString('es-CL');
-                elTot.style.transition = 'color 0.3s ease';
-                elTot.style.color = '#16A34A';
-                setTimeout(() => { elTot.style.color = 'var(--muni-navy)'; }, 600);
-            }
-
-            // Agregar evento al ticker de actividad
-            const ticker = document.getElementById('liveFeedTicker');
-            if (ticker) {
-                const eventosEjemplo = [
-                    { del: 'Las Compañías', tipo: 'danger', desc: 'Atención presencial finalizada: Registro Social de Hogares entregado' },
-                    { del: 'Centro Histórico', tipo: 'primary', desc: 'Certificado de residencia emitido vía tótem digital' },
-                    { del: 'La Pampa', tipo: 'success', desc: 'Solicitud de mantención de plaza asignada a inspector municipal' },
-                    { del: 'San Joaquín', tipo: 'primary', desc: 'Audiencia de junta vecinal confirmada con delegado territorial' },
-                    { del: 'Sector Rural', tipo: 'success', desc: 'Operativo APR: Camión aljibe abastecido en Quebrada de Talca' },
-                    { del: 'Avenida del Mar', tipo: 'info', desc: 'Permiso de actividad turística verificado en terreno' }
-                ];
-                const ev = eventosEjemplo[Math.floor(Math.random() * eventosEjemplo.length)];
-                const ahora = new Date().toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-
-                const item = document.createElement('div');
-                item.className = 'live-feed-item';
-                item.innerHTML = `
-                    <div class="d-flex align-items-center gap-2">
-                        <span class="badge bg-${ev.tipo}-subtle text-${ev.tipo} border" style="font-size: 0.75rem;">${ev.del}</span>
-                        <span class="text-dark fw-medium">${ev.desc}</span>
-                    </div>
-                    <span class="text-muted small font-monospace">${ahora}</span>
-                `;
-                ticker.insertBefore(item, ticker.firstChild);
-
-                // Limitar a máximo 5 items en pantalla
-                if (ticker.children.length > 5) {
-                    ticker.removeChild(ticker.lastChild);
-                }
-            }
+            actualizarReportesDatos();
         }
 
         function actualizarReportesDatos() {
@@ -2363,27 +1888,17 @@
             const elC = document.getElementById('filtroCanalReporte');
             const c = (elC && elC.value) ? elC.value : '';
 
-            let factor = 1;
-            if (p === 'mes') factor = 0.35;
-            if (p === 'ano') factor = 3.8;
-            if (p === 'historico') factor = 7.5;
-            if (d !== '') factor *= 0.45;
-            if (c !== '') factor *= 0.6;
-
-            const baseTotal = 15842;
-            const totalCalc = Math.round(baseTotal * factor);
-            const elTot = document.getElementById('kpiRepTotal');
-            if (elTot) elTot.textContent = totalCalc.toLocaleString('es-CL');
-
-            mostrarToast(`✓ Reportes actualizados: ${totalCalc.toLocaleString('es-CL')} registros analizados.`);
+            const params = new URLSearchParams({ period: p });
+            if (d) params.set('delegation', d);
+            if (c) params.set('channel', c);
+            mostrarToast('Los filtros se habilitarán cuando el módulo tenga su consulta de reportes conectada a datos reales.');
         }
 
         function restablecerFiltrosReportes() {
             if (document.getElementById('filtroPeriodoReporte')) document.getElementById('filtroPeriodoReporte').value = 'trimestre';
             if (document.getElementById('filtroDelegacionReporte')) document.getElementById('filtroDelegacionReporte').value = '';
             if (document.getElementById('filtroCanalReporte')) document.getElementById('filtroCanalReporte').value = '';
-            actualizarReportesDatos();
-            mostrarToast('✓ Filtros restablecidos a valores iniciales');
+            mostrarToast('Filtros restablecidos. Los datos se consultarán al conectar la API de reportes.');
         }
 
         /* ==========================================================================
@@ -2401,13 +1916,11 @@
             const resumenData = [
                 ["ILUSTRE MUNICIPALIDAD DE LA SERENA - GESTIÓN DE ATENCIÓN CIUDADANA (SGR)"],
                 ["INFORME EJECUTIVO DE RENDIMIENTO INSTITUCIONAL Y TERRITORIAL"],
-                ["Fecha de Emisión:", new Date().toLocaleString('es-CL'), "Autoridad:", "Administrador Municipal"],
+                ["Fecha de Emisión:", new Date().toLocaleString('es-CL')],
                 [],
-                ["INDICADOR CLAVE (KPI)", "VALOR REGISTRADO", "META OFICIAL", "ESTADO"],
-                ["Atenciones Totales Gestionadas", "15.842", "14.000", "+14.2% (Meta Superada)"],
-                ["Resolución en 1er Contacto", "94.8%", "90.0%", "Cumplimiento Óptimo"],
-                ["Tiempo Medio de Espera Vecinal", "12.4 min", "< 18 min", "-3.1 min (Optimizado)"],
-                ["Satisfacción Vecinal (CSAT)", "4.85 / 5.0", "4.50 / 5.0", "Nivel Excelente (3.420 encuestas)"]
+                ["Indicadores", "Estado"],
+                ["Atenciones", "Los valores se incorporarán al conectar la consulta a la base de datos."],
+                ["Tiempo de espera y satisfacción", "No hay datos suficientes registrados para calcularlos."]
             ];
             const ws1 = XLSX.utils.aoa_to_sheet(resumenData);
             XLSX.utils.book_append_sheet(wb, ws1, "Resumen_Ejecutivo");
@@ -2429,13 +1942,8 @@
 
             const compData = [
                 ["COMPARATIVA FRENTE A FRENTE (1 VS 1)"],
-                ["Métrica", delA.nombre, delB.nombre, "Diferencia"],
-                ["Atenciones Totales", delA.atenciones, delB.atenciones, delA.atenciones - delB.atenciones],
-                ["Meta Asignada", delA.meta, delB.meta, delA.meta - delB.meta],
-                ["% Cumplimiento", delA.cumplimiento + "%", delB.cumplimiento + "%", (delA.cumplimiento - delB.cumplimiento).toFixed(1) + "%"],
-                ["Tiempo Espera (min)", delA.tiempoMin, delB.tiempoMin, (delA.tiempoMin - delB.tiempoMin) + " min"],
-                ["Satisfacción (1 a 5)", delA.csat, delB.csat, (delA.csat - delB.csat).toFixed(2)],
-                ["Dotación de Funcionarios", delA.personal, delB.personal, delA.personal - delB.personal]
+                ["Métrica", delA.nombre, delB.nombre, "Estado"],
+                ["Atenciones, metas, tiempos, satisfacción y dotación", "No disponible", "No disponible", "API de reportes pendiente"]
             ];
             const ws3 = XLSX.utils.aoa_to_sheet(compData);
             XLSX.utils.book_append_sheet(wb, ws3, "Comparativa_1vs1");
@@ -2443,19 +1951,12 @@
             // Hoja 4: Canales de Atención y Ranking de Trámites
             const canalesData = [
                 ["DISTRIBUCIÓN POR CANAL DE ATENCIÓN"],
-                ["Canal", "Volumen Atenciones", "Porcentaje Estimado"],
-                ["Presencial (Ventanilla)", 8540, "53.9%"],
-                ["Telefónico", 4120, "26.0%"],
-                ["Digital / Portal Vecino", 2380, "15.0%"],
-                ["Operativo Móvil en Terreno", 802, "5.1%"],
+                ["Canal", "Volumen Atenciones", "Porcentaje"],
+                ["No disponible", "—", "—"],
                 [],
                 ["TOP TRÁMITES MÁS DEMANDADOS"],
                 ["Trámite", "Solicitudes Registradas"],
-                ["Registro Social de Hogares", 4210],
-                ["Subsidios Municipales", 3180],
-                ["Certificados de Residencia", 2890],
-                ["Permisos y Patentes de Obras", 1450],
-                ["Audiencia con Alcaldía / Jefaturas", 890]
+                ["No disponible", "—"]
             ];
             const ws4 = XLSX.utils.aoa_to_sheet(canalesData);
             XLSX.utils.book_append_sheet(wb, ws4, "Canales_Y_Tramites");
@@ -2493,19 +1994,17 @@
             doc.setFontSize(8.5);
             doc.setFont('helvetica', 'normal');
             doc.setTextColor(90, 100, 120);
-            doc.text(`Fecha de emisión: ${new Date().toLocaleDateString('es-CL')} | Estado: Consolidado Oficial Comunal`, 14, 34);
+            doc.text(`Fecha de emisión: ${new Date().toLocaleDateString('es-CL')} | Borrador con datos disponibles en la base`, 14, 34);
 
             // Resumen de KPIs
             doc.autoTable({
                 startY: 39,
                 theme: 'plain',
                 styles: { fontSize: 8.5, cellPadding: 2 },
-                head: [['Indicador Clave', 'Valor Registrado', 'Meta Oficial', 'Cumplimiento']],
+                head: [['Indicador Clave', 'Estado']],
                 body: [
-                    ['Atenciones Totales Gestionadas', '15.842', '14.000', '113.1% (Superada)'],
-                    ['Tasa de Resolución en 1er Contacto', '94.8%', '90.0%', 'Cumple con excelencia'],
-                    ['Tiempo Medio de Espera Vecinal', '12.4 minutos', '< 18 minutos', 'Cumple estándar'],
-                    ['Índice de Satisfacción (CSAT)', '4.85 / 5.0 (97%)', '4.50 / 5.0', 'Destacado Comunal']
+                    ['Métricas de gestión', 'Aún no existe conexión de consulta para este reporte.'],
+                    ['Tiempo de espera y satisfacción', 'No hay registros suficientes para calcular estos indicadores.']
                 ],
                 headStyles: { fillColor: [244, 248, 252], textColor: [27, 54, 93], fontStyle: 'bold' }
             });
@@ -2535,7 +2034,7 @@
             doc.text('Secretaría Comunal de Planificación', 165, finalY + 9, { align: 'center' });
 
             doc.save('Informe_Gestion_Atencion_Ciudadana_LaSerena.pdf');
-            mostrarToast('✓ Informe PDF generado y descargado con éxito.');
+            mostrarToast('Informe PDF de estado generado. Las métricas se incluirán al conectar el módulo a datos verificables.');
         }
 
         function renderAtencionesChart() {
@@ -3203,7 +2702,8 @@
                 document.getElementById('usrStatus').value = 'Activo';
                 document.getElementById('usrIsSuperuser').checked = false;
                 document.getElementById('lblPasswordUsuario').innerHTML = 'Contraseña de Acceso <span class="text-danger">*</span>';
-                document.getElementById('helpPasswordUsuario').textContent = "Por defecto se asigna 'MuniLaSerena2026!' si se deja en blanco.";
+                document.getElementById('usrPassword').placeholder = 'Mínimo 8 caracteres';
+                document.getElementById('helpPasswordUsuario').textContent = 'Obligatoria al crear. Usa 8+ caracteres, mayúscula, minúscula, número y símbolo.';
             } else {
                 const u = datasetUsuarios.find(x => x.id === id);
                 if (!u) return;
@@ -3220,7 +2720,8 @@
                 document.getElementById('usrPosition').value = u.position_id || '';
                 document.getElementById('usrIsSuperuser').checked = u.is_superuser || u.is_staff;
                 document.getElementById('lblPasswordUsuario').innerHTML = 'Cambiar Contraseña (Opcional)';
-                document.getElementById('helpPasswordUsuario').textContent = "Dejar en blanco para conservar la clave actual del usuario.";
+                document.getElementById('usrPassword').placeholder = 'Nueva contraseña (opcional)';
+                document.getElementById('helpPasswordUsuario').textContent = 'Déjala en blanco para conservar la clave actual; si la cambias, usa 8+ caracteres, mayúscula, minúscula, número y símbolo.';
 
                 // Marcar roles que el usuario tiene
                 if (u.roles && u.roles.length > 0) {
@@ -3261,6 +2762,15 @@
                     icon: 'warning',
                     title: 'Campos requeridos',
                     text: 'Nombre, RUT y Correo Institucional son obligatorios y no pueden quedar en blanco.'
+                });
+                return;
+            }
+
+            if (!editId && !password) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Contraseña obligatoria',
+                    text: 'Asigna una contraseña inicial segura para la nueva cuenta.'
                 });
                 return;
             }
@@ -3768,199 +3278,59 @@
            ========================================================================== */
 
         const datasetDelegacionesDetalle = {
-            'centro': {
-                id: 'centro',
-                nombre: 'Delegación Centro Histórico',
-                sector: 'Zona Urbana Central & Colonial',
-                foto: '/static/img/delegacion_centro.jpg',
-                direccion: 'Prat 451, Edificio Consistorial (Plaza de Armas)',
-                telefono: '+56 51 220 6600',
-                email: 'delegacion.centro@laserena.cl',
-                horario: 'Lunes a Viernes 08:30 a 14:00 hrs',
-                delegado: 'Marcelo Salazar Peña',
-                cargoDelegado: 'Coordinador & Delegado Centro',
-                cumplimiento: 95.0,
-                statusSemaforo: 'Verde (Óptimo)',
-                colorSemaforo: '#10B981',
-                atencionesMes: 980,
-                vecinosRegistrados: '38.400',
-                tuboResueltos: '96%',
-                satisfaccion: '96.2%',
-                barrios: ['Plaza de Armas', 'Barrio Almagro', 'Santa Inés', 'Colina El Pino', 'Barrio Carmona', 'Zona Típica Colonial'],
-                resumen: 'Comprende el casco histórico fundacional de La Serena. Concentra la atención preferencial de adultos mayores, trámites de patentes, regularizaciones patrimoniales y apoyo a juntas vecinales urbanas.',
-                funcionarios: [
-                    { nombre: 'Marcelo Salazar Peña', rut: '13.456.789-0', cargo: 'Coordinador General SGR & Jefatura', email: 'coordinacion.sgr@laserena.cl', rol: 'Coordinador', avatar: 'MS' },
-                    { nombre: 'Camila Araya Miranda', rut: '18.345.678-K', cargo: 'Gestora Social Territorial', email: 'gestora.centro@laserena.cl', rol: 'Gestor Territorial', avatar: 'CA' },
-                    { nombre: 'Valeria Cáceres Soto', rut: '16.789.012-3', cargo: 'Directora de Atención Ciudadana', email: 'auditoria.externa@laserena.cl', rol: 'Usuario de Consulta', avatar: 'VC' },
-                    { nombre: 'Jorge Cortés Olivares', rut: '15.432.198-7', cargo: 'Verificador Técnico de Evidencias', email: 'verificador.centro@laserena.cl', rol: 'Verificador', avatar: 'JC' }
-                ],
-                metricasAtencion: [
-                    { tipo: 'Registro Social de Hogares (RSH)', cantidad: 420, porcentaje: 43 },
-                    { tipo: 'Orientación Legal y Social', cantidad: 260, porcentaje: 27 },
-                    { tipo: 'Trámites de Permisos y Certificados', cantidad: 190, porcentaje: 19 },
-                    { tipo: 'Reclamos y Solicitudes Obras', cantidad: 110, porcentaje: 11 }
-                ]
+            centro: {
+                id: 'centro', nombre: 'Delegación Centro Histórico', sector: 'Zona urbana central',
+                foto: '/static/img/delegacion_centro.jpg', direccion: 'Dirección no registrada',
+                telefono: 'No registrado', email: '', horario: 'Horario no registrado', delegado: 'No asignado',
+                cumplimiento: null, statusSemaforo: 'Sin medición', colorSemaforo: '#64748B',
+                atencionesMes: null, vecinosRegistrados: null, tuboResueltos: 'Sin datos', satisfaccion: 'Sin medición',
+                barrios: [], resumen: 'Área de referencia cartográfica. Información operativa pendiente de registros verificados.',
+                funcionarios: [], metricasAtencion: []
             },
-            'companias': {
-                id: 'companias',
-                nombre: 'Delegación Las Compañías',
-                sector: 'Zona Norte del Río Elqui (Mayor Población)',
-                foto: '/static/img/delegacion_companias.jpg',
-                direccion: 'Av. Espejo del Sol 210, Las Compañías',
-                telefono: '+56 51 220 6710',
-                email: 'delegacion.companias@laserena.cl',
-                horario: 'Lunes a Viernes 08:30 a 14:00 hrs',
-                delegado: 'Gonzalo Pizarro Rojas',
-                cargoDelegado: 'Delegado Municipal Las Compañías',
-                cumplimiento: 88.0,
-                statusSemaforo: 'Verde (Conforme)',
-                colorSemaforo: '#7C3AED',
-                atencionesMes: 1150,
-                vecinosRegistrados: '110.000',
-                tuboResueltos: '89%',
-                satisfaccion: '93.5%',
-                barrios: ['Compañía Alta', 'Compañía Baja', 'Villa Los Aromos', 'Parque Nevada', 'Villa El Romero', 'Las Rosas'],
-                resumen: 'Es el sector con mayor volumen poblacional de La Serena. Destaca por alta demanda en operativos en terreno, postulación a subsidios habitacionales, enlace con comités de seguridad y aseo barrial.',
-                funcionarios: [
-                    { nombre: 'Gonzalo Pizarro Rojas', rut: '14.234.567-8', cargo: 'Delegado Municipal Las Compañías', email: 'delegado.companias@laserena.cl', rol: 'Delegado', avatar: 'GP' },
-                    { nombre: 'Rodrigo Tapia Gallardo', rut: '17.892.456-3', cargo: 'Gestor Territorial Operativo', email: 'gestor.companias@laserena.cl', rol: 'Gestor Territorial', avatar: 'RT' },
-                    { nombre: 'Esteban Morales Vega', rut: '15.678.901-2', cargo: 'Verificador Técnico de Operaciones', email: 'verificador@laserena.cl', rol: 'Verificador', avatar: 'EM' },
-                    { nombre: 'Romina Carvajal Díaz', rut: '18.901.234-5', cargo: 'Asistente Social OO.CC.', email: 'romina.companias@laserena.cl', rol: 'Funcionario', avatar: 'RC' }
-                ],
-                metricasAtencion: [
-                    { tipo: 'Operativos Vecinales y Terreno', cantidad: 490, porcentaje: 42 },
-                    { tipo: 'Fichas RSH y Ayudas Sociales', cantidad: 350, porcentaje: 30 },
-                    { tipo: 'Seguridad Ciudadana y Comités', cantidad: 180, porcentaje: 16 },
-                    { tipo: 'Aseo y Retiro de Escombros', cantidad: 130, porcentaje: 12 }
-                ]
+            companias: {
+                id: 'companias', nombre: 'Delegación Las Compañías', sector: 'Sector norte',
+                foto: '/static/img/delegacion_companias.jpg', direccion: 'Dirección no registrada',
+                telefono: 'No registrado', email: '', horario: 'Horario no registrado', delegado: 'No asignado',
+                cumplimiento: null, statusSemaforo: 'Sin medición', colorSemaforo: '#64748B',
+                atencionesMes: null, vecinosRegistrados: null, tuboResueltos: 'Sin datos', satisfaccion: 'Sin medición',
+                barrios: [], resumen: 'Área de referencia cartográfica. Información operativa pendiente de registros verificados.',
+                funcionarios: [], metricasAtencion: []
             },
-            'pampa': {
-                id: 'pampa',
-                nombre: 'Delegación La Pampa',
-                sector: 'Zona Sur Urbano & El Milagro',
-                foto: '/static/img/delegacion_pampa.jpg',
-                direccion: 'Av. Juan Cisternas 2855, La Pampa',
-                telefono: '+56 51 220 6820',
-                email: 'delegacion.pampa@laserena.cl',
-                horario: 'Lunes a Viernes 08:30 a 14:00 hrs',
-                delegado: 'Patricia Vega Albarracín',
-                cargoDelegado: 'Delegada Territorial La Pampa',
-                cumplimiento: 92.0,
-                statusSemaforo: 'Verde (Óptimo)',
-                colorSemaforo: '#2563EB',
-                atencionesMes: 640,
-                vecinosRegistrados: '48.000',
-                tuboResueltos: '93%',
-                satisfaccion: '95.0%',
-                barrios: ['La Pampa', 'San Joaquín Bajo', 'El Milagro I y II', 'Cuatro Esquinas Poniente', 'La Chimba Urbana'],
-                resumen: 'Polo residencial y de servicios en continuo desarrollo al sur de la ciudad. Fuerte gestión en mantención de plazas y áreas verdes, luminarias públicas y actividades con adultos mayores.',
-                funcionarios: [
-                    { nombre: 'Patricia Vega Albarracín', rut: '16.123.456-7', cargo: 'Delegada Territorial La Pampa', email: 'patricia.pampa@laserena.cl', rol: 'Delegado', avatar: 'PV' },
-                    { nombre: 'Kevin Encina Molina', rut: '17.234.567-9', cargo: 'Gestor de Operaciones y Cuadrilla', email: 'kevin.pampa@laserena.cl', rol: 'Gestor Territorial', avatar: 'KE' },
-                    { nombre: 'Mauricio Ramos Cortés', rut: '14.890.123-4', cargo: 'Inspector Comunal de Obras', email: 'mramos@laserena.cl', rol: 'Funcionario', avatar: 'MR' }
-                ],
-                metricasAtencion: [
-                    { tipo: 'Gestión de Parques y Áreas Verdes', cantidad: 240, porcentaje: 38 },
-                    { tipo: 'Seguridad y Luminarias Públicas', cantidad: 190, porcentaje: 30 },
-                    { tipo: 'Atención Social y Tercera Edad', cantidad: 130, porcentaje: 20 },
-                    { tipo: 'Trámites de Tránsito y Señalética', cantidad: 80, porcentaje: 12 }
-                ]
+            pampa: {
+                id: 'pampa', nombre: 'Delegación La Pampa', sector: 'Sector sur',
+                foto: '/static/img/delegacion_pampa.jpg', direccion: 'Dirección no registrada',
+                telefono: 'No registrado', email: '', horario: 'Horario no registrado', delegado: 'No asignado',
+                cumplimiento: null, statusSemaforo: 'Sin medición', colorSemaforo: '#64748B',
+                atencionesMes: null, vecinosRegistrados: null, tuboResueltos: 'Sin datos', satisfaccion: 'Sin medición',
+                barrios: [], resumen: 'Área de referencia cartográfica. Información operativa pendiente de registros verificados.',
+                funcionarios: [], metricasAtencion: []
             },
-            'costa': {
-                id: 'costa',
-                nombre: 'Delegación Avenida del Mar',
-                sector: 'Borde Costero & Zona Turística',
-                foto: '/static/img/delegacion_costa.jpg',
-                direccion: 'Av. del Mar 1200 (Frente a Costanera)',
-                telefono: '+56 51 220 6900',
-                email: 'delegacion.mar@laserena.cl',
-                horario: 'Lunes a Domingo 09:00 a 18:00 hrs',
-                delegado: 'Christian Cerda Núñez',
-                cargoDelegado: 'Encargado Territorial Borde Costero',
-                cumplimiento: 91.0,
-                statusSemaforo: 'Verde (Óptimo)',
-                colorSemaforo: '#06B6D4',
-                atencionesMes: 410,
-                vecinosRegistrados: '22.000',
-                tuboResueltos: '91%',
-                satisfaccion: '97.0%',
-                barrios: ['Avenida del Mar', 'Sector Faro Monumental', 'Playa Mansa', 'Cuatro Esquinas Playa', 'Los Nísperos Costeros'],
-                resumen: 'Representa el principal polo turístico, gastronómico y hotelero comunal. Coordina fiscalización en playas, eventos estivales, ciclovías y permisos de temporada.',
-                funcionarios: [
-                    { nombre: 'Christian Cerda Núñez', rut: '15.345.678-2', cargo: 'Encargado Territorial Borde Costero', email: 'ccerda@laserena.cl', rol: 'Delegado', avatar: 'CC' },
-                    { nombre: 'Claudia Monroy Soto', rut: '16.456.789-1', cargo: 'Coordinadora de Información Turística', email: 'cmonroy@laserena.cl', rol: 'Funcionario', avatar: 'CM' },
-                    { nombre: 'Héctor Tapia Araya', rut: '13.987.654-3', cargo: 'Inspector de Borde Costero y Terreno', email: 'htapia@laserena.cl', rol: 'Verificador', avatar: 'HT' }
-                ],
-                metricasAtencion: [
-                    { tipo: 'Permisos Precarios y Borde Costero', cantidad: 160, porcentaje: 39 },
-                    { tipo: 'Fiscalización y Limpieza de Playas', cantidad: 120, porcentaje: 29 },
-                    { tipo: 'Orientación al Vecino y Turista', cantidad: 85, porcentaje: 21 },
-                    { tipo: 'Seguridad y Patrullaje Costero', cantidad: 45, porcentaje: 11 }
-                ]
+            costa: {
+                id: 'costa', nombre: 'Delegación Avenida del Mar', sector: 'Borde costero',
+                foto: '/static/img/delegacion_costa.jpg', direccion: 'Dirección no registrada',
+                telefono: 'No registrado', email: '', horario: 'Horario no registrado', delegado: 'No asignado',
+                cumplimiento: null, statusSemaforo: 'Sin medición', colorSemaforo: '#64748B',
+                atencionesMes: null, vecinosRegistrados: null, tuboResueltos: 'Sin datos', satisfaccion: 'Sin medición',
+                barrios: [], resumen: 'Área de referencia cartográfica. Información operativa pendiente de registros verificados.',
+                funcionarios: [], metricasAtencion: []
             },
-            'antena': {
-                id: 'antena',
-                nombre: 'Delegación La Antena',
-                sector: 'Colina Oriente & Mirador Cerro Grande',
-                foto: '/static/img/delegacion_antena.jpg',
-                direccion: 'Calle 18 de Septiembre 340, La Antena',
-                telefono: '+56 51 220 6840',
-                email: 'delegacion.antena@laserena.cl',
-                horario: 'Lunes a Viernes 08:30 a 14:00 hrs',
-                delegado: 'Arturo Godoy Rivera',
-                cargoDelegado: 'Delegado Municipal La Antena / San Joaquín',
-                cumplimiento: 84.0,
-                statusSemaforo: 'Ámbar (Atención)',
-                colorSemaforo: '#F59E0B',
-                atencionesMes: 490,
-                vecinosRegistrados: '32.000',
-                tuboResueltos: '82%',
-                satisfaccion: '91.8%',
-                barrios: ['La Antena', 'La Florida', 'Población Coll', 'Mirador Cerro Grande', 'Villa Vista Hermosa'],
-                resumen: 'Abarca el sector alto oriental de la comuna. Prioriza programas de pavimentación participativa, juntas de vecinos, talleres comunitarios y operativos sanitarios.',
-                funcionarios: [
-                    { nombre: 'Arturo Godoy Rivera', rut: '12.876.543-9', cargo: 'Delegado Municipal La Antena', email: 'agodoy@laserena.cl', rol: 'Delegado', avatar: 'AG' },
-                    { nombre: 'Scarlett Williams Medalla', rut: '18.123.456-K', cargo: 'Gestora Social RSH Terreno', email: 'swilliams@laserena.cl', rol: 'Gestor Territorial', avatar: 'SW' },
-                    { nombre: 'Daniela Olivares Vega', rut: '17.345.678-0', cargo: 'Atención a Organizaciones Comunitarias', email: 'dolivares@laserena.cl', rol: 'Funcionario', avatar: 'DO' }
-                ],
-                metricasAtencion: [
-                    { tipo: 'Postulación a Fondos y Subsidios', cantidad: 180, porcentaje: 37 },
-                    { tipo: 'RSH y Registro de Vecinos', cantidad: 150, porcentaje: 31 },
-                    { tipo: 'Operativos Sanitarios y Desratización', cantidad: 95, porcentaje: 19 },
-                    { tipo: 'Talleres Deportivos y Comunitarios', cantidad: 65, porcentaje: 13 }
-                ]
+            antena: {
+                id: 'antena', nombre: 'Delegación La Antena', sector: 'Sector oriente',
+                foto: '/static/img/delegacion_antena.jpg', direccion: 'Dirección no registrada',
+                telefono: 'No registrado', email: '', horario: 'Horario no registrado', delegado: 'No asignado',
+                cumplimiento: null, statusSemaforo: 'Sin medición', colorSemaforo: '#64748B',
+                atencionesMes: null, vecinosRegistrados: null, tuboResueltos: 'Sin datos', satisfaccion: 'Sin medición',
+                barrios: [], resumen: 'Área de referencia cartográfica. Información operativa pendiente de registros verificados.',
+                funcionarios: [], metricasAtencion: []
             },
-            'rural': {
-                id: 'rural',
-                nombre: 'Delegación Sector Rural',
-                sector: 'Valle del Elqui Rural & Quebradas',
-                foto: '/static/img/delegacion_rural.jpg',
-                direccion: 'Ruta 41 Km 15, Sector Algarrobito',
-                telefono: '+56 51 220 6950',
-                email: 'delegacion.rural@laserena.cl',
-                horario: 'Lunes a Viernes 08:30 a 14:00 hrs',
-                delegado: 'Fernando Carvajal Pizarro',
-                cargoDelegado: 'Delegado Municipal Sector Rural',
-                cumplimiento: 71.4,
-                statusSemaforo: 'Rojo (Crítica)',
-                colorSemaforo: '#EF4444',
-                atencionesMes: 320,
-                vecinosRegistrados: '18.500',
-                tuboResueltos: '71%',
-                satisfaccion: '88.5%',
-                barrios: ['Algarrobito', 'Altovalsol', 'El Romero Rural', 'Lambert', 'Quebrada de Talca', 'Las Rojas', 'Pelicana'],
-                resumen: 'Cubre la vasta área rural y pueblos tradicionales del Valle de Elqui comunal. Atención de APR (Agua Potable Rural), caminos de tierra, crianceros y emergencias hídricas.',
-                funcionarios: [
-                    { nombre: 'Fernando Carvajal Pizarro', rut: '11.987.654-1', cargo: 'Delegado Municipal Sector Rural', email: 'fcarvajal@laserena.cl', rol: 'Delegado', avatar: 'FC' },
-                    { nombre: 'Esteban Collao Barraza', rut: '16.543.210-8', cargo: 'Técnico de Terreno APR y Caminos', email: 'ecollao@laserena.cl', rol: 'Gestor Territorial', avatar: 'EC' },
-                    { nombre: 'María Inés Alfaro', rut: '14.234.123-7', cargo: 'Enlace Fomento Productivo Rural', email: 'malfaro@laserena.cl', rol: 'Funcionario', avatar: 'MA' }
-                ],
-                metricasAtencion: [
-                    { tipo: 'Abastecimiento APR y Camiones Aljibe', cantidad: 130, porcentaje: 41 },
-                    { tipo: 'Mantención de Caminos Rurales', cantidad: 90, porcentaje: 28 },
-                    { tipo: 'Fichas Sociales RSH Rural', cantidad: 60, porcentaje: 19 },
-                    { tipo: 'Fomento Productivo y Crianceros', cantidad: 40, porcentaje: 12 }
-                ]
+            rural: {
+                id: 'rural', nombre: 'Delegación Sector Rural', sector: 'Localidades rurales',
+                foto: '/static/img/delegacion_rural.jpg', direccion: 'Dirección no registrada',
+                telefono: 'No registrado', email: '', horario: 'Horario no registrado', delegado: 'No asignado',
+                cumplimiento: null, statusSemaforo: 'Sin medición', colorSemaforo: '#64748B',
+                atencionesMes: null, vecinosRegistrados: null, tuboResueltos: 'Sin datos', satisfaccion: 'Sin medición',
+                barrios: [], resumen: 'Área de referencia cartográfica. Información operativa pendiente de registros verificados.',
+                funcionarios: [], metricasAtencion: []
             }
         };
 
@@ -3985,8 +3355,8 @@
                     foto: '/static/img/faro_real_sunset.jpg', direccion: 'Dirección no registrada',
                     telefono: 'No registrado', email: 'No registrado', horario: 'Horario no registrado',
                     delegado: 'Encargado por asignar', cargoDelegado: 'Delegado Municipal',
-                    cumplimiento: 0, statusSemaforo: 'Sin evaluación', colorSemaforo: '#64748B',
-                    atencionesMes: 0, vecinosRegistrados: '0', tuboResueltos: '0%', satisfaccion: 'Sin medición',
+                    cumplimiento: null, statusSemaforo: 'Sin medición', colorSemaforo: '#64748B',
+                    atencionesMes: null, vecinosRegistrados: null, tuboResueltos: 'Sin datos', satisfaccion: 'Sin medición',
                     barrios: [], resumen: 'Sin descripción territorial registrada.', funcionarios: [], metricasAtencion: []
                 };
                 Object.assign(base, {
@@ -3997,14 +3367,14 @@
                     foto: item.photo_url || base.foto || '/static/img/faro_real_sunset.jpg',
                     resumen: item.description || base.resumen || 'Sin descripción territorial registrada.',
                     atencionesMes: item.monthly_activities,
-                    vecinosRegistrados: String(item.registered_neighbors ?? 0),
+                    vecinosRegistrados: item.registered_neighbors == null ? null : String(item.registered_neighbors),
                     tuboResueltos: item.resolution_rate == null ? 'Sin datos' : `${item.resolution_rate}%`,
                     cumplimiento: item.compliance_percentage,
                     satisfaccion: item.satisfaction_percentage == null ? 'Sin medición' : `${item.satisfaction_percentage}%`,
                     funcionariosDB: item.users_count,
                     funcionarios: (item.staff || []).map(person => ({
-                        nombre: person.name, rut: person.rut, cargo: person.position,
-                        email: person.email, rol: person.role,
+                        nombre: person.name, cargo: person.position,
+                        rol: person.role,
                         avatar: person.name.split(/\s+/).slice(0, 2).map(part => part[0] || '').join('').toUpperCase()
                     }))
                 });
@@ -4023,9 +3393,105 @@
 
         let delegacionSeleccionadaActiva = null;
         let filtroZonaActivo = 'todas';
+        let filtroEstadoDelegacion = '';
+        let busquedaDelegacion = '';
+        let paginaActualDelegaciones = 1;
+        let filasPorPaginaDelegaciones = 6;
+
+        function normalizarBusquedaDelegacion(value) {
+            return String(value || '').trim().toLocaleLowerCase('es-CL').normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+        }
+
+        function delegacionCoincideConSector(item) {
+            if (filtroZonaActivo === 'todas') return true;
+            const key = claveVisualDelegacion(item);
+            if (filtroZonaActivo === 'urbano') return ['centro', 'companias', 'pampa', 'antena'].includes(key);
+            if (filtroZonaActivo === 'costa') return key === 'costa';
+            if (filtroZonaActivo === 'rural') return key === 'rural';
+            return false;
+        }
+
+        function delegacionesFiltradas() {
+            const query = normalizarBusquedaDelegacion(busquedaDelegacion);
+            return Object.values(datasetDelegacionesDetalle).filter(item => {
+                if (item.dbId == null) return false;
+                if (filtroEstadoDelegacion && item.dbStatus !== filtroEstadoDelegacion) return false;
+                if (!delegacionCoincideConSector({ name: item.nombre, scope: item.sector })) return false;
+                const searchable = normalizarBusquedaDelegacion([
+                    item.nombre, item.sector, item.direccion, item.email, item.telefono, item.delegado, item.dbStatus
+                ].join(' '));
+                return !query || searchable.includes(query);
+            });
+        }
+
+        function actualizarPaginacionDelegaciones(total, pages) {
+            const start = total ? (paginaActualDelegaciones - 1) * filasPorPaginaDelegaciones + 1 : 0;
+            const end = Math.min(total, paginaActualDelegaciones * filasPorPaginaDelegaciones);
+            const summary = document.getElementById('resumenDelegaciones');
+            const pageInfo = document.getElementById('paginacionInfoDelegaciones');
+            const previous = document.getElementById('paginaAnteriorDelegaciones');
+            const next = document.getElementById('paginaSiguienteDelegaciones');
+            if (summary) summary.textContent = `${total} delegación(es)`;
+            if (pageInfo) pageInfo.textContent = `Mostrando ${start}-${end} de ${total} · Página ${paginaActualDelegaciones} de ${pages}`;
+            if (previous) previous.disabled = paginaActualDelegaciones <= 1;
+            if (next) next.disabled = paginaActualDelegaciones >= pages;
+        }
+
+        function buscarDelegaciones() {
+            busquedaDelegacion = document.getElementById('buscarDelegaciones')?.value || '';
+            paginaActualDelegaciones = 1;
+            renderizarDelegacionesCards(filtroZonaActivo);
+        }
+
+        function filtrarEstadoDelegaciones() {
+            filtroEstadoDelegacion = document.getElementById('estadoDelegaciones')?.value || '';
+            paginaActualDelegaciones = 1;
+            renderizarDelegacionesCards(filtroZonaActivo);
+        }
+
+        function cambiarPaginaDelegaciones(delta) {
+            const pages = Math.max(1, Math.ceil(delegacionesFiltradas().length / filasPorPaginaDelegaciones));
+            paginaActualDelegaciones = Math.min(pages, Math.max(1, paginaActualDelegaciones + delta));
+            renderizarDelegacionesCards(filtroZonaActivo);
+        }
+
+        function exportarDelegacionesExcel() {
+            if (!window.XLSX) {
+                Swal.fire({ icon: 'error', title: 'Excel no disponible', text: 'Recarga el panel e inténtalo nuevamente.' });
+                return;
+            }
+            const rows = catalogoDelegacionesDB.filter(item => {
+                if (filtroEstadoDelegacion && item.status !== filtroEstadoDelegacion) return false;
+                if (!delegacionCoincideConSector(item)) return false;
+                const query = normalizarBusquedaDelegacion(busquedaDelegacion);
+                const searchable = normalizarBusquedaDelegacion([
+                    item.name, item.scope, item.address, item.phone, item.email, item.manager_name, item.status
+                ].join(' '));
+                return !query || searchable.includes(query);
+            }).map(item => ({
+                'Nombre': item.name,
+                'Sector': item.scope,
+                'Dirección': item.address || '',
+                'Teléfono': item.phone || '',
+                'Correo de contacto': item.email || '',
+                'Encargado': item.manager_name || '',
+                'Horario': item.schedule || '',
+                'Funcionarios activos': item.users_count ?? 0,
+                'Estado': item.status,
+            }));
+            if (!rows.length) {
+                Swal.fire({ icon: 'info', title: 'Sin resultados', text: 'No hay delegaciones que coincidan con los filtros.' });
+                return;
+            }
+            const worksheet = XLSX.utils.json_to_sheet(rows);
+            const workbook = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(workbook, worksheet, 'Delegaciones');
+            XLSX.writeFile(workbook, `Delegaciones_La_Serena_${new Date().toISOString().slice(0, 10)}.xlsx`);
+        }
 
         function filtrarDelegacionesPorSector(zona) {
             filtroZonaActivo = zona;
+            paginaActualDelegaciones = 1;
             document.querySelectorAll('.delegacion-filter-pill').forEach(b => b.classList.remove('active'));
             const activeBtn = document.getElementById(`btn-filtro-${zona}`);
             if (activeBtn) activeBtn.classList.add('active');
@@ -4033,6 +3499,13 @@
         }
 
         async function initDelegacionesView() {
+            document.getElementById('buscarDelegaciones')?.addEventListener('input', buscarDelegaciones);
+            document.getElementById('estadoDelegaciones')?.addEventListener('change', filtrarEstadoDelegaciones);
+            document.getElementById('tamanoPaginaDelegaciones')?.addEventListener('change', event => {
+                filasPorPaginaDelegaciones = Number(event.target.value) || 6;
+                paginaActualDelegaciones = 1;
+                renderizarDelegacionesCards(filtroZonaActivo);
+            });
             try { await cargarCatalogosOrganizacion(); }
             catch (error) { console.warn('No fue posible sincronizar las fichas territoriales:', error); }
             renderizarDelegacionesCards(filtroZonaActivo);
@@ -4043,14 +3516,15 @@
             if (!grid) return;
             grid.innerHTML = '';
 
-            const items = Object.values(datasetDelegacionesDetalle).filter(d => {
-                if (d.dbStatus === 'Inactivo') return false;
-                if (filtro === 'todas') return true;
-                if (filtro === 'urbano') return ['centro', 'companias', 'pampa', 'antena'].includes(d.id);
-                if (filtro === 'costa') return d.id === 'costa';
-                if (filtro === 'rural') return d.id === 'rural';
-                return true;
-            });
+            const filtered = delegacionesFiltradas();
+            const pages = Math.max(1, Math.ceil(filtered.length / filasPorPaginaDelegaciones));
+            if (paginaActualDelegaciones > pages) paginaActualDelegaciones = pages;
+            actualizarPaginacionDelegaciones(filtered.length, pages);
+            const items = filtered.slice((paginaActualDelegaciones - 1) * filasPorPaginaDelegaciones, paginaActualDelegaciones * filasPorPaginaDelegaciones);
+            if (!items.length) {
+                grid.innerHTML = '<div class="col-12 text-center text-muted py-4">No hay delegaciones que coincidan con estos filtros.</div>';
+                return;
+            }
 
             items.forEach((d, idx) => {
                 const card = document.createElement('div');
@@ -4061,8 +3535,11 @@
                 };
 
                 let statusBadgeBg = 'rgba(5, 150, 105, 0.90)';
-                let statusLabel = 'Operativa 100%';
-                if (d.cumplimiento == null) {
+                let statusLabel = 'Estado sin datos';
+                if (d.dbStatus === 'Inactivo') {
+                    statusBadgeBg = 'rgba(71, 85, 105, 0.90)';
+                    statusLabel = 'Inactiva';
+                } else if (d.cumplimiento == null) {
                     statusBadgeBg = 'rgba(71, 85, 105, 0.90)';
                     statusLabel = 'Sin medición vigente';
                 } else if (d.cumplimiento >= 85) {
@@ -4076,9 +3553,6 @@
                     statusLabel = 'Atención Especial';
                 }
 
-                const esperaMedia = d.id === 'rural' ? '5 min' : d.id === 'companias' ? '18 min' : d.id === 'centro' ? '12 min' : '8 min';
-                const gestorTurno = d.funcionarios && d.funcionarios.length > 0 ? d.funcionarios[0].nombre : d.delegado;
-
                 card.innerHTML = `
                     <div>
                         <!-- Cabecera Fotográfica 16:9 con Badges de Cristal Flotantes -->
@@ -4088,7 +3562,7 @@
                                 <i class="bi bi-circle-fill me-1" style="font-size: 0.55rem;"></i> ${statusLabel}
                             </span>
                             <span class="delegacion-card-score-pill">
-                                <i class="bi bi-star-fill text-warning me-1"></i>${d.satisfaccion || '98.2%'}
+                                <i class="bi bi-activity me-1"></i>${d.satisfaccion || 'Sin medición'}
                             </span>
                         </div>
 
@@ -4108,15 +3582,9 @@
                             <div class="p-2 px-3 rounded-3 mb-2" style="background: rgba(27, 54, 93, 0.04); border: 1px solid rgba(226, 232, 240, 0.9);">
                                 <div class="d-flex justify-content-between align-items-center mb-1">
                                     <span class="text-muted small" style="font-size: 0.74rem;">
-                                        <i class="bi bi-person-badge text-primary me-1"></i>Delegado(a):
+                                        <i class="bi bi-person-badge text-primary me-1"></i>Encargado:
                                     </span>
-                                    <span class="fw-bold text-dark small" style="font-size: 0.78rem;">${gestorTurno}</span>
-                                </div>
-                                <div class="d-flex justify-content-between align-items-center">
-                                    <span class="text-muted small" style="font-size: 0.74rem;">
-                                        <i class="bi bi-hourglass-split text-warning me-1"></i>Espera Media:
-                                    </span>
-                                    <span class="fw-bold text-dark small font-monospace" style="font-size: 0.78rem;">${esperaMedia}</span>
+                                    <span class="fw-bold text-dark small" style="font-size: 0.78rem;">${d.delegado || 'No registrado'}</span>
                                 </div>
                             </div>
                         </div>
@@ -4126,7 +3594,7 @@
                     <div class="p-3 pt-0">
                         <div class="d-flex align-items-center justify-content-between pt-2 border-top">
                             <span class="badge bg-primary-subtle text-primary border border-primary-subtle px-2 py-1" style="font-size: 0.74rem; font-weight: 700;">
-                                <i class="bi bi-folder2-open me-1"></i> ${d.atencionesMes ?? 0} Casos / mes
+                                <i class="bi bi-folder2-open me-1"></i> ${d.atencionesMes == null ? 'Sin registros' : `${d.atencionesMes} atenciones este mes`}
                             </span>
                             <div class="btn-expediente-sede-link" title="Ver ficha territorial de sede">
                                 <span>Ver Ficha Técnica</span>
@@ -4179,11 +3647,11 @@
                 doc.setFontSize(9);
                 doc.setTextColor(91, 107, 130);
                 doc.text(`Sector: ${data.sector} | Dirección: ${data.direccion}`, 14, 40);
-                doc.text(`Horario: ${data.horario} | Contacto: ${data.email}`, 14, 45);
+                doc.text(`Horario: ${data.horario} | Encargado: ${data.delegado}`, 14, 45);
 
                 const tableBody = [
-                    ['Atenciones Mensuales', `${data.atencionesMes} atenciones`],
-                    ['Población Territorial', `${data.vecinosRegistrados} vecinos`],
+                    ['Atenciones Mensuales', data.atencionesMes == null ? 'Sin datos' : `${data.atencionesMes} atenciones`],
+                    ['Población Territorial', data.vecinosRegistrados == null ? 'Sin datos' : `${data.vecinosRegistrados} vecinos`],
                     ['Tasa de Resolución', data.tuboResueltos],
                     ['Satisfacción Vecinal', data.satisfaccion],
                     ['Dotación Funcionarios', `${data.funcionarios.length} funcionarios asignados`]
@@ -4232,7 +3700,7 @@
             if (!panel) return;
 
             // Construir Funcionarios HTML con tarjetas Liquid Glass legibles
-            const funcionariosHtml = data.funcionarios.map(f => `
+            const funcionariosHtml = data.funcionarios.length ? data.funcionarios.map(f => `
                 <div class="col-md-6 col-lg-3">
                     <div class="delegacion-funcionario-glass-card">
                         <div>
@@ -4242,7 +3710,6 @@
                                 </div>
                                 <div style="min-width:0;">
                                     <div class="fw-bold text-truncate" style="color: var(--muni-navy); font-size: 0.92rem;" title="${f.nombre}">${f.nombre}</div>
-                                    <div class="text-muted small">${f.rut}</div>
                                 </div>
                             </div>
                             <div class="small text-secondary mb-2"><strong>Cargo:</strong> ${f.cargo}</div>
@@ -4250,24 +3717,19 @@
                                 ${f.rol}
                             </span>
                         </div>
-                        <div class="pt-2 border-top mt-2">
-                            <a href="mailto:${f.email}" class="small text-decoration-none text-primary d-flex align-items-center gap-1 text-truncate" title="${f.email}">
-                                <i class="bi bi-envelope-fill text-muted"></i> ${f.email}
-                            </a>
-                        </div>
                     </div>
                 </div>
-            `).join('');
+            `).join('') : '<div class="col-12"><p class="text-secondary small mb-0">No hay funcionarios registrados para esta delegación.</p></div>';
 
             // Construir Barrios HTML
-            const barriosHtml = data.barrios.map(b => `
+            const barriosHtml = data.barrios.length ? data.barrios.map(b => `
                 <span class="badge bg-white text-dark border px-3 py-2 rounded-pill me-1 mb-2 shadow-xs" style="font-size:0.82rem; font-weight:600;">
                     <i class="bi bi-geo-alt-fill text-danger me-1"></i> ${b}
                 </span>
-            `).join('');
+            `).join('') : '<span class="text-secondary small">Sin sectores descriptivos registrados.</span>';
 
             // Construir Métricas de Atención
-            const metricasHtml = data.metricasAtencion.map(m => `
+            const metricasHtml = data.metricasAtencion.length ? data.metricasAtencion.map(m => `
                 <div class="mb-3">
                     <div class="d-flex justify-content-between small fw-bold mb-1">
                         <span style="color: var(--muni-navy);">${m.tipo}</span>
@@ -4277,7 +3739,7 @@
                         <div class="progress-bar" style="width: ${m.porcentaje}%; background-color: ${data.colorSemaforo}; border-radius: 6px;"></div>
                     </div>
                 </div>
-            `).join('');
+            `).join('') : '<p class="text-secondary small mb-0">Sin métricas verificadas disponibles.</p>';
 
             panel.innerHTML = `
                 <!-- Barra de Navegación Rápida -->
@@ -4361,21 +3823,21 @@
                         <div class="col-sm-6 col-md-3">
                             <div class="delegacion-detail-kpi-card">
                                 <div class="text-muted small fw-bold text-uppercase" style="font-size: 0.72rem; letter-spacing: 0.04em;">Atenciones del Mes</div>
-                                <div class="fs-3 fw-bold my-1" style="color: var(--muni-navy);">${data.atencionesMes}</div>
-                                <small class="text-success fw-bold"><i class="bi bi-check2-circle me-1"></i>Registros validados</small>
+                                <div class="fs-3 fw-bold my-1" style="color: var(--muni-navy);">${data.atencionesMes == null ? 'Sin datos' : data.atencionesMes}</div>
+                                <small class="text-muted fw-semibold">${data.atencionesMes == null ? 'Sin registros verificados' : 'Registros disponibles'}</small>
                             </div>
                         </div>
                         <div class="col-sm-6 col-md-3">
                             <div class="delegacion-detail-kpi-card">
                                 <div class="text-muted small fw-bold text-uppercase" style="font-size: 0.72rem; letter-spacing: 0.04em;">Vecinos Atendidos</div>
-                                <div class="fs-3 fw-bold my-1" style="color: var(--muni-navy);">${data.vecinosRegistrados}</div>
+                                <div class="fs-3 fw-bold my-1" style="color: var(--muni-navy);">${data.vecinosRegistrados == null ? 'Sin datos' : data.vecinosRegistrados}</div>
                                 <small class="text-muted fw-semibold">Población territorial</small>
                             </div>
                         </div>
                         <div class="col-sm-6 col-md-3">
                             <div class="delegacion-detail-kpi-card">
                                 <div class="text-muted small fw-bold text-uppercase" style="font-size: 0.72rem; letter-spacing: 0.04em;">Casos Resueltos</div>
-                                <div class="fs-3 fw-bold my-1 text-primary">${data.tuboResueltos}</div>
+                                <div class="fs-3 fw-bold my-1 text-primary">${data.tuboResueltos || 'Sin datos'}</div>
                                 <small class="text-info fw-bold"><i class="bi bi-shield-check me-1"></i>Satisfacción: ${data.satisfaccion}</small>
                             </div>
                         </div>
@@ -4466,14 +3928,14 @@
             doc.setFont('helvetica', 'normal');
             doc.setTextColor(60, 60, 60);
             doc.text(`Sector: ${data.sector} | Sede: ${data.direccion}`, 14, 39);
-            doc.text(`Teléfono: ${data.telefono} | Correo: ${data.email} | Delegado: ${data.delegado}`, 14, 44);
-            doc.text(`Cumplimiento de Metas: ${data.cumplimiento}% | Atenciones del Mes: ${data.atencionesMes} | Vecinos: ${data.vecinosRegistrados}`, 14, 49);
+            doc.text(`Teléfono: ${data.telefono} | Correo: ${data.email || 'No registrado'} | Encargado: ${data.delegado}`, 14, 44);
+            doc.text(`Cumplimiento de Metas: ${data.cumplimiento == null ? 'Sin datos' : `${data.cumplimiento}%`} | Atenciones del Mes: ${data.atencionesMes ?? 'Sin datos'} | Vecinos: ${data.vecinosRegistrados ?? 'Sin datos'}`, 14, 49);
 
             // Tabla de funcionarios
-            const rowsStaff = data.funcionarios.map(f => [f.nombre, f.rut, f.cargo, f.rol, f.email]);
+            const rowsStaff = data.funcionarios.map(f => [f.nombre, f.cargo, f.rol]);
             doc.autoTable({
-                head: [['Funcionario', 'RUT', 'Cargo', 'Rol', 'Correo']],
-                body: rowsStaff,
+                head: [['Funcionario', 'Cargo', 'Rol']],
+                body: rowsStaff.length ? rowsStaff : [['Sin datos registrados', '—', '—']],
                 startY: 55,
                 theme: 'striped',
                 headStyles: { fillColor: [27, 54, 93], textColor: [255, 255, 255], fontStyle: 'bold' },
@@ -4490,7 +3952,7 @@
             const rowsMetrics = data.metricasAtencion.map(m => [m.tipo, m.cantidad, m.porcentaje + '%']);
             doc.autoTable({
                 head: [['Tipo de Atención', 'Cantidad Atendida', 'Porcentaje']],
-                body: rowsMetrics,
+                body: rowsMetrics.length ? rowsMetrics : [['Sin métricas verificadas', '—', '—']],
                 startY: finalY + 4,
                 theme: 'plain',
                 headStyles: { fillColor: [196, 18, 48], textColor: [255, 255, 255], fontStyle: 'bold' },
@@ -4523,8 +3985,8 @@
                     'auditoria.view', 'auditoria.config'
                 ],
                 permissions_count: 40,
-                users_count: 1,
-                users_sample: ['Administrador General']
+                users_count: 0,
+                users_sample: []
             },
             {
                 id: 9,
@@ -4537,8 +3999,8 @@
                     'tipo_atencion.view', 'delegaciones.view', 'reportes.view'
                 ],
                 permissions_count: 11,
-                users_count: 2,
-                users_sample: ['María López', 'Juan Pérez']
+                users_count: 0,
+                users_sample: []
             },
             {
                 id: 10,
@@ -4550,8 +4012,8 @@
                     'metas.view', 'tipo_atencion.view', 'reportes.view'
                 ],
                 permissions_count: 6,
-                users_count: 1,
-                users_sample: ['Carlos Díaz']
+                users_count: 0,
+                users_sample: []
             },
             {
                 id: 3,
@@ -4563,8 +4025,8 @@
                     'tipo_atencion.view', 'delegaciones.view', 'vecinos.view', 'reportes.view'
                 ],
                 permissions_count: 8,
-                users_count: 1,
-                users_sample: ['Verificador Técnico']
+                users_count: 0,
+                users_sample: []
             },
             {
                 id: 5,
@@ -4576,8 +4038,8 @@
                     'vecinos.view', 'delegaciones.view', 'reportes.view', 'reportes.export_excel', 'reportes.export_pdf', 'auditoria.view'
                 ],
                 permissions_count: 11,
-                users_count: 1,
-                users_sample: ['Coordinador General']
+                users_count: 0,
+                users_sample: []
             },
             {
                 id: 6,
@@ -4590,8 +4052,8 @@
                     'vecinos.view', 'vecinos.create', 'vecinos.edit', 'reportes.view'
                 ],
                 permissions_count: 11,
-                users_count: 1,
-                users_sample: ['Delegado Las Compañías']
+                users_count: 0,
+                users_sample: []
             },
             {
                 id: 7,
@@ -4603,8 +4065,8 @@
                     'vecinos.view', 'vecinos.create', 'tipo_atencion.view', 'delegaciones.view'
                 ],
                 permissions_count: 7,
-                users_count: 2,
-                users_sample: ['Funcionario Operativo']
+                users_count: 0,
+                users_sample: []
             },
             {
                 id: 2,
@@ -4746,6 +4208,7 @@
         async function initRolesView(mostrarAviso = false) {
             try {
                 const res = await fetch('/api/roles/');
+                if (!res.ok) throw new Error(`No se pudieron consultar los roles (HTTP ${res.status}).`);
                 const data = await res.json();
                 if (data.success && data.roles) {
                     datasetRoles = data.roles;
@@ -4764,6 +4227,7 @@
                         if (idxB !== -1) return 1;
                         return a.name.localeCompare(b.name);
                     });
+                    renderTarjetasPermisosRoles(datasetRoles);
 
                     // Actualizar contadores KPI
                     if (data.summary) {
@@ -4777,15 +4241,73 @@
                     const totalUsersCovered = datasetRoles.reduce((acc, r) => acc + (r.users_count || 0), 0);
                     const elUsr = document.getElementById('lblUsuariosRoles');
                     if (elUsr) elUsr.textContent = totalUsersCovered;
-                }
+                } else throw new Error(data.message || 'Respuesta inválida al consultar los roles.');
                 filtrarRoles();
                 if (mostrarAviso) {
                     mostrarToast('✓ Base de datos sincronizada: ' + datasetRoles.length + ' roles activos.');
                 }
             } catch (err) {
                 console.warn("Error al cargar roles desde API (usando catálogo local):", err);
+                const grid = document.getElementById('roleCardsLive');
+                if (grid) {
+                    grid.innerHTML = '<p class="text-danger mb-0">No se pudieron cargar los permisos guardados. Recarga esta sección para intentarlo de nuevo.</p>';
+                    grid.dataset.ready = 'true';
+                }
                 filtrarRoles();
             }
+        }
+
+        function renderTarjetasPermisosRoles(roles) {
+            const grid = document.getElementById('roleCardsLive');
+            if (!grid) return;
+            const permisos = [
+                ['lectura', 'Lectura'], ['edicion', 'Edición'],
+                ['derivacion', 'Derivación'], ['cierre', 'Cierre']
+            ];
+            const colores = ['#C41230', '#6554C0', '#008F8C', '#1677A8', '#E28C20', '#678341'];
+            const escapeHtml = value => String(value ?? '').replace(/[&<>"']/g, char => ({
+                '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+            })[char]);
+
+            if (!roles.length) {
+                grid.innerHTML = '<p class="text-secondary mb-0">No hay roles activos registrados.</p>';
+                grid.dataset.ready = 'true';
+                return;
+            }
+
+            grid.innerHTML = roles.map((role, index) => {
+                const color = colores[index % colores.length];
+                const description = role.description && role.description !== 'Sin descripción'
+                    ? role.description : 'Sin descripción registrada.';
+                const assigned = new Set((role.permissions || []).map(permission => String(permission).toLowerCase()));
+                const controls = permisos.map(([code, label]) => `
+                    <div class="role-perm-pill-toggle">
+                        <span>${label}</span>
+                        <label class="perm-mini-switch">
+                            <input type="checkbox" data-role-name="${escapeHtml(role.name)}" data-permission="${code}"
+                                aria-label="${label} para ${escapeHtml(role.name)}" ${assigned.has(code) ? 'checked' : ''}>
+                            <span class="perm-mini-slider"></span>
+                        </label>
+                    </div>`).join('');
+                return `
+                    <article class="role-profile-card" style="--role-card-accent:${color}; border-top:3px solid ${color};">
+                        <div class="d-flex align-items-center justify-content-between gap-2 mb-2">
+                            <div class="d-flex align-items-center gap-2 min-w-0">
+                                <div class="role-card-icon" style="color:${color};background:${color}18"><i class="bi ${role.is_system ? 'bi-shield-lock-fill' : 'bi-person-badge-fill'}"></i></div>
+                                <div class="min-w-0"><h5 class="role-card-title">${escapeHtml(role.name)}</h5>
+                                    <span class="text-muted role-card-kind">${role.is_system ? 'Rol de sistema' : 'Rol personalizado'}</span></div>
+                            </div>
+                            <span class="badge bg-light text-secondary rounded-pill role-card-users">${Number(role.users_count) || 0} usuarios</span>
+                        </div>
+                        <p class="role-card-description">${escapeHtml(description)}</p>
+                        <div class="role-perm-matrix-bar">${controls}</div>
+                    </article>`;
+            }).join('');
+
+            grid.querySelectorAll('input[data-role-name]').forEach(input => {
+                input.addEventListener('change', () => toggleRolPermisoCard(input.dataset.roleName, input.dataset.permission, input));
+            });
+            grid.dataset.ready = 'true';
         }
         function filtrarRoles() {
             const elSearchR = document.getElementById('searchRolesInput');
@@ -4977,7 +4499,7 @@
                 const allModChecked = (modCheckedCount === modTotalCount && modTotalCount > 0);
 
                 col.innerHTML = `
-                    <details class="perm-module-card role-permission-accordion" ${moduleIndex === 0 ? 'open' : ''}>
+                    <details class="perm-module-card role-permission-accordion">
                         <summary class="d-flex align-items-center justify-content-between gap-3">
                             <div class="d-flex align-items-center gap-2 flex-grow-1" style="min-width:0">
                                 <i class="bi ${mod.icon || 'bi-folder'} text-primary fs-5"></i>
@@ -5715,11 +5237,70 @@
             }).join('');
         }
 
-        function abrirModalNuevaAtencion() {
+        let catalogsForAttentionForm = null;
+
+        async function cargarCatalogosFormularioAtencion(forceRefresh = false) {
+            if (forceRefresh) catalogsForAttentionForm = null;
+            if (catalogsForAttentionForm) return catalogsForAttentionForm;
+            catalogsForAttentionForm = (async () => {
+                const [delegationResponse, typeResponse, subResponse] = await Promise.all([
+                    fetch('/api/delegations/', { credentials: 'same-origin', headers: { Accept: 'application/json' } }),
+                    fetch('/api/catalogs/attention-types/?page_size=100', { credentials: 'same-origin', headers: { Accept: 'application/json' } }),
+                    fetch('/api/catalogs/subattentions/?page_size=100', { credentials: 'same-origin', headers: { Accept: 'application/json' } })
+                ]);
+                if (!delegationResponse.ok || !typeResponse.ok || !subResponse.ok) {
+                    catalogsForAttentionForm = null;
+                    throw new Error('No se pudieron cargar las delegaciones y catálogos autorizados. Recarga la página e inténtalo de nuevo.');
+                }
+                const [delegationData, typeData, subData] = await Promise.all([
+                    delegationResponse.json(), typeResponse.json(), subResponse.json()
+                ]);
+                const delegationSelect = document.getElementById('selAtencionDelegacion');
+                const typeSelect = document.getElementById('selAtencionTipo');
+                const subSelect = document.getElementById('selAtencionSubtipo');
+                const fill = (select, placeholder, records, label, filterActive = false) => {
+                    if (!select) return;
+                    select.replaceChildren(new Option(placeholder, ''));
+                    records.filter(record => !filterActive || record.status === 'Activo').forEach(record => {
+                        select.add(new Option(label(record), record.id));
+                    });
+                };
+                fill(delegationSelect, 'Selecciona una delegación', delegationData.delegations || [], record => record.name, true);
+                fill(typeSelect, 'Selecciona un tipo', typeData.results || [], record => record.name, true);
+                fill(subSelect, 'Primero selecciona un tipo', subData.results || [], record => record.name, true);
+                if (typeSelect && subSelect) {
+                    subSelect.disabled = true;
+                    typeSelect.onchange = () => {
+                        const typeId = typeSelect.value;
+                        let hasOptions = false;
+                        [...subSelect.options].forEach(option => {
+                            if (!option.value) return;
+                            const record = (subData.results || []).find(item => String(item.id) === option.value);
+                            const matches = Boolean(typeId) && record && String(record.attention_type) === typeId && record.status === 'Activo';
+                            option.hidden = !matches;
+                            option.disabled = !matches;
+                            hasOptions ||= Boolean(matches);
+                        });
+                        subSelect.value = '';
+                        subSelect.options[0].textContent = !typeId ? 'Primero selecciona un tipo' : (hasOptions ? 'Selecciona una subatención' : 'No hay subatenciones activas');
+                        subSelect.disabled = !hasOptions;
+                    };
+                }
+            })();
+            return catalogsForAttentionForm;
+        }
+
+        async function abrirModalNuevaAtencion() {
             const form = document.getElementById('formAtencionDB');
             if (form) form.reset();
             const editId = document.getElementById('atencionEditId');
             if (editId) editId.value = '';
+            try {
+                await cargarCatalogosFormularioAtencion(true);
+            } catch (error) {
+                if (window.Swal) Swal.fire({ icon: 'error', title: 'No se pudo preparar el formulario', text: error.message });
+                return;
+            }
             if (bsModalNuevaAtencion) {
                 bsModalNuevaAtencion.show();
             } else {
@@ -5735,15 +5316,16 @@
             const contact_name = document.getElementById('txtAtencionNombre')?.value?.trim();
             const contact_phone = document.getElementById('txtAtencionTelefono')?.value?.trim();
             const delegation = document.getElementById('selAtencionDelegacion')?.value;
-            const status = document.getElementById('selAtencionEstado')?.value || 'Approved';
+            const attention_type_id = document.getElementById('selAtencionTipo')?.value;
+            const subattention_id = document.getElementById('selAtencionSubtipo')?.value;
             const title = document.getElementById('txtAtencionProblema')?.value?.trim();
             const description = document.getElementById('txtAtencionAccion')?.value?.trim();
 
-            if (!contact_name || !title || !description) {
+            if (!contact_name || !delegation || !attention_type_id || !subattention_id || !title || !description) {
                 Swal.fire({
                     icon: 'warning',
                     title: 'Campos requeridos',
-                    text: 'Por favor complete el nombre del vecino, la descripción del problema y la acción ejecutada.'
+                    text: 'Completa solicitante, delegación, tipo, subatención, descripción y acción realizada.'
                 });
                 return;
             }
@@ -5759,24 +5341,28 @@
                         'X-CSRFToken': getCookie('csrftoken') || ''
                     },
                     body: JSON.stringify({
-                        title: title,
-                        description: description,
+                        problem_description: title,
+                        executed_action: description,
                         delegation: delegation,
-                        status: status,
                         contact_name: contact_name,
                         contact_phone: contact_phone,
-                        stage: 1
+                        attention_type_id: attention_type_id,
+                        subattention_id: subattention_id
                     })
                 });
 
                 const data = await resp.json();
+                if (!resp.ok || !data.success) {
+                    switchEl.checked = !activo;
+                    throw new Error(data.message || 'No se pudo guardar el permiso.');
+                }
                 if (data.success) {
                     if (bsModalNuevaAtencion) bsModalNuevaAtencion.hide();
                     await cargarAtencionesDB();
                     Swal.fire({
                         icon: 'success',
                         title: 'Atención Guardada',
-                        text: 'El caso social ha sido guardado exitosamente en la base de datos MySQL.',
+                        text: data.message || 'La atención quedó registrada correctamente.',
                         timer: 2500,
                         showConfirmButton: false
                     });
@@ -5938,6 +5524,8 @@
            ========================================================================== */
         async function toggleRolPermisoCard(rolName, permiso, switchEl) {
             const activo = switchEl.checked;
+            switchEl.disabled = true;
+            switchEl.closest('.role-perm-pill-toggle')?.setAttribute('aria-busy', 'true');
             try {
                 const resp = await fetch('/api/roles/toggle-permiso/', {
                     method: 'POST',
@@ -5958,13 +5546,6 @@
                         icon: 'success',
                         title: data.message || `Permiso de ${permiso.toUpperCase()} ${activo ? 'activado' : 'desactivado'}`
                     });
-                } else {
-                    switchEl.checked = !activo;
-                    Swal.fire({
-                        icon: 'warning',
-                        title: 'Aviso de seguridad',
-                        text: data.message || 'No se pudo modificar el permiso del rol en la base de datos.'
-                    });
                 }
             } catch (err) {
                 switchEl.checked = !activo;
@@ -5973,6 +5554,9 @@
                     title: 'Error de conexión',
                     text: err.message
                 });
+            } finally {
+                switchEl.disabled = false;
+                switchEl.closest('.role-perm-pill-toggle')?.removeAttribute('aria-busy');
             }
         }
 
@@ -6269,231 +5853,7 @@
         }
         window.ejecutarAccionLote = ejecutarAccionLote;
 
-        // 7. Módulo de Metas Institucionales SGR (metas.html)
-        function exportarMetasExcel() {
-            try {
-                if (typeof XLSX === 'undefined') throw new Error("Librería SheetJS XLSX no disponible");
-                const metasData = [
-                    { 'Cargo Municipal': 'Territorial OO.CC.', 'Ítem Medible': 'Operativos Vecinales y Terreno', 'Ponderador (%)': 35, 'Meta Trimestral': '45 operativos', 'Avance Real': '41 ops.', 'Cumplimiento (%)': '91.1%', 'Semáforo': 'Verde' },
-                    { 'Cargo Municipal': 'Gestor Social', 'Ítem Medible': 'Atenciones RSH y Fichas Sociales', 'Ponderador (%)': 30, 'Meta Trimestral': '130 atenciones', 'Avance Real': '118 aten.', 'Cumplimiento (%)': '90.8%', 'Semáforo': 'Verde' },
-                    { 'Cargo Municipal': 'Prevención y Seguridad', 'Ítem Medible': 'Comités Vecinales de Seguridad', 'Ponderador (%)': 20, 'Meta Trimestral': '25 reuniones', 'Avance Real': '22 com.', 'Cumplimiento (%)': '88.0%', 'Semáforo': 'Verde' },
-                    { 'Cargo Municipal': 'Medio Ambiente / Obras', 'Ítem Medible': 'Fiscalización y Retiro de Escombros', 'Ponderador (%)': 15, 'Meta Trimestral': '30 inspecciones', 'Avance Real': '18 insp.', 'Cumplimiento (%)': '60.0%', 'Semáforo': 'Ámbar' }
-                ];
-                const ws = XLSX.utils.json_to_sheet(metasData);
-                const wb = XLSX.utils.book_new();
-                XLSX.utils.book_append_sheet(wb, ws, "Metas_SGR");
-                XLSX.writeFile(wb, `Metas_Institucionales_SGR_LaSerena_${new Date().toISOString().slice(0, 10)}.xlsx`);
-                mostrarToast("✓ Metas institucionales exportadas a Excel.");
-            } catch (err) {
-                Swal.fire({ icon: 'error', title: 'Error de exportación', text: err.message });
-            }
-        }
-        window.exportarMetasExcel = exportarMetasExcel;
-
-        function abrirModalNuevaMeta() {
-            Swal.fire({
-                title: 'Definir Nueva Meta SGR (RF-007)',
-                html: `
-                    <div class="text-start">
-                        <div class="mb-3">
-                            <label class="form-label small fw-bold text-dark">Cargo Municipal</label>
-                            <select class="form-select" id="swalMetaCargo">
-                                <option value="Territorial OO.CC.">Territorial OO.CC.</option>
-                                <option value="Gestor Social">Gestor Social</option>
-                                <option value="Prevención y Seguridad">Prevención y Seguridad</option>
-                                <option value="Medio Ambiente / Obras">Medio Ambiente / Obras</option>
-                                <option value="Delegado Municipal">Delegado Municipal</option>
-                            </select>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label small fw-bold text-dark">Ítem Medible Evaluado</label>
-                            <input type="text" class="form-control" id="swalMetaItem" placeholder="Ej: Talleres Barriales Comunitarios">
-                        </div>
-                        <div class="row g-2 mb-3">
-                            <div class="col-6">
-                                <label class="form-label small fw-bold text-dark">Ponderador (%)</label>
-                                <input type="number" class="form-control" id="swalMetaPond" min="1" max="100" value="25">
-                            </div>
-                            <div class="col-6">
-                                <label class="form-label small fw-bold text-dark">Meta Cantidad (T3)</label>
-                                <input type="number" class="form-control" id="swalMetaValor" min="1" value="50">
-                            </div>
-                        </div>
-                    </div>
-                `,
-                showCancelButton: true,
-                confirmButtonText: '<i class="bi bi-save me-1"></i> Guardar Meta',
-                cancelButtonText: 'Cancelar',
-                confirmButtonColor: '#1B365D',
-                preConfirm: () => {
-                    const cargo = document.getElementById('swalMetaCargo').value;
-                    const item = document.getElementById('swalMetaItem').value.trim();
-                    const pond = parseFloat(document.getElementById('swalMetaPond').value);
-                    const metaVal = parseInt(document.getElementById('swalMetaValor').value);
-
-                    if (!item) {
-                        Swal.showValidationMessage('El nombre del ítem medible es obligatorio.');
-                        return false;
-                    }
-                    if (isNaN(pond) || pond <= 0 || pond > 100) {
-                        Swal.showValidationMessage('El ponderador debe ser entre 1% y 100%.');
-                        return false;
-                    }
-                    return { cargo, item, pond, metaVal };
-                }
-            }).then((res) => {
-                if (res.isConfirmed) {
-                    Swal.fire({
-                        icon: 'success',
-                        title: 'Meta Registrada',
-                        text: `La meta para '${res.value.item}' (${res.value.cargo}) ha sido registrada con un ponderador del ${res.value.pond}%.`,
-                        timer: 2500,
-                        showConfirmButton: false
-                    });
-                }
-            });
-        }
-        window.abrirModalNuevaMeta = abrirModalNuevaMeta;
-
-        function editarMeta(cargo, item, pond, metaVal) {
-            Swal.fire({
-                title: 'Editar Meta SGR',
-                html: `
-                    <div class="text-start">
-                        <div class="mb-2">
-                            <small class="text-muted d-block">Cargo:</small>
-                            <strong class="text-dark">${cargo}</strong>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label small fw-bold text-dark">Ítem Medible</label>
-                            <input type="text" class="form-control" id="swalEditItem" value="${item}">
-                        </div>
-                        <div class="row g-2">
-                            <div class="col-6">
-                                <label class="form-label small fw-bold text-dark">Ponderación (%)</label>
-                                <input type="number" class="form-control" id="swalEditPond" value="${pond}" min="1" max="100">
-                            </div>
-                            <div class="col-6">
-                                <label class="form-label small fw-bold text-dark">Meta del Período</label>
-                                <input type="text" class="form-control" id="swalEditMetaVal" value="${metaVal}">
-                            </div>
-                        </div>
-                    </div>
-                `,
-                showCancelButton: true,
-                confirmButtonText: 'Actualizar',
-                cancelButtonText: 'Cancelar',
-                confirmButtonColor: '#1B365D'
-            }).then((res) => {
-                if (res.isConfirmed) {
-                    Swal.fire({
-                        toast: true,
-                        position: 'top-end',
-                        icon: 'success',
-                        title: `✓ Meta '${item}' actualizada correctamente`,
-                        showConfirmButton: false,
-                        timer: 2000
-                    });
-                }
-            });
-        }
-        window.editarMeta = editarMeta;
-
-        // 8. Módulo de Tipos de Atención (tipo_atencion.html)
-        function abrirModalNuevoTipoAtencion() {
-            Swal.fire({
-                title: 'Nuevo Tipo de Atención (RF-004)',
-                html: `
-                    <div class="text-start">
-                        <div class="mb-3">
-                            <label class="form-label small fw-bold text-dark">Código Institucional</label>
-                            <input type="text" class="form-control font-monospace" id="swalTipoCod" value="CAT-COM-05">
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label small fw-bold text-dark">Nombre del Servicio / Atención</label>
-                            <input type="text" class="form-control" id="swalTipoNom" placeholder="Ej: Alumbrado Público y Eficiencia Energética">
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label small fw-bold text-dark">Dirección / Área Responsable</label>
-                            <input type="text" class="form-control" id="swalTipoArea" placeholder="Ej: Dirección de Servicios a la Comunidad">
-                        </div>
-                    </div>
-                `,
-                showCancelButton: true,
-                confirmButtonText: 'Guardar en Catálogo',
-                cancelButtonText: 'Cancelar',
-                confirmButtonColor: '#1B365D',
-                preConfirm: () => {
-                    const nom = document.getElementById('swalTipoNom').value.trim();
-                    if (!nom) {
-                        Swal.showValidationMessage('El nombre de la atención es obligatorio.');
-                        return false;
-                    }
-                    return { nom, cod: document.getElementById('swalTipoCod').value, area: document.getElementById('swalTipoArea').value };
-                }
-            }).then((res) => {
-                if (res.isConfirmed) {
-                    Swal.fire({
-                        icon: 'success',
-                        title: 'Tipo de Atención Creado',
-                        text: `Se agregó '${res.value.nom}' con código ${res.value.cod} al catálogo municipal.`,
-                        timer: 2500,
-                        showConfirmButton: false
-                    });
-                }
-            });
-        }
-        window.abrirModalNuevoTipoAtencion = abrirModalNuevoTipoAtencion;
-
-        function abrirModalNuevaSubAtencion() {
-            Swal.fire({
-                title: 'Nueva Subatención por Categoría',
-                html: `
-                    <div class="text-start">
-                        <div class="mb-3">
-                            <label class="form-label small fw-bold text-dark">Nombre de la Subatención</label>
-                            <input type="text" class="form-control" id="swalSubNom" placeholder="Ej: Certificado de Residencia Comunal">
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label small fw-bold text-dark">Tipo de Atención Principal</label>
-                            <select class="form-select" id="swalSubCat">
-                                <option value="Atención Social (CAT-SOC-01)">Atención Social (CAT-SOC-01)</option>
-                                <option value="Operativos Vecinales (CAT-TER-02)">Operativos Vecinales (CAT-TER-02)</option>
-                                <option value="Seguridad Ciudadana (CAT-SEG-03)">Seguridad Ciudadana (CAT-SEG-03)</option>
-                                <option value="Medio Ambiente / Obras (CAT-OBR-04)">Medio Ambiente / Obras (CAT-OBR-04)</option>
-                            </select>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label small fw-bold text-dark">Plazo Máximo de Resolución</label>
-                            <input type="text" class="form-control" id="swalSubPlazo" value="5 días hábiles">
-                        </div>
-                    </div>
-                `,
-                showCancelButton: true,
-                confirmButtonText: 'Registrar Subatención',
-                cancelButtonText: 'Cancelar',
-                confirmButtonColor: '#1B365D',
-                preConfirm: () => {
-                    const nom = document.getElementById('swalSubNom').value.trim();
-                    if (!nom) {
-                        Swal.showValidationMessage('El nombre es obligatorio.');
-                        return false;
-                    }
-                    return { nom, cat: document.getElementById('swalSubCat').value, plazo: document.getElementById('swalSubPlazo').value };
-                }
-            }).then((res) => {
-                if (res.isConfirmed) {
-                    Swal.fire({
-                        icon: 'success',
-                        title: 'Subatención Registrada',
-                        text: `Se vinculó '${res.value.nom}' a '${res.value.cat}'.`,
-                        timer: 2500,
-                        showConfirmButton: false
-                    });
-                }
-            });
-        }
-        window.abrirModalNuevaSubAtencion = abrirModalNuevaSubAtencion;
+        // CRUD de ítems, metas, tipos y subatenciones: catalogs.js
 
         function abrirModalNuevoTipoGestion() {
             Swal.fire({
@@ -6536,63 +5896,6 @@
         }
         window.abrirModalNuevoTipoGestion = abrirModalNuevoTipoGestion;
 
-        function editarTipoAtencion(codigo, nombre, area) {
-            Swal.fire({
-                title: `Editar Tipo de Atención: ${codigo}`,
-                html: `
-                    <div class="text-start">
-                        <div class="mb-3">
-                            <label class="form-label small fw-bold text-dark">Nombre de la Atención</label>
-                            <input type="text" class="form-control" id="swalEditTipoNom" value="${nombre}">
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label small fw-bold text-dark">Área Responsable</label>
-                            <input type="text" class="form-control" id="swalEditTipoArea" value="${area}">
-                        </div>
-                    </div>
-                `,
-                showCancelButton: true,
-                confirmButtonText: 'Actualizar',
-                cancelButtonText: 'Cancelar',
-                confirmButtonColor: '#1B365D'
-            }).then((res) => {
-                if (res.isConfirmed) {
-                    mostrarToast(`✓ Categoría ${codigo} actualizada en catálogo.`);
-                }
-            });
-        }
-        window.editarTipoAtencion = editarTipoAtencion;
-
-        function editarSubAtencion(nombre, cat, plazo) {
-            Swal.fire({
-                title: `Editar Subatención`,
-                html: `
-                    <div class="text-start">
-                        <div class="mb-3">
-                            <label class="form-label small fw-bold text-dark">Nombre</label>
-                            <input type="text" class="form-control" id="swalEditSubNom" value="${nombre}">
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label small fw-bold text-dark">Categoría Principal</label>
-                            <input type="text" class="form-control" readonly value="${cat}">
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label small fw-bold text-dark">Plazo Máximo</label>
-                            <input type="text" class="form-control" id="swalEditSubPlazo" value="${plazo}">
-                        </div>
-                    </div>
-                `,
-                showCancelButton: true,
-                confirmButtonText: 'Actualizar',
-                cancelButtonText: 'Cancelar',
-                confirmButtonColor: '#1B365D'
-            }).then((res) => {
-                if (res.isConfirmed) {
-                    mostrarToast(`✓ Subatención actualizada.`);
-                }
-            });
-        }
-        window.editarSubAtencion = editarSubAtencion;
 
         function editarTipoGestion(etapa, nombre, desc) {
             Swal.fire({

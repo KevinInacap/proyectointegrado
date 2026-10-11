@@ -1,19 +1,165 @@
 {% extends 'base.html' %}
 
-{% block title %}Registrar Actividad | Ilustre Municipalidad de La Serena{% endblock %}
+{% block title %}Registrar atención | Ilustre Municipalidad de La Serena{% endblock %}
+
+{% block extra_css %}
+<style>
+    .attention-form-card { max-width: 980px; margin-inline: auto; border: 1px solid #e7e9ed; border-top: 4px solid #c41230; border-radius: 1rem; background: #fff; box-shadow: 0 12px 36px rgba(15, 32, 56, .08); }
+    .attention-context { border-radius: .75rem; background: #f5f7fa; border: 1px solid #e8ebef; }
+    .attention-form-card label { color: #1b365d; font-weight: 650; }
+    .attention-form-card .form-control:focus, .attention-form-card .form-select:focus { border-color: #c41230; box-shadow: 0 0 0 .2rem rgba(196, 18, 48, .12); }
+    .attention-required { color: #c41230; }
+</style>
+{% endblock %}
 
 {% block content %}
-<div class="py-4">
-    <div class="mb-4">
-        <h1 class="h3 fw-bold text-dark mb-1">Registro de Actividad</h1>
-        <p class="text-muted mb-0">Formulario institucional de ingreso de evidencias y gestión territorial</p>
-    </div>
+<div class="py-3 py-lg-4">
+    <div class="attention-form-card p-3 p-md-4 p-lg-5">
+        <div class="d-flex flex-wrap justify-content-between align-items-start gap-3 mb-4">
+            <div>
+                <p class="text-uppercase fw-bold small mb-1" style="color:#8b1d2c; letter-spacing:.06em">Atención ciudadana</p>
+                <h1 class="h3 fw-bold mb-2" style="color:#1b365d">Registrar una atención</h1>
+                <p class="text-secondary mb-0">Completa los datos del solicitante y el motivo de la atención.</p>
+            </div>
+            <a class="btn btn-outline-secondary rounded-pill px-3" href="{% url 'activities:dashboard' %}">
+                <i class="bi bi-arrow-left me-1" aria-hidden="true"></i> Volver al panel
+            </a>
+        </div>
 
-    <div class="muni-card">
-        <form method="post" enctype="multipart/form-data">
+        <div class="attention-context p-3 mb-4" aria-label="Contexto de registro">
+            <div class="row g-3">
+                <div class="col-md-4"><span class="small text-secondary d-block">Funcionario responsable</span><strong>{{ request.user.profile.full_name|default:request.user.get_full_name|default:request.user.username }}</strong></div>
+                <div class="col-md-4"><span class="small text-secondary d-block">Delegación activa</span><strong>{% if assigned_delegation %}{{ assigned_delegation.name }}{% else %}Selecciona una delegación autorizada{% endif %}</strong></div>
+                <div class="col-md-4"><span class="small text-secondary d-block">Fecha de registro</span><strong>{{ today_date|date:'d/m/Y'|default:today_date }}</strong></div>
+            </div>
+        </div>
+
+        <form method="post" id="attention-create-form" novalidate>
             {% csrf_token %}
-            <p class="text-muted small">Módulo en proceso de actualización según las normas gráficas oficiales.</p>
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label class="form-label" for="contact_name">Nombre del solicitante <span class="attention-required">*</span></label>
+                    <input class="form-control" id="contact_name" name="contact_name" maxlength="150" autocomplete="name" value="{{ form_values.contact_name|default:'' }}" required>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label" for="contact_phone">Teléfono de contacto</label>
+                    <input class="form-control" id="contact_phone" name="contact_phone" maxlength="20" autocomplete="tel" value="{{ form_values.contact_phone|default:'' }}">
+                </div>
+
+                <div class="col-md-6">
+                    <label class="form-label" for="attention_type_id">Tipo de Atención <span class="attention-required">*</span></label>
+                    <select class="form-select" id="attention_type_id" name="attention_type_id" required>
+                        <option value="">Selecciona un tipo</option>
+                        {% for type in attention_types %}
+                        <option value="{{ type.pk }}" {% if form_values.attention_type_id == type.pk|stringformat:'s' %}selected{% endif %}>{{ type.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label" for="subattention_id">Sub Atención <span class="attention-required">*</span></label>
+                    <select class="form-select" id="subattention_id" name="subattention_id" required disabled>
+                        <option value="">Primero selecciona un tipo</option>
+                        {% for sub in subattentions %}
+                        <option value="{{ sub.pk }}" data-attention-type="{{ sub.attention_type_id }}" {% if form_values.subattention_id == sub.pk|stringformat:'s' %}selected{% endif %}>{{ sub.name }}</option>
+                        {% endfor %}
+                    </select>
+                    <div class="form-text">Solo se mostrarán subatenciones activas del tipo elegido.</div>
+                </div>
+
+                <div class="col-md-6">
+                    <label class="form-label" for="delegation">Delegación <span class="attention-required">*</span></label>
+                    {% if can_choose_delegation %}
+                    <select class="form-select" id="delegation" name="delegation" required>
+                        <option value="">Selecciona una delegación</option>
+                        {% for delegation in delegations %}
+                        <option value="{{ delegation.pk }}" {% if form_values.delegation == delegation.pk|stringformat:'s' %}selected{% endif %}>{{ delegation.name }}</option>
+                        {% endfor %}
+                    </select>
+                    {% else %}
+                    <input class="form-control" value="{{ assigned_delegation.name|default:'Sin delegación asignada' }}" aria-label="Delegación asignada al perfil" readonly>
+                    {% if assigned_delegation %}<input type="hidden" id="delegation" name="delegation" value="{{ assigned_delegation.pk }}">{% endif %}
+                    {% endif %}
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label" for="activity_date">Fecha de registro <span class="attention-required">*</span></label>
+                    <input class="form-control" type="date" id="activity_date" name="activity_date" value="{{ form_values.activity_date|default:today_date }}" max="{{ today_date }}" required>
+                </div>
+
+                <div class="col-12">
+                    <label class="form-label" for="problem_description">Descripción de la solicitud <span class="attention-required">*</span></label>
+                    <textarea class="form-control" id="problem_description" name="problem_description" rows="3" maxlength="10000" required>{{ form_values.problem_description|default:'' }}</textarea>
+                </div>
+                <div class="col-12">
+                    <label class="form-label" for="executed_action">Acción realizada o derivación <span class="attention-required">*</span></label>
+                    <textarea class="form-control" id="executed_action" name="executed_action" rows="3" maxlength="10000" required>{{ form_values.executed_action|default:'' }}</textarea>
+                </div>
+                <div class="col-12">
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="is_collective_agenda" name="is_collective_agenda" value="1" {% if form_values.is_collective_agenda %}checked{% endif %}>
+                        <label class="form-check-label fw-normal" for="is_collective_agenda">Incorporar a la agenda colectiva</label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="d-flex flex-wrap justify-content-end gap-2 mt-4 pt-3 border-top">
+                <a class="btn btn-light rounded-pill px-4" href="{% url 'activities:dashboard' %}">Cancelar</a>
+                <button class="btn btn-danger rounded-pill px-4" id="attention-submit" type="submit" style="background:linear-gradient(100deg,#c41230,#8b1d2c); border:0">
+                    <i class="bi bi-check2-circle me-1" aria-hidden="true"></i> Guardar atención
+                </button>
+            </div>
         </form>
     </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+(() => {
+    const typeSelect = document.getElementById('attention_type_id');
+    const subSelect = document.getElementById('subattention_id');
+    const form = document.getElementById('attention-create-form');
+    const submit = document.getElementById('attention-submit');
+    if (!typeSelect || !subSelect || !form) return;
+
+    const updateSubattentions = (preferredValue = '') => {
+        const typeId = typeSelect.value;
+        let hasOptions = false;
+        [...subSelect.options].forEach(option => {
+            if (!option.value) return;
+            const matches = Boolean(typeId) && option.dataset.attentionType === typeId;
+            option.hidden = !matches;
+            option.disabled = !matches;
+            hasOptions ||= matches;
+        });
+        if (!typeId) {
+            subSelect.value = '';
+            subSelect.options[0].textContent = 'Primero selecciona un tipo';
+            subSelect.disabled = true;
+        } else {
+            subSelect.options[0].textContent = hasOptions ? 'Selecciona una subatención' : 'No hay subatenciones activas para este tipo';
+            subSelect.disabled = !hasOptions;
+            if (preferredValue && [...subSelect.options].some(option => option.value === preferredValue && !option.disabled)) subSelect.value = preferredValue;
+            else if (subSelect.selectedOptions[0]?.disabled) subSelect.value = '';
+        }
+    };
+    updateSubattentions('{{ form_values.subattention_id|default:""|escapejs }}');
+    typeSelect.addEventListener('change', () => updateSubattentions());
+    form.addEventListener('submit', event => {
+        if (!form.reportValidity()) { event.preventDefault(); return; }
+        if (!typeSelect.value || !subSelect.value) {
+            event.preventDefault();
+            if (window.Swal) Swal.fire({icon:'warning', title:'Falta elegir el tipo de atención', text:'Selecciona un tipo y una subatención relacionada antes de guardar.'});
+            return;
+        }
+        if (submit) { submit.disabled = true; submit.innerHTML = '<span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>Guardando…'; }
+    });
+    document.querySelectorAll('main .alert[role="alert"]').forEach(alert => {
+        if (!window.Swal) return;
+        const isError = alert.classList.contains('alert-danger');
+        Swal.fire({icon: isError ? 'error' : 'success', title: isError ? 'No se pudo guardar' : 'Atención registrada', text: alert.textContent.trim()});
+        alert.remove();
+    });
+})();
+</script>
 {% endblock %}

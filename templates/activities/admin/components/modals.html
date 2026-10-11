@@ -221,12 +221,12 @@
                                         <div class="col-md-6" id="wrapperPasswordUsuario">
                                             <label class="form-label small fw-bold mb-1" id="lblPasswordUsuario">Contraseña <span class="text-danger">*</span></label>
                                             <div class="input-group input-group-sm">
-                                                <input type="password" class="form-control form-control-sm" id="usrPassword" placeholder="Mínimo 6 caracteres">
+                                                <input type="password" class="form-control form-control-sm" id="usrPassword" placeholder="Mínimo 8 caracteres">
                                                 <button class="btn btn-outline-secondary" type="button" onclick="togglePasswordVisibility('usrPassword', this)">
                                                     <i class="bi bi-eye"></i>
                                                 </button>
                                             </div>
-                                            <small class="text-muted d-block" id="helpPasswordUsuario" style="font-size: 0.68rem; line-height: 1.1;">Por defecto: MuniLaSerena2026!</small>
+                                            <small class="text-muted d-block" id="helpPasswordUsuario" style="font-size: 0.68rem; line-height: 1.1;">Obligatoria al crear. Usa 8+ caracteres, mayúscula, minúscula, número y símbolo.</small>
                                         </div>
 
                                         <!-- Estado -->
@@ -344,13 +344,18 @@
                                 </select>
                             </div>
                             <div class="col-md-6">
-                                <label class="form-label small fw-bold mb-1">Estado de Validación Técnica</label>
-                                <select class="form-select form-select-sm" id="selAtencionEstado">
-                                    <option value="Approved">Aprobada (Aporta al indicador)</option>
-                                    <option value="Pending">En Revisión Técnica</option>
-                                    <option value="Requires correction">Requiere Corrección</option>
+                                <label class="form-label small fw-bold mb-1" for="selAtencionTipo">Tipo de Atención <span class="text-danger">*</span></label>
+                                <select class="form-select form-select-sm" id="selAtencionTipo" required>
+                                    <option value="">Cargando tipos disponibles…</option>
                                 </select>
                             </div>
+                            <div class="col-md-6">
+                                <label class="form-label small fw-bold mb-1" for="selAtencionSubtipo">Sub Atención <span class="text-danger">*</span></label>
+                                <select class="form-select form-select-sm" id="selAtencionSubtipo" required disabled>
+                                    <option value="">Primero selecciona un tipo</option>
+                                </select>
+                            </div>
+                            <div class="col-12 small text-muted" id="atencionResponsableInfo">El usuario y la fecha se registrarán automáticamente.</div>
                             <div class="col-12">
                                 <label class="form-label small fw-bold mb-1">Descripción del Requerimiento / Solicitud <span class="text-danger">*</span></label>
                                 <textarea class="form-control form-control-sm" id="txtAtencionProblema" rows="2" placeholder="Describa el motivo de la atención ciudadana o caso social..." required></textarea>

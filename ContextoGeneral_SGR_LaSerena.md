@@ -33,14 +33,16 @@ La Serena es la capital de la Región de Coquimbo, caracterizada por ser una com
 
 Conforme al Reglamento Interno Municipal, las delegaciones canalizan demandas ciudadanas, coordinan servicios en terreno y gestionan emergencias comunales.
 
-| # | Delegación | Territorio y Ámbito Predominante | Dirección Oficial | Teléfono | Encargado(a) / Delegado(a) | Correo Institucional |
-|---|---|---|---|---|---|---|
-| 1 | **Centro** | Casco histórico, administrativo, comercial y patrimonial | Cienfuegos 226 | 512 207861 | Alan Von Kretschmann | centro@laserena.cl |
-| 2 | **Las Compañías** | Sector urbano norte de alta densidad y fuerte identidad | Esmeralda 2422 (Costado Banco Estado) | 512 206527 | Pablo Cuadra Corrales | lascompanias@laserena.cl |
-| 3 | **La Pampa** | Sector urbano sur y áreas residenciales consolidadas | Larraín Alcalde 3505 | 512 206788 | María Soledad Rojas | pampa@laserena.cl |
-| 4 | **La Antena - La Florida** | Sector urbano oriental, barrios asociados y cerros | Av. 18 de Septiembre S/N | 512 206618 | Elizabeth Villanueva Oyarce | antena@laserena.cl |
-| 5 | **Avenida del Mar** | Borde costero, turismo, sector residencial y servicios | Av. del Mar 2500 | 512 206518 | Rodrigo Fuenzalida Vásquez | avenidadelmar@laserena.cl |
-| 6 | **Rural** | Localidades agrícolas, valles, caletas y comunidades dispersas | O'Higgins 154 | 512 206687 / +569 7420874 | Manuel Barraza Delgado | rural@laserena.cl |
+| # | Delegación | Territorio y ámbito predominante |
+|---|---|---|
+| 1 | **Centro** | Casco histórico, administrativo, comercial y patrimonial |
+| 2 | **Las Compañías** | Sector urbano norte |
+| 3 | **La Pampa** | Sector urbano sur |
+| 4 | **La Antena - La Florida** | Sector urbano oriental |
+| 5 | **Avenida del Mar** | Borde costero |
+| 6 | **Rural** | Localidades agrícolas, valles, caletas y comunidades dispersas |
+
+Las direcciones, teléfonos, correos y responsables no se fijan en este documento: deben cargarse desde una fuente municipal verificada y mantenerse en la base del entorno correspondiente.
 
 ---
 
@@ -82,17 +84,9 @@ Conforme a la especificación académica de INACAP (Sección 3 y RF-002 / RNF-00
 
 ---
 
-## 4. NÓMINA OFICIAL DE USUARIOS DE PRUEBA (SEED DATA MYSQL)
+## 4. CUENTAS DE PRUEBA
 
-| ID | Nombre Completo | RUT Institucional | Correo Oficial | Rol Asignado | Sede / Delegación | Cargo |
-|---|---|---|---|---|---|---|
-| 1 | **Administrador General SGR** | 11.111.111-1 | admin@laserena.cl | Administrador | Centro | Coordinador General TI |
-| 2 | **Marcelo Salazar Peña** | 13.456.789-0 | coordinacion.sgr@laserena.cl | Coordinador | Centro | Coordinador General SGR |
-| 3 | **Gonzalo Pizarro Rojas** | 14.234.567-8 | delegado.companias@laserena.cl | Delegado | Las Compañías | Delegado Municipal |
-| 4 | **Rodrigo Tapia Gallardo** | 17.892.456-3 | gestor.companias@laserena.cl | Funcionario | Las Compañías | Gestor Territorial |
-| 5 | **Camila Araya Miranda** | 18.345.678-K | gestora.centro@laserena.cl | Funcionario | Centro | Gestora Social DIDECO |
-| 6 | **Esteban Morales Vega** | 15.678.901-2 | verificador@laserena.cl | Verificador | Las Compañías | Verificador Técnico |
-| 7 | **Valeria Cáceres Soto** | 16.789.012-3 | auditoria.externa@laserena.cl | Usuario Consulta | Centro | Auditora de Control |
+No se publican nombres, RUT ni correos de cuentas ficticias o institucionales en este documento. La semilla normal no crea usuarios; las cuentas de evaluación, si se necesitan, se crean localmente con datos sintéticos y una contraseña privada fuera del repositorio.
 
 ---
 

@@ -2,14 +2,20 @@ from django.shortcuts import render, redirect
 from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.hashers import make_password, check_password
+from django.contrib.auth.password_validation import validate_password
+from django.core.exceptions import ValidationError
 from django.core.mail import send_mail
+from django.db import transaction
 from django.utils import timezone
-from django.http import HttpResponse
 from datetime import timedelta
 import secrets
 import re
 from .models import PasswordRecoveryCode
 from organization.models import UserProfile
+
+
+class _RecoveryEmailError(Exception):
+    """Fallo de entrega que no debe cambiar la respuesta pública."""
 
 
 def _normalize_rut(value):
@@ -21,12 +27,12 @@ def _find_profile_for_login(identifier):
     normalized_rut = _normalize_rut(identifier)
     if normalized_rut and normalized_rut[:-1].isdigit():
         matches = [
-            profile for profile in UserProfile.objects.select_related('user').all()
+            profile for profile in UserProfile.objects.select_related('user').filter(deleted_at__isnull=True)
             if _normalize_rut(profile.rut) == normalized_rut
         ]
         if len(matches) == 1:
             return matches[0]
-    matches = UserProfile.objects.select_related('user').filter(full_name__iexact=identifier)
+    matches = UserProfile.objects.select_related('user').filter(full_name__iexact=identifier, deleted_at__isnull=True)
     return matches.first() if matches.count() == 1 else None
 
 
@@ -38,67 +44,37 @@ def _role_redirect(role_name):
         return 'activities:dashboard_gestor'
     if normalized == 'administrador general':
         return 'activities:dashboard_admin'
+    if normalized in {'coordinador del sistema', 'coordinador'}:
+        return 'activities:dashboard_coordinador'
+    if normalized in {'delegado municipal', 'delegado'}:
+        return 'activities:dashboard_delegado'
+    if normalized == 'usuario de consulta':
+        return 'activities:dashboard_consulta'
     return 'core:login'
 
 
 def _start_session_for_user(request, user, profile):
     role_name = profile.roles.filter(deleted_at__isnull=True).values_list('name', flat=True).first()
-    if not role_name:
-        messages.error(request, 'Tu cuenta está activa, pero todavía no tiene un rol asignado. Solicita al administrador que configure tu acceso.')
-        logout(request)
+    destination = _role_redirect(role_name)
+    if destination == 'core:login':
+        messages.error(request, 'No tienes un rol habilitado para acceder.')
         return redirect('core:login')
     login(request, user)
     request.session['user_role'] = role_name
     request.session['user_name'] = profile.full_name
     request.session['user_rut'] = profile.rut
     request.session['user_delegation'] = profile.delegation.name if profile.delegation else 'Sin delegación asignada'
-    return redirect(_role_redirect(role_name))
+    return redirect(destination)
 
 def login_view(request):
-    rol_param = request.GET.get('rol')
-    if rol_param:
-        if rol_param == 'admin':
-            request.session['user_role'] = 'Administrador General'
-            request.session['user_name'] = 'Alcaldía La Serena'
-            request.session['user_rut'] = '11.111.111-1'
-            request.session['user_delegation'] = 'Consolidado Comunal'
-            return redirect('activities:dashboard_admin')
-        elif rol_param == 'coordinador':
-            request.session['user_role'] = 'Coordinador del Sistema'
-            request.session['user_name'] = 'Marcelo Salazar Peña'
-            request.session['user_rut'] = '13.456.789-0'
-            request.session['user_delegation'] = 'Supervisión Comunal SGR'
-            return redirect('core:login')
-        elif rol_param == 'delegado':
-            request.session['user_role'] = 'Delegado Municipal'
-            request.session['user_name'] = 'Gonzalo Pizarro Rojas'
-            request.session['user_rut'] = '14.234.567-8'
-            request.session['user_delegation'] = 'Delegación Las Compañías'
-            return redirect('core:login')
-        elif rol_param == 'verificador':
-            request.session['user_role'] = 'Verificador Técnico'
-            request.session['user_name'] = 'Esteban Morales Vega'
-            request.session['user_rut'] = '15.678.901-2'
-            request.session['user_delegation'] = 'Delegación Las Compañías'
-            return redirect('activities:dashboard_verificador')
-        elif rol_param == 'consulta':
-            request.session['user_role'] = 'Usuario de Consulta'
-            request.session['user_name'] = 'Valeria Cáceres Soto'
-            request.session['user_rut'] = '16.789.012-3'
-            request.session['user_delegation'] = 'Auditoría Transversal'
-            return redirect('core:login')
-        elif rol_param in ['gestor', 'funcionario']:
-            request.session['user_role'] = 'Gestor Territorial'
-            request.session['user_name'] = 'Rodrigo Tapia Gallardo'
-            request.session['user_rut'] = '17.892.456-3'
-            request.session['user_delegation'] = 'Delegación Las Compañías'
-            return redirect('activities:dashboard_gestor')
-
+    if not getattr(getattr(request, 'user', None), 'is_authenticated', False):
+        for key in ('user_role', 'user_name', 'user_rut', 'user_delegation'):
+            request.session.pop(key, None)
     if request.method == 'POST':
         identifier = request.POST.get('username', '').strip()
         password = request.POST.get('password', '')
-        user = authenticate(request, username=identifier, password=password)
-        if user is None:
+        user = authenticate(request, username=identifier, password=password) if identifier and password and '@' not in identifier else None
+        if user is None and identifier and password and '@' not in identifier:
             profile = _find_profile_for_login(identifier)
             if profile and profile.user:
                 user = authenticate(request, username=profile.user.username, password=password)
@@ -108,9 +84,9 @@ def login_view(request):
             return render(request, 'login.html', status=401)
 
         profile = getattr(user, 'profile', None)
-        if profile is None or profile.status != 'Activo':
-            messages.error(request, 'La cuenta no tiene un perfil activo en el sistema.')
-            return render(request, 'login.html', status=403)
+        if profile is None or profile.status != 'Activo' or profile.deleted_at is not None:
+            messages.error(request, 'Usuario o contraseña incorrectos.')
+            return render(request, 'login.html', status=401)
 
         return _start_session_for_user(request, user, profile)
 
@@ -124,54 +100,118 @@ def logout_view(request):
 
 
 def password_recovery_view(request):
-    """Solicita código y permite cambiar la contraseña mediante sesión temporal."""
+    """Recuperación con respuesta pública uniforme y código de un solo uso."""
     recovery_user_id = request.session.get('recovery_user_id')
     if request.method == 'POST':
         action = request.POST.get('action', 'request_code')
         if action == 'request_code':
-            identifier = request.POST.get('identifier', '').strip()
-            profile = UserProfile.objects.select_related('user').filter(rut__iexact=identifier).first()
-            if not profile:
-                profile = UserProfile.objects.select_related('user').filter(email__iexact=identifier).first()
-            if not profile or profile.status != 'Activo' or not profile.user.is_active:
-                return render(request, 'password_recovery.html', {'error': 'No encontramos una cuenta activa con esos datos.'}, status=400)
-
-            PasswordRecoveryCode.objects.filter(user=profile.user, used_at__isnull=True).update(used_at=timezone.now())
-            code = f'{secrets.randbelow(1000000):06d}'
-            recovery = PasswordRecoveryCode.objects.create(
-                user=profile.user,
-                code_hash=make_password(code),
-                expires_at=timezone.now() + timedelta(minutes=10),
-            )
-            send_mail(
-                'Código de recuperación — SGR La Serena',
-                f'Hola {profile.full_name}, tu código de recuperación es: {code}. Expira en 10 minutos.',
-                None,
-                [profile.email],
-                fail_silently=False,
-            )
-            request.session['recovery_user_id'] = profile.user_id
-            return render(request, 'password_recovery.html', {'step': 'verify', 'notice': 'Te enviamos un código al correo registrado.'})
-
-        if action == 'reset_password' and recovery_user_id:
-            code = request.POST.get('code', '').strip()
-            new_password = request.POST.get('new_password', '')
-            recovery = PasswordRecoveryCode.objects.filter(user_id=recovery_user_id, used_at__isnull=True).first()
-            if not recovery or not recovery.is_valid:
+            now = timezone.now()
+            last_request = request.session.get('recovery_last_request_at')
+            request.session['recovery_pending'] = True
+            session_limited = isinstance(last_request, (int, float)) and now.timestamp() - last_request < 45
+            if not session_limited:
+                request.session['recovery_last_request_at'] = now.timestamp()
                 request.session.pop('recovery_user_id', None)
-                return render(request, 'password_recovery.html', {'error': 'El código expiró o superó el límite de intentos.'}, status=400)
-            if not check_password(code, recovery.code_hash):
-                recovery.attempts += 1
-                recovery.save(update_fields=['attempts', 'updated_at'])
-                return render(request, 'password_recovery.html', {'step': 'verify', 'error': 'El código ingresado no es válido.'}, status=400)
-            if len(new_password) < 8:
-                return render(request, 'password_recovery.html', {'step': 'verify', 'error': 'La nueva contraseña debe tener al menos 8 caracteres.'}, status=400)
-            user = recovery.user
-            user.set_password(new_password)
-            user.save(update_fields=['password'])
-            recovery.used_at = timezone.now()
-            recovery.save(update_fields=['used_at', 'updated_at'])
+                request.session.pop('recovery_verified_code_id', None)
+                identifier = request.POST.get('identifier', '').strip()
+                profile = UserProfile.objects.select_related('user').filter(rut__iexact=identifier, deleted_at__isnull=True).first()
+                if not profile:
+                    profile = UserProfile.objects.select_related('user').filter(email__iexact=identifier, deleted_at__isnull=True).first()
+                if profile and profile.status == 'Activo' and profile.user.is_active and profile.email:
+                    try:
+                        with transaction.atomic():
+                            # El bloqueo serializa solicitudes de sesiones distintas para la misma cuenta.
+                            profile.user.__class__.objects.select_for_update().get(pk=profile.user_id)
+                            latest = PasswordRecoveryCode.objects.filter(user=profile.user).order_by('-created_at').first()
+                            if latest and latest.created_at and now - latest.created_at < timedelta(seconds=45):
+                                request.session['recovery_user_id'] = profile.user_id
+                            else:
+                                code = f'{secrets.randbelow(1000000):06d}'
+                                try:
+                                    sent = send_mail(
+                                        'Código de recuperación — SGR La Serena',
+                                        f'Hola {profile.full_name}, tu código de recuperación es: {code}. Expira en 10 minutos.',
+                                        None,
+                                        [profile.email],
+                                        fail_silently=False,
+                                    )
+                                except Exception as exc:
+                                    raise _RecoveryEmailError from exc
+                                if sent != 1:
+                                    raise _RecoveryEmailError
+                                PasswordRecoveryCode.objects.filter(user=profile.user, used_at__isnull=True).update(used_at=now)
+                                PasswordRecoveryCode.objects.create(
+                                    user=profile.user,
+                                    code_hash=make_password(code),
+                                    expires_at=now + timedelta(minutes=10),
+                                )
+                                request.session['recovery_user_id'] = profile.user_id
+                    except _RecoveryEmailError:
+                        # La respuesta pública no depende de la disponibilidad del correo.
+                        pass
+            return render(request, 'password_recovery.html', {
+                'step': 'verify',
+                'notice': 'Si existe una cuenta activa con esos datos, enviamos un código al correo registrado.',
+            })
+
+        if action == 'verify_code' and recovery_user_id:
+            code = request.POST.get('code', '').strip()
+            with transaction.atomic():
+                recovery = (PasswordRecoveryCode.objects.select_for_update()
+                            .filter(user_id=recovery_user_id, used_at__isnull=True,
+                                    user__is_active=True, user__profile__status='Activo',
+                                    user__profile__deleted_at__isnull=True).first())
+                if not recovery or not recovery.is_valid:
+                    request.session.pop('recovery_user_id', None)
+                    request.session.pop('recovery_pending', None)
+                    return render(request, 'password_recovery.html', {'step': 'verify', 'error': 'El código no es válido o expiró. Solicita uno nuevo si es necesario.'}, status=400)
+                if not re.fullmatch(r'[0-9]{6}', code) or not check_password(code, recovery.code_hash):
+                    recovery.attempts += 1
+                    recovery.save(update_fields=['attempts', 'updated_at'])
+                    return render(request, 'password_recovery.html', {'step': 'verify', 'error': 'El código no es válido o expiró. Solicita uno nuevo si es necesario.'}, status=400)
+                request.session['recovery_verified_code_id'] = recovery.pk
+            return render(request, 'password_recovery.html', {'step': 'new_password'})
+
+        if action == 'reset_password' and recovery_user_id and request.session.get('recovery_verified_code_id'):
+            new_password = request.POST.get('new_password', '')
+            confirm_password = request.POST.get('confirm_password', '')
+            if not confirm_password or new_password != confirm_password:
+                return render(request, 'password_recovery.html', {
+                    'step': 'new_password', 'error': 'Las contraseñas no coinciden.',
+                }, status=400)
+            with transaction.atomic():
+                recovery = (PasswordRecoveryCode.objects.select_for_update()
+                            .filter(pk=request.session['recovery_verified_code_id'], user_id=recovery_user_id,
+                                    used_at__isnull=True, user__is_active=True,
+                                    user__profile__status='Activo',
+                                    user__profile__deleted_at__isnull=True).first())
+                if not recovery or not recovery.is_valid:
+                    request.session.pop('recovery_verified_code_id', None)
+                    request.session.pop('recovery_user_id', None)
+                    request.session.pop('recovery_pending', None)
+                    return render(request, 'password_recovery.html', {'step': 'request', 'error': 'El código expiró o superó el límite de intentos.'}, status=400)
+                user = recovery.user
+                try:
+                    validate_password(new_password, user=user)
+                except ValidationError as exc:
+                    return render(request, 'password_recovery.html', {'step': 'new_password', 'error': ' '.join(exc.messages)}, status=400)
+                user.set_password(new_password)
+                user.save(update_fields=['password'])
+                PasswordRecoveryCode.objects.filter(user_id=recovery_user_id, used_at__isnull=True).update(used_at=timezone.now())
             request.session.pop('recovery_user_id', None)
+            request.session.pop('recovery_pending', None)
+            request.session.pop('recovery_verified_code_id', None)
             return render(request, 'password_recovery.html', {'success': 'Contraseña actualizada. Ya puedes iniciar sesión.'})
 
-    return render(request, 'password_recovery.html', {'step': 'verify' if recovery_user_id else 'request'})
+        if action in {'reset_password', 'verify_code'}:
+            return render(request, 'password_recovery.html', {'step': 'verify', 'error': 'El código no es válido o expiró. Solicita uno nuevo si es necesario.'}, status=400)
+    verified_id = request.session.get('recovery_verified_code_id')
+    if verified_id:
+        recovery = PasswordRecoveryCode.objects.filter(
+            pk=verified_id, user_id=recovery_user_id, used_at__isnull=True,
+        ).first() if recovery_user_id else None
+        if not recovery or not recovery.is_valid:
+            request.session.pop('recovery_verified_code_id', None)
+            verified_id = None
+    step = 'new_password' if verified_id else ('verify' if request.session.get('recovery_pending') else 'request')
+    return render(request, 'password_recovery.html', {'step': step})

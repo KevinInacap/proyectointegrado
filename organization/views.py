@@ -5,42 +5,101 @@ from functools import wraps
 from django.shortcuts import render, get_object_or_404
 from django.http import JsonResponse
 from django.contrib.auth.models import User
+from django.contrib.auth.password_validation import validate_password
 from django.db import transaction
 from django.db.models import Avg
 from django.utils import timezone
 from django.core.validators import validate_email
 from django.core.exceptions import ValidationError
 from .models import UserProfile, Role, Delegation, Position, PermissionDefinition
-from core.models import AuditLog
+from core.models import AuditLog, PasswordRecoveryCode
 
 
 def admin_only(view_func):
-    """Protege las operaciones del panel administrativo del SGR."""
+    """Autoriza con la cuenta y el rol vigentes, nunca con la sesión editable."""
     @wraps(view_func)
     def wrapped(request, *args, **kwargs):
-        if request.session.get('user_role') != 'Administrador General':
-            return JsonResponse({'success': False, 'message': 'Se requiere el rol Administrador General.'}, status=403)
+        user = getattr(request, 'user', None)
+        if not user or not user.is_authenticated or not user.is_active:
+            return JsonResponse({'success': False, 'message': 'Autenticación requerida.'}, status=403)
+        if not user.is_superuser:
+            if not UserProfile.objects.filter(
+                user=user, status='Activo', deleted_at__isnull=True,
+                roles__name='Administrador General', roles__deleted_at__isnull=True,
+            ).exists():
+                return JsonResponse({'success': False, 'message': 'Se requiere el rol Administrador General.'}, status=403)
         return view_func(request, *args, **kwargs)
     return wrapped
 
+
 def _get_request_data(request):
-    """Auxiliar para parsear payload JSON o form-data"""
     if request.content_type == 'application/json':
         try:
-            return json.loads(request.body.decode('utf-8'))
-        except Exception:
+            data = json.loads(request.body.decode('utf-8'))
+            return data if isinstance(data, dict) else {}
+        except (ValueError, UnicodeDecodeError):
             return {}
     return request.POST
 
 
+def _text(data, key, default=''):
+    value = data.get(key, default)
+    # Estos campos son texto plano y algunos consumidores los insertan en HTML.
+    return value.strip() if isinstance(value, str) and not re.search(r'[<>]', value) else None
+
+
+def _password(data, key='password'):
+    value = data.get(key, '')
+    return value if isinstance(value, str) else None
+
+
+def _protected_account(request, profile):
+    return not request.user.is_superuser and (profile.user.is_staff or profile.user.is_superuser)
+
+
+def _boolean(data, key):
+    value = data.get(key)
+    if isinstance(value, bool):
+        return value
+    if value in ('true', '1', 'on', 'True', 1):
+        return True
+    if value in ('false', '0', 'off', 'False', 0):
+        return False
+    return None
+
+
+def _ids(value):
+    if not isinstance(value, list) or any(
+        isinstance(item, bool) or not str(item).isdigit() for item in value
+    ):
+        return None
+    return list(dict.fromkeys(int(item) for item in value))
+
+
+def _valid_status(value, allow_blocked=False):
+    return value in (('Activo', 'Inactivo', 'Bloqueado') if allow_blocked else ('Activo', 'Inactivo'))
+
+
+def _validated_roles(value):
+    ids = _ids(value)
+    if ids is None:
+        return None
+    roles = list(Role.objects.filter(id__in=ids, deleted_at__isnull=True))
+    return roles if len(roles) == len(ids) else None
+
+
+def _validated_permissions(value):
+    if not isinstance(value, list) or any(not isinstance(code, str) for code in value):
+        return None
+    codes = list(dict.fromkeys(value))
+    return codes if set(codes) <= set(_all_system_perm_codes()) else None
+
+
 def _is_valid_chilean_rut(value):
-    """Valida formato y dígito verificador sin depender del frontend."""
-    cleaned = re.sub(r'[^0-9kK]', '', value or '')
-    if len(cleaned) < 2:
+    if not isinstance(value, str) or not re.fullmatch(r'(?:\d{1,8}|\d{1,2}(?:\.\d{3}){1,2})-?[0-9kK]', value.strip()):
         return False
+    cleaned = value.replace('-', '').replace('.', '')
     number, verifier = cleaned[:-1], cleaned[-1].upper()
-    if not number.isdigit():
-        return False
     total, multiplier = 0, 2
     for digit in reversed(number):
         total += int(digit) * multiplier
@@ -52,18 +111,25 @@ def _is_valid_chilean_rut(value):
 
 def _validate_delegation_details(data):
     text_fields = ('name', 'scope', 'address', 'phone', 'schedule', 'manager_name', 'description')
-    if any(re.search(r'[<>]', str(data.get(field, ''))) for field in text_fields):
+    if any(_text(data, field) is None for field in text_fields):
+        return 'Los campos de texto deben ser cadenas.'
+    if any(re.search(r'[<>]', _text(data, field)) for field in text_fields):
         return 'Los campos de la delegación no pueden contener etiquetas HTML.'
-    email = str(data.get('email', '')).strip()
+    email = _text(data, 'email')
+    if email is None:
+        return 'El correo de contacto no tiene un formato válido.'
     if email:
         try:
             validate_email(email)
         except ValidationError:
             return 'El correo de contacto no tiene un formato válido.'
-    photo_url = str(data.get('photo_url', '')).strip()
-    if photo_url and not re.fullmatch(r'(?:/static/[A-Za-z0-9_./-]+|https?://[^\s"\'<>]+)', photo_url):
+    photo_url = _text(data, 'photo_url')
+    if photo_url is None or (photo_url and not re.fullmatch(
+        r'(?:/static/(?!.*\.\.)[A-Za-z0-9_./-]+|https?://[^\s"\'<>]+)', photo_url
+    )):
         return 'La fotografía debe ser una ruta /static/ segura o una URL http(s) válida.'
     return None
+
 
 @admin_only
 def api_users_list(request):
@@ -97,7 +163,7 @@ def api_users_list(request):
         
     delegations = [{'id': d.id, 'name': d.name} for d in Delegation.objects.filter(status='Activo', deleted_at__isnull=True).order_by('name')]
     positions = [{'id': p.id, 'name': p.name} for p in Position.objects.filter(status='Activo', deleted_at__isnull=True).order_by('name')]
-    roles = [{'id': r.id, 'name': r.name, 'description': r.description} for r in Role.objects.all().order_by('name')]
+    roles = [{'id': r.id, 'name': r.name, 'description': r.description} for r in Role.objects.filter(deleted_at__isnull=True).order_by('name')]
 
     total = len(users_data)
     activos = sum(1 for u in users_data if u['status'] == 'Activo')
@@ -129,18 +195,39 @@ def api_user_create(request):
         
     data = _get_request_data(request)
     
-    username = data.get('username', '').strip()
-    full_name = data.get('full_name', '').strip()
-    email = data.get('email', '').strip().lower()
-    rut = data.get('rut', '').strip()
-    password = data.get('password', '').strip() or 'MuniLaSerena2026!'
+    username = _text(data, 'username')
+    full_name = _text(data, 'full_name')
+    email = (_text(data, 'email') or '').lower()
+    rut = _text(data, 'rut')
+    password = _password(data)
     status = data.get('status', 'Activo')
     delegation_id = data.get('delegation_id')
     position_id = data.get('position_id')
     role_ids = data.get('role_ids', [])
-    is_staff = bool(data.get('is_staff', False))
-    is_superuser = bool(data.get('is_superuser', False))
+    is_staff = _boolean(data, 'is_staff') if 'is_staff' in data else False
+    is_superuser = _boolean(data, 'is_superuser') if 'is_superuser' in data else False
 
+    if None in (username, full_name, email, rut, password) or is_staff is None or is_superuser is None:
+        return JsonResponse({'success': False, 'message': 'Datos de usuario inválidos.'}, status=400)
+    if not request.user.is_superuser and (is_staff or is_superuser):
+        return JsonResponse({'success': False, 'message': 'Solo un superusuario puede conceder acceso técnico.'}, status=403)
+    if not _valid_status(status, True):
+        return JsonResponse({'success': False, 'message': 'Estado inválido.'}, status=400)
+    try:
+        validate_email(email)
+    except ValidationError:
+        return JsonResponse({'success': False, 'message': 'Correo inválido.'}, status=400)
+    roles = _validated_roles(role_ids)
+    if roles is None:
+        return JsonResponse({'success': False, 'message': 'Roles inválidos.'}, status=400)
+    if not password:
+        return JsonResponse({'success': False, 'message': 'La contraseña es obligatoria.'}, status=400)
+    try:
+        validate_password(password, User(username=username, email=email,
+                                         first_name=full_name.split()[0] if full_name else '',
+                                         last_name=' '.join(full_name.split()[1:])))
+    except ValidationError as exc:
+        return JsonResponse({'success': False, 'message': 'Contraseña insegura.', 'details': exc.messages}, status=400)
     if not username or not full_name or not email or not rut:
         return JsonResponse({'success': False, 'message': 'Nombre, RUT, Correo y Usuario son obligatorios.'}, status=400)
 
@@ -157,8 +244,10 @@ def api_user_create(request):
     if UserProfile.objects.filter(email__iexact=email).exists():
         return JsonResponse({'success': False, 'message': f"El correo institucional '{email}' ya se encuentra registrado."}, status=400)
 
-    delegation = Delegation.objects.filter(id=delegation_id, status='Activo').first() if delegation_id else None
-    position = Position.objects.filter(id=position_id, status='Activo').first() if position_id else None
+    if delegation_id and _ids([delegation_id]) is None or position_id and _ids([position_id]) is None:
+        return JsonResponse({'success': False, 'message': 'Delegación o cargo inválido.'}, status=400)
+    delegation = Delegation.objects.filter(id=delegation_id, status='Activo', deleted_at__isnull=True).first() if delegation_id else None
+    position = Position.objects.filter(id=position_id, status='Activo', deleted_at__isnull=True).first() if position_id else None
     if delegation_id and not delegation:
         return JsonResponse({'success': False, 'message': 'La delegación seleccionada no existe o está inactiva.'}, status=400)
     if position_id and not position:
@@ -192,7 +281,6 @@ def api_user_create(request):
 
             # Asignar roles
             if role_ids:
-                roles = Role.objects.filter(id__in=role_ids)
                 profile.roles.set(roles)
 
             # Registro de Auditoría
@@ -231,22 +319,59 @@ def api_user_update(request, pk):
     if request.method not in ['POST', 'PUT']:
         return JsonResponse({'success': False, 'message': 'Método no permitido'}, status=405)
 
-    profile = get_object_or_404(UserProfile, id=pk)
+    profile = get_object_or_404(UserProfile, id=pk, deleted_at__isnull=True)
     data = _get_request_data(request)
 
-    full_name = data.get('full_name', '').strip() or profile.full_name
-    email = data.get('email', '').strip().lower() or profile.email
-    rut = data.get('rut', '').strip() or profile.rut
+    full_name = _text(data, 'full_name', profile.full_name)
+    email = (_text(data, 'email', profile.email) or '').lower()
+    rut = _text(data, 'rut', profile.rut)
     status = data.get('status') or profile.status
     delegation_id = data.get('delegation_id')
     position_id = data.get('position_id')
     role_ids = data.get('role_ids')
-    password = data.get('password', '').strip()
+    password = _password(data)
     is_staff = data.get('is_staff')
     is_superuser = data.get('is_superuser')
 
+    if _protected_account(request, profile) or (not request.user.is_superuser and (
+        _boolean(data, 'is_staff') is True or _boolean(data, 'is_superuser') is True
+    )):
+        return JsonResponse({'success': False, 'message': 'Solo un superusuario puede administrar acceso técnico.'}, status=403)
+
+    if None in (full_name, email, rut, password) or not full_name or len(full_name) > 150 or not _valid_status(status, True):
+        return JsonResponse({'success': False, 'message': 'Datos de usuario inválidos.'}, status=400)
+    try:
+        validate_email(email)
+    except ValidationError:
+        return JsonResponse({'success': False, 'message': 'Correo inválido.'}, status=400)
     if not _is_valid_chilean_rut(rut):
-        return JsonResponse({'success': False, 'message': 'RUT inválido. Revisa el número y el dígito verificador.'}, status=400)
+        return JsonResponse({'success': False, 'message': 'RUT inválido.'}, status=400)
+    roles = _validated_roles(role_ids) if role_ids is not None else None
+    if role_ids is not None and roles is None:
+        return JsonResponse({'success': False, 'message': 'Roles inválidos.'}, status=400)
+    if password:
+        try:
+            validate_password(password, profile.user)
+        except ValidationError as exc:
+            return JsonResponse({'success': False, 'message': 'Contraseña insegura.', 'details': exc.messages}, status=400)
+    if profile.user_id == request.user.id and (
+        status != 'Activo' or
+        (role_ids is not None and not request.user.is_superuser and
+         not any(role.name == 'Administrador General' for role in roles)) or
+        (is_superuser is not None and request.user.is_superuser and
+         _boolean(data, 'is_superuser') is False)
+    ):
+        return JsonResponse({'success': False, 'message': 'No puede revocar su propio acceso administrativo.'}, status=400)
+    if is_staff is not None and _boolean(data, 'is_staff') is None:
+        return JsonResponse({'success': False, 'message': 'is_staff inválido.'}, status=400)
+    if is_superuser is not None and _boolean(data, 'is_superuser') is None:
+        return JsonResponse({'success': False, 'message': 'is_superuser inválido.'}, status=400)
+    if delegation_id and _ids([delegation_id]) is None or position_id and _ids([position_id]) is None:
+        return JsonResponse({'success': False, 'message': 'Delegación o cargo inválido.'}, status=400)
+    delegation = Delegation.objects.filter(id=delegation_id, status='Activo', deleted_at__isnull=True).first() if delegation_id else None
+    position = Position.objects.filter(id=position_id, status='Activo', deleted_at__isnull=True).first() if position_id else None
+    if delegation_id and not delegation or position_id and not position:
+        return JsonResponse({'success': False, 'message': 'Delegación o cargo inválido.'}, status=400)
 
     # Validar que no choque RUT o Email con otro usuario
     if UserProfile.objects.filter(rut=rut).exclude(id=profile.id).exists():
@@ -271,14 +396,14 @@ def api_user_update(request, pk):
             profile.rut = rut
             profile.status = status
 
-            if delegation_id is not None:
-                profile.delegation = Delegation.objects.filter(id=delegation_id).first() if delegation_id else None
+            if 'delegation_id' in data:
+                profile.delegation = delegation
             
-            if position_id is not None:
-                profile.position = Position.objects.filter(id=position_id).first() if position_id else None
+            if 'position_id' in data:
+                profile.position = position
 
             if role_ids is not None:
-                profile.roles.set(Role.objects.filter(id__in=role_ids))
+                profile.roles.set(roles)
 
             profile.save()
 
@@ -292,11 +417,14 @@ def api_user_update(request, pk):
                     user.first_name = parts[0]
                     user.last_name = ' '.join(parts[1:]) if len(parts) > 1 else ''
                 if is_staff is not None:
-                    user.is_staff = bool(is_staff)
+                    user.is_staff = _boolean(data, 'is_staff')
                 if is_superuser is not None:
-                    user.is_superuser = bool(is_superuser)
+                    user.is_superuser = _boolean(data, 'is_superuser')
+                if user.is_superuser:
+                    user.is_staff = True
                 if password:
                     user.set_password(password)
+                    PasswordRecoveryCode.objects.filter(user=user, used_at__isnull=True).update(used_at=timezone.now())
                 user.save()
 
             # Auditoría
@@ -334,24 +462,25 @@ def api_user_toggle_status(request, pk):
     if request.method != 'POST':
         return JsonResponse({'success': False, 'message': 'Método no permitido'}, status=405)
 
-    profile = get_object_or_404(UserProfile, id=pk)
+    profile = get_object_or_404(UserProfile, id=pk, deleted_at__isnull=True)
+    if _protected_account(request, profile):
+        return JsonResponse({'success': False, 'message': 'Cuenta técnica protegida.'}, status=403)
+    if profile.user_id == request.user.id:
+        return JsonResponse({'success': False, 'message': 'No puede cambiar su propio estado.'}, status=400)
     
     # Prevenir deshabilitar al usuario admin principal
     if profile.user and profile.user.username == 'admin' and profile.status == 'Activo':
         return JsonResponse({'success': False, 'message': 'No es posible inhabilitar la cuenta de Administrador Principal del sistema.'}, status=400)
 
     nuevo_estado = 'Inactivo' if profile.status == 'Activo' else 'Activo'
-    profile.status = nuevo_estado
-    profile.save()
-
-    if profile.user:
-        profile.user.is_active = (nuevo_estado == 'Activo')
-        profile.user.save()
-
-    # Auditoría
-    current_admin = request.user if request.user.is_authenticated else profile.user
-    AuditLog.objects.create(
-        user=current_admin,
+    with transaction.atomic():
+        profile.status = nuevo_estado
+        profile.save(update_fields=['status', 'updated_at'])
+        if profile.user:
+            profile.user.is_active = (nuevo_estado == 'Activo')
+            profile.user.save(update_fields=['is_active'])
+        AuditLog.objects.create(
+        user=request.user,
         affected_table='usuario',
         affected_record_id=str(profile.id),
         action='UPDATE',
@@ -374,7 +503,11 @@ def api_user_delete(request, pk):
     if request.method not in ['POST', 'DELETE']:
         return JsonResponse({'success': False, 'message': 'Método no permitido'}, status=405)
 
-    profile = get_object_or_404(UserProfile, id=pk)
+    profile = get_object_or_404(UserProfile, id=pk, deleted_at__isnull=True)
+    if _protected_account(request, profile):
+        return JsonResponse({'success': False, 'message': 'Cuenta técnica protegida.'}, status=403)
+    if profile.user_id == request.user.id:
+        return JsonResponse({'success': False, 'message': 'No puede dar de baja su propia cuenta.'}, status=400)
     
     # Salvaguarda: No borrar admin principal
     if profile.user and profile.user.username == 'admin':
@@ -418,22 +551,28 @@ def api_user_reset_password(request, pk):
     if request.method != 'POST':
         return JsonResponse({'success': False, 'message': 'Método no permitido'}, status=405)
 
-    profile = get_object_or_404(UserProfile, id=pk)
+    profile = get_object_or_404(UserProfile, id=pk, deleted_at__isnull=True)
+    if _protected_account(request, profile):
+        return JsonResponse({'success': False, 'message': 'Cuenta técnica protegida.'}, status=403)
     data = _get_request_data(request)
-    new_password = data.get('password', '').strip()
+    new_password = _password(data)
 
-    if not new_password or len(new_password) < 6:
-        return JsonResponse({'success': False, 'message': 'La contraseña debe tener al menos 6 caracteres.'}, status=400)
+    if not new_password:
+        return JsonResponse({'success': False, 'message': 'La contraseña es obligatoria.'}, status=400)
 
     if not profile.user:
         return JsonResponse({'success': False, 'message': 'El perfil no tiene una cuenta de autenticación vinculada.'}, status=400)
+    try:
+        validate_password(new_password, profile.user)
+    except ValidationError as exc:
+        return JsonResponse({'success': False, 'message': 'Contraseña insegura.', 'details': exc.messages}, status=400)
 
-    profile.user.set_password(new_password)
-    profile.user.save()
-
-    current_admin = request.user if request.user.is_authenticated else profile.user
-    AuditLog.objects.create(
-        user=current_admin,
+    with transaction.atomic():
+        profile.user.set_password(new_password)
+        profile.user.save(update_fields=['password'])
+        PasswordRecoveryCode.objects.filter(user=profile.user, used_at__isnull=True).update(used_at=timezone.now())
+        AuditLog.objects.create(
+        user=request.user,
         affected_table='usuario',
         affected_record_id=str(profile.id),
         action='UPDATE',
@@ -720,15 +859,18 @@ def api_role_create(request):
         return JsonResponse({'success': False, 'message': 'Método no permitido'}, status=405)
 
     data = _get_request_data(request)
-    name = data.get('name', '').strip()
-    description = data.get('description', '').strip()
+    name = _text(data, 'name')
+    description = _text(data, 'description')
     permissions = data.get('permissions', [])
-    is_system = bool(data.get('is_system', False))
+    is_system = False
 
-    if not name:
-        return JsonResponse({'success': False, 'message': 'El nombre del rol es obligatorio.'}, status=400)
+    if name is None or description is None or not name or len(name) > 50 or len(description) > 255:
+        return JsonResponse({'success': False, 'message': 'Nombre o descripción inválidos.'}, status=400)
+    permissions = _validated_permissions(permissions)
+    if permissions is None:
+        return JsonResponse({'success': False, 'message': 'Permisos inválidos.'}, status=400)
 
-    if Role.objects.filter(name__iexact=name, deleted_at__isnull=True).exists():
+    if Role.objects.filter(name__iexact=name).exists():
         return JsonResponse({'success': False, 'message': f"Ya existe un rol activo con el nombre '{name}'."}, status=400)
 
     try:
@@ -779,11 +921,11 @@ def api_role_update(request, pk):
     if request.method not in ['POST', 'PUT']:
         return JsonResponse({'success': False, 'message': 'Método no permitido'}, status=405)
 
-    role = get_object_or_404(Role, id=pk)
+    role = get_object_or_404(Role, id=pk, deleted_at__isnull=True)
     data = _get_request_data(request)
 
-    new_name = data.get('name', '').strip() or role.name
-    new_description = data.get('description', '').strip()
+    new_name = _text(data, 'name', role.name)
+    new_description = _text(data, 'description')
     if 'description' not in data:
         new_description = role.description
 
@@ -791,8 +933,16 @@ def api_role_update(request, pk):
     if new_permissions is None:
         new_permissions = role.permissions_data
 
+    if role.is_system or role.name == 'Administrador General':
+        return JsonResponse({'success': False, 'message': 'El rol de sistema está protegido.'}, status=403)
+    if new_name is None or new_description is None or not new_name or len(new_name) > 50 or len(new_description) > 255:
+        return JsonResponse({'success': False, 'message': 'Nombre o descripción inválidos.'}, status=400)
+    new_permissions = _validated_permissions(new_permissions)
+    if new_permissions is None:
+        return JsonResponse({'success': False, 'message': 'Permisos inválidos.'}, status=400)
+
     # Validar duplicados si se cambia el nombre
-    if new_name != role.name and Role.objects.filter(name__iexact=new_name, deleted_at__isnull=True).exclude(id=role.id).exists():
+    if new_name != role.name and Role.objects.filter(name__iexact=new_name).exclude(id=role.id).exists():
         return JsonResponse({'success': False, 'message': f"El nombre '{new_name}' ya se encuentra en uso por otro rol."}, status=400)
 
     try:
@@ -844,11 +994,11 @@ def api_role_delete(request, pk):
     if request.method not in ['POST', 'DELETE']:
         return JsonResponse({'success': False, 'message': 'Método no permitido'}, status=405)
 
-    role = get_object_or_404(Role, id=pk)
+    role = get_object_or_404(Role, id=pk, deleted_at__isnull=True)
 
     # Protección de roles base del sistema
     protected_roles = ['Administrador', 'Operador', 'Consultor', 'Verificador']
-    if role.name in protected_roles or (role.is_system and role.name == 'Administrador'):
+    if role.is_system or role.name in protected_roles or role.name == 'Administrador General':
         return JsonResponse({
             'success': False,
             'message': f"El rol '{role.name}' es un rol protegido fundamental de la plataforma municipal y no puede ser eliminado."
@@ -879,7 +1029,8 @@ def api_role_delete(request, pk):
                 }
             )
 
-            role.delete()
+            role.deleted_at = timezone.now()
+            role.save(update_fields=['deleted_at', 'updated_at'])
 
         return JsonResponse({
             'success': True,
@@ -896,15 +1047,19 @@ def api_role_duplicate(request, pk):
     if request.method != 'POST':
         return JsonResponse({'success': False, 'message': 'Método no permitido'}, status=405)
 
-    origin_role = get_object_or_404(Role, id=pk)
+    origin_role = get_object_or_404(Role, id=pk, deleted_at__isnull=True)
     data = _get_request_data(request)
 
-    base_name = data.get('name', '').strip() or f"{origin_role.name} (Copia)"
+    base_name = _text(data, 'name', f"{origin_role.name} (Copia)")
+    if base_name is None or not base_name or len(base_name) > 50:
+        return JsonResponse({'success': False, 'message': 'Nombre inválido.'}, status=400)
     candidate_name = base_name
     counter = 1
-    while Role.objects.filter(name__iexact=candidate_name, deleted_at__isnull=True).exists():
+    while Role.objects.filter(name__iexact=candidate_name).exists():
         counter += 1
         candidate_name = f"{base_name} {counter}"
+        if len(candidate_name) > 50:
+            return JsonResponse({'success': False, 'message': 'Nombre demasiado largo.'}, status=400)
 
     try:
         with transaction.atomic():
@@ -912,7 +1067,7 @@ def api_role_duplicate(request, pk):
                 name=candidate_name,
                 description=f"Copia basada en {origin_role.name}: {origin_role.description}",
                 is_system=False,
-                permissions_data=list(origin_role.permissions_data or [])
+                permissions_data=deepcopy(origin_role.permissions_data or [])
             )
 
             current_admin = request.user if request.user.is_authenticated else None
@@ -953,26 +1108,29 @@ def api_add_custom_permission(request):
         return JsonResponse({'success': False, 'message': 'Método no permitido'}, status=405)
 
     data = _get_request_data(request)
-    module_id = data.get('module_id', '').strip()
-    code = data.get('code', '').strip()
-    name = data.get('name', '').strip()
-    desc = data.get('desc', '').strip()
+    module_id = _text(data, 'module_id')
+    code = _text(data, 'code')
+    name = _text(data, 'name')
+    desc = _text(data, 'desc')
 
-    if not code or not name:
-        return JsonResponse({'success': False, 'message': 'Código y Nombre de la función son requeridos.'}, status=400)
+    if None in (module_id, code, name, desc) or not re.fullmatch(r'[a-z_]+\.[a-z_]+', code or '') or not name or len(code) > 100 or len(name) > 120 or len(module_id) > 50 or len(desc) > 255:
+        return JsonResponse({'success': False, 'message': 'Datos del permiso inválidos.'}, status=400)
+    if module_id and code.split('.')[0] != module_id:
+        return JsonResponse({'success': False, 'message': 'El código debe pertenecer al módulo.'}, status=400)
 
     if code in _all_system_perm_codes():
         return JsonResponse({'success': False, 'message': f"La función con código '{code}' ya existe."}, status=400)
 
-    permission = PermissionDefinition.objects.create(
+    with transaction.atomic():
+        permission = PermissionDefinition.objects.create(
         module_id=module_id or 'personalizados',
         code=code,
         name=name,
         description=desc,
         is_system=False,
     )
-    AuditLog.objects.create(
-        user=request.user if request.user.is_authenticated else None,
+        AuditLog.objects.create(
+        user=request.user,
         affected_table='permiso_definicion',
         affected_record_id=str(permission.id),
         action='CREATE',
@@ -1067,24 +1225,29 @@ def api_delegations(request):
         return JsonResponse({'success': False, 'message': 'Método no permitido.'}, status=405)
 
     data = _get_request_data(request)
-    name, scope = data.get('name', '').strip(), data.get('scope', '').strip()
+    name, scope = _text(data, 'name'), _text(data, 'scope')
     status = data.get('status', 'Activo')
-    if not name or not scope:
-        return JsonResponse({'success': False, 'message': 'Nombre y ámbito territorial son obligatorios.'}, status=400)
+    if name is None or scope is None or not name or not scope or len(name) > 100 or len(scope) > 100:
+        return JsonResponse({'success': False, 'message': 'Nombre y ámbito territorial inválidos.'}, status=400)
     if status not in ('Activo', 'Inactivo'):
         return JsonResponse({'success': False, 'message': 'Estado inválido.'}, status=400)
-    if Delegation.objects.filter(name__iexact=name, deleted_at__isnull=True).exists():
+    if Delegation.objects.filter(name__iexact=name).exists():
         return JsonResponse({'success': False, 'message': 'Ya existe una delegación con ese nombre.'}, status=400)
     detail_error = _validate_delegation_details(data)
     if detail_error:
         return JsonResponse({'success': False, 'message': detail_error}, status=400)
+    if any(len(_text(data, field)) > limit for field, limit in (
+        ('address', 200), ('phone', 30), ('email', 120), ('schedule', 120),
+        ('manager_name', 150), ('photo_url', 255)
+    )):
+        return JsonResponse({'success': False, 'message': 'Detalle demasiado largo.'}, status=400)
     with transaction.atomic():
         item = Delegation.objects.create(
             name=name, scope=scope, status=status,
-            address=data.get('address', '').strip(), phone=data.get('phone', '').strip(),
-            email=data.get('email', '').strip().lower(), schedule=data.get('schedule', '').strip(),
-            manager_name=data.get('manager_name', '').strip(), photo_url=data.get('photo_url', '').strip(),
-            description=data.get('description', '').strip(),
+            address=_text(data, 'address'), phone=_text(data, 'phone'),
+            email=(_text(data, 'email') or '').lower(), schedule=_text(data, 'schedule'),
+            manager_name=_text(data, 'manager_name'), photo_url=_text(data, 'photo_url'),
+            description=_text(data, 'description'),
         )
         _catalog_audit(request, 'delegacion', item, 'CREATE')
     return JsonResponse({'success': True, 'message': f"Delegación '{name}' creada y guardada.", 'id': item.id})
@@ -1096,16 +1259,28 @@ def api_delegation_update(request, pk):
         return JsonResponse({'success': False, 'message': 'Método no permitido.'}, status=405)
     item = get_object_or_404(Delegation, id=pk, deleted_at__isnull=True)
     data = _get_request_data(request)
-    name = data.get('name', item.name).strip()
-    scope = data.get('scope', item.scope).strip()
+    name = _text(data, 'name', item.name)
+    scope = _text(data, 'scope', item.scope)
     status = data.get('status', item.status)
-    if not name or not scope or status not in ('Activo', 'Inactivo'):
+    if name is None or scope is None or not name or not scope or len(name) > 100 or len(scope) > 100 or status not in ('Activo', 'Inactivo'):
         return JsonResponse({'success': False, 'message': 'Revisa el nombre, ámbito y estado.'}, status=400)
-    if Delegation.objects.filter(name__iexact=name, deleted_at__isnull=True).exclude(id=pk).exists():
+    if status == 'Inactivo' and item.status == 'Activo' and item.users.filter(deleted_at__isnull=True, status='Activo').exists():
+        return JsonResponse({'success': False, 'message': 'La delegación tiene funcionarios activos.'}, status=400)
+    if Delegation.objects.filter(name__iexact=name).exclude(id=pk).exists():
         return JsonResponse({'success': False, 'message': 'Ya existe otra delegación con ese nombre.'}, status=400)
-    detail_error = _validate_delegation_details(data)
+    merged = {field: getattr(item, field) for field in (
+        'name', 'scope', 'address', 'phone', 'email', 'schedule',
+        'manager_name', 'photo_url', 'description'
+    )}
+    merged.update({key: data.get(key) for key in merged if key in data})
+    detail_error = _validate_delegation_details(merged)
     if detail_error:
         return JsonResponse({'success': False, 'message': detail_error}, status=400)
+    if any(len(_text(merged, field)) > limit for field, limit in (
+        ('address', 200), ('phone', 30), ('email', 120), ('schedule', 120),
+        ('manager_name', 150), ('photo_url', 255)
+    )):
+        return JsonResponse({'success': False, 'message': 'Detalle demasiado largo.'}, status=400)
     previous = {'name': item.name, 'scope': item.scope, 'status': item.status, 'address': item.address,
                 'phone': item.phone, 'email': item.email, 'schedule': item.schedule,
                 'manager_name': item.manager_name, 'photo_url': item.photo_url, 'description': item.description}
@@ -1113,7 +1288,7 @@ def api_delegation_update(request, pk):
         item.name, item.scope, item.status = name, scope, status
         for field in ('address', 'phone', 'email', 'schedule', 'manager_name', 'photo_url', 'description'):
             if field in data:
-                setattr(item, field, data.get(field, '').strip())
+                setattr(item, field, _text(data, field))
         item.email = item.email.lower()
         item.save(update_fields=['name', 'scope', 'status', 'address', 'phone', 'email', 'schedule',
                                  'manager_name', 'photo_url', 'description', 'updated_at'])
@@ -1127,6 +1302,8 @@ def api_delegation_toggle(request, pk):
         return JsonResponse({'success': False, 'message': 'Método no permitido.'}, status=405)
     item = get_object_or_404(Delegation, id=pk, deleted_at__isnull=True)
     previous = {'name': item.name, 'scope': item.scope, 'status': item.status}
+    if item.status == 'Activo' and item.users.filter(deleted_at__isnull=True, status='Activo').exists():
+        return JsonResponse({'success': False, 'message': 'La delegación tiene funcionarios activos.'}, status=400)
     item.status = 'Inactivo' if item.status == 'Activo' else 'Activo'
     with transaction.atomic():
         item.save(update_fields=['status', 'updated_at'])
@@ -1147,13 +1324,13 @@ def api_positions(request):
     if request.method != 'POST':
         return JsonResponse({'success': False, 'message': 'Método no permitido.'}, status=405)
     data = _get_request_data(request)
-    name, description = data.get('name', '').strip(), data.get('description', '').strip()
+    name, description = _text(data, 'name'), _text(data, 'description')
     status = data.get('status', 'Activo')
-    if not name:
-        return JsonResponse({'success': False, 'message': 'El nombre del cargo es obligatorio.'}, status=400)
+    if name is None or description is None or not name or len(name) > 100:
+        return JsonResponse({'success': False, 'message': 'Nombre o descripción inválidos.'}, status=400)
     if status not in ('Activo', 'Inactivo'):
         return JsonResponse({'success': False, 'message': 'Estado inválido.'}, status=400)
-    if Position.objects.filter(name__iexact=name, deleted_at__isnull=True).exists():
+    if Position.objects.filter(name__iexact=name).exists():
         return JsonResponse({'success': False, 'message': 'Ya existe un cargo con ese nombre.'}, status=400)
     with transaction.atomic():
         item = Position.objects.create(name=name, description=description, status=status)
@@ -1167,12 +1344,14 @@ def api_position_update(request, pk):
         return JsonResponse({'success': False, 'message': 'Método no permitido.'}, status=405)
     item = get_object_or_404(Position, id=pk, deleted_at__isnull=True)
     data = _get_request_data(request)
-    name = data.get('name', item.name).strip()
-    description = data.get('description', item.description).strip()
+    name = _text(data, 'name', item.name)
+    description = _text(data, 'description', item.description)
     status = data.get('status', item.status)
-    if not name or status not in ('Activo', 'Inactivo'):
+    if name is None or description is None or not name or len(name) > 100 or status not in ('Activo', 'Inactivo'):
         return JsonResponse({'success': False, 'message': 'Revisa el nombre y estado.'}, status=400)
-    if Position.objects.filter(name__iexact=name, deleted_at__isnull=True).exclude(id=pk).exists():
+    if status == 'Inactivo' and item.status == 'Activo' and item.users.filter(deleted_at__isnull=True, status='Activo').exists():
+        return JsonResponse({'success': False, 'message': 'El cargo tiene funcionarios activos.'}, status=400)
+    if Position.objects.filter(name__iexact=name).exclude(id=pk).exists():
         return JsonResponse({'success': False, 'message': 'Ya existe otro cargo con ese nombre.'}, status=400)
     previous = {'name': item.name, 'description': item.description, 'status': item.status}
     with transaction.atomic():
@@ -1188,6 +1367,8 @@ def api_position_toggle(request, pk):
         return JsonResponse({'success': False, 'message': 'Método no permitido.'}, status=405)
     item = get_object_or_404(Position, id=pk, deleted_at__isnull=True)
     previous = {'name': item.name, 'description': item.description, 'status': item.status}
+    if item.status == 'Activo' and item.users.filter(deleted_at__isnull=True, status='Activo').exists():
+        return JsonResponse({'success': False, 'message': 'El cargo tiene funcionarios activos.'}, status=400)
     item.status = 'Inactivo' if item.status == 'Activo' else 'Activo'
     with transaction.atomic():
         item.save(update_fields=['status', 'updated_at'])
