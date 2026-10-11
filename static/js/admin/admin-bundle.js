@@ -6,6 +6,7 @@
         let filasPorPagina = 10;
         let paginaActual = 1;
         let ordenAsc = true;
+        let columnaOrdenVecinos = 'nombre';
         let bsModalVecino, bsModalFicha, bsModalImportar, bsModalAuditoria, bsModalPerfil, chartInstance;
 
         /* Variables Globales de Gestión de Usuarios y Atenciones */
@@ -310,6 +311,10 @@
                 datasetVecinos = data.vecinos || [];
                 window.datasetVecinos = datasetVecinos;
                 seleccionadosIds.clear();
+                const updated = document.getElementById('vecinosUltimaActualizacion');
+                if (updated) updated.textContent = `Actualizado ${new Intl.DateTimeFormat('es-CL', {hour:'2-digit', minute:'2-digit'}).format(new Date())}`;
+                actualizarOpcionesTerritorioVecinos();
+                actualizarIndicadoresDiscretos();
                 ejecutarFiltroCompletoVecinos();
                 if (mostrarAviso) mostrarToast(`✓ ${datasetVecinos.length} vecinos cargados desde la base de datos`);
             } catch (error) {
@@ -320,6 +325,7 @@
 
         function renderTablaVecinos() {
             const tbody = document.getElementById('tablaVecinosBody');
+            if (!tbody) return;
             tbody.innerHTML = '';
 
             const inicio = (paginaActual - 1) * filasPorPagina;
@@ -327,18 +333,20 @@
             const datos = filasFiltradasVecinos.slice(inicio, fin);
 
             if (datos.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="10" class="text-center py-5 text-muted">
+                tbody.innerHTML = `<tr><td colspan="9" class="text-center py-5 text-muted">
                     <div class="empty-state-pro py-2">
                         <div class="empty-state-icon"><i class="bi bi-people"></i></div>
                         <div class="empty-state-title">No se encontraron vecinos</div>
-                        <div class="empty-state-desc">No hay registros coincidentes con los filtros de búsqueda o sector aplicados.</div>
+                        <div class="empty-state-desc">No hay registros que coincidan con la búsqueda o los filtros aplicados.</div>
                         <button class="btn btn-sm btn-outline-primary rounded-pill px-3" onclick="limpiarFiltrosVecinos()">Restablecer Filtros</button>
                     </div>
                 </td></tr>`;
                 document.getElementById('lblRegistrosInfo').textContent = '0 registros';
+                actualizarIndicadorTablaVecinos(0, 0, 0);
                 return;
             }
 
+            const escapar = valor => String(valor ?? '').replace(/[&<>"']/g, caracter => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[caracter]));
             datos.forEach((v, idx) => {
                 const isSel = seleccionadosIds.has(v.id);
                 const tr = document.createElement('tr');
@@ -348,24 +356,24 @@
 
                 tr.innerHTML = `
                     <td class="text-center"><input type="checkbox" class="form-check-input" ${isSel ? 'checked' : ''} onchange="toggleSeleccionarFila(${v.id}, this.checked)"></td>
-                    <td>${v.id}</td>
-                    <td class="fw-bold"><a href="javascript:void(0)" class="text-decoration-none text-dark" onclick="abrirFichaVecino(${v.id})">${v.nombre}</a></td>
-                    <td class="col-rut"><code class="text-primary fw-semibold">${v.rut}</code></td>
-                    <td class="col-dir">${v.direccion}</td>
-                    <td class="col-tel">${v.telefono}</td>
-                    <td class="col-terr"><span class="badge bg-light text-dark border">${v.territorio}</span></td>
-                    <td class="col-gest">${v.gestion}</td>
-                    <td class="col-est"><span class="badge-status ${v.estado.toLowerCase()}">${v.estado}</span></td>
-                    <td class="text-end">
-                        <button class="btn-action-icon btn-action-view" onclick="abrirAdminDrawer('vecino', ${v.id})" title="Abrir en Panel Lateral"><i class="bi bi-layout-sidebar-inset-reverse text-primary"></i></button>
-                        <button class="btn-action-icon btn-action-edit" onclick="abrirModalVecino('editar', ${v.id})" title="Editar en Modal"><i class="bi bi-pencil"></i></button>
-                        <button class="btn-action-icon btn-action-delete" onclick="eliminarVecino(${v.id})" title="Eliminar"><i class="bi bi-trash"></i></button>
+                    <td>${inicio + idx + 1}</td>
+                    <td class="fw-semibold"><button type="button" class="vecino-name-link" onclick="abrirFichaVecino(${Number(v.id)})">${escapar(v.nombre)}</button></td>
+                    <td class="col-rut"><code>${escapar(v.rut)}</code></td>
+                    <td class="col-dir">${escapar(v.direccion)}</td>
+                    <td class="col-tel">${escapar(v.telefono)}</td>
+                    <td class="col-terr"><span class="vecino-territory-label">${escapar(v.territorio)}</span></td>
+                    <td class="col-est"><span class="badge-status ${v.estado === 'Activo' ? 'activo' : 'inactivo'}">${escapar(v.estado)}</span></td>
+                    <td class="vecinos-row-actions">
+                        <button type="button" class="vecino-action-link" onclick="abrirFichaVecino(${Number(v.id)})">Ficha</button>
+                        <button type="button" class="vecino-action-link" onclick="abrirModalVecino('editar', ${Number(v.id)})">Editar</button>
+                        <button type="button" class="vecino-action-link vecino-action-danger" onclick="eliminarVecino(${Number(v.id)})">Baja</button>
                     </td>
                 `;
                 tbody.appendChild(tr);
             });
 
             document.getElementById('lblRegistrosInfo').textContent = `Mostrando ${inicio + 1} - ${Math.min(fin, filasFiltradasVecinos.length)} de ${filasFiltradasVecinos.length} registros`;
+            actualizarIndicadorTablaVecinos(inicio + 1, Math.min(fin, filasFiltradasVecinos.length), filasFiltradasVecinos.length);
             actualizarIndicadoresDiscretos();
             actualizarBarraAccionesMasivas();
         }
@@ -376,25 +384,39 @@
         }
 
         function ejecutarFiltroCompletoVecinos() {
-            const texto = document.getElementById('searchVecinosInput').value.toLowerCase().trim();
-            const est = document.getElementById('filtroEstadoVecino').value;
-            const terr = document.getElementById('filtroTerritorioVecino').value;
-            const gest = document.getElementById('filtroGestionVecino').value;
+            const texto = (document.getElementById('searchVecinosInput')?.value || '').toLocaleLowerCase('es').trim();
+            const est = document.getElementById('filtroEstadoVecino')?.value || '';
+            const terr = document.getElementById('filtroTerritorioVecino')?.value || '';
 
             filasFiltradasVecinos = datasetVecinos.filter(v => {
-                const matchT = !texto || (v.nombre.toLowerCase().includes(texto) || v.rut.toLowerCase().includes(texto));
+                const campos = [v.nombre, v.rut, v.direccion, v.telefono, v.territorio].map(valor => String(valor || '').toLocaleLowerCase('es'));
+                const matchT = !texto || campos.some(valor => valor.includes(texto));
                 const matchE = !est || v.estado === est;
-                const matchTer = !terr || v.territorio.includes(terr);
-                const matchG = !gest || v.gestion === gest;
-                return matchT && matchE && matchTer && matchG;
+                const matchTer = !terr || v.territorio === terr;
+                return matchT && matchE && matchTer;
             });
+            const normalizar = valor => String(valor ?? '').toLocaleLowerCase('es');
+            filasFiltradasVecinos.sort((a, b) => ordenAsc
+                ? normalizar(a[columnaOrdenVecinos]).localeCompare(normalizar(b[columnaOrdenVecinos]), 'es', {numeric:true})
+                : normalizar(b[columnaOrdenVecinos]).localeCompare(normalizar(a[columnaOrdenVecinos]), 'es', {numeric:true}));
 
             const chips = document.getElementById('contenedorChipsFiltros');
             chips.innerHTML = '';
             let count = 0;
-            if (est) { count++; chips.innerHTML += `<span class="filter-chip">Estado: ${est} <i class="bi bi-x-circle-fill" onclick="removerFiltro('filtroEstadoVecino')"></i></span>`; }
-            if (terr) { count++; chips.innerHTML += `<span class="filter-chip">Territorio: ${terr} <i class="bi bi-x-circle-fill" onclick="removerFiltro('filtroTerritorioVecino')"></i></span>`; }
-            if (gest) { count++; chips.innerHTML += `<span class="filter-chip">Gestión: ${gest} <i class="bi bi-x-circle-fill" onclick="removerFiltro('filtroGestionVecino')"></i></span>`; }
+            const agregarChip = (etiqueta, valor, controlId) => {
+                const chip = document.createElement('span');
+                chip.className = 'filter-chip';
+                chip.append(document.createTextNode(`${etiqueta}: ${valor} `));
+                const quitar = document.createElement('button');
+                quitar.type = 'button';
+                quitar.setAttribute('aria-label', `Quitar filtro ${etiqueta}`);
+                quitar.textContent = '×';
+                quitar.addEventListener('click', () => removerFiltro(controlId));
+                chip.appendChild(quitar);
+                chips.appendChild(chip);
+            };
+            if (est) { count++; agregarChip('Estado', est, 'filtroEstadoVecino'); }
+            if (terr) { count++; agregarChip('Territorio', terr, 'filtroTerritorioVecino'); }
 
             const badge = document.getElementById('badgeFiltrosActivos');
             badge.style.display = count > 0 ? 'inline-block' : 'none';
@@ -404,23 +426,38 @@
             renderTablaVecinos();
         }
 
-        function removerFiltro(id) { document.getElementById(id).value = ''; ejecutarFiltroCompletoVecinos(); }
-        function limpiarFiltrosVecinos() { document.getElementById('searchVecinosInput').value = ''; document.getElementById('filtroEstadoVecino').value = ''; document.getElementById('filtroTerritorioVecino').value = ''; document.getElementById('filtroGestionVecino').value = ''; ejecutarFiltroCompletoVecinos(); }
-        function filtrarSectorVecinoRapido(sector) {
-            const sel = document.getElementById('filtroTerritorioVecino');
-            if (sel) sel.value = sector;
-            ejecutarFiltroCompletoVecinos();
-            mostrarToast(sector ? `Filtrando por: ${sector}` : 'Mostrando todos los sectores');
-        }
-
+        function removerFiltro(id) { const control = document.getElementById(id); if (control) control.value = ''; ejecutarFiltroCompletoVecinos(); }
+        function limpiarFiltrosVecinos() { ['searchVecinosInput','filtroEstadoVecino','filtroTerritorioVecino'].forEach(id => { const control = document.getElementById(id); if (control) control.value = ''; }); ejecutarFiltroCompletoVecinos(); }
         function toggleColumna(clase, visible) {
             document.querySelectorAll('.' + clase).forEach(c => c.style.display = visible ? '' : 'none');
         }
 
         function ordenarTablaVecinos(col) {
-            ordenAsc = !ordenAsc;
-            filasFiltradasVecinos.sort((a, b) => ordenAsc ? a[col].localeCompare(b[col]) : b[col].localeCompare(a[col]));
+            if (!['nombre', 'rut', 'territorio', 'estado'].includes(col)) return;
+            ordenAsc = columnaOrdenVecinos === col ? !ordenAsc : true;
+            columnaOrdenVecinos = col;
+            const normalizar = valor => String(valor ?? '').toLocaleLowerCase('es');
+            filasFiltradasVecinos.sort((a, b) => ordenAsc ? normalizar(a[col]).localeCompare(normalizar(b[col]), 'es', {numeric:true}) : normalizar(b[col]).localeCompare(normalizar(a[col]), 'es', {numeric:true}));
+            document.querySelectorAll('#tablaVecinos thead [data-sort-column]').forEach(th => {
+                th.setAttribute('aria-sort', th.dataset.sortColumn === col ? (ordenAsc ? 'ascending' : 'descending') : 'none');
+            });
             renderTablaVecinos();
+        }
+
+        function actualizarOpcionesTerritorioVecinos() {
+            const select = document.getElementById('filtroTerritorioVecino');
+            if (!select) return;
+            const seleccionado = select.value;
+            const territorios = [...new Set(datasetVecinos.map(v => String(v.territorio || '').trim()).filter(Boolean))].sort((a,b) => a.localeCompare(b, 'es'));
+            select.innerHTML = '<option value="">Todos los territorios</option>' + territorios.map(nombre => `<option value="${nombre.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}">${nombre.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}</option>`).join('');
+            if (territorios.includes(seleccionado)) select.value = seleccionado;
+        }
+
+        function actualizarIndicadorTablaVecinos(desde, hasta, total) {
+            const orden = document.getElementById('vecinosOrdenActual');
+            const filas = document.getElementById('vecinosFilasActuales');
+            if (orden) orden.textContent = `Orden: ${({nombre:'Nombre',rut:'RUT',territorio:'Territorio',estado:'Estado'}[columnaOrdenVecinos] || 'Nombre')} · ${ordenAsc ? 'A–Z' : 'Z–A'}`;
+            if (filas) filas.textContent = total ? `Filas ${desde}–${hasta} de ${total}` : '0 resultados';
         }
 
         function toggleSeleccionarTodosVecinos(checked) {
@@ -1220,208 +1257,143 @@
            4. SELECCIÓN DE DELEGACIÓN EN EL MAPA COMUNAL INTERACTIVO
            ========================================================================== */
         const delegacionesMapaData = {
-            centro: {
-                nombre: 'Centro',
-                mapa: 'Centro',
-                sector: 'Área urbana central',
-                badge: 'SEDE CENTRAL',
-                badgeColor: '#C41230',
-                badgeText: '#FFFFFF',
-            },
-            lascompanias: {
-                id: 'companias',
-                nombre: 'Las Compañías',
-                mapa: 'Las Compañías',
-                sector: 'Sector norte de la comuna',
-                badge: 'DELEGACIÓN NORTE',
-                badgeColor: '#6554C0',
-                badgeText: '#FFFFFF'
-            },
-            lapampa: {
-                id: 'pampa',
-                nombre: 'La Pampa',
-                mapa: 'Pampa',
-                sector: 'Sector sur de la comuna',
-                badge: 'DELEGACIÓN SUR',
-                badgeColor: '#008F8C',
-                badgeText: '#FFFFFF'
-            },
-            laflorida: {
-                id: 'antena',
-                nombre: 'La Antena',
-                mapa: 'La Antena',
-                sector: 'Sector oriente de la comuna',
-                badge: 'DELEGACIÓN LA ANTENA',
-                badgeColor: '#E28C20',
-                badgeText: '#FFFFFF'
-            },
-            tierrasblancas: {
-                id: 'costa',
-                nombre: 'Avenida del Mar',
-                mapa: 'Avenida del Mar',
-                sector: 'Franja costera de la comuna',
-                badge: 'DELEGACIÓN COSTERA',
-                badgeColor: '#1677A8',
-                badgeText: '#FFFFFF'
-            },
-            rural: {
-                id: 'rural',
-                nombre: 'Rural',
-                mapa: 'Rural',
-                sector: 'Localidades rurales y caletas',
-                badge: 'DELEGACIÓN RURAL',
-                badgeColor: '#678341',
-                badgeText: '#FFFFFF'
-            }
+            centro: { nombre: 'Centro', mapa: 'Centro', sector: 'Área urbana central', badge: 'SEDE CENTRAL', badgeColor: '#C41230', monogram: 'CE', number: '01' },
+            lascompanias: { id: 'companias', nombre: 'Las Compañías', mapa: 'Las Compañías', sector: 'Sector norte de la comuna', badge: 'SECTOR NORTE', badgeColor: '#6554C0', monogram: 'LC', number: '02' },
+            lapampa: { id: 'pampa', nombre: 'La Pampa', mapa: 'La Pampa', sector: 'Sector sur de la comuna', badge: 'SECTOR SUR', badgeColor: '#008F8C', monogram: 'LP', number: '03' },
+            laflorida: { id: 'antena', nombre: 'La Antena', mapa: 'La Antena', sector: 'Sector oriente de la comuna', badge: 'SECTOR ORIENTE', badgeColor: '#B86A08', monogram: 'LA', number: '04' },
+            tierrasblancas: { id: 'costa', nombre: 'Avenida del Mar', mapa: 'Avenida del Mar', sector: 'Franja costera de la comuna', badge: 'BORDE COSTERO', badgeColor: '#1677A8', monogram: 'AM', number: '05' },
+            rural: { id: 'rural', nombre: 'Rural', mapa: 'Rural', sector: 'Localidades rurales y caletas', badge: 'SECTOR RURAL', badgeColor: '#678341', monogram: 'RU', number: '06' }
         };
 
         window.currentMapSedeKey = 'centro';
         let mapaDelegacionesLeaflet = null;
-        let datosSedesDelegaciones = {};
-        let datosPoligonosDelegaciones = {};
-
-        function llaveDelegacionMapa(nombre) {
-            const entry = Object.entries(delegacionesMapaData).find(([, item]) => item.mapa === nombre);
-            return entry ? entry[0] : null;
-        }
+        const datosSedesDelegaciones = {};
+        const marcadoresDelegaciones = {};
+        let popupDelegacion = null;
 
         async function inicializarMapaDelegaciones() {
             const mapElement = document.getElementById('mapaDelegacionesReal');
+            const loader = document.getElementById('mapaDelegacionesLoader');
             if (!mapElement || mapaDelegacionesLeaflet) return;
+            seleccionarDelegacionMapa(window.currentMapSedeKey);
             if (!window.maplibregl) {
-                const status = document.getElementById('mapaDelegacionesLoader');
-                if (status) status.textContent = 'No se pudo iniciar el mapa. Recarga la página para intentarlo de nuevo.';
+                if (loader) loader.textContent = 'El mapa no está disponible. Puedes consultar las sedes en las fichas.';
                 return;
             }
-
             mapaDelegacionesLeaflet = new maplibregl.Map({
                 container: mapElement,
                 style: 'https://tiles.openfreemap.org/styles/liberty',
-                center: [-71.24, -29.91],
-                zoom: 10,
-                scrollZoom: false,
-                attributionControl: true
+                center: [-71.25, -29.91], zoom: 12,
+                scrollZoom: false, attributionControl: true
             });
             mapaDelegacionesLeaflet.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'top-right');
+            // Los marcadores HTML quedan sobre la cartografía y no dependen del orden de sus capas.
+            const resizeObserver = new ResizeObserver(() => mapaDelegacionesLeaflet.resize());
+            resizeObserver.observe(mapElement);
+            mapaDelegacionesLeaflet.on('remove', () => resizeObserver.disconnect());
+            mapaDelegacionesLeaflet.on('error', () => {
+                if (!mapaDelegacionesLeaflet.isStyleLoaded() && loader) {
+                    loader.classList.remove('oculto');
+                    loader.textContent = 'La cartografía está tardando en cargar. Las direcciones siguen disponibles en las fichas.';
+                }
+            });
 
             try {
                 const response = await fetch('/static/data/delegaciones-la-serena.geojson', {
                     headers: { Accept: 'application/geo+json, application/json' }
                 });
-                if (!response.ok) throw new Error('No se pudo cargar la cartografía municipal.');
+                if (!response.ok) throw new Error('No se pudieron consultar las sedes.');
                 const geojson = await response.json();
-                const offices = geojson.features.filter(feature => feature.properties.kind === 'office');
-                offices.forEach(feature => { datosSedesDelegaciones[feature.properties.name] = feature; });
-                geojson.features.filter(feature => feature.properties.kind === 'territory')
-                    .forEach(feature => { datosPoligonosDelegaciones[feature.properties.name] = feature; });
-                const loader = document.getElementById('mapaDelegacionesLoader');
-                if (loader) loader.classList.add('oculto');
-                mapaDelegacionesLeaflet.once('load', () => {
-                    const styleSource = Object.keys(mapaDelegacionesLeaflet.getStyle().sources || {})[0];
-                    const firstSymbolLayer = mapaDelegacionesLeaflet.getStyle().layers?.find(layer => layer.type === 'symbol')?.id;
-                    mapaDelegacionesLeaflet.addSource('delegation-areas', { type: 'geojson', data: geojson });
-                    mapaDelegacionesLeaflet.addLayer({
-                        id: 'delegation-fill', type: 'fill', source: 'delegation-areas',
-                        filter: ['==', ['get', 'kind'], 'territory'],
-                        paint: {
-                            'fill-color': ['match', ['get', 'name'],
-                                'Centro', '#C41230', 'Las Compañías', '#6554C0', 'La Pampa', '#008F8C',
-                                'La Antena', '#E28C20', 'Avenida del Mar', '#1677A8', 'Rural', '#678341', '#64748B'],
-                            'fill-opacity': ['case', ['==', ['get', 'name'], delegacionesMapaData[window.currentMapSedeKey].mapa], 0.34, 0.16]
-                        }
-                    }, firstSymbolLayer);
-                    mapaDelegacionesLeaflet.addLayer({
-                        id: 'delegation-outline', type: 'line', source: 'delegation-areas',
-                        filter: ['==', ['get', 'kind'], 'territory'],
-                        paint: {
-                            'line-color': ['match', ['get', 'name'],
-                                'Centro', '#C41230', 'Las Compañías', '#6554C0', 'La Pampa', '#008F8C',
-                                'La Antena', '#E28C20', 'Avenida del Mar', '#1677A8', 'Rural', '#678341', '#64748B'],
-                            'line-width': ['case', ['==', ['get', 'name'], delegacionesMapaData[window.currentMapSedeKey].mapa], 3, 1.5],
-                            'line-opacity': 0.9
-                        }
-                    }, firstSymbolLayer);
-                    mapaDelegacionesLeaflet.addLayer({
-                        id: 'delegation-offices', type: 'circle', source: 'delegation-areas',
-                        filter: ['==', ['get', 'kind'], 'office'],
-                        paint: {
-                            'circle-radius': 7, 'circle-color': ['match', ['get', 'name'],
-                                'Centro', '#C41230', 'Las Compañías', '#6554C0', 'La Pampa', '#008F8C',
-                                'La Antena', '#E28C20', 'Avenida del Mar', '#1677A8', 'Rural', '#678341', '#64748B'],
-                            'circle-stroke-color': '#fff', 'circle-stroke-width': 2.5
-                        }
-                    }, firstSymbolLayer);
-                    mapaDelegacionesLeaflet.addLayer({
-                        id: 'delegation-labels', type: 'symbol', source: 'delegation-areas',
-                        filter: ['==', ['get', 'kind'], 'office'],
-                        layout: { 'text-field': ['get', 'name'], 'text-size': 11, 'text-offset': [0, 1.4], 'text-anchor': 'top' },
-                        paint: { 'text-color': '#203957', 'text-halo-color': '#fff', 'text-halo-width': 1.5 }
-                    }, firstSymbolLayer);
-                    const bounds = new maplibregl.LngLatBounds();
-                    const extendCoordinates = coordinates => {
-                        if (typeof coordinates[0] === 'number') bounds.extend(coordinates);
-                        else coordinates.forEach(extendCoordinates);
-                    };
-                    geojson.features.filter(feature => feature.properties.kind === 'territory')
-                        .forEach(feature => extendCoordinates(feature.geometry.coordinates));
-                    if (!bounds.isEmpty()) mapaDelegacionesLeaflet.fitBounds(bounds, { padding: 28, maxZoom: 11 });
-                    ['delegation-fill', 'delegation-offices'].forEach(layerId => {
-                        mapaDelegacionesLeaflet.on('click', layerId, event => {
-                            const key = llaveDelegacionMapa(event.features?.[0]?.properties?.name);
-                            if (key) seleccionarDelegacionMapa(key);
-                        });
-                        mapaDelegacionesLeaflet.on('mouseenter', layerId, () => { mapaDelegacionesLeaflet.getCanvas().style.cursor = 'pointer'; });
-                        mapaDelegacionesLeaflet.on('mouseleave', layerId, () => { mapaDelegacionesLeaflet.getCanvas().style.cursor = ''; });
+                geojson.features.filter(feature => feature.properties.kind === 'office')
+                    .forEach(feature => { datosSedesDelegaciones[feature.properties.name] = feature; });
+                Object.entries(delegacionesMapaData).forEach(([key, data]) => {
+                    const sede = datosSedesDelegaciones[data.mapa];
+                    if (!sede) return;
+                    const button = document.createElement('button');
+                    button.type = 'button';
+                    button.className = 'delegation-map-pin';
+                    button.style.setProperty('--delegation-color', data.badgeColor);
+                    button.setAttribute('aria-label', 'Ver sede de ' + data.nombre);
+                    button.setAttribute('aria-pressed', 'false');
+                    button.title = data.nombre;
+                    const dot = document.createElement('span');
+                    dot.className = 'delegation-pin-dot';
+                    dot.textContent = data.number;
+                    button.appendChild(dot);
+                    button.addEventListener('click', event => {
+                        event.stopPropagation();
+                        seleccionarDelegacionMapa(key);
                     });
-                    seleccionarDelegacionMapa(window.currentMapSedeKey);
+                    marcadoresDelegaciones[key] = new maplibregl.Marker({ element: button, anchor: 'bottom' })
+                        .setLngLat(sede.geometry.coordinates).addTo(mapaDelegacionesLeaflet);
                 });
+                const ready = () => {
+                    if (loader) loader.classList.add('oculto');
+                    seleccionarDelegacionMapa(window.currentMapSedeKey);
+                };
+                if (mapaDelegacionesLeaflet.loaded()) ready();
+                else mapaDelegacionesLeaflet.once('load', ready);
+                seleccionarDelegacionMapa(window.currentMapSedeKey);
             } catch (error) {
-                mapElement.innerHTML = '<div class="mapa-error" role="status">No se pudo cargar la cartografía municipal. Comprueba tu conexión e inténtalo de nuevo.</div>';
-                console.error('Error al cargar el mapa de delegaciones:', error);
+                if (loader) {
+                    loader.classList.remove('oculto');
+                    loader.textContent = 'No se pudieron cargar las sedes. Recarga la página para volver a intentarlo.';
+                }
+                console.error('Error al consultar sedes:', error);
             }
         }
 
         function seleccionarDelegacionMapa(key) {
             const data = delegacionesMapaData[key];
             if (!data) return;
-
             window.currentMapSedeKey = key;
-
-            // Actualizar botones / pills de sedes
-            document.querySelectorAll('.serena-sede-pill').forEach(p => p.classList.remove('active'));
-            const pillActiva = document.getElementById(`pill-sede-${key}`);
-            document.querySelectorAll('.serena-sede-pill').forEach(p => p.setAttribute('aria-pressed', 'false'));
-            if (pillActiva) {
-                pillActiva.classList.add('active');
-                pillActiva.setAttribute('aria-pressed', 'true');
-            }
-
-            if (mapaDelegacionesLeaflet?.isStyleLoaded() && mapaDelegacionesLeaflet.getLayer('delegation-fill')) {
-                mapaDelegacionesLeaflet.setPaintProperty('delegation-fill', 'fill-opacity',
-                    ['case', ['==', ['get', 'name'], data.mapa], 0.34, 0.16]);
-                mapaDelegacionesLeaflet.setPaintProperty('delegation-outline', 'line-width',
-                    ['case', ['==', ['get', 'name'], data.mapa], 3, 1.5]);
-            }
-
-            // Actualizar panel de detalle
-            const titleEl = document.getElementById('mapFocusTitle');
-            if (titleEl) titleEl.textContent = data.nombre;
-            const swatchEl = document.getElementById('mapFocusSwatch');
-            if (swatchEl) swatchEl.style.setProperty('--delegation-color', data.badgeColor);
-
-            const sectorEl = document.getElementById('mapFocusSector');
-            if (sectorEl) sectorEl.textContent = data.sector;
-
-            const addrEl = document.getElementById('mapFocusAddress');
-            const addressValue = addrEl?.querySelector('[data-address-value]');
+            document.querySelectorAll('.serena-sede-pill').forEach(pill => {
+                const selected = pill.id === 'pill-sede-' + key;
+                pill.classList.toggle('active', selected);
+                pill.setAttribute('aria-pressed', String(selected));
+            });
+            Object.entries(marcadoresDelegaciones).forEach(([markerKey, marker]) => {
+                marker.getElement().classList.toggle('selected', markerKey === key);
+                marker.getElement().setAttribute('aria-pressed', String(markerKey === key));
+            });
+            const card = document.getElementById('panelFocoTerritorial');
+            if (card) card.style.setProperty('--delegation-color', data.badgeColor);
+            const content = {
+                mapFocusTitle: data.nombre, mapFocusSector: data.sector,
+                mapFocusMonogram: data.monogram, mapFocusNumber: data.number,
+                mapFocusBadge: data.badge
+            };
+            Object.entries(content).forEach(([id, value]) => {
+                const element = document.getElementById(id);
+                if (element) element.textContent = value;
+            });
+            const swatch = document.getElementById('mapFocusSwatch');
+            if (swatch) swatch.style.setProperty('--delegation-color', data.badgeColor);
             const sede = datosSedesDelegaciones[data.mapa];
-            if (addressValue) addressValue.textContent = sede?.properties?.address || 'Dirección no disponible en la cartografía consultada.';
-            const coordinatesEl = document.getElementById('mapFocusCoordinates');
-            if (coordinatesEl && sede) {
-                const [longitude, latitude] = sede.geometry.coordinates;
-                coordinatesEl.textContent = `${latitude.toFixed(5)}, ${longitude.toFixed(5)}`;
-            }
+            const address = document.querySelector('#mapFocusAddress [data-address-value]');
+            if (address) address.textContent = sede?.properties?.address || 'Consultando dirección de la sede…';
+            const coordinates = document.getElementById('mapFocusCoordinates');
+            if (coordinates) coordinates.textContent = sede
+                ? sede.geometry.coordinates[1].toFixed(5) + ', ' + sede.geometry.coordinates[0].toFixed(5) : '—';
 
+            if (mapaDelegacionesLeaflet && sede) {
+                const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+                mapaDelegacionesLeaflet.resize();
+                mapaDelegacionesLeaflet.easeTo({
+                    center: sede.geometry.coordinates, zoom: 14,
+                    duration: reducedMotion ? 0 : 650
+                });
+                if (popupDelegacion) popupDelegacion.remove();
+                const popup = document.createElement('div');
+                popup.className = 'delegation-map-label';
+                const title = document.createElement('strong');
+                title.textContent = data.nombre;
+                const subtitle = document.createElement('span');
+                subtitle.textContent = 'Sede municipal · ubicación de referencia';
+                popup.append(title, subtitle);
+                popupDelegacion = new maplibregl.Popup({ offset: 44, closeButton: false, maxWidth: '240px' })
+                    .setLngLat(sede.geometry.coordinates).setDOMContent(popup).addTo(mapaDelegacionesLeaflet);
+            }
         }
 
         function irADetalleDelegacionDesdeMapa() {
@@ -2240,6 +2212,9 @@
                 ordenAscUsuarios = true;
             }
             aplicarOrdenUsuarios();
+            document.querySelectorAll('#tablaUsuarios thead [data-sort-column]').forEach(th => {
+                th.setAttribute('aria-sort', th.dataset.sortColumn === campo ? (ordenAscUsuarios ? 'ascending' : 'descending') : 'none');
+            });
             renderTablaUsuarios();
         }
 
@@ -2266,7 +2241,7 @@
             const datos = filasFiltradasUsuarios.slice(inicio, fin);
 
             if (datos.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="9" class="text-center py-5 text-muted">
+                tbody.innerHTML = `<tr><td colspan="7" class="text-center py-5 text-muted">
                     <div class="empty-state-pro py-2">
                         <div class="empty-state-icon"><i class="bi bi-person-x"></i></div>
                         <div class="empty-state-title">No se encontraron funcionarios</div>
@@ -2276,6 +2251,7 @@
                 </td></tr>`;
                 const lblInfo = document.getElementById('lblRegistrosInfoUsuarios');
                 if (lblInfo) lblInfo.textContent = '0 registros encontrados';
+                actualizarIndicadorTablaUsuarios(0, 0, 0);
                 actualizarPaginadorUsuarios(0);
                 return;
             }
@@ -2330,8 +2306,6 @@
                 // Avatar con iniciales y anillo institucional
                 const initials = (u.full_name || 'U').split(' ').map(n => n[0]).slice(0, 2).join('').toUpperCase();
                 const avatarRingColor = esAdmin ? 'var(--muni-red)' : 'var(--muni-navy)';
-                const ultimaConexion = u.last_login || (idx % 2 === 0 ? 'Hoy 09:42 hrs' : 'Ayer 17:15 hrs');
-
                 const isSelected = typeof selectedTableRows !== 'undefined' && selectedTableRows.has(u.id);
                 if (isSelected) tr.classList.add('row-selected');
 
@@ -2419,7 +2393,16 @@
             const total = filasFiltradasUsuarios.length;
             const lblInfo = document.getElementById('lblRegistrosInfoUsuarios');
             if (lblInfo) lblInfo.textContent = `Mostrando ${Math.min(fin, total)} de ${total} funcionarios`;
+            actualizarIndicadorTablaUsuarios(inicio + 1, Math.min(fin, total), total);
             actualizarPaginadorUsuarios(total);
+        }
+
+        function actualizarIndicadorTablaUsuarios(desde, hasta, total) {
+            const orden = document.getElementById('usuariosOrdenActual');
+            const filas = document.getElementById('usuariosFilasActuales');
+            const nombres = {full_name:'Nombre', delegation_name:'Delegación y cargo', status:'Estado'};
+            if (orden) orden.textContent = `Orden: ${nombres[campoOrdenUsuarios] || 'Nombre'} · ${ordenAscUsuarios ? 'A–Z' : 'Z–A'}`;
+            if (filas) filas.textContent = total ? `Filas ${desde}–${hasta} de ${total}` : '0 resultados';
         }
 
         function cerrarFichaUsuario() {
@@ -2908,7 +2891,13 @@
         function abrirModalPassword(id, nombre) {
             usuarioAPasswordId = id;
             document.getElementById('pwdUsuarioNombre').textContent = nombre;
-            document.getElementById('pwdNuevaClave').value = '';
+            const passwordInput = document.getElementById('pwdNuevaClave');
+            const passwordError = document.getElementById('pwdErrorClave');
+            passwordInput.value = '';
+            if (passwordError) {
+                passwordError.textContent = '';
+                passwordError.hidden = true;
+            }
             if (!bsModalPasswordUsuario) {
                 const el = document.getElementById('modalPasswordUsuario');
                 if (el && window.bootstrap) bsModalPasswordUsuario = new bootstrap.Modal(el);
@@ -2918,11 +2907,25 @@
 
         async function guardarPasswordDB() {
             if (!usuarioAPasswordId) return;
-            const pwd = document.getElementById('pwdNuevaClave').value.trim();
-            if (!pwd || pwd.length < 6) {
-                mostrarToast('⚠ La contraseña debe tener al menos 6 caracteres.');
+            const input = document.getElementById('pwdNuevaClave');
+            const pwd = input.value;
+            const feedback = document.getElementById('pwdErrorClave');
+            const issues = [];
+            if (pwd.length < 8) issues.push('al menos 8 caracteres');
+            if (!/\p{Lu}/u.test(pwd)) issues.push('una mayúscula');
+            if (!/\p{Ll}/u.test(pwd)) issues.push('una minúscula');
+            if (!/\p{Nd}/u.test(pwd)) issues.push('un número');
+            if (!/[^\p{L}\p{N}\s]/u.test(pwd)) issues.push('un símbolo');
+            if (issues.length) {
+                const message = `La contraseña debe incluir ${issues.join(', ')}.`;
+                if (feedback) {
+                    feedback.textContent = message;
+                    feedback.hidden = false;
+                } else mostrarToast('⚠ ' + message);
+                input.focus();
                 return;
             }
+            if (feedback) { feedback.textContent = ''; feedback.hidden = true; }
 
             try {
                 const res = await fetch(`/api/users/${usuarioAPasswordId}/reset-password/`, {
@@ -2935,10 +2938,24 @@
                 });
                 const data = await res.json();
                 if (!data.success) {
-                    mostrarToast('⚠ ' + data.message);
+                    const details = Array.isArray(data.details) ? data.details.join(' ') : '';
+                    const message = [data.message, details].filter(Boolean).join(' ');
+                    if (feedback) {
+                        feedback.textContent = message;
+                        feedback.hidden = false;
+                    } else mostrarToast('⚠ ' + message);
                     return;
                 }
-                mostrarToast('✓ ' + data.message);
+                let loginGuidance = 'Para entrar, debe usar el RUT o el correo registrado (el nombre de usuario no sirve como identificador de acceso).';
+                if (data.account_status !== 'Activo' || !data.is_active) {
+                    loginGuidance += ' La cuenta está inactiva: primero actívala desde Editar funcionario.';
+                } else if (!data.has_active_role) {
+                    loginGuidance += ' La cuenta no tiene un rol activo asignado; asígnale uno antes de intentar ingresar.';
+                }
+                if (window.Swal) {
+                    await Swal.fire({icon:'success', title:'Contraseña actualizada', text:`${data.message} ${loginGuidance}`, confirmButtonColor:'#1B365D'});
+                } else mostrarToast('✓ ' + data.message);
+                input.value = '';
                 if (bsModalPasswordUsuario) bsModalPasswordUsuario.hide();
             } catch (err) {
                 console.error("Error password:", err);
@@ -3274,7 +3291,7 @@
         }
 
         /* ==========================================================================
-           MÓDULO: DELEGACIONES MUNICIPALES (6 DELEGACIONES CON FOTOGRAFÍA REAL & GLASSMORPHISM)
+           MÓDULO: DELEGACIONES MUNICIPALES (IDENTIDAD TERRITORIAL POR COLOR Y SIGLAS)
            ========================================================================== */
 
         const datasetDelegacionesDetalle = {
@@ -3345,6 +3362,15 @@
             return `db-${item.id}`;
         }
 
+        const identidadVisualDelegacion = {
+            centro: { color: '#C41230', sigla: 'CH', numero: '01' },
+            companias: { color: '#6554C0', sigla: 'LC', numero: '02' },
+            pampa: { color: '#008F8C', sigla: 'LP', numero: '03' },
+            antena: { color: '#B86A08', sigla: 'LA', numero: '04' },
+            costa: { color: '#1677A8', sigla: 'AM', numero: '05' },
+            rural: { color: '#678341', sigla: 'SR', numero: '06' }
+        };
+
         function sincronizarDelegacionesVisualesDesdeDB() {
             if (typeof datasetDelegacionesDetalle === 'undefined') return;
             Object.values(datasetDelegacionesDetalle).forEach(item => { item.dbStatus = 'Inactivo'; });
@@ -3352,7 +3378,7 @@
                 const key = claveVisualDelegacion(item);
                 const base = datasetDelegacionesDetalle[key] || {
                     id: key, nombre: item.name, sector: item.scope,
-                    foto: '/static/img/faro_real_sunset.jpg', direccion: 'Dirección no registrada',
+                    direccion: 'Dirección no registrada',
                     telefono: 'No registrado', email: 'No registrado', horario: 'Horario no registrado',
                     delegado: 'Encargado por asignar', cargoDelegado: 'Delegado Municipal',
                     cumplimiento: null, statusSemaforo: 'Sin medición', colorSemaforo: '#64748B',
@@ -3364,7 +3390,7 @@
                     direccion: item.address || 'Dirección no registrada', telefono: item.phone || 'No registrado',
                     email: item.email || 'No registrado', horario: item.schedule || 'Horario no registrado',
                     delegado: item.manager_name || 'Encargado por asignar',
-                    foto: item.photo_url || base.foto || '/static/img/faro_real_sunset.jpg',
+                    ...identidadVisualDelegacion[key],
                     resumen: item.description || base.resumen || 'Sin descripción territorial registrada.',
                     atencionesMes: item.monthly_activities,
                     vecinosRegistrados: item.registered_neighbors == null ? null : String(item.registered_neighbors),
@@ -3555,9 +3581,9 @@
 
                 card.innerHTML = `
                     <div>
-                        <!-- Cabecera Fotográfica 16:9 con Badges de Cristal Flotantes -->
-                        <div class="delegacion-card-img-wrap">
-                            <img src="${d.foto || '/static/img/delegacion_centro.jpg'}" alt="${d.nombre}" class="delegacion-card-img" onerror="this.src='/static/img/faro_real_sunset.jpg'">
+                        <div class="delegacion-card-identity" style="--delegation-color:${d.color || '#1B365D'}">
+                            <span class="delegacion-card-monogram">${d.sigla || 'DM'}</span>
+                            <span class="delegacion-card-number">${d.numero || '00'}</span>
                             <span class="delegacion-card-status-pill" style="background: ${statusBadgeBg};">
                                 <i class="bi bi-circle-fill me-1" style="font-size: 0.55rem;"></i> ${statusLabel}
                             </span>
@@ -3680,17 +3706,6 @@
             const data = datasetDelegacionesDetalle[id];
             if (!data) return;
 
-            // Mapeo de fotos oficiales en alta definición
-            const fotosSedes = {
-                'centro': '/static/img/delegacion_centro.jpg',
-                'companias': '/static/img/delegacion_companias.jpg',
-                'pampa': '/static/img/delegacion_pampa.jpg',
-                'antena': '/static/img/delegacion_antena.jpg',
-                'costa': '/static/img/delegacion_costa.jpg',
-                'rural': '/static/img/delegacion_rural.jpg'
-            };
-            const fotoSede = data.foto || fotosSedes[id] || '/static/img/faro_real_sunset.jpg';
-
             // Actualizar estilo activo en las tarjetas modulares
             document.querySelectorAll('.delegacion-modular-glass-card').forEach(c => c.classList.remove('active-delegacion'));
             const activeCard = document.getElementById(`card-del-${id}`);
@@ -3752,10 +3767,9 @@
                     </span>
                 </div>
 
-                <!-- Banner Panorámico con Foto HD y Tarjeta Flotante Liquid Glass -->
-                <div class="delegacion-detail-hero-banner">
-                    <img src="${fotoSede}" alt="${data.nombre}" class="delegacion-detail-hero-bg">
-                    
+                <!-- Ficha territorial con el color y las siglas de la delegación -->
+                <div class="delegacion-detail-hero-banner delegation-color-hero" style="--delegation-color:${data.color || '#1B365D'}">
+                    <div class="delegacion-detail-monogram" aria-hidden="true">${data.sigla || 'DM'}</div>
                     <div class="delegacion-detail-hero-glass-card">
                         <div class="d-flex justify-content-between align-items-start flex-wrap gap-3 mb-2">
                             <div>
@@ -5175,44 +5189,42 @@
                 return;
             }
 
+            const escapeCell = (value) => {
+                const span = document.createElement('span');
+                span.textContent = value == null ? '' : String(value);
+                return span.innerHTML;
+            };
+
             tbody.innerHTML = items.map((a) => {
                 const badgeClass = a.status === 'Approved' ? 'bg-success-subtle text-success border-success-subtle' :
                                    a.status === 'Requires correction' ? 'bg-danger-subtle text-danger border-danger-subtle' :
                                    'bg-warning-subtle text-warning-emphasis border-warning-subtle';
-                const badgeIcon = a.status === 'Approved' ? 'bi-check-circle-fill' :
-                                  a.status === 'Requires correction' ? 'bi-exclamation-triangle-fill' : 'bi-hourglass-split';
                 const statusName = a.status === 'Approved' ? 'Aprobada' :
                                    a.status === 'Requires correction' ? 'Req. Corrección' : 'En Revisión';
                 const stageText = a.stage ? `Etapa ${a.stage} de 3` : 'Etapa 1 de 3';
-                const dateText = a.date || '10/09/2026';
-                const initials = (a.contact_name || 'Vecino').split(' ').slice(0, 2).map(n => n[0]).join('').toUpperCase() || 'VC';
+                const dateText = a.date || 'Sin fecha';
 
                 return `
                     <tr style="border-bottom: 1px solid #E2E8F0;">
                         <td class="py-2.5 px-2 text-truncate">
                             <span class="badge bg-light text-dark border px-1.5 py-1 font-monospace fw-bold" style="font-size: 0.74rem;">
-                                ${a.evidence_code || ('EVI-2026-' + String(a.id).padStart(4, '0'))}
+                                ${escapeCell(a.evidence_code || ('ACT-' + String(a.id).padStart(4, '0')))}
                             </span>
                         </td>
                         <td class="py-2.5 px-2">
-                            <div class="d-flex align-items-center gap-1.5" style="min-width: 0;">
-                                <div style="width: 28px; height: 28px; min-width: 28px; border-radius: 50%; background: rgba(27, 54, 93, 0.12); color: var(--muni-navy); font-weight: 800; display: flex; align-items: center; justify-content: center; font-size: 0.72rem;">
-                                    ${initials}
-                                </div>
-                                <div class="text-truncate" style="min-width: 0;">
-                                    <strong class="d-block text-truncate" style="color: #0F172A; font-size: 0.82rem;">${a.contact_name || 'Ciudadano SGR'}</strong>
-                                    <span class="d-block text-muted text-truncate" style="font-size: 0.70rem;">${a.contact_phone ? a.contact_phone : 'Sin teléfono'}</span>
-                                </div>
+                            <div class="text-truncate" style="min-width: 0;">
+                                <strong class="d-block text-truncate" style="color: #0F172A; font-size: 0.82rem;">${escapeCell(a.contact_name || 'Sin nombre')}</strong>
+                                <span class="d-block text-muted text-truncate" style="font-size: 0.70rem;">${escapeCell(a.contact_phone || 'Sin teléfono')}</span>
                             </div>
                         </td>
                         <td class="py-2.5 px-2 text-truncate">
-                            <span class="fw-semibold text-dark text-truncate d-block" style="font-size: 0.78rem;" title="${a.delegation || 'Centro'}">
-                                <i class="bi bi-geo-alt-fill text-danger me-1"></i>${(a.delegation || 'Centro').replace('Delegación ', '')}
+                            <span class="fw-semibold text-dark text-truncate d-block" style="font-size: 0.78rem;" title="${escapeCell(a.delegation || 'Sin delegación')}">
+                                ${escapeCell((a.delegation || 'Sin delegación').replace('Delegación ', ''))}
                             </span>
                         </td>
                         <td class="py-2.5 px-2 text-truncate">
-                            <span class="fw-semibold text-dark d-block text-truncate" style="font-size: 0.80rem;">${a.service || a.title || 'Atención'}</span>
-                            <span class="d-block text-muted text-truncate" style="font-size: 0.70rem;">${a.description || 'Seguimiento técnico'}</span>
+                            <span class="fw-semibold text-dark d-block text-truncate" style="font-size: 0.80rem;">${escapeCell(a.service || a.title || 'Atención')}</span>
+                            <span class="d-block text-muted text-truncate" style="font-size: 0.70rem;">${escapeCell(a.description || 'Sin acción registrada')}</span>
                         </td>
                         <td class="py-2.5 px-1 text-center text-truncate">
                             <span class="badge rounded-pill bg-primary-subtle text-primary border border-primary-subtle fw-bold" style="font-size: 0.70rem; padding: 3px 6px;">
@@ -5223,14 +5235,14 @@
                             ${dateText}
                         </td>
                         <td class="py-2.5 px-2 text-center text-truncate">
-                            <span class="badge rounded-pill fw-bold border ${badgeClass}" style="font-size: 0.72rem; padding: 4px 8px; display: inline-flex; align-items: center; gap: 3px;">
-                                <i class="bi ${badgeIcon}"></i><span>${statusName}</span>
+                            <span class="badge rounded-pill fw-bold border ${badgeClass}" style="font-size: 0.72rem; padding: 4px 8px;">
+                                ${statusName}
                             </span>
                         </td>
-                        <td class="py-2.5 px-2 text-center">
-                            <button class="btn btn-sm btn-outline-primary rounded-pill fw-bold shadow-2xs" onclick="verExpedienteAtencion(${a.id})" title="Ver Expediente de Atención" style="font-size: 0.80rem; width: 34px; height: 28px; display: inline-flex; align-items: center; justify-content: center; margin: 0 auto;">
-                                <i class="bi bi-eye"></i>
-                            </button>
+                        <td class="py-2.5 px-2 text-center atencion-row-actions">
+                            <button class="btn btn-sm btn-outline-secondary" onclick="verExpedienteAtencion(${Number(a.id)})" title="Ver detalle">Ver</button>
+                            <button class="btn btn-sm btn-outline-primary" onclick="editarAtencion(${Number(a.id)})" title="Editar registro">Editar</button>
+                            <button class="btn btn-sm btn-outline-danger" onclick="eliminarAtencion(${Number(a.id)})" title="Dar de baja">Baja</button>
                         </td>
                     </tr>
                 `;
@@ -5290,16 +5302,47 @@
             return catalogsForAttentionForm;
         }
 
-        async function abrirModalNuevaAtencion() {
+        async function abrirModalNuevaAtencion(editId = null) {
             const form = document.getElementById('formAtencionDB');
             if (form) form.reset();
-            const editId = document.getElementById('atencionEditId');
-            if (editId) editId.value = '';
+            const editInput = document.getElementById('atencionEditId');
+            if (editInput) editInput.value = editId || '';
+            const dateInput = document.getElementById('txtAtencionFecha');
+            if (dateInput) {
+                const today = new Date();
+                dateInput.value = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+            }
             try {
                 await cargarCatalogosFormularioAtencion(true);
             } catch (error) {
                 if (window.Swal) Swal.fire({ icon: 'error', title: 'No se pudo preparar el formulario', text: error.message });
                 return;
+            }
+            const title = document.getElementById('modalAtencionTitle');
+            const saveButton = document.getElementById('btnGuardarAtencionDB');
+            const info = document.getElementById('atencionResponsableInfo');
+            if (editId) {
+                const record = datasetAtenciones.find(item => Number(item.id) === Number(editId));
+                if (!record) {
+                    Swal.fire({ icon: 'error', title: 'Registro no disponible', text: 'Actualiza el listado e inténtalo nuevamente.' });
+                    return;
+                }
+                document.getElementById('txtAtencionNombre').value = record.contact_name || '';
+                document.getElementById('txtAtencionTelefono').value = record.contact_phone || '';
+                if (dateInput) dateInput.value = record.activity_date_iso || '';
+                document.getElementById('selAtencionDelegacion').value = record.delegation || '';
+                document.getElementById('selAtencionTipo').value = record.attention_type_id || '';
+                document.getElementById('selAtencionTipo').dispatchEvent(new Event('change'));
+                document.getElementById('selAtencionSubtipo').value = record.subattention_id || '';
+                document.getElementById('txtAtencionProblema').value = record.problem_description || record.title || '';
+                document.getElementById('txtAtencionAccion').value = record.executed_action || record.description || '';
+                if (title) title.textContent = 'Editar Atención Ciudadana';
+                if (saveButton) saveButton.innerHTML = '<i class="bi bi-check-lg me-1"></i> Guardar cambios';
+                if (info) info.textContent = `Registro ${record.activity_code || record.id}. El estado de revisión lo mantiene el Verificador Técnico.`;
+            } else {
+                if (title) title.textContent = 'Registrar Nueva Atención Ciudadana';
+                if (saveButton) saveButton.innerHTML = '<i class="bi bi-check-lg me-1"></i> Guardar Atención';
+                if (info) info.textContent = 'El usuario y la fecha se registrarán automáticamente.';
             }
             if (bsModalNuevaAtencion) {
                 bsModalNuevaAtencion.show();
@@ -5313,19 +5356,21 @@
         }
 
         async function guardarAtencionDB() {
+            const editId = document.getElementById('atencionEditId')?.value;
             const contact_name = document.getElementById('txtAtencionNombre')?.value?.trim();
             const contact_phone = document.getElementById('txtAtencionTelefono')?.value?.trim();
+            const activity_date = document.getElementById('txtAtencionFecha')?.value;
             const delegation = document.getElementById('selAtencionDelegacion')?.value;
             const attention_type_id = document.getElementById('selAtencionTipo')?.value;
             const subattention_id = document.getElementById('selAtencionSubtipo')?.value;
             const title = document.getElementById('txtAtencionProblema')?.value?.trim();
             const description = document.getElementById('txtAtencionAccion')?.value?.trim();
 
-            if (!contact_name || !delegation || !attention_type_id || !subattention_id || !title || !description) {
+            if (!contact_name || !delegation || !activity_date || !attention_type_id || !subattention_id || !title || !description) {
                 Swal.fire({
                     icon: 'warning',
                     title: 'Campos requeridos',
-                    text: 'Completa solicitante, delegación, tipo, subatención, descripción y acción realizada.'
+                    text: 'Completa solicitante, delegación, fecha, tipo, subatención, descripción y acción realizada.'
                 });
                 return;
             }
@@ -5334,8 +5379,8 @@
             if (btn) btn.disabled = true;
 
             try {
-                const resp = await fetch('/api/atenciones/', {
-                    method: 'POST',
+                const resp = await fetch(editId ? `/api/atenciones/${encodeURIComponent(editId)}/` : '/api/atenciones/', {
+                    method: editId ? 'PUT' : 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                         'X-CSRFToken': getCookie('csrftoken') || ''
@@ -5346,6 +5391,7 @@
                         delegation: delegation,
                         contact_name: contact_name,
                         contact_phone: contact_phone,
+                        activity_date: activity_date,
                         attention_type_id: attention_type_id,
                         subattention_id: subattention_id
                     })
@@ -5353,26 +5399,17 @@
 
                 const data = await resp.json();
                 if (!resp.ok || !data.success) {
-                    switchEl.checked = !activo;
-                    throw new Error(data.message || 'No se pudo guardar el permiso.');
+                    throw new Error(data.message || 'No se pudo guardar la atención.');
                 }
-                if (data.success) {
-                    if (bsModalNuevaAtencion) bsModalNuevaAtencion.hide();
-                    await cargarAtencionesDB();
-                    Swal.fire({
-                        icon: 'success',
-                        title: 'Atención Guardada',
-                        text: data.message || 'La atención quedó registrada correctamente.',
-                        timer: 2500,
-                        showConfirmButton: false
-                    });
-                } else {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Error al guardar',
-                        text: data.error || 'No se pudo guardar la atención en la base de datos.'
-                    });
-                }
+                if (bsModalNuevaAtencion) bsModalNuevaAtencion.hide();
+                await cargarAtencionesDB();
+                Swal.fire({
+                    icon: 'success',
+                    title: editId ? 'Cambios guardados' : 'Atención registrada',
+                    text: data.message || 'La atención quedó registrada correctamente.',
+                    timer: 2500,
+                    showConfirmButton: false
+                });
             } catch (err) {
                 Swal.fire({
                     icon: 'error',
@@ -5381,6 +5418,33 @@
                 });
             } finally {
                 if (btn) btn.disabled = false;
+            }
+        }
+
+        function editarAtencion(id) {
+            abrirModalNuevaAtencion(id);
+        }
+
+        async function eliminarAtencion(id) {
+            const record = datasetAtenciones.find(item => Number(item.id) === Number(id));
+            if (!record) return;
+            const result = await Swal.fire({
+                title: 'Dar de baja esta atención',
+                text: `El registro ${record.activity_code || record.id} dejará de aparecer en el listado y conservará su trazabilidad.`,
+                icon: 'warning', showCancelButton: true, confirmButtonText: 'Dar de baja',
+                cancelButtonText: 'Cancelar', confirmButtonColor: '#C41230'
+            });
+            if (!result.isConfirmed) return;
+            try {
+                const response = await fetch(`/api/atenciones/${encodeURIComponent(id)}/`, {
+                    method: 'DELETE', headers: { 'X-CSRFToken': getCookie('csrftoken') || '' }
+                });
+                const data = await response.json();
+                if (!response.ok || !data.success) throw new Error(data.message || 'No fue posible dar de baja la atención.');
+                await cargarAtencionesDB();
+                Swal.fire({ icon: 'success', title: 'Registro actualizado', text: data.message, confirmButtonColor: '#1B365D' });
+            } catch (error) {
+                Swal.fire({ icon: 'error', title: 'No se pudo dar de baja', text: error.message, confirmButtonColor: '#C41230' });
             }
         }
 
@@ -5855,74 +5919,7 @@
 
         // CRUD de ítems, metas, tipos y subatenciones: catalogs.js
 
-        function abrirModalNuevoTipoGestion() {
-            Swal.fire({
-                title: 'Nuevo Tipo de Gestión (RN-012)',
-                html: `
-                    <div class="text-start">
-                        <div class="mb-3">
-                            <label class="form-label small fw-bold text-dark">Etapa del Proceso</label>
-                            <select class="form-select" id="swalGestEtapa">
-                                <option value="Etapa 1">Etapa 1: Ingreso y Recepción</option>
-                                <option value="Etapa 2">Etapa 2: Visita en Terreno / Derivación</option>
-                                <option value="Etapa 3">Etapa 3: Cierre y Resolución</option>
-                            </select>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label small fw-bold text-dark">Nombre de la Gestión</label>
-                            <input type="text" class="form-control" id="swalGestNom" placeholder="Ej: Informe Técnico Social Favorable">
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label small fw-bold text-dark">Descripción Operativa</label>
-                            <textarea class="form-control" id="swalGestDesc" rows="2" placeholder="Detalle técnico de la acción ejecutada..."></textarea>
-                        </div>
-                    </div>
-                `,
-                showCancelButton: true,
-                confirmButtonText: 'Guardar Gestión',
-                cancelButtonText: 'Cancelar',
-                confirmButtonColor: '#1B365D'
-            }).then((res) => {
-                if (res.isConfirmed) {
-                    Swal.fire({
-                        icon: 'success',
-                        title: 'Gestión Registrada',
-                        text: 'La nueva etapa operativa quedó registrada en el flujo de atenciones.',
-                        timer: 2000,
-                        showConfirmButton: false
-                    });
-                }
-            });
-        }
-        window.abrirModalNuevoTipoGestion = abrirModalNuevoTipoGestion;
-
-
-        function editarTipoGestion(etapa, nombre, desc) {
-            Swal.fire({
-                title: `Editar Etapa ${etapa} de Gestión`,
-                html: `
-                    <div class="text-start">
-                        <div class="mb-3">
-                            <label class="form-label small fw-bold text-dark">Nombre de la Gestión</label>
-                            <input type="text" class="form-control" id="swalEditGestNom" value="${nombre}">
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label small fw-bold text-dark">Descripción</label>
-                            <textarea class="form-control" id="swalEditGestDesc" rows="2">${desc}</textarea>
-                        </div>
-                    </div>
-                `,
-                showCancelButton: true,
-                confirmButtonText: 'Actualizar',
-                cancelButtonText: 'Cancelar',
-                confirmButtonColor: '#1B365D'
-            }).then((res) => {
-                if (res.isConfirmed) {
-                    mostrarToast(`✓ Flujo de gestión para Etapa ${etapa} actualizado.`);
-                }
-            });
-        }
-        window.editarTipoGestion = editarTipoGestion;
+        // Tipos de gestión persistidos mediante catalogs.js.
 
         // 9. Enlace automático de validaciones institucionales y eventos al cargar el documento
         document.addEventListener('DOMContentLoaded', function() {

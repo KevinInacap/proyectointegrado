@@ -2,6 +2,7 @@
 (() => {
     'use strict';
     const definitions = {
+        'management-types': { title: 'tipo de gestión', columns: [['code', 'Código'], ['name', 'Nombre'], ['description', 'Descripción'], ['status', 'Estado']] },
         items: { title: 'ítem', columns: [['code', 'Código'], ['name', 'Nombre'], ['description', 'Descripción'], ['item_type', 'Tipo'], ['status', 'Estado']] },
         goals: { title: 'meta', columns: [['code', 'Código'], ['period', 'ID período'], ['position', 'Cargo'], ['item', 'Ítem'], ['target_value', 'Objetivo'], ['unit_of_measure', 'Unidad'], ['weight', 'Ponderación (%)'], ['status', 'Estado']] },
         'attention-types': { title: 'tipo de atención', columns: [['code', 'Código'], ['name', 'Nombre'], ['description', 'Descripción'], ['status', 'Estado']] },

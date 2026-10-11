@@ -139,6 +139,19 @@ class AttentionType(BaseModel):
         return self.name
 
 
+class ManagementType(BaseModel):
+    code = models.CharField(max_length=30, unique=True)
+    name = models.CharField(max_length=120, unique=True)
+    description = models.TextField(blank=True, default='')
+    status = models.CharField(max_length=20, choices=MeasurementItem.STATUS_CHOICES, default='Activo')
+
+    class Meta:
+        ordering = ['name', 'id']
+
+    def __str__(self):
+        return self.name
+
+
 class SubAttention(BaseModel):
     code = models.CharField(max_length=30, unique=True)
     name = models.CharField(max_length=120)

@@ -1,3 +1,4 @@
+{% load static %}
 <section id="view-dashboard" class="maintainer-view active">
     <!-- 1. HERO BANNER PANORÁMICO DE IDENTIDAD SERENENSE (FOTO REAL Y LIQUID GLASS) -->
     <div class="serena-hero-glass-banner mb-4">
@@ -116,7 +117,7 @@
                     Sedes Municipales y Despliegue en La Serena
                 </h3>
                 <p class="text-secondary small mb-0" style="margin-top: 2px;">
-                    Selecciona una zona o sede para consultar su área de referencia y ubicación municipal.
+                    Selecciona una delegación para acercar el mapa a su sede municipal.
                 </p>
             </div>
             <button class="btn btn-sm btn-outline-primary rounded-pill px-3 py-1 fw-bold" onclick="switchView('delegaciones')">
@@ -138,7 +139,7 @@
                 <span class="pill-dot"></span>
                 <span>La Pampa</span>
             </button>
-            <button type="button" class="serena-sede-pill" id="pill-sede-laflorida" style="--delegation-color:#E28C20" aria-pressed="false" onclick="seleccionarDelegacionMapa('laflorida')">
+            <button type="button" class="serena-sede-pill" id="pill-sede-laflorida" style="--delegation-color:#B86A08" aria-pressed="false" onclick="seleccionarDelegacionMapa('laflorida')">
                 <span class="pill-dot"></span>
                 <span>La Antena</span>
             </button>
@@ -158,12 +159,18 @@
             <div class="serena-map-svg-panel">
                 <div class="mapa-delegaciones-loader" id="mapaDelegacionesLoader" role="status">Cargando mapa municipal…</div>
                 <div id="mapaDelegacionesReal" class="mapa-delegaciones-real" role="application" aria-label="Mapa interactivo de delegaciones municipales de La Serena"></div>
-                <p class="mapa-fuente">Zonas municipales de referencia (2023). <a href="https://mapas.laserena.cl/mapas/delegaciones/index.html" target="_blank" rel="noopener noreferrer">Fuente: Geoportal de La Serena</a>. Base cartográfica © OpenStreetMap.</p>
+                <p class="mapa-fuente">Los puntos indican la ubicación de las sedes, no límites territoriales. <a href="https://mapas.laserena.cl/mapas/delegaciones/index.html" target="_blank" rel="noopener noreferrer">Geoportal de La Serena · 2023</a>. Base © OpenStreetMap.</p>
             </div>
 
             <!-- Columna Derecha: Tarjeta de Foco Territorial HD (Vidrio Líquido con Amplio Espacio) -->
             <div class="serena-map-detail-card" id="panelFocoTerritorial">
                 <div>
+                    <div class="territory-identity" aria-hidden="true">
+                        <span class="territory-identity-label">LA SERENA / RED TERRITORIAL</span>
+                        <span class="territory-monogram" id="mapFocusMonogram">CE</span>
+                        <span class="territory-number" id="mapFocusNumber">01</span>
+                        <span class="territory-caption" id="mapFocusBadge">SEDE CENTRAL</span>
+                    </div>
                     <!-- Datos Principales de la Delegación -->
                     <div class="mb-3">
                         <div class="d-flex align-items-center gap-2 mb-1"><span id="mapFocusSwatch" class="map-focus-swatch" aria-hidden="true"></span><h3 class="fw-bold mb-0" id="mapFocusTitle" style="color: var(--muni-navy); font-size: 1.35rem;">Centro</h3></div>

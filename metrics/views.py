@@ -9,7 +9,7 @@ from django.db.models import Q
 from django.http import JsonResponse
 from django.views.decorators.http import require_http_methods
 from organization.models import UserProfile
-from .models import AttentionType, Goal, MeasurementItem, SubAttention
+from .models import AttentionType, Goal, MeasurementItem, SubAttention, ManagementType
 from .validation import catalog_id
 
 
@@ -73,8 +73,15 @@ class SubForm(CatalogForm):
         fields = ('code', 'name', 'attention_type', 'description', 'status')
 
 
+class ManagementTypeForm(CatalogForm):
+    class Meta:
+        model = ManagementType
+        fields = ('code', 'name', 'description', 'status')
+
+
 CATALOGS = {'items': (MeasurementItem, ItemForm), 'goals': (Goal, GoalForm),
-            'attention-types': (AttentionType, TypeForm), 'subattentions': (SubAttention, SubForm)}
+            'attention-types': (AttentionType, TypeForm), 'subattentions': (SubAttention, SubForm),
+            'management-types': (ManagementType, ManagementTypeForm)}
 
 
 def serialize(obj):
@@ -123,7 +130,7 @@ def validate_extra(model, data, instance=None):
         duplicate_code = duplicate_code.exclude(pk=instance.pk)
     if duplicate_code.exists():
         return {'code': ['El código ya existe.']}
-    if model in (MeasurementItem, AttentionType) and data.get('name'):
+    if model in (MeasurementItem, AttentionType, ManagementType) and data.get('name'):
         duplicate_name = model.objects.filter(name__iexact=data['name'])
         if instance:
             duplicate_name = duplicate_name.exclude(pk=instance.pk)
@@ -163,7 +170,7 @@ def save_form(model, form, instance=None):
 def defaults(model, data):
     data = dict(data)
     data.setdefault('status', 'Activo')
-    if model in (MeasurementItem, AttentionType, SubAttention):
+    if model in (MeasurementItem, AttentionType, SubAttention, ManagementType):
         data.setdefault('description', '')
     if model is MeasurementItem:
         data.setdefault('item_type', 'Cuantitativo')

@@ -581,7 +581,10 @@ def api_user_reset_password(request, pk):
 
     return JsonResponse({
         'success': True,
-        'message': f"Contraseña actualizada con éxito para el usuario '{profile.full_name}'."
+        'message': f"Contraseña actualizada con éxito para el usuario '{profile.full_name}'.",
+        'account_status': profile.status,
+        'is_active': bool(profile.user.is_active),
+        'has_active_role': profile.roles.filter(deleted_at__isnull=True).exists(),
     })
 
 @admin_only

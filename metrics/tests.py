@@ -24,6 +24,24 @@ class CatalogAPITests(TestCase):
         self.client.force_login(self.staff)
         self.assertEqual(self.client.get('/items/').status_code, 403)
 
+    def test_management_types_persist_and_require_admin(self):
+        self.assertEqual(self.client.get('/management-types/').status_code, 403)
+        self.client.force_login(self.admin)
+        payload = {'code': 'G-01', 'name': 'Derivación', 'description': 'Asignar unidad responsable'}
+        created = self.send('post', '/management-types/', payload)
+        self.assertEqual(created.status_code, 201)
+        pk = created.json()['id']
+        self.assertEqual(self.client.get(f'/management-types/{pk}/').json()['name'], 'Derivación')
+        self.assertEqual(self.send('patch', f'/management-types/{pk}/', {'status': 'Inactivo'}).status_code, 200)
+        self.assertEqual(self.client.get('/management-types/?status=Inactivo').json()['count'], 1)
+        self.assertEqual(self.send('post', '/management-types/', payload).status_code, 400)
+        self.assertEqual(self.client.delete(f'/management-types/{pk}/').status_code, 204)
+        self.client.force_login(self.regular)
+        self.assertEqual(self.client.get('/management-types/').status_code, 403)
+        self.assertEqual(self.send('post', '/management-types/', payload).status_code, 403)
+        self.client.force_login(self.staff)
+        self.assertEqual(self.client.get('/management-types/').status_code, 403)
+
     def test_item_crud_search_pagination_and_duplicate(self):
         self.client.force_login(self.admin)
         payload = {'code': 'IT-01', 'name': 'Atenciones RSH', 'item_type': 'Cuantitativo', 'status': 'Activo'}
