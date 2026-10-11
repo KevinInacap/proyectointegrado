@@ -7,9 +7,22 @@ from django.core.paginator import Paginator
 from django.db import IntegrityError, transaction
 from django.db.models import Q
 from django.http import JsonResponse
-from django.views.decorators.http import require_http_methods
+from django.views.decorators.http import require_GET, require_http_methods
 from organization.models import UserProfile
-from .models import AttentionType, Goal, MeasurementItem, SubAttention, ManagementType
+from organization.access import is_administrator_role
+from .models import AttentionType, Goal, MeasurementItem, SubAttention, ManagementType, MeasurementPeriod
+
+
+@require_GET
+def periods_reference(request):
+    """Períodos disponibles para elegir una meta sin conocer IDs internos."""
+    if not authorized(request):
+        return error('Se requiere una cuenta administradora.', 403)
+    periods = MeasurementPeriod.objects.filter(deleted_at__isnull=True).order_by('-start_date')
+    return JsonResponse({'results': [
+        {'id': period.id, 'name': period.name, 'status': period.status}
+        for period in periods
+    ]})
 from .validation import catalog_id
 
 
@@ -105,10 +118,15 @@ def authorized(request):
     user = getattr(request, 'user', None)
     if not user or not user.is_authenticated or not user.is_active:
         return False
-    return user.is_superuser or UserProfile.objects.filter(
+    if user.is_superuser:
+        return True
+    profile = UserProfile.objects.filter(
         user=user, status='Activo', deleted_at__isnull=True,
-        roles__name='Administrador General', roles__deleted_at__isnull=True,
-    ).exists()
+    ).prefetch_related('roles').first()
+    return bool(profile and any(
+        is_administrator_role(role)
+        for role in profile.roles.all() if role.deleted_at is None
+    ))
 
 
 def body(request):

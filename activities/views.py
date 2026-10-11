@@ -7,6 +7,13 @@ from django.utils import timezone
 from .models import Activity, Evidence, Validation
 from organization.models import Delegation, UserProfile
 from core.models import AuditLog
+from core.views import _normalized_label, dashboard_route_for_position
+from organization.access import (
+    ADMINISTRATOR_ROLE_NAME,
+    is_administrator_role,
+    role_permission_codes,
+    set_role_permission_codes,
+)
 from metrics.validation import catalog_id as parse_catalog_id
 
 
@@ -23,9 +30,10 @@ def _actor(request):
 def _is_admin(request):
     profile = _actor(request)
     return bool(profile and (
-        request.user.is_superuser or profile.roles.filter(
-            name='Administrador General', deleted_at__isnull=True
-        ).exists()
+        request.user.is_superuser or any(
+            is_administrator_role(role)
+            for role in profile.roles.filter(deleted_at__isnull=True)
+        )
     ))
 
 
@@ -36,8 +44,8 @@ def _has_matrix_permission(request, permission):
     if _is_admin(request):
         return True
     return any(
-        permission.lower() in {str(p).lower() for p in (role.permissions_data or [])}
-        for role in profile.roles.filter(deleted_at__isnull=True)
+        permission.casefold() in role_permission_codes(role)
+        for role in profile.roles.filter(deleted_at__isnull=True).prefetch_related('permission_definitions')
     )
 
 
@@ -84,125 +92,134 @@ def _session_role_required(request, allowed_roles):
         return redirect('core:login')
     return None
 
+
+def _position_required(request, expected_position):
+    profile = _actor(request)
+    if (not profile or not profile.position or profile.position.status != 'Activo'
+            or profile.position.deleted_at is not None
+            or _normalized_label(profile.position.name) != _normalized_label(expected_position)):
+        return redirect('core:login')
+    return None
+
 def dashboard_view(request):
     profile = _actor(request)
     if not profile:
         return redirect('core:login')
-    roles = set(profile.roles.filter(deleted_at__isnull=True).values_list('name', flat=True))
-    if _is_admin(request):
-        return redirect('activities:dashboard_admin')
-    if roles.intersection({'Coordinador del Sistema', 'Coordinador'}):
-        return redirect('activities:dashboard_coordinador')
-    if roles.intersection({'Delegado Municipal', 'Delegado'}):
-        return redirect('activities:dashboard_delegado')
-    if 'Usuario de Consulta' in roles:
-        return redirect('activities:dashboard_consulta')
-    if roles.intersection({'Verificador Técnico', 'Verificador'}):
-        return redirect('activities:dashboard_verificador')
-    if roles.intersection({'Gestor Territorial', 'Funcionario', 'Funcionario / Gestor Territorial'}):
-        return redirect('activities:dashboard_gestor')
-    return redirect('core:login')
+    destination = dashboard_route_for_position(profile.position.name if profile.position else None)
+    if destination == 'core:login':
+        messages.error(request, 'Tu perfil no tiene un cargo activo con panel asignado.')
+        return redirect('core:login')
+    return redirect(destination)
 
 
-def _readonly_landing(request, role_name, title):
+POSITION_DASHBOARD_CONTENT = {
+    'Coordinador del Sistema': {
+        'subtitle': 'Vista general de coordinación',
+        'description': 'Un punto de partida para revisar el avance comunal y organizar el trabajo del sistema.',
+        'cards': [('Resumen comunal', 'Aquí se mostrará el avance general de las delegaciones.', 'lectura'), ('Metas', 'Aquí se podrán revisar los períodos y metas municipales.', 'edicion'), ('Reportes', 'Aquí estarán los informes de coordinación.', 'lectura')],
+    },
+    'Delegado Municipal': {
+        'subtitle': 'Panel de tu delegación',
+        'description': 'Un espacio sencillo para orientar el trabajo diario de tu sede municipal.',
+        'cards': [('Atenciones', 'Aquí se reunirán las atenciones de tu delegación.', 'lectura'), ('Equipo', 'Aquí podrás consultar al personal de tu sede.', 'lectura'), ('Seguimiento', 'Aquí se organizará el seguimiento de solicitudes locales.', 'derivacion')],
+    },
+    'Gestor Territorial': {
+        'subtitle': 'Trabajo territorial',
+        'description': 'Un acceso claro a las tareas y registros asociados a tu labor territorial.',
+        'cards': [('Mi trabajo', 'Aquí se mostrarán las tareas asignadas.', 'lectura'), ('Atenciones', 'Aquí se consultarán los registros de atención.', 'edicion'), ('Seguimiento', 'Aquí se revisará el estado de las solicitudes.', 'derivacion')],
+    },
+    'Verificador Técnico': {
+        'subtitle': 'Revisión técnica',
+        'description': 'Un espacio para revisar antecedentes y evidencias cuando ese módulo esté habilitado.',
+        'cards': [('Pendientes de revisión', 'Aquí aparecerán los elementos que requieren revisión.', 'lectura'), ('Revisiones realizadas', 'Aquí quedará el historial de revisiones.', 'cierre'), ('Orientación', 'Aquí se explicarán los criterios de verificación.', 'lectura')],
+    },
+    'Asistente Social': {
+        'subtitle': 'Atención social',
+        'description': 'Un acceso simple al trabajo social de tu delegación y a la atención de vecinos.',
+        'cards': [('Casos', 'Aquí se organizarán los casos de tu delegación.', 'lectura'), ('Atenciones', 'Aquí se registrarán las atenciones sociales.', 'edicion'), ('Seguimiento', 'Aquí podrás consultar los próximos pasos de cada caso.', 'derivacion')],
+    },
+    'Auditor Municipal': {
+        'subtitle': 'Revisión y control',
+        'description': 'Un punto de entrada para consultar trazabilidad e informes cuando estén disponibles.',
+        'cards': [('Actividad del sistema', 'Aquí se consultarán los cambios registrados.', 'lectura'), ('Informes', 'Aquí estarán los informes de revisión.', 'lectura'), ('Criterios', 'Aquí se presentarán las pautas de auditoría.', 'lectura')],
+    },
+    'Usuario de Consulta': {
+        'subtitle': 'Consulta municipal',
+        'description': 'Un panel de lectura claro para la información autorizada a tu perfil.',
+        'cards': [('Información disponible', 'Aquí aparecerán los datos habilitados para consulta.', 'lectura'), ('Indicadores', 'Aquí se mostrarán los indicadores disponibles.', 'lectura'), ('Reportes', 'Aquí se podrán revisar los informes autorizados.', 'lectura')],
+    },
+}
+
+
+def _position_dashboard(request, expected_position=None):
+    """Panel visual sin operaciones; el cargo define el panel y el rol se muestra aparte."""
     profile = _actor(request)
-    aliases = {
-        'Coordinador del Sistema': {'Coordinador del Sistema', 'Coordinador'},
-        'Delegado Municipal': {'Delegado Municipal', 'Delegado'},
-        'Usuario de Consulta': {'Usuario de Consulta'},
-    }
-    if not profile:
+    if not profile or not profile.position or profile.position.status != 'Activo' or profile.position.deleted_at is not None:
         return redirect('core:login')
-    current_role = profile.roles.filter(
-        name__in=aliases[role_name], deleted_at__isnull=True
-    ).values_list('name', flat=True).first()
-    if not current_role:
+    position_name = profile.position.name
+    if expected_position and _normalized_label(position_name) != _normalized_label(expected_position):
         return redirect('core:login')
-    module_catalog = {
-        'Coordinador del Sistema': [
-            {'slug': 'atenciones', 'name': 'Atenciones comunales', 'description': 'Consulta registros visibles según el alcance autorizado.'},
-            {'slug': 'metas', 'name': 'Metas y períodos', 'description': 'Interfaz de seguimiento de metas y períodos de evaluación.'},
-            {'slug': 'reportes', 'name': 'Reportes comunales', 'description': 'Espacio para reportes consolidados del sistema.'},
-        ],
-        'Delegado Municipal': [
-            {'slug': 'atenciones', 'name': 'Atenciones de la sede', 'description': 'Consulta los registros de tu delegación.'},
-            {'slug': 'equipo', 'name': 'Equipo territorial', 'description': 'Vista del personal asignado a tu delegación.'},
-            {'slug': 'seguimiento', 'name': 'Seguimiento de casos', 'description': 'Interfaz para el seguimiento territorial de casos.'},
-        ],
-        'Usuario de Consulta': [
-            {'slug': 'atenciones', 'name': 'Atenciones consultables', 'description': 'Consulta información dentro del alcance de tu perfil.'},
-            {'slug': 'indicadores', 'name': 'Indicadores', 'description': 'Vista de indicadores institucionales autorizados.'},
-            {'slug': 'reportes', 'name': 'Reportes', 'description': 'Vista de consulta para reportes disponibles.'},
-        ],
-    }
-    role_key = next(key for key, names in aliases.items() if current_role in names)
-    available_modules = module_catalog[role_key]
-    from django.core.paginator import Paginator
-    from django.db.models import Q
-    can_read = _has_matrix_permission(request, 'lectura')
-    can_edit = _has_matrix_permission(request, 'edicion')
-    module_slug = request.GET.get('module', '').strip()
-    if module_slug and (not can_read or module_slug not in {item['slug'] for item in available_modules}):
-        return JsonResponse({'detail': 'Módulo no disponible para este perfil.'}, status=404)
-    selected_module = next((item for item in available_modules if item['slug'] == module_slug), None)
-    search = request.GET.get('q', '').strip()[:150]
-    records = _activity_scope(request) if can_read else Activity.objects.none()
-    if search:
-        records = records.filter(Q(activity_code__icontains=search) | Q(problem_description__icontains=search))
-    page = Paginator(records.select_related('delegation').order_by('-activity_date', '-pk'), 5).get_page(request.GET.get('page'))
-    activity_count = page.paginator.count
-    if role_key == 'Coordinador del Sistema':
-        headline = 'Coordinación comunal'
-        intro = 'Seguimiento de metas, períodos y resultados municipales.'
-        sections = [{'name': 'Registros visibles', 'status': f'{activity_count} atenciones dentro del alcance autorizado'}]
-    elif role_key == 'Delegado Municipal':
-        team_count = UserProfile.objects.filter(
-            delegation_id=profile.delegation_id, status='Activo', deleted_at__isnull=True,
-        ).count() if profile.delegation_id else 0
-        headline = 'Gestión de delegación'
-        intro = 'Revisión de atenciones y personal de tu sede, según los permisos asignados.'
-        sections = [{'name': 'Registros visibles', 'status': f'{activity_count} atenciones · {team_count} perfiles activos en la delegación'}]
-    else:
-        headline = 'Consulta municipal'
-        intro = 'Vista de solo lectura con información disponible para tu perfil.'
-        sections = [{'name': 'Alcance territorial', 'status': profile.delegation.name if profile.delegation else 'Acceso según permisos asignados'}]
-    for module in available_modules:
-        module['status'] = (
-            f'{activity_count} registros disponibles' if module['slug'] == 'atenciones' and can_read
-            else 'Vista de referencia · lógica pendiente de esta entrega'
-        )
-    return render(request, 'activities/dashboard_role.html', {
-        'role_name': current_role,
-        'full_name': profile.full_name,
-        'delegation_name': profile.delegation.name if profile.delegation else 'Sin delegación',
-        'sections': sections,
-        'modules': available_modules if can_read else [],
-        'selected_module': selected_module,
-        'can_edit': can_edit,
-        'dashboard_title': title,
-        'dashboard_headline': headline,
-        'dashboard_intro': intro,
-        'can_read': can_read,
-        'records_page': page,
-        'search': search,
+
+    details = POSITION_DASHBOARD_CONTENT.get(position_name, {
+        'subtitle': 'Panel de trabajo',
+        'description': 'Este es tu punto de inicio. Las herramientas de tu cargo se incorporarán en próximas etapas.',
+        'cards': [('Información', 'Aquí se reunirá la información relacionada con tu cargo.', 'lectura'), ('Tareas', 'Aquí se organizarán las tareas cuando estén habilitadas.', 'edicion'), ('Ayuda', 'Aquí encontrarás orientación para usar el sistema.', 'lectura')],
     })
+    first_name = profile.full_name.strip().split()[0] if profile.full_name.strip() else request.user.get_username()
+    granted = {
+        code for role in profile.roles.filter(deleted_at__isnull=True).prefetch_related('permission_definitions')
+        for code in role_permission_codes(role)
+    }
+    cards = [
+        {'title': title, 'description': description}
+        for title, description, required in details['cards']
+        if required in granted or request.user.is_superuser
+    ]
+    context = {
+        'full_name': profile.full_name or request.user.get_username(),
+        'first_name': first_name,
+        'position_name': position_name,
+        'role_name': profile.roles.filter(deleted_at__isnull=True).values_list('name', flat=True).first() or 'Sin rol asignado',
+        'delegation_name': profile.delegation.name if profile.delegation else 'Sin delegación asignada',
+        'delegation_code': profile.delegation.code if profile.delegation else '',
+        'dashboard_subtitle': details['subtitle'],
+        'dashboard_description': details['description'],
+        'dashboard_cards': cards,
+        'is_placeholder': True,
+    }
+    return render(request, 'activities/dashboard_position.html', context)
 
 
 def dashboard_coordinador_view(request):
-    return _readonly_landing(request, 'Coordinador del Sistema', 'Coordinación del Sistema')
+    return _position_dashboard(request, 'Coordinador del Sistema')
 
 
 def dashboard_delegado_view(request):
-    return _readonly_landing(request, 'Delegado Municipal', 'Delegación Municipal')
+    return _position_dashboard(request, 'Delegado Municipal')
 
 
 def dashboard_consulta_view(request):
-    return _readonly_landing(request, 'Usuario de Consulta', 'Consulta')
+    return _position_dashboard(request, 'Usuario de Consulta')
+
+
+def dashboard_asistente_view(request):
+    return _position_dashboard(request, 'Asistente Social')
+
+
+def dashboard_auditor_view(request):
+    return _position_dashboard(request, 'Auditor Municipal')
+
+
+def dashboard_cargo_view(request):
+    return _position_dashboard(request)
 
 
 def dashboard_admin_view(request):
+    access_denied = _position_required(request, 'Administrador General')
+    if access_denied:
+        return access_denied
     if not _is_admin(request):
-        return redirect('core:login')
+        return _position_dashboard(request, 'Administrador General')
     from django.db.models import Count, Q
     from core.models import AuditLog
     from metrics.models import DailyIndicator, Goal, MeasurementPeriod
@@ -247,14 +264,15 @@ def dashboard_admin_view(request):
 
     profile = _actor(request)
     user_name = profile.full_name if profile else request.user.get_full_name() or request.user.username
-    user_role = profile.roles.filter(deleted_at__isnull=True).values_list('name', flat=True).first() if profile else 'Administrador General'
+    user_role = profile.roles.filter(deleted_at__isnull=True).values_list('name', flat=True).first() if profile else 'Sin rol asignado'
     context = {
         'user_name': user_name,
         'user_role': user_role,
         'live_delegation_count': active_delegations.count(),
         'live_attention_count': attention_qs.count(),
         'live_neighbor_count': Vecino.objects.filter(deleted_at__isnull=True).count(),
-        'current_delegation': request.GET.get('delegacion', 'Consolidado Comunal'),
+        'current_delegation': profile.delegation.name if profile and profile.delegation else 'Consolidado comunal',
+        'delegation_code': profile.delegation.code if profile and profile.delegation else '',
         'current_period': latest_period.name if latest_period else 'Sin período configurado',
         'live_evidence_count': evidence_count,
         'pending_attention_count': status_counts['pending'],
@@ -271,200 +289,11 @@ def dashboard_admin_view(request):
     return render(request, 'activities/dashboard_admin.html', context)
 
 def dashboard_verificador_view(request):
-    access_denied = _session_role_required(request, {'Verificador Técnico', 'Verificador'})
-    if access_denied:
-        return access_denied
-
-    profile = _actor(request)
-    pending = _activity_scope(request).filter(
-        validation_status='Pending'
-    ).select_related('user', 'attention_type', 'catalog').prefetch_related('evidences', 'validations')
-    evidence_queue = []
-    for activity in pending:
-        evidence = next((item for item in activity.evidences.all() if item.deleted_at is None), None)
-        if evidence is None:
-            continue
-        official = activity.user.get_full_name() or activity.user.username if activity.user else 'Funcionario no asignado'
-        item_name = activity.attention_type.name if activity.attention_type_id else (
-            activity.catalog.service if activity.catalog_id else 'Sin clasificación'
-        )
-        thumbnail = evidence.file_path
-        if not thumbnail.startswith(('http://', 'https://', '/')):
-            thumbnail = f"/media/{thumbnail.lstrip('/')}"
-        evidence_queue.append({
-            'code': evidence.evidence_code,
-            'date': activity.activity_date.strftime('%d %b %Y'),
-            'official': official,
-            'item': item_name,
-            'description': activity.problem_description,
-            'thumbnail': thumbnail,
-            'status': activity.get_validation_status_display(),
-        })
-
-    from metrics.models import MeasurementPeriod
-    today = timezone.localdate()
-    pending_count = pending.count()
-    approved_today = Validation.objects.filter(
-        decision='Approved', created_at__date=today, deleted_at__isnull=True,
-    ).count()
-    rejected_count = Validation.objects.filter(
-        decision__in=['Rejected', 'Requires correction'], created_at__date=today,
-        deleted_at__isnull=True,
-    ).count()
-    latest_period = MeasurementPeriod.objects.filter(
-        deleted_at__isnull=True,
-    ).order_by('-start_date').first()
-    current_period = latest_period.name if latest_period else 'Sin período configurado'
-    user_name = profile.full_name if profile else request.user.get_full_name() or request.user.username
-    user_role = profile.roles.filter(deleted_at__isnull=True).values_list('name', flat=True).first() if profile else 'Verificador Técnico'
-    context = {
-        'user_name': user_name,
-        'user_role': user_role,
-        'user_rut': profile.rut if profile else '',
-        'current_delegation': profile.delegation.name if profile and profile.delegation else 'Sin delegación asignada',
-        'current_period': current_period,
-        'demo_data': False,
-        'kpi': {
-            'pending_reviews': pending_count,
-            'points_validated_today': approved_today,
-            'rejected_count': rejected_count,
-            'delegation_avg': None,
-            'delegation_status': 'Sin datos de medición',
-        },
-        'evidence_queue': evidence_queue,
-        'officials_monitoring': [],
-    }
-    return render(request, 'activities/dashboard_verificador.html', context)
+    return _position_dashboard(request, 'Verificador Técnico')
 
 
 def dashboard_gestor_view(request):
-    access_denied = _session_role_required(request, {'Gestor Territorial', 'Funcionario', 'Funcionario / Gestor Territorial'})
-    if access_denied:
-        return access_denied
-
-    profile = _actor(request)
-    from social.models import SocialCase
-    from metrics.models import MeasurementPeriod
-
-    activities = Activity.objects.filter(
-        user=request.user, deleted_at__isnull=True,
-    ).select_related('attention_type', 'catalog').prefetch_related('evidences', 'validations')
-    activity_rows = list(activities)
-    status_labels = {
-        'Pending': 'Pendiente',
-        'Approved': 'Aprobada',
-        'Rejected': 'Rechazada',
-        'Requires correction': 'Requiere corrección',
-    }
-    evidence_labels = {
-        'Pending': 'En Revisión',
-        'Approved': 'Aprobada',
-        'Rejected': 'Observada',
-        'Requires correction': 'Observada',
-    }
-    tubo_trabajo = [{
-        'code': activity.activity_code,
-        'request_date': activity.activity_date.strftime('%d %b %Y'),
-        'problem': activity.problem_description,
-        'requester': activity.contact_name or 'Contacto no registrado',
-        'phone': activity.contact_phone or 'Sin teléfono registrado',
-        'responsible': profile.full_name if profile else request.user.get_full_name() or request.user.username,
-        'due_date': 'Sin plazo registrado',
-        'status': status_labels.get(activity.validation_status, activity.validation_status),
-    } for activity in activity_rows if activity.is_collective_agenda]
-
-    mis_evidencias = []
-    for activity in activity_rows:
-        validation = activity.validations.filter(deleted_at__isnull=True).order_by('-created_at').first()
-        for evidence in activity.evidences.all():
-            if evidence.deleted_at is not None:
-                continue
-            thumbnail = evidence.file_path
-            if not thumbnail.startswith(('http://', 'https://', '/')):
-                thumbnail = f"/media/{thumbnail.lstrip('/')}"
-            mis_evidencias.append({
-                'code': evidence.evidence_code,
-                'date': activity.activity_date.strftime('%d %b %Y'),
-                'activity_type': activity.attention_type.name if activity.attention_type_id else (
-                    activity.catalog.service if activity.catalog_id else 'Sin clasificación'
-                ),
-                'activity': activity.problem_description,
-                'contact': activity.contact_name or 'Contacto no registrado',
-                'phone': activity.contact_phone or 'Sin teléfono registrado',
-                'thumbnail': thumbnail,
-                'hash_inmutable': 'Huella digital no disponible',
-                'supervisor_status': evidence_labels.get(activity.validation_status, activity.validation_status),
-                'status': evidence_labels.get(activity.validation_status, activity.validation_status),
-                'due_date': 'Sin plazo registrado',
-                'supervisor_note': validation.observations if validation else 'Sin observaciones registradas',
-                'last_modified': timezone.localtime(activity.updated_at).strftime('%d %b %Y, %H:%M'),
-            })
-
-    cases = SocialCase.objects.filter(
-        delegation_id=profile.delegation_id if profile and profile.delegation_id else None,
-        deleted_at__isnull=True,
-    ).prefetch_related('managements') if profile and profile.delegation_id else SocialCase.objects.none()
-    ciudadania_records = []
-    for case in cases:
-        management = case.managements.filter(deleted_at__isnull=True).order_by('-stage').first()
-        ciudadania_records.append({
-            'rut': case.user_rut,
-            'name': case.user_name,
-            'address': 'Sin dirección registrada',
-            'phone': case.contact_phone or 'Sin teléfono registrado',
-            'rsh_tramo': 'Sin dato registrado',
-            'rsh_status': 'No informado',
-            'last_attention': management.management_date.strftime('%d %b %Y') if management else case.entry_date.strftime('%d %b %Y'),
-            'case_type': management.management_type if management else 'Sin gestión registrada',
-            'stage': management.stage if management else 1,
-            'status': 'En seguimiento' if management else 'Ingreso',
-        })
-
-    latest_period = MeasurementPeriod.objects.filter(deleted_at__isnull=True).order_by('-start_date').first()
-    user_name = profile.full_name if profile else request.user.get_full_name() or request.user.username
-    approved_count = sum(activity.validation_status == 'Approved' for activity in activity_rows)
-    active_cases_count = sum(activity.validation_status != 'Approved' for activity in activity_rows if activity.is_collective_agenda)
-    citizens_count = len(ciudadania_records)
-    evidence_statuses = [item['supervisor_status'] for item in mis_evidencias]
-    context = {
-        'first_name': user_name.split()[0] if user_name else 'Funcionario',
-        'user_name': user_name,
-        'user_role': profile.roles.filter(deleted_at__isnull=True).values_list('name', flat=True).first() if profile else 'Funcionario',
-        'user_position': profile.position.name if profile and profile.position else 'Sin cargo asignado',
-        'user_status': profile.status if profile else 'Sin perfil',
-        'user_rut': profile.rut if profile else '',
-        'current_delegation': profile.delegation.name if profile and profile.delegation else 'Sin delegación asignada',
-        'current_period': latest_period.name if latest_period else 'Sin período configurado',
-        'demo_data': False,
-        'dashboard_sections': [],
-        'kpi': {
-            'my_accumulated_validated': approved_count,
-            'my_compliance_pct': None,
-            'my_pending_tubo': active_cases_count,
-            'my_semaphore_pct': None,
-            'my_semaphore_status': 'Sin medición',
-            'evidence_total': len(mis_evidencias),
-            'evidence_approved': evidence_statuses.count('Aprobada'),
-            'evidence_pending': evidence_statuses.count('En Revisión'),
-            'evidence_observed': evidence_statuses.count('Observada'),
-        },
-        'tubo_trabajo': tubo_trabajo,
-        'historial_personal': mis_evidencias,
-        'mis_evidencias': mis_evidencias,
-        'ciudadania_records': ciudadania_records,
-        'active_cases_count': active_cases_count,
-        'citizens_count': citizens_count,
-    }
-    from metrics.models import AttentionType, SubAttention
-    context.update({
-        'today_date': timezone.localdate().isoformat(),
-        'attention_types': AttentionType.objects.filter(status='Activo', deleted_at__isnull=True).order_by('name'),
-        'subattentions': SubAttention.objects.filter(
-            status='Activo', deleted_at__isnull=True,
-            attention_type__status='Activo', attention_type__deleted_at__isnull=True,
-        ).select_related('attention_type').order_by('attention_type__name', 'name'),
-    })
-    return render(request, 'activities/dashboard_gestor.html', context)
+    return _position_dashboard(request, 'Gestor Territorial')
 
 def activity_create_view(request):
     if not _has_matrix_permission(request, 'edicion'):
@@ -1013,7 +842,7 @@ def api_toggle_rol_permiso(request):
     y persistirlos directamente en la base de datos MySQL (tabla: rol).
     """
     if not _is_admin(request):
-        return JsonResponse({'success': False, 'message': 'Se requiere el rol Administrador General.'}, status=403)
+        return JsonResponse({'success': False, 'message': f'Se requiere el rol {ADMINISTRATOR_ROLE_NAME}.'}, status=403)
 
     if request.method != 'POST':
         return JsonResponse({'success': False, 'message': 'Método no permitido'}, status=405)
@@ -1043,32 +872,36 @@ def api_toggle_rol_permiso(request):
     with transaction.atomic():
         rol = Role.objects.select_for_update().filter(
             name__iexact=rol_name, deleted_at__isnull=True
-        ).first()
+        ).prefetch_related('permission_definitions').first()
         if not rol:
             return JsonResponse({'success': False, 'message': 'El rol indicado no existe o ya no está activo.'}, status=404)
+        if is_administrator_role(rol):
+            return JsonResponse({
+                'success': False,
+                'message': 'El rol Administrador conserva acceso integral; sus permisos no se pueden apagar individualmente.',
+            }, status=403)
 
-        previous_permissions = list(rol.permissions_data or [])
-        perms = set(str(permission).lower() for permission in previous_permissions)
+        previous_permissions = sorted(role_permission_codes(rol))
+        perms = set(previous_permissions)
         if enabled:
             perms.add(permiso)
         else:
             perms.discard(permiso)
 
-        rol.permissions_data = sorted(perms)
-        rol.save(update_fields=['permissions_data', 'updated_at'])
+        permissions = set_role_permission_codes(rol, perms)
         AuditLog.objects.create(
             user=request.user if request.user.is_authenticated else None,
             affected_table='rol',
             affected_record_id=str(rol.pk),
             action='UPDATE',
             previous_value={'role': rol.name, 'permissions': previous_permissions},
-            new_value={'role': rol.name, 'permissions': rol.permissions_data, 'changed_permission': permiso, 'enabled': enabled},
+            new_value={'role': rol.name, 'permissions': permissions, 'changed_permission': permiso, 'enabled': enabled},
             source_ip=request.META.get('REMOTE_ADDR'),
         )
 
     return JsonResponse({
         'success': True,
         'message': f"Permiso de {permiso.capitalize()} {'activado' if enabled else 'desactivado'} para '{rol.name}' en la base de datos.",
-        'permissions': list(perms)
+        'permissions': permissions
     })
 

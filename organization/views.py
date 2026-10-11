@@ -12,6 +12,12 @@ from django.utils import timezone
 from django.core.validators import validate_email
 from django.core.exceptions import ValidationError
 from .models import UserProfile, Role, Delegation, Position, PermissionDefinition
+from .access import (
+    ADMINISTRATOR_ROLE_NAME,
+    is_administrator_role,
+    role_permission_codes,
+    set_role_permission_codes,
+)
 from core.models import AuditLog, PasswordRecoveryCode
 
 
@@ -23,13 +29,74 @@ def admin_only(view_func):
         if not user or not user.is_authenticated or not user.is_active:
             return JsonResponse({'success': False, 'message': 'Autenticación requerida.'}, status=403)
         if not user.is_superuser:
-            if not UserProfile.objects.filter(
+            profile = UserProfile.objects.filter(
                 user=user, status='Activo', deleted_at__isnull=True,
-                roles__name='Administrador General', roles__deleted_at__isnull=True,
-            ).exists():
-                return JsonResponse({'success': False, 'message': 'Se requiere el rol Administrador General.'}, status=403)
+            ).prefetch_related('roles').first()
+            if not profile or not any(
+                is_administrator_role(role)
+                for role in profile.roles.all()
+                if role.deleted_at is None
+            ):
+                return JsonResponse({'success': False, 'message': f'Se requiere el rol {ADMINISTRATOR_ROLE_NAME}.'}, status=403)
         return view_func(request, *args, **kwargs)
     return wrapped
+
+
+def _has_administrator_role(user):
+    if not user or not user.is_authenticated or not user.is_active:
+        return False
+    if user.is_superuser:
+        return True
+    profile = UserProfile.objects.filter(
+        user=user, status='Activo', deleted_at__isnull=True,
+    ).prefetch_related('roles').first()
+    return bool(profile and any(
+        is_administrator_role(role)
+        for role in profile.roles.all()
+        if role.deleted_at is None
+    ))
+
+
+def _users_scope(request):
+    profiles = UserProfile.objects.filter(deleted_at__isnull=True)
+    if _has_administrator_role(request.user):
+        return profiles
+    actor = UserProfile.objects.select_related('delegation').filter(
+        user=request.user, status='Activo', deleted_at__isnull=True,
+    ).first()
+    if (not actor or not actor.delegation_id or actor.delegation.status != 'Activo'
+            or actor.delegation.deleted_at is not None):
+        return profiles.none()
+    return profiles.filter(delegation_id=actor.delegation_id)
+
+
+def permission_gate(method_permissions):
+    """Autoriza cada operación con permisos del rol vigente; nunca confía en la sesión."""
+    def decorate(view_func):
+        @wraps(view_func)
+        def wrapped(request, *args, **kwargs):
+            user = getattr(request, 'user', None)
+            if not user or not user.is_authenticated or not user.is_active:
+                return JsonResponse({'success': False, 'message': 'Autenticación requerida.'}, status=403)
+            if user.is_superuser:
+                return view_func(request, *args, **kwargs)
+            profile = UserProfile.objects.filter(
+                user=user, status='Activo', deleted_at__isnull=True,
+            ).prefetch_related('roles').first()
+            if not profile:
+                return JsonResponse({'success': False, 'message': 'Perfil activo requerido.'}, status=403)
+            role_rows = [role for role in profile.roles.all() if role.deleted_at is None]
+            if any(is_administrator_role(role) for role in role_rows):
+                return view_func(request, *args, **kwargs)
+            required = method_permissions.get(request.method)
+            granted = {code for role in role_rows for code in role_permission_codes(role)}
+            if required and required.casefold() in granted:
+                return view_func(request, *args, **kwargs)
+            if required:
+                return JsonResponse({'success': False, 'message': f'El rol no tiene habilitado {required}.'}, status=403)
+            return view_func(request, *args, **kwargs)
+        return wrapped
+    return decorate
 
 
 def _get_request_data(request):
@@ -131,13 +198,13 @@ def _validate_delegation_details(data):
     return None
 
 
-@admin_only
+@permission_gate({'GET': 'usuarios.view'})
 def api_users_list(request):
     """
     Retorna la lista completa de usuarios y perfiles desde la base de datos,
     junto con los catálogos de delegaciones, cargos y roles.
     """
-    profiles = UserProfile.objects.select_related('user', 'delegation', 'position').prefetch_related('roles').filter(deleted_at__isnull=True).order_by('full_name')
+    profiles = _users_scope(request).select_related('user', 'delegation', 'position').prefetch_related('roles').order_by('full_name')
     
     users_data = []
     for p in profiles:
@@ -154,14 +221,16 @@ def api_users_list(request):
             'is_superuser': p.user.is_superuser if p.user else False,
             'delegation_id': p.delegation.id if p.delegation else None,
             'delegation_name': p.delegation.name if p.delegation else 'Sin delegación',
+            'delegation_code': p.delegation.code if p.delegation else '',
             'position_id': p.position.id if p.position else None,
             'position_name': p.position.name if p.position else 'Sin cargo asignado',
             'roles': [{'id': r.id, 'name': r.name} for r in p.roles.all()],
             'roles_str': ', '.join([r.name for r in p.roles.all()]) or 'Sin rol',
             'created_at': p.created_at.strftime('%d/%m/%Y %H:%M') if getattr(p, 'created_at', None) else '',
+            'last_login': timezone.localtime(p.user.last_login).strftime('%d/%m/%Y %H:%M') if p.user and p.user.last_login else '',
         })
         
-    delegations = [{'id': d.id, 'name': d.name} for d in Delegation.objects.filter(status='Activo', deleted_at__isnull=True).order_by('name')]
+    delegations = [{'id': d.id, 'code': d.code, 'name': d.name} for d in Delegation.objects.filter(status='Activo', deleted_at__isnull=True).order_by('name')]
     positions = [{'id': p.id, 'name': p.name} for p in Position.objects.filter(status='Activo', deleted_at__isnull=True).order_by('name')]
     roles = [{'id': r.id, 'name': r.name, 'description': r.description} for r in Role.objects.filter(deleted_at__isnull=True).order_by('name')]
 
@@ -184,7 +253,7 @@ def api_users_list(request):
         }
     })
 
-@admin_only
+@permission_gate({'POST': 'usuarios.create'})
 def api_user_create(request):
     """
     Crea un nuevo usuario en auth_user y su perfil institucional en UserProfile,
@@ -252,6 +321,14 @@ def api_user_create(request):
         return JsonResponse({'success': False, 'message': 'La delegación seleccionada no existe o está inactiva.'}, status=400)
     if position_id and not position:
         return JsonResponse({'success': False, 'message': 'El cargo seleccionado no existe o está inactivo.'}, status=400)
+    if not _has_administrator_role(request.user):
+        actor = UserProfile.objects.select_related('delegation').filter(
+            user=request.user, status='Activo', deleted_at__isnull=True,
+        ).first()
+        if not actor or not actor.delegation_id or not delegation or delegation.pk != actor.delegation_id:
+            return JsonResponse({'success': False, 'message': 'Solo puede crear usuarios dentro de su delegación asignada.'}, status=403)
+        if any(is_administrator_role(role) for role in roles):
+            return JsonResponse({'success': False, 'message': 'Solo un Administrador puede asignar el rol global.'}, status=403)
 
     try:
         with transaction.atomic():
@@ -311,7 +388,7 @@ def api_user_create(request):
     except Exception as e:
         return JsonResponse({'success': False, 'message': f"Error al crear usuario: {str(e)}"}, status=500)
 
-@admin_only
+@permission_gate({'POST': 'usuarios.edit', 'PUT': 'usuarios.edit'})
 def api_user_update(request, pk):
     """
     Actualiza datos de un usuario existente, roles, privilegios y delegación.
@@ -319,7 +396,7 @@ def api_user_update(request, pk):
     if request.method not in ['POST', 'PUT']:
         return JsonResponse({'success': False, 'message': 'Método no permitido'}, status=405)
 
-    profile = get_object_or_404(UserProfile, id=pk, deleted_at__isnull=True)
+    profile = get_object_or_404(_users_scope(request), id=pk)
     data = _get_request_data(request)
 
     full_name = _text(data, 'full_name', profile.full_name)
@@ -349,6 +426,15 @@ def api_user_update(request, pk):
     roles = _validated_roles(role_ids) if role_ids is not None else None
     if role_ids is not None and roles is None:
         return JsonResponse({'success': False, 'message': 'Roles inválidos.'}, status=400)
+    if role_ids is not None and not _has_administrator_role(request.user) and any(
+        is_administrator_role(role) for role in roles
+    ):
+        return JsonResponse({'success': False, 'message': 'Solo un Administrador puede asignar el rol global.'}, status=403)
+    if not _has_administrator_role(request.user) and any(
+        is_administrator_role(role)
+        for role in profile.roles.filter(deleted_at__isnull=True)
+    ):
+        return JsonResponse({'success': False, 'message': 'Solo un Administrador puede modificar una cuenta con el rol global.'}, status=403)
     if password:
         try:
             validate_password(password, profile.user)
@@ -357,7 +443,7 @@ def api_user_update(request, pk):
     if profile.user_id == request.user.id and (
         status != 'Activo' or
         (role_ids is not None and not request.user.is_superuser and
-         not any(role.name == 'Administrador General' for role in roles)) or
+         not any(is_administrator_role(role) for role in roles)) or
         (is_superuser is not None and request.user.is_superuser and
          _boolean(data, 'is_superuser') is False)
     ):
@@ -372,6 +458,14 @@ def api_user_update(request, pk):
     position = Position.objects.filter(id=position_id, status='Activo', deleted_at__isnull=True).first() if position_id else None
     if delegation_id and not delegation or position_id and not position:
         return JsonResponse({'success': False, 'message': 'Delegación o cargo inválido.'}, status=400)
+    if not _has_administrator_role(request.user):
+        actor = UserProfile.objects.filter(
+            user=request.user, status='Activo', deleted_at__isnull=True,
+        ).first()
+        if not actor or not actor.delegation_id or (
+            'delegation_id' in data and (not delegation or delegation.pk != actor.delegation_id)
+        ):
+            return JsonResponse({'success': False, 'message': 'No puede mover usuarios fuera de su delegación asignada.'}, status=403)
 
     # Validar que no choque RUT o Email con otro usuario
     if UserProfile.objects.filter(rut=rut).exclude(id=profile.id).exists():
@@ -454,7 +548,7 @@ def api_user_update(request, pk):
     except Exception as e:
         return JsonResponse({'success': False, 'message': f"Error al actualizar: {str(e)}"}, status=500)
 
-@admin_only
+@permission_gate({'POST': 'usuarios.toggle_status'})
 def api_user_toggle_status(request, pk):
     """
     Habilita o Inhabilita un usuario con 1 click.
@@ -462,7 +556,7 @@ def api_user_toggle_status(request, pk):
     if request.method != 'POST':
         return JsonResponse({'success': False, 'message': 'Método no permitido'}, status=405)
 
-    profile = get_object_or_404(UserProfile, id=pk, deleted_at__isnull=True)
+    profile = get_object_or_404(_users_scope(request), id=pk)
     if _protected_account(request, profile):
         return JsonResponse({'success': False, 'message': 'Cuenta técnica protegida.'}, status=403)
     if profile.user_id == request.user.id:
@@ -495,7 +589,7 @@ def api_user_toggle_status(request, pk):
         'message': f"Usuario '{profile.full_name}' ha sido {action_label} exitosamente."
     })
 
-@admin_only
+@permission_gate({'POST': 'usuarios.delete', 'DELETE': 'usuarios.delete'})
 def api_user_delete(request, pk):
     """
     Elimina un usuario de la base de datos (con salvaguardas institucionales).
@@ -503,7 +597,7 @@ def api_user_delete(request, pk):
     if request.method not in ['POST', 'DELETE']:
         return JsonResponse({'success': False, 'message': 'Método no permitido'}, status=405)
 
-    profile = get_object_or_404(UserProfile, id=pk, deleted_at__isnull=True)
+    profile = get_object_or_404(_users_scope(request), id=pk)
     if _protected_account(request, profile):
         return JsonResponse({'success': False, 'message': 'Cuenta técnica protegida.'}, status=403)
     if profile.user_id == request.user.id:
@@ -543,7 +637,7 @@ def api_user_delete(request, pk):
     except Exception as e:
         return JsonResponse({'success': False, 'message': f"Error al eliminar usuario: {str(e)}"}, status=500)
 
-@admin_only
+@permission_gate({'POST': 'usuarios.reset_password'})
 def api_user_reset_password(request, pk):
     """
     Restablece la contraseña de un usuario directamente desde el panel de administración.
@@ -551,7 +645,7 @@ def api_user_reset_password(request, pk):
     if request.method != 'POST':
         return JsonResponse({'success': False, 'message': 'Método no permitido'}, status=405)
 
-    profile = get_object_or_404(UserProfile, id=pk, deleted_at__isnull=True)
+    profile = get_object_or_404(_users_scope(request), id=pk)
     if _protected_account(request, profile):
         return JsonResponse({'success': False, 'message': 'Cuenta técnica protegida.'}, status=403)
     data = _get_request_data(request)
@@ -587,7 +681,7 @@ def api_user_reset_password(request, pk):
         'has_active_role': profile.roles.filter(deleted_at__isnull=True).exists(),
     })
 
-@admin_only
+@permission_gate({'GET': 'auditoria.view'})
 def api_audit_logs(request):
     """
     Retorna el historial de auditoría y trazabilidad de acciones realizadas por administradores.
@@ -673,6 +767,18 @@ SYSTEM_PERMISSIONS_CATALOG = [
             {'code': 'usuarios.toggle_status', 'name': 'Activar/Desactivar', 'desc': 'Habilitar o suspender acceso al sistema'},
             {'code': 'usuarios.reset_password', 'name': 'Resetear Contraseñas', 'desc': 'Asignar nueva contraseña de acceso'},
             {'code': 'usuarios.delete', 'name': 'Eliminar Usuarios', 'desc': 'Borrado lógico o permanente de cuentas'},
+        ]
+    },
+    {
+        'module_id': 'cargos',
+        'module_name': 'Cargos y Paneles',
+        'icon': 'bi-person-badge',
+        'description': 'Administración del cargo que determina el panel institucional de entrada',
+        'permissions': [
+            {'code': 'cargos.view', 'name': 'Ver Cargos', 'desc': 'Consultar cargos disponibles y su asignación a paneles'},
+            {'code': 'cargos.create', 'name': 'Crear Cargos', 'desc': 'Registrar nuevos cargos institucionales'},
+            {'code': 'cargos.edit', 'name': 'Editar Cargos', 'desc': 'Modificar nombre, descripción o estado de un cargo'},
+            {'code': 'cargos.delete', 'name': 'Inactivar Cargos', 'desc': 'Inactivar cargos sin funcionarios asignados'},
         ]
     },
     {
@@ -766,7 +872,22 @@ SYSTEM_PERMISSIONS_CATALOG = [
 def _permissions_catalog():
     catalog = deepcopy(SYSTEM_PERMISSIONS_CATALOG)
     modules = {module['module_id']: module for module in catalog}
-    for permission in PermissionDefinition.objects.filter(deleted_at__isnull=True).order_by('module_id', 'name'):
+    definitions = {
+        permission.code: permission
+        for permission in PermissionDefinition.objects.filter(deleted_at__isnull=True).order_by('module_id', 'name')
+    }
+    known_codes = set()
+    for module in catalog:
+        for item in module['permissions']:
+            known_codes.add(item['code'])
+            definition = definitions.get(item['code'])
+            if definition:
+                item['name'] = definition.name
+                item['desc'] = definition.description
+
+    for permission in definitions.values():
+        if permission.code in known_codes:
+            continue
         target = modules.get(permission.module_id)
         if not target:
             target = {
@@ -778,12 +899,11 @@ def _permissions_catalog():
             }
             catalog.append(target)
             modules[permission.module_id] = target
-        if not any(item['code'] == permission.code for item in target['permissions']):
-            target['permissions'].append({
-                'code': permission.code,
-                'name': permission.name,
-                'desc': permission.description,
-            })
+        target['permissions'].append({
+            'code': permission.code,
+            'name': permission.name,
+            'desc': permission.description,
+        })
     return catalog
 
 
@@ -794,7 +914,7 @@ def _all_system_perm_codes():
             codes.append(p['code'])
     return codes
 
-@admin_only
+@permission_gate({'GET': 'roles.view'})
 def api_permissions_catalog(request):
     """
     Retorna el catálogo completo estructurado de módulos, permisos y funciones del sistema.
@@ -808,17 +928,19 @@ def api_permissions_catalog(request):
         'modules_count': len(catalog)
     })
 
-@admin_only
+@permission_gate({'GET': 'roles.view'})
 def api_roles_list(request):
     """
     Retorna la lista completa de roles con sus permisos asignados, contador de usuarios,
     indicadores de sistema y el catálogo de funciones disponibles (MyAdmin).
     """
-    roles_qs = Role.objects.filter(deleted_at__isnull=True).order_by('id')
+    roles_qs = Role.objects.filter(deleted_at__isnull=True).prefetch_related(
+        'permission_definitions'
+    ).order_by('id')
     roles_data = []
 
     for r in roles_qs:
-        perms = r.permissions_data or []
+        perms = sorted(role_permission_codes(r))
         users_qs = r.users.filter(deleted_at__isnull=True)
         users_count = users_qs.count()
         users_sample = list(users_qs.values_list('full_name', flat=True)[:5])
@@ -828,6 +950,7 @@ def api_roles_list(request):
             'name': r.name,
             'description': r.description or 'Sin descripción',
             'is_system': r.is_system,
+            'is_admin_role': is_administrator_role(r),
             'permissions': perms,
             'permissions_count': len(perms),
             'users_count': users_count,
@@ -853,7 +976,7 @@ def api_roles_list(request):
         }
     })
 
-@admin_only
+@permission_gate({'POST': 'roles.create'})
 def api_role_create(request):
     """
     Crea un nuevo rol en la base de datos con su matriz de permisos asignada y auditoría (MyAdmin).
@@ -882,8 +1005,9 @@ def api_role_create(request):
                 name=name,
                 description=description,
                 is_system=is_system,
-                permissions_data=permissions
+                permissions_data=[],
             )
+            permissions = set_role_permission_codes(role, permissions)
 
             current_admin = request.user if request.user.is_authenticated else None
             AuditLog.objects.create(
@@ -908,6 +1032,7 @@ def api_role_create(request):
                 'name': role.name,
                 'description': role.description,
                 'is_system': role.is_system,
+                'is_admin_role': False,
                 'permissions': role.permissions_data,
                 'permissions_count': len(role.permissions_data or []),
                 'users_count': 0,
@@ -916,7 +1041,7 @@ def api_role_create(request):
     except Exception as e:
         return JsonResponse({'success': False, 'message': f"Error al crear el rol: {str(e)}"}, status=500)
 
-@admin_only
+@permission_gate({'POST': 'roles.edit', 'PUT': 'roles.edit'})
 def api_role_update(request, pk):
     """
     Modifica un rol existente, su descripción y su matriz de funciones/permisos (MyAdmin).
@@ -934,9 +1059,9 @@ def api_role_update(request, pk):
 
     new_permissions = data.get('permissions')
     if new_permissions is None:
-        new_permissions = role.permissions_data
+        new_permissions = sorted(role_permission_codes(role))
 
-    if role.is_system or role.name == 'Administrador General':
+    if role.is_system or is_administrator_role(role):
         return JsonResponse({'success': False, 'message': 'El rol de sistema está protegido.'}, status=403)
     if new_name is None or new_description is None or not new_name or len(new_name) > 50 or len(new_description) > 255:
         return JsonResponse({'success': False, 'message': 'Nombre o descripción inválidos.'}, status=400)
@@ -950,13 +1075,14 @@ def api_role_update(request, pk):
 
     try:
         with transaction.atomic():
-            prev_perms_count = len(role.permissions_data or [])
+            prev_permissions = sorted(role_permission_codes(role))
+            prev_perms_count = len(prev_permissions)
             prev_name = role.name
 
             role.name = new_name
             role.description = new_description
-            role.permissions_data = new_permissions
-            role.save()
+            role.save(update_fields=['name', 'description', 'updated_at'])
+            new_permissions = set_role_permission_codes(role, new_permissions)
 
             current_admin = request.user if request.user.is_authenticated else None
             AuditLog.objects.create(
@@ -964,7 +1090,7 @@ def api_role_update(request, pk):
                 affected_table='rol',
                 affected_record_id=str(role.id),
                 action='UPDATE',
-                previous_value={'name': prev_name, 'permissions_count': prev_perms_count},
+                previous_value={'name': prev_name, 'permissions_count': prev_perms_count, 'permissions': prev_permissions},
                 new_value={
                     'name': new_name,
                     'description': new_description,
@@ -981,15 +1107,16 @@ def api_role_update(request, pk):
                 'name': role.name,
                 'description': role.description,
                 'is_system': role.is_system,
-                'permissions': role.permissions_data,
-                'permissions_count': len(role.permissions_data or []),
+                'is_admin_role': is_administrator_role(role),
+                'permissions': sorted(role_permission_codes(role)),
+                'permissions_count': len(role_permission_codes(role)),
                 'users_count': role.users.filter(deleted_at__isnull=True).count(),
             }
         })
     except Exception as e:
         return JsonResponse({'success': False, 'message': f"Error al actualizar el rol: {str(e)}"}, status=500)
 
-@admin_only
+@permission_gate({'POST': 'roles.delete', 'DELETE': 'roles.delete'})
 def api_role_delete(request, pk):
     """
     Elimina un rol de la base de datos (con verificación de protección de sistema y usuarios).
@@ -1000,8 +1127,8 @@ def api_role_delete(request, pk):
     role = get_object_or_404(Role, id=pk, deleted_at__isnull=True)
 
     # Protección de roles base del sistema
-    protected_roles = ['Administrador', 'Operador', 'Consultor', 'Verificador']
-    if role.is_system or role.name in protected_roles or role.name == 'Administrador General':
+    protected_roles = ['Operador', 'Consultor', 'Verificador']
+    if role.is_system or role.name in protected_roles or is_administrator_role(role):
         return JsonResponse({
             'success': False,
             'message': f"El rol '{role.name}' es un rol protegido fundamental de la plataforma municipal y no puede ser eliminado."
@@ -1028,7 +1155,7 @@ def api_role_delete(request, pk):
                 previous_value={
                     'name': role_name,
                     'description': role.description,
-                    'permissions_count': len(role.permissions_data or []),
+                    'permissions_count': len(role_permission_codes(role)),
                 }
             )
 
@@ -1042,7 +1169,7 @@ def api_role_delete(request, pk):
     except Exception as e:
         return JsonResponse({'success': False, 'message': f"Error al eliminar el rol: {str(e)}"}, status=500)
 
-@admin_only
+@permission_gate({'POST': 'roles.create'})
 def api_role_duplicate(request, pk):
     """
     Duplica un rol existente junto con toda su matriz de permisos (función phpMyAdmin).
@@ -1070,8 +1197,9 @@ def api_role_duplicate(request, pk):
                 name=candidate_name,
                 description=f"Copia basada en {origin_role.name}: {origin_role.description}",
                 is_system=False,
-                permissions_data=deepcopy(origin_role.permissions_data or [])
+                permissions_data=[],
             )
+            cloned_permissions = set_role_permission_codes(new_role, role_permission_codes(origin_role))
 
             current_admin = request.user if request.user.is_authenticated else None
             AuditLog.objects.create(
@@ -1082,7 +1210,7 @@ def api_role_duplicate(request, pk):
                 new_value={
                     'name': candidate_name,
                     'cloned_from': origin_role.name,
-                    'permissions_count': len(new_role.permissions_data),
+                    'permissions_count': len(cloned_permissions),
                 }
             )
 
@@ -1094,15 +1222,16 @@ def api_role_duplicate(request, pk):
                 'name': new_role.name,
                 'description': new_role.description,
                 'is_system': False,
-                'permissions': new_role.permissions_data,
-                'permissions_count': len(new_role.permissions_data),
+                'is_admin_role': False,
+                'permissions': cloned_permissions,
+                'permissions_count': len(cloned_permissions),
                 'users_count': 0,
             }
         })
     except Exception as e:
         return JsonResponse({'success': False, 'message': f"Error al clonar rol: {str(e)}"}, status=500)
 
-@admin_only
+@permission_gate({'POST': 'roles.manage_features'})
 def api_add_custom_permission(request):
     """
     Permite al Super Administrador registrar una nueva función/privilegio dinámico en el catálogo.
@@ -1159,6 +1288,7 @@ def _catalog_audit(request, table, record, action, previous=None):
             'name': record.name,
             'status': record.status,
             'scope': getattr(record, 'scope', None),
+            'commune': getattr(record, 'commune', None),
             'description': getattr(record, 'description', None),
             'address': getattr(record, 'address', None),
             'phone': getattr(record, 'phone', None),
@@ -1171,7 +1301,7 @@ def _catalog_audit(request, table, record, action, previous=None):
     )
 
 
-@admin_only
+@permission_gate({'GET': 'delegaciones.view', 'POST': 'delegaciones.create'})
 def api_delegations(request):
     """Lista y crea delegaciones usadas por la asignación real de funcionarios."""
     if request.method == 'GET':
@@ -1199,7 +1329,8 @@ def api_delegations(request):
                 )
             compliance = indicators.aggregate(value=Avg('weighted_compliance'))['value']
             result.append({
-                'id': item.id, 'name': item.name, 'scope': item.scope,
+                'id': item.id, 'code': item.code, 'name': item.name, 'scope': item.scope,
+                'commune': item.commune,
                 'status': item.status, 'address': item.address, 'phone': item.phone,
                 'email': item.email, 'schedule': item.schedule,
                 'manager_name': item.manager_name, 'photo_url': item.photo_url,
@@ -1229,13 +1360,19 @@ def api_delegations(request):
 
     data = _get_request_data(request)
     name, scope = _text(data, 'name'), _text(data, 'scope')
+    commune = _text(data, 'commune', 'La Serena')
+    code = _text(data, 'code')
     status = data.get('status', 'Activo')
     if name is None or scope is None or not name or not scope or len(name) > 100 or len(scope) > 100:
         return JsonResponse({'success': False, 'message': 'Nombre y ámbito territorial inválidos.'}, status=400)
+    if not commune or len(commune) > 100:
+        return JsonResponse({'success': False, 'message': 'Comuna inválida.'}, status=400)
     if status not in ('Activo', 'Inactivo'):
         return JsonResponse({'success': False, 'message': 'Estado inválido.'}, status=400)
     if Delegation.objects.filter(name__iexact=name).exists():
         return JsonResponse({'success': False, 'message': 'Ya existe una delegación con ese nombre.'}, status=400)
+    if code is None or (code and (not re.fullmatch(r'[A-Za-z0-9-]{2,20}', code) or Delegation.objects.filter(code__iexact=code).exists())):
+        return JsonResponse({'success': False, 'message': 'Código inválido o ya utilizado.'}, status=400)
     detail_error = _validate_delegation_details(data)
     if detail_error:
         return JsonResponse({'success': False, 'message': detail_error}, status=400)
@@ -1246,31 +1383,37 @@ def api_delegations(request):
         return JsonResponse({'success': False, 'message': 'Detalle demasiado largo.'}, status=400)
     with transaction.atomic():
         item = Delegation.objects.create(
-            name=name, scope=scope, status=status,
+            name=name, code=code.upper() if code else None, scope=scope, commune=commune, status=status,
             address=_text(data, 'address'), phone=_text(data, 'phone'),
             email=(_text(data, 'email') or '').lower(), schedule=_text(data, 'schedule'),
             manager_name=_text(data, 'manager_name'), photo_url=_text(data, 'photo_url'),
             description=_text(data, 'description'),
         )
         _catalog_audit(request, 'delegacion', item, 'CREATE')
-    return JsonResponse({'success': True, 'message': f"Delegación '{name}' creada y guardada.", 'id': item.id})
+    return JsonResponse({'success': True, 'message': f"Delegación '{name}' creada y guardada.", 'id': item.id, 'code': item.code})
 
 
-@admin_only
+@permission_gate({'POST': 'delegaciones.edit', 'PUT': 'delegaciones.edit'})
 def api_delegation_update(request, pk):
     if request.method not in ('POST', 'PUT'):
         return JsonResponse({'success': False, 'message': 'Método no permitido.'}, status=405)
     item = get_object_or_404(Delegation, id=pk, deleted_at__isnull=True)
     data = _get_request_data(request)
     name = _text(data, 'name', item.name)
+    code = _text(data, 'code', item.code)
     scope = _text(data, 'scope', item.scope)
+    commune = _text(data, 'commune', item.commune)
     status = data.get('status', item.status)
     if name is None or scope is None or not name or not scope or len(name) > 100 or len(scope) > 100 or status not in ('Activo', 'Inactivo'):
         return JsonResponse({'success': False, 'message': 'Revisa el nombre, ámbito y estado.'}, status=400)
+    if not commune or len(commune) > 100:
+        return JsonResponse({'success': False, 'message': 'Comuna inválida.'}, status=400)
     if status == 'Inactivo' and item.status == 'Activo' and item.users.filter(deleted_at__isnull=True, status='Activo').exists():
         return JsonResponse({'success': False, 'message': 'La delegación tiene funcionarios activos.'}, status=400)
     if Delegation.objects.filter(name__iexact=name).exclude(id=pk).exists():
         return JsonResponse({'success': False, 'message': 'Ya existe otra delegación con ese nombre.'}, status=400)
+    if not code or not re.fullmatch(r'[A-Za-z0-9-]{2,20}', code) or Delegation.objects.filter(code__iexact=code).exclude(id=pk).exists():
+        return JsonResponse({'success': False, 'message': 'Código inválido o ya utilizado.'}, status=400)
     merged = {field: getattr(item, field) for field in (
         'name', 'scope', 'address', 'phone', 'email', 'schedule',
         'manager_name', 'photo_url', 'description'
@@ -1284,22 +1427,22 @@ def api_delegation_update(request, pk):
         ('manager_name', 150), ('photo_url', 255)
     )):
         return JsonResponse({'success': False, 'message': 'Detalle demasiado largo.'}, status=400)
-    previous = {'name': item.name, 'scope': item.scope, 'status': item.status, 'address': item.address,
+    previous = {'code': item.code, 'name': item.name, 'scope': item.scope, 'commune': item.commune, 'status': item.status, 'address': item.address,
                 'phone': item.phone, 'email': item.email, 'schedule': item.schedule,
                 'manager_name': item.manager_name, 'photo_url': item.photo_url, 'description': item.description}
     with transaction.atomic():
-        item.name, item.scope, item.status = name, scope, status
+        item.name, item.code, item.scope, item.commune, item.status = name, code.upper(), scope, commune, status
         for field in ('address', 'phone', 'email', 'schedule', 'manager_name', 'photo_url', 'description'):
             if field in data:
                 setattr(item, field, _text(data, field))
         item.email = item.email.lower()
-        item.save(update_fields=['name', 'scope', 'status', 'address', 'phone', 'email', 'schedule',
+        item.save(update_fields=['name', 'code', 'scope', 'commune', 'status', 'address', 'phone', 'email', 'schedule',
                                  'manager_name', 'photo_url', 'description', 'updated_at'])
         _catalog_audit(request, 'delegacion', item, 'UPDATE', previous)
     return JsonResponse({'success': True, 'message': f"Delegación '{name}' actualizada."})
 
 
-@admin_only
+@permission_gate({'POST': 'delegaciones.delete'})
 def api_delegation_toggle(request, pk):
     if request.method != 'POST':
         return JsonResponse({'success': False, 'message': 'Método no permitido.'}, status=405)
@@ -1314,7 +1457,7 @@ def api_delegation_toggle(request, pk):
     return JsonResponse({'success': True, 'message': f"Delegación {item.status.lower()} correctamente.", 'status': item.status})
 
 
-@admin_only
+@permission_gate({'GET': 'cargos.view', 'POST': 'cargos.create'})
 def api_positions(request):
     """Lista y crea cargos institucionales asignables a funcionarios."""
     if request.method == 'GET':
@@ -1341,7 +1484,7 @@ def api_positions(request):
     return JsonResponse({'success': True, 'message': f"Cargo '{name}' creado y guardado.", 'id': item.id})
 
 
-@admin_only
+@permission_gate({'POST': 'cargos.edit', 'PUT': 'cargos.edit'})
 def api_position_update(request, pk):
     if request.method not in ('POST', 'PUT'):
         return JsonResponse({'success': False, 'message': 'Método no permitido.'}, status=405)
@@ -1364,7 +1507,7 @@ def api_position_update(request, pk):
     return JsonResponse({'success': True, 'message': f"Cargo '{name}' actualizado."})
 
 
-@admin_only
+@permission_gate({'POST': 'cargos.delete'})
 def api_position_toggle(request, pk):
     if request.method != 'POST':
         return JsonResponse({'success': False, 'message': 'Método no permitido.'}, status=405)

@@ -4,12 +4,12 @@
     const definitions = {
         'management-types': { title: 'tipo de gestión', columns: [['code', 'Código'], ['name', 'Nombre'], ['description', 'Descripción'], ['status', 'Estado']] },
         items: { title: 'ítem', columns: [['code', 'Código'], ['name', 'Nombre'], ['description', 'Descripción'], ['item_type', 'Tipo'], ['status', 'Estado']] },
-        goals: { title: 'meta', columns: [['code', 'Código'], ['period', 'ID período'], ['position', 'Cargo'], ['item', 'Ítem'], ['target_value', 'Objetivo'], ['unit_of_measure', 'Unidad'], ['weight', 'Ponderación (%)'], ['status', 'Estado']] },
+        goals: { title: 'meta', columns: [['code', 'Código'], ['period', 'Período'], ['position', 'Cargo'], ['item', 'Ítem'], ['target_value', 'Objetivo'], ['unit_of_measure', 'Unidad'], ['weight', 'Ponderación (%)'], ['status', 'Estado']] },
         'attention-types': { title: 'tipo de atención', columns: [['code', 'Código'], ['name', 'Nombre'], ['description', 'Descripción'], ['status', 'Estado']] },
         subattentions: { title: 'subatención', columns: [['code', 'Código'], ['name', 'Nombre'], ['attention_type', 'Tipo de atención'], ['description', 'Descripción'], ['status', 'Estado']] }
     };
     const panels = [];
-    const labels = { code: 'Código', name: 'Nombre', description: 'Descripción', status: 'Estado', item_type: 'Tipo de ítem', period: 'ID del período existente', position: 'Cargo', item: 'Ítem', target_value: 'Valor objetivo', unit_of_measure: 'Unidad de medida', weight: 'Ponderación (%)', attention_type: 'Tipo de atención', __all__: 'Registro' };
+    const labels = { code: 'Código', name: 'Nombre', description: 'Descripción', status: 'Estado', item_type: 'Tipo de ítem', period: 'Período de medición', position: 'Cargo', item: 'Ítem', target_value: 'Valor objetivo', unit_of_measure: 'Unidad de medida', weight: 'Ponderación (%)', attention_type: 'Tipo de atención', __all__: 'Registro' };
 
     function element(tag, className, text) {
         const node = document.createElement(tag);
@@ -79,9 +79,10 @@
     async function references(catalog) {
         if (catalog === 'subattentions') return { attention_type: await all('attention-types') };
         if (catalog === 'goals') {
-            const [items, positions] = await Promise.all([all('items'), request('/organization/positions/')]);
+            const [items, positions, periods] = await Promise.all([all('items'), request('/organization/positions/'), request('/api/catalogs/periods/')]);
             if (!Array.isArray(positions.positions)) throw new Error('No se pudieron cargar los cargos.');
-            return { item: items, position: positions.positions };
+            if (!Array.isArray(periods.results)) throw new Error('No se pudieron cargar los períodos.');
+            return { item: items, position: positions.positions, period: periods.results };
         }
         return {};
     }
@@ -177,10 +178,10 @@
         if (choices) {
             input.append(new Option('Seleccione…', ''));
             choices.forEach(choice => input.append(new Option(choice.name, choice.id)));
-        } else if (['period', 'target_value', 'weight'].includes(key)) {
+        } else if (['target_value', 'weight'].includes(key)) {
             input.type = 'number';
-            input.min = key === 'period' ? '1' : '0.01';
-            input.step = key === 'period' ? '1' : '0.01';
+            input.min = '0.01';
+            input.step = '0.01';
             if (key === 'weight') input.max = '100';
             if (key === 'target_value') input.max = '99999999.99';
         } else if (key !== 'description') {

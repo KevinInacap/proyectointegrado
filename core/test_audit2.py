@@ -27,7 +27,7 @@ class Audit2AuthTests(TestCase):
             user=self.user, rut='12.345.678-5', full_name='Persona Auditoria',
             email='audit@example.test', status='Activo',
         )
-        self.role = Role.objects.get(name='Administrador General')
+        self.role = Role.objects.get(name='Administrador')
         self.profile.roles.add(self.role)
 
     def request_code(self, client=None):

@@ -20,6 +20,12 @@
         let filasPorPaginaUsuarios = 10, paginaActualUsuarios = 1, ordenAscUsuarios = true, campoOrdenUsuarios = 'full_name';
         let usuarioAEliminarId = null, usuarioAPasswordId = null;
 
+        function escapeHtml(value) {
+            return String(value ?? '').replace(/[&<>"']/g, char => ({
+                '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+            })[char]);
+        }
+
         let calFechaActual = new Date();
         let calFechaHoy = new Date();
         let calFechaSeleccionada = new Date(calFechaHoy.getFullYear(), calFechaHoy.getMonth(), calFechaHoy.getDate());
@@ -189,6 +195,7 @@
         /* Ajuste universal de modales: todo el contenido queda visible sin scroll. */
         function ajustarModalAlViewport(modal) {
             if (!modal || !modal.classList.contains('show')) return;
+            if (modal.id === 'modalCatalogosOrganizacion' && window.innerWidth < 992) return;
             const dialog = modal.querySelector('.modal-dialog');
             const content = modal.querySelector('.modal-content');
             if (!dialog || !content) return;
@@ -261,6 +268,10 @@
         }
 
         function switchView(viewName) {
+            if (viewName !== 'usuarios' && typeof selectedTableRows !== 'undefined') {
+                selectedTableRows.clear();
+                actualizarBarraUsuariosLote();
+            }
             document.querySelectorAll('.maintainer-view').forEach(v => v.classList.remove('active'));
             document.querySelectorAll('.nav-item-btn, .submenu-item-btn').forEach(btn => btn.classList.remove('active'));
 
@@ -2128,6 +2139,7 @@
                 mostrarToast('⚠ Error al conectar con la base de datos: ' + err.message);
             }
         }
+        window.cargarUsuariosDesdeDB = cargarUsuariosDesdeDB;
 
         let filtroFacetUsuarioActual = '';
 
@@ -2283,7 +2295,7 @@
                             badgeCls = 'bg-primary-subtle text-primary border border-primary-subtle';
                             rIcon = '<i class="bi bi-diagram-3 me-1"></i>';
                         }
-                        return `<span class="badge ${badgeCls} px-2 py-1" style="font-size: 0.78rem; font-weight: 600;">${rIcon}${r.name}</span>`;
+                        return `<span class="badge ${badgeCls} px-2 py-1" style="font-size: 0.78rem; font-weight: 600;">${rIcon}${escapeHtml(r.name)}</span>`;
                     }).join(' ');
                 } else {
                     rolesHtml = `<span class="text-muted small">Sin rol</span>`;
@@ -2296,7 +2308,7 @@
                 // Estado interactivo
                 const isActivo = u.status === 'Activo';
                 const statusBadge = `
-                    <button class="btn btn-sm p-0 border-0" onclick="toggleEstadoUsuario(${u.id}, '${u.full_name.replace(/'/g, "\\'")}')" title="Clic para alternar estado">
+                    <button class="btn btn-sm p-0 border-0" onclick="toggleEstadoUsuario(${u.id})" title="Clic para alternar estado">
                         <span class="badge ${isActivo ? 'bg-success-subtle text-success border border-success-subtle' : 'bg-danger-subtle text-danger border border-danger-subtle'} px-3 py-1 rounded-pill" style="font-size: 0.80rem; font-weight: 700; cursor: pointer;">
                             <i class="bi ${isActivo ? 'bi-check-circle-fill' : 'bi-x-circle-fill'} me-1"></i>${u.status}
                         </span>
@@ -2317,18 +2329,18 @@
                     <td style="vertical-align: middle; cursor: pointer;" onclick="seleccionarUsuarioDetalle('${u.id}')">
                         <div class="d-flex align-items-center gap-2">
                             <div class="user-avatar-pill ${esAdmin ? 'admin' : ''}" style="width: 38px; height: 38px; font-size: 0.85rem; font-weight: 800; border: 2px solid ${avatarRingColor}; flex-shrink: 0; background: ${esAdmin ? 'var(--muni-red)' : 'var(--muni-navy)'}; color: #FFF;">
-                                ${initials}
+                                ${escapeHtml(initials)}
                             </div>
                             <div style="min-width: 0;">
                                 <div class="d-flex align-items-center gap-1">
-                                    <span class="fw-bold text-truncate" style="color: var(--muni-navy); font-size: 0.90rem;">${u.full_name}</span>
+                                    <span class="fw-bold text-truncate" style="color: var(--muni-navy); font-size: 0.90rem;">${escapeHtml(u.full_name)}</span>
                                     ${esAdmin ? '<span class="badge rounded-pill px-2 py-0 text-white fw-bold" style="background: var(--muni-red); font-size: 0.65rem;">ADMIN</span>' : ''}
                                 </div>
                                 <div class="text-secondary small d-flex align-items-center gap-1 font-monospace" style="font-size: 0.74rem;">
-                                    <span>${u.rut || 'RUT no reg.'}</span>
+                                    <span>${escapeHtml(u.rut || 'RUT no reg.')}</span>
                                     <span>•</span>
-                                    <a href="mailto:${u.email}" class="text-primary text-decoration-none text-truncate" style="max-width: 170px;" onclick="event.stopPropagation();" title="${u.email}">
-                                        ${u.email}
+                                    <a href="mailto:${escapeHtml(u.email)}" class="text-primary text-decoration-none text-truncate" style="max-width: 170px;" onclick="event.stopPropagation();" title="${escapeHtml(u.email)}">
+                                        ${escapeHtml(u.email)}
                                     </a>
                                 </div>
                             </div>
@@ -2336,9 +2348,9 @@
                     </td>
                     <td style="vertical-align: middle;">
                         <div class="fw-bold small" style="font-size: 0.85rem; color: var(--muni-navy);">
-                            <i class="bi bi-geo-alt-fill text-danger me-1"></i>${delegacionLimpia}
+                            <i class="bi bi-geo-alt-fill text-danger me-1"></i>${escapeHtml(delegacionLimpia)}
                         </div>
-                        ${cargoLimpio ? `<div class="text-muted small text-truncate" style="font-size: 0.75rem; max-width: 180px;">${cargoLimpio}</div>` : ''}
+                        ${cargoLimpio ? `<div class="text-muted small text-truncate" style="font-size: 0.75rem; max-width: 180px;">${escapeHtml(cargoLimpio)}</div>` : ''}
                     </td>
                     <td style="vertical-align: middle;">
                         <div class="d-flex flex-wrap gap-1">
@@ -2367,7 +2379,7 @@
                                         </a>
                                     </li>
                                     <li>
-                                        <a class="dropdown-item py-2 fw-semibold text-dark rounded-2 d-flex align-items-center gap-2" href="javascript:void(0)" onclick="abrirModalPassword(${u.id}, '${u.full_name.replace(/'/g, "\\'")}')">
+                                        <a class="dropdown-item py-2 fw-semibold text-dark rounded-2 d-flex align-items-center gap-2" href="javascript:void(0)" onclick="abrirModalPassword(${u.id})">
                                             <i class="bi bi-key-fill text-info"></i> Resetear Contraseña
                                         </a>
                                     </li>
@@ -2378,7 +2390,7 @@
                                     </li>
                                     <li><hr class="dropdown-divider my-1"></li>
                                     <li>
-                                        <a class="dropdown-item py-2 fw-semibold text-${isActivo ? 'danger' : 'success'} rounded-2 d-flex align-items-center gap-2" href="javascript:void(0)" onclick="toggleEstadoUsuario(${u.id}, '${u.full_name.replace(/'/g, "\\'")}')">
+                                        <a class="dropdown-item py-2 fw-semibold text-${isActivo ? 'danger' : 'success'} rounded-2 d-flex align-items-center gap-2" href="javascript:void(0)" onclick="toggleEstadoUsuario(${u.id})">
                                             <i class="bi bi-power"></i> ${isActivo ? 'Desactivar Acceso' : 'Activar Acceso'}
                                         </a>
                                     </li>
@@ -2430,7 +2442,7 @@
             if (u.roles && u.roles.length > 0) {
                 rolesHtml = u.roles.map(r => `
                     <span class="badge bg-white text-dark border px-3 py-2 rounded-pill shadow-xs me-1 mb-1 fw-bold" style="font-size: 0.82rem;">
-                        <i class="bi bi-shield-check text-primary me-1"></i>${r.name}
+                        <i class="bi bi-shield-check text-primary me-1"></i>${escapeHtml(r.name)}
                     </span>
                 `).join(' ');
             } else {
@@ -2459,17 +2471,17 @@
                         <div class="col-lg-7">
                             <div class="d-flex align-items-center gap-3">
                                 <div style="width: 72px; height: 72px; border-radius: 20px; background: ${avatarColor}; color: #FFF; display: flex; align-items: center; justify-content: center; font-size: 1.8rem; font-weight: 800; box-shadow: 0 8px 24px rgba(27,54,93,0.18); flex-shrink: 0;">
-                                    ${initials}
+                                    ${escapeHtml(initials)}
                                 </div>
                                 <div>
                                     <div class="d-flex align-items-center gap-2 flex-wrap mb-1">
                                         <h3 class="m-0 fw-bold" style="color: var(--muni-navy); font-size: 1.55rem; letter-spacing: -0.2px;">
-                                            ${u.full_name}
+                                            ${escapeHtml(u.full_name)}
                                         </h3>
                                         ${esAdmin ? '<span class="badge rounded-pill px-2 py-1 text-white fw-bold" style="background: var(--muni-red); font-size: 0.70rem;">ADMINISTRADOR</span>' : ''}
                                     </div>
                                     <div class="text-secondary small font-monospace fw-semibold" style="font-size: 0.85rem;">
-                                        RUT: ${u.rut || 'Sin RUT'} • Usuario: @${u.username}
+                                        RUT: ${escapeHtml(u.rut || 'Sin RUT')} • Usuario: @${escapeHtml(u.username)}
                                     </div>
                                 </div>
                             </div>
@@ -2477,26 +2489,26 @@
                             <div class="row g-3 mt-3 pt-3 border-top text-dark" style="font-size: 0.88rem;">
                                 <div class="col-sm-6">
                                     <div class="text-muted small fw-bold text-uppercase" style="font-size: 0.70rem;">Correo Institucional</div>
-                                    <a href="mailto:${u.email}" class="text-decoration-none text-primary fw-bold d-flex align-items-center gap-1 mt-1">
-                                        <i class="bi bi-envelope-fill text-muted"></i> ${u.email}
+                                    <a href="mailto:${escapeHtml(u.email)}" class="text-decoration-none text-primary fw-bold d-flex align-items-center gap-1 mt-1">
+                                        <i class="bi bi-envelope-fill text-muted"></i> ${escapeHtml(u.email)}
                                     </a>
                                 </div>
                                 <div class="col-sm-6">
                                     <div class="text-muted small fw-bold text-uppercase" style="font-size: 0.70rem;">Delegación Asignada</div>
                                     <div class="fw-bold mt-1" style="color: var(--muni-navy);">
-                                        <i class="bi bi-geo-alt-fill text-danger me-1"></i> ${u.delegation_name || 'Sin Sede Asignada'}
+                                        <i class="bi bi-geo-alt-fill text-danger me-1"></i> ${escapeHtml(u.delegation_name || 'Sin Sede Asignada')}
                                     </div>
                                 </div>
                                 <div class="col-sm-6">
                                     <div class="text-muted small fw-bold text-uppercase" style="font-size: 0.70rem;">Cargo Funcionario</div>
                                     <div class="fw-semibold mt-1 text-dark">
-                                        <i class="bi bi-briefcase-fill text-secondary me-1"></i> ${u.position_name || 'Personal Municipal'}
+                                        <i class="bi bi-briefcase-fill text-secondary me-1"></i> ${escapeHtml(u.position_name || 'Personal Municipal')}
                                     </div>
                                 </div>
                                 <div class="col-sm-6">
-                                    <div class="text-muted small fw-bold text-uppercase" style="font-size: 0.70rem;">Último Acceso Registrado</div>
+                                    <div class="text-muted small fw-bold text-uppercase" style="font-size: 0.70rem;">Último acceso registrado</div>
                                     <div class="fw-semibold mt-1 text-secondary font-monospace">
-                                        <i class="bi bi-clock-history text-info me-1"></i> ${u.last_login || 'Hoy 09:42 hrs'}
+                                        <i class="bi bi-clock-history text-info me-1"></i> ${u.last_login ? escapeHtml(u.last_login) : 'Sin ingreso registrado'}
                                     </div>
                                 </div>
                             </div>
@@ -2513,13 +2525,13 @@
                             </div>
 
                             <div class="d-flex align-items-center gap-2 flex-wrap">
-                                <button class="btn btn-sm btn-outline-primary rounded-pill px-3 py-2 fw-bold shadow-xs" onclick="abrirModalPassword(${u.id}, '${u.full_name.replace(/'/g, "\\'")}')">
+                                <button class="btn btn-sm btn-outline-primary rounded-pill px-3 py-2 fw-bold shadow-xs" onclick="abrirModalPassword(${u.id})">
                                     <i class="bi bi-key-fill me-1"></i> Resetear Contraseña
                                 </button>
                                 <button class="btn btn-sm btn-outline-secondary rounded-pill px-3 py-2 fw-bold shadow-xs" onclick="abrirModalUsuario('editar', ${u.id})">
                                     <i class="bi bi-pencil-square me-1"></i> Editar Datos
                                 </button>
-                                <button class="btn btn-sm btn-outline-${isActivo ? 'danger' : 'success'} rounded-pill px-3 py-2 fw-bold shadow-xs" onclick="toggleEstadoUsuario(${u.id}, '${u.full_name.replace(/'/g, "\\'")}')">
+                                <button class="btn btn-sm btn-outline-${isActivo ? 'danger' : 'success'} rounded-pill px-3 py-2 fw-bold shadow-xs" onclick="toggleEstadoUsuario(${u.id})">
                                     <i class="bi bi-power me-1"></i> ${isActivo ? 'Desactivar Cuenta' : 'Activar Cuenta'}
                                 </button>
                                 <button class="btn-exportar-pdf-oficial" onclick="exportarFichaUsuarioPDF(${u.id})" style="font-size: 0.78rem; padding: 0.40rem 1rem;">
@@ -2888,9 +2900,10 @@
             }
         }
 
-        function abrirModalPassword(id, nombre) {
+        function abrirModalPassword(id) {
             usuarioAPasswordId = id;
-            document.getElementById('pwdUsuarioNombre').textContent = nombre;
+            const account = datasetUsuarios.find(user => user.id === id);
+            document.getElementById('pwdUsuarioNombre').textContent = account?.full_name || 'Funcionario';
             const passwordInput = document.getElementById('pwdNuevaClave');
             const passwordError = document.getElementById('pwdErrorClave');
             passwordInput.value = '';
@@ -3136,7 +3149,7 @@
             const editar = tipo === 'delegacion' ? `editarDelegacionCatalogo(${item.id})` : `editarCargoCatalogo(${item.id})`;
             const alternar = tipo === 'delegacion' ? `alternarDelegacionCatalogo(${item.id})` : `alternarCargoCatalogo(${item.id})`;
             return `<div class="col-md-6" style="min-width:0"><article class="bg-white border rounded-4 p-3 shadow-sm h-100 overflow-hidden" style="min-width:0">
-                <div class="d-flex justify-content-between gap-2" style="min-width:0"><div class="flex-grow-1" style="min-width:0"><div class="fw-bold text-dark text-truncate">${escaparHtmlCatalogo(item.name)}</div><div class="small text-muted text-truncate">${escaparHtmlCatalogo(detalle)}</div></div><span class="badge ${activo ? 'bg-success-subtle text-success' : 'bg-secondary-subtle text-secondary'} align-self-start flex-shrink-0">${item.status}</span></div>
+                <div class="d-flex justify-content-between gap-2" style="min-width:0"><div class="flex-grow-1" style="min-width:0"><div class="fw-bold text-dark text-truncate">${escaparHtmlCatalogo(item.name)}</div><div class="small text-muted text-truncate">${tipo === 'delegacion' ? escaparHtmlCatalogo(item.code || '') + ' · ' : ''}${escaparHtmlCatalogo(detalle)}</div></div><span class="badge ${activo ? 'bg-success-subtle text-success' : 'bg-secondary-subtle text-secondary'} align-self-start flex-shrink-0">${item.status}</span></div>
                 <div class="d-flex justify-content-between align-items-center mt-2"><small class="text-muted"><i class="bi bi-people me-1"></i>${item.users_count} usuario(s)</small><div class="btn-group btn-group-sm"><button class="btn btn-outline-primary" type="button" onclick="${editar}" title="Editar"><i class="bi bi-pencil"></i></button><button class="btn btn-outline-${activo ? 'danger' : 'success'}" type="button" onclick="${alternar}" title="${activo ? 'Desactivar' : 'Activar'}"><i class="bi bi-${activo ? 'pause-circle' : 'play-circle'}"></i></button></div></div>
             </article></div>`;
         }
@@ -3201,6 +3214,8 @@
                 if (subtitle) subtitle.textContent = esCargos
                     ? 'Cargos institucionales disponibles para la asignación de funcionarios.'
                     : 'Sedes, cobertura y datos de contacto guardados en la base de datos.';
+                const delegationList = document.getElementById('delegacionesListaDetalles');
+                if (delegationList) delegationList.open = window.innerWidth >= 992;
                 bootstrap.Modal.getOrCreateInstance(modalEl).show();
             } catch (error) {
                 Swal.fire('No fue posible abrir el catálogo', error.message, 'error');
@@ -3221,8 +3236,12 @@
 
         function editarDelegacionCatalogo(id) {
             const item = catalogoDelegacionesDB.find(i => i.id === id); if (!item) return;
+            const extras = document.getElementById('delegacionExtraFields');
+            if (extras) extras.open = true;
             document.getElementById('catalogoDelegacionId').value = item.id;
             document.getElementById('catalogoDelegacionNombre').value = item.name;
+            document.getElementById('catalogoDelegacionCodigo').value = item.code || '';
+            document.getElementById('catalogoDelegacionComuna').value = item.commune || 'La Serena';
             document.getElementById('catalogoDelegacionAmbito').value = item.scope;
             document.getElementById('catalogoDelegacionEstado').value = item.status;
             document.getElementById('catalogoDelegacionDireccion').value = item.address || '';
@@ -3259,6 +3278,8 @@
             try {
                 await enviarCatalogo(id ? `/organization/delegations/${id}/update/` : '/organization/delegations/', {
                     name: document.getElementById('catalogoDelegacionNombre').value.trim(),
+                    code: document.getElementById('catalogoDelegacionCodigo').value.trim(),
+                    commune: document.getElementById('catalogoDelegacionComuna').value.trim(),
                     scope: document.getElementById('catalogoDelegacionAmbito').value.trim(),
                     status: document.getElementById('catalogoDelegacionEstado').value,
                     address: document.getElementById('catalogoDelegacionDireccion').value.trim(),
@@ -3387,6 +3408,7 @@
                 };
                 Object.assign(base, {
                     dbId: item.id, dbStatus: item.status, nombre: item.name, sector: item.scope,
+                    codigo: item.code || '', comuna: item.commune || 'La Serena',
                     direccion: item.address || 'Dirección no registrada', telefono: item.phone || 'No registrado',
                     email: item.email || 'No registrado', horario: item.schedule || 'Horario no registrado',
                     delegado: item.manager_name || 'Encargado por asignar',
@@ -3444,7 +3466,7 @@
                 if (filtroEstadoDelegacion && item.dbStatus !== filtroEstadoDelegacion) return false;
                 if (!delegacionCoincideConSector({ name: item.nombre, scope: item.sector })) return false;
                 const searchable = normalizarBusquedaDelegacion([
-                    item.nombre, item.sector, item.direccion, item.email, item.telefono, item.delegado, item.dbStatus
+                    item.codigo, item.nombre, item.comuna, item.sector, item.direccion, item.email, item.telefono, item.delegado, item.dbStatus
                 ].join(' '));
                 return !query || searchable.includes(query);
             });
@@ -3491,11 +3513,13 @@
                 if (!delegacionCoincideConSector(item)) return false;
                 const query = normalizarBusquedaDelegacion(busquedaDelegacion);
                 const searchable = normalizarBusquedaDelegacion([
-                    item.name, item.scope, item.address, item.phone, item.email, item.manager_name, item.status
+                    item.code, item.name, item.commune, item.scope, item.address, item.phone, item.email, item.manager_name, item.status
                 ].join(' '));
                 return !query || searchable.includes(query);
             }).map(item => ({
+                'Código': item.code || '',
                 'Nombre': item.name,
+                'Comuna': item.commune || 'La Serena',
                 'Sector': item.scope,
                 'Dirección': item.address || '',
                 'Teléfono': item.phone || '',
@@ -3547,6 +3571,29 @@
             if (paginaActualDelegaciones > pages) paginaActualDelegaciones = pages;
             actualizarPaginacionDelegaciones(filtered.length, pages);
             const items = filtered.slice((paginaActualDelegaciones - 1) * filasPorPaginaDelegaciones, paginaActualDelegaciones * filasPorPaginaDelegaciones);
+            const tableBody = document.getElementById('tablaDelegacionesBody');
+            if (tableBody) {
+                tableBody.replaceChildren();
+                if (!items.length) {
+                    const row = tableBody.insertRow();
+                    const cell = row.insertCell();
+                    cell.colSpan = 6;
+                    cell.textContent = 'No hay delegaciones para los filtros actuales.';
+                }
+                items.forEach(item => {
+                    const row = tableBody.insertRow();
+                    [item.codigo, item.nombre, item.comuna, item.dbStatus, String(item.funcionariosDB ?? 0)].forEach(value => {
+                        row.insertCell().textContent = value || '—';
+                    });
+                    const actionCell = row.insertCell();
+                    const action = document.createElement('button');
+                    action.type = 'button';
+                    action.className = 'btn btn-sm btn-outline-danger rounded-pill';
+                    action.textContent = 'Ver ficha';
+                    action.addEventListener('click', () => seleccionarDelegacion(item.id));
+                    actionCell.append(action);
+                });
+            }
             if (!items.length) {
                 grid.innerHTML = '<div class="col-12 text-center text-muted py-4">No hay delegaciones que coincidan con estos filtros.</div>';
                 return;
@@ -4294,12 +4341,14 @@
                 const description = role.description && role.description !== 'Sin descripción'
                     ? role.description : 'Sin descripción registrada.';
                 const assigned = new Set((role.permissions || []).map(permission => String(permission).toLowerCase()));
+                const adminRole = role.is_admin_role === true || String(role.name).trim().toLocaleLowerCase() === 'administrador';
                 const controls = permisos.map(([code, label]) => `
                     <div class="role-perm-pill-toggle">
                         <span>${label}</span>
                         <label class="perm-mini-switch">
                             <input type="checkbox" data-role-name="${escapeHtml(role.name)}" data-permission="${code}"
-                                aria-label="${label} para ${escapeHtml(role.name)}" ${assigned.has(code) ? 'checked' : ''}>
+                                aria-label="${label} para ${escapeHtml(role.name)}" ${adminRole || assigned.has(code) ? 'checked' : ''}
+                                ${adminRole ? 'disabled title="El rol Administrador conserva acceso integral"' : ''}>
                             <span class="perm-mini-slider"></span>
                         </label>
                     </div>`).join('');
@@ -4374,6 +4423,9 @@
             const tbody = document.getElementById('tablaRolesBody');
             if (!tbody) return;
             tbody.innerHTML = '';
+
+            const totalLabel = document.getElementById('lblTotalRoles');
+            if (totalLabel) totalLabel.textContent = String(datasetRoles.length);
 
             const total = filasFiltradasRoles.length;
             const inicio = (paginaActualRoles - 1) * filasPorPaginaRoles;
@@ -4690,6 +4742,7 @@
                     datasetRoles.push(data.role);
                 }
 
+                renderTarjetasPermisosRoles(datasetRoles);
                 if (bsModalRol) bsModalRol.hide();
                 filtrarRoles();
                 mostrarToast(data.message || (id ? 'Rol actualizado exitosamente.' : 'Rol creado exitosamente.'));
@@ -4720,19 +4773,19 @@
 
             if (elNombre) elNombre.textContent = `¿Eliminar el rol "${rol.name}"?`;
 
-            const isCoreProtected = (rol.name === 'Administrador' || rol.name === 'Operador' || rol.name === 'Consultor');
+            const isCoreProtected = rol.is_system || rol.name === 'Administrador';
             const hasUsers = (rol.users_count > 0);
 
             if (isCoreProtected) {
-                if (elAviso) elAviso.innerHTML = `<span class="text-danger fw-bold"><i class="bi bi-shield-lock-fill"></i> ACCIÓN DENEGADA:</span> El rol <strong>"${rol.name}"</strong> es uno de los roles fundamentales del sistema y no puede eliminarse.`;
+                if (elAviso) elAviso.textContent = `El rol de sistema "${rol.name}" está protegido y no puede darse de baja.`;
                 if (elDetalle) elDetalle.className = 'alert alert-danger py-2 text-start small mb-0';
                 if (btnConfirm) btnConfirm.disabled = true;
             } else if (hasUsers) {
-                if (elAviso) elAviso.innerHTML = `<span class="text-warning fw-bold"><i class="bi bi-exclamation-circle-fill"></i> ADVERTENCIA:</span> Este rol tiene <strong>${rol.users_count} funcionario(s)</strong> asignado(s). Reasigne primero a estos usuarios para poder dar de baja el rol.`;
+                if (elAviso) elAviso.textContent = `Este rol tiene ${rol.users_count} funcionario(s) asignado(s). Reasigna primero a esas personas.`;
                 if (elDetalle) elDetalle.className = 'alert alert-warning py-2 text-start small mb-0';
                 if (btnConfirm) btnConfirm.disabled = true;
             } else {
-                if (elAviso) elAviso.textContent = `Esta acción dará de baja el rol "${rol.name}" de forma permanente en la base de datos municipal.`;
+                if (elAviso) elAviso.textContent = `El rol "${rol.name}" dejará de mostrarse y de otorgar permisos; se conservará su registro de auditoría.`;
                 if (elDetalle) elDetalle.className = 'alert alert-secondary py-2 text-start small mb-0';
                 if (btnConfirm) btnConfirm.disabled = false;
             }
@@ -4755,6 +4808,7 @@
                 if (!data.success) throw new Error(data.message || 'Error al eliminar el rol');
 
                 datasetRoles = datasetRoles.filter(r => r.id !== rolEliminarId);
+                renderTarjetasPermisosRoles(datasetRoles);
                 if (bsModalEliminarRol) bsModalEliminarRol.hide();
                 filtrarRoles();
                 mostrarToast(data.message || 'Rol eliminado exitosamente.');
@@ -4784,6 +4838,7 @@
                 const data = await res.json();
                 if (!data.success || !data.role) throw new Error(data.message || 'La base de datos no confirmó la duplicación.');
                 datasetRoles.push(data.role);
+                renderTarjetasPermisosRoles(datasetRoles);
                 filtrarRoles();
                 mostrarToast(`Rol duplicado como "${origen.name} (Copia)".`);
             } catch (err) {
@@ -5601,22 +5656,23 @@
                 });
 
                 const data = await resp.json();
-                if (data.success) {
-                    Swal.fire({
-                        toast: true,
-                        position: 'top-end',
-                        showConfirmButton: false,
-                        timer: 2500,
-                        icon: 'success',
-                        title: data.message || `Permiso de ${permiso.toUpperCase()} ${activo ? 'activado' : 'desactivado'}`
-                    });
+                if (!resp.ok || data.success !== true) {
+                    throw new Error(data.message || 'No se pudo guardar el permiso.');
                 }
+                Swal.fire({
+                    toast: true,
+                    position: 'top-end',
+                    showConfirmButton: false,
+                    timer: 2500,
+                    icon: 'success',
+                    title: data.message || `Permiso de ${permiso.toUpperCase()} ${activo ? 'activado' : 'desactivado'}`
+                });
             } catch (err) {
                 switchEl.checked = !activo;
                 Swal.fire({
                     icon: 'error',
-                    title: 'Error de conexión',
-                    text: err.message
+                    title: 'No se guardó el permiso',
+                    text: err.message || 'Revisa tu conexión e inténtalo nuevamente.'
                 });
             } finally {
                 switchEl.disabled = false;
@@ -5876,6 +5932,84 @@
         }
         window.ejecutarGuardadoDrawer = ejecutarGuardadoDrawer;
 
+        // Selección de usuarios: las acciones deben persistir en la API.
+        const selectedTableRows = new Set();
+        function actualizarBarraUsuariosLote() {
+            const bar = document.getElementById('adminFloatingActionBar');
+            const badge = document.getElementById('batchCountNumber');
+            if (!bar) return;
+            if (badge) badge.textContent = `${selectedTableRows.size} seleccionado${selectedTableRows.size === 1 ? '' : 's'}`;
+            bar.classList.toggle('active', selectedTableRows.size > 0 && !!document.querySelector('#view-usuarios.active'));
+        }
+        function toggleFilaSeleccionada(id, checkbox) {
+            if (checkbox.checked) selectedTableRows.add(Number(id));
+            else selectedTableRows.delete(Number(id));
+            checkbox.closest('tr')?.classList.toggle('row-selected', checkbox.checked);
+            const all = [...document.querySelectorAll('#view-usuarios .check-user-row')];
+            const head = document.getElementById('checkAllUsuarios');
+            if (head) head.checked = all.length > 0 && all.every(item => item.checked);
+            actualizarBarraUsuariosLote();
+        }
+        window.toggleFilaSeleccionada = toggleFilaSeleccionada;
+        function toggleSeleccionarTodosUsuarios(checked) {
+            document.querySelectorAll('#view-usuarios .check-user-row').forEach(box => {
+                box.checked = checked;
+                toggleFilaSeleccionada(Number(box.dataset.id), box);
+            });
+        }
+        window.toggleSeleccionarTodosUsuarios = toggleSeleccionarTodosUsuarios;
+
+        async function ejecutarLoteUsuarios(accion) {
+            const ids = [...selectedTableRows];
+            if (!ids.length) return;
+            if (accion === 'export-excel') {
+                if (typeof XLSX === 'undefined') {
+                    Swal.fire({icon: 'error', text: 'No está disponible la exportación Excel.'});
+                    return;
+                }
+                const rows = datasetUsuarios.filter(u => selectedTableRows.has(u.id)).map(u => ({
+                    'Nombre': u.full_name, 'RUT': u.rut, 'Correo': u.email,
+                    'Delegación': u.delegation_name || '', 'Cargo': u.position_name || '',
+                    'Rol': (u.roles || []).map(r => r.name).join(', '), 'Estado': u.status
+                }));
+                const workbook = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(workbook, XLSX.utils.json_to_sheet(rows), 'Usuarios');
+                XLSX.writeFile(workbook, 'Usuarios_seleccionados.xlsx');
+                return;
+            }
+            if (accion !== 'toggle-status' && accion !== 'delete') return;
+            const deleting = accion === 'delete';
+            const choice = await Swal.fire({
+                icon: 'warning', title: deleting ? 'Dar de baja usuarios' : 'Cambiar estado de usuarios',
+                text: `${ids.length} cuenta${ids.length === 1 ? '' : 's'} seleccionada${ids.length === 1 ? '' : 's'}. ${deleting ? 'La baja conserva la auditoría.' : 'El cambio se guardará de inmediato.'}`,
+                showCancelButton: true, confirmButtonText: deleting ? 'Dar de baja' : 'Cambiar estado', cancelButtonText: 'Cancelar',
+                confirmButtonColor: '#A30F32'
+            });
+            if (!choice.isConfirmed) return;
+            let updated = 0;
+            const errors = [];
+            for (const id of ids) {
+                try {
+                    const response = await fetch(`/api/users/${id}/${deleting ? 'delete' : 'toggle-status'}/`, {
+                        method: 'POST', headers: {'X-CSRFToken': getCookie('csrftoken') || ''}
+                    });
+                    const result = await response.json();
+                    if (!response.ok || !result.success) throw new Error(result.message || `No se pudo modificar la cuenta ${id}.`);
+                    updated++;
+                } catch (error) {
+                    errors.push(`${id}: ${error.message}`);
+                }
+            }
+            selectedTableRows.clear();
+            actualizarBarraUsuariosLote();
+            await cargarUsuariosDesdeDB(false);
+            if (errors.length) {
+                Swal.fire({icon: 'warning', title: `${updated} de ${ids.length} cuentas actualizadas`, text: errors.slice(0, 3).join(' · ')});
+            } else {
+                mostrarToast(`✓ ${updated} cuenta${updated === 1 ? '' : 's'} actualizada${updated === 1 ? '' : 's'} en la base de datos`);
+            }
+        }
+
         // 6. Barra Flotante de Acciones en Lote (floating_batch_bar.html)
         function actualizarBarraLoteUI() {
             const bar = document.getElementById('adminFloatingActionBar');
@@ -5892,6 +6026,17 @@
         window.actualizarBarraLoteUI = actualizarBarraLoteUI;
 
         function deseleccionarTodoFilas() {
+            if (document.querySelector('#view-usuarios.active')) {
+                selectedTableRows.clear();
+                document.querySelectorAll('#view-usuarios .check-user-row').forEach(box => {
+                    box.checked = false;
+                    box.closest('tr')?.classList.remove('row-selected');
+                });
+                const head = document.getElementById('checkAllUsuarios');
+                if (head) head.checked = false;
+                actualizarBarraUsuariosLote();
+                return;
+            }
             if (seleccionadosIds) seleccionadosIds.clear();
             const checkHeader = document.getElementById('checkAllVecinos');
             if (checkHeader) checkHeader.checked = false;
@@ -5902,6 +6047,10 @@
         window.deseleccionarTodoFilas = deseleccionarTodoFilas;
 
         function ejecutarAccionLote(accion) {
+            if (document.querySelector('#view-usuarios.active')) {
+                ejecutarLoteUsuarios(accion);
+                return;
+            }
             if (!seleccionadosIds || seleccionadosIds.size === 0) {
                 Swal.fire({ icon: 'info', title: 'Sin selección', text: 'No hay filas seleccionadas.' });
                 return;

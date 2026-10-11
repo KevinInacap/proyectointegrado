@@ -123,6 +123,15 @@
         <div class="delegacion-grid" id="delegacionesCardsGrid">
             <!-- Las fichas se renderizan con la identidad cromática territorial y métricas -->
         </div>
+        <details class="delegaciones-listado mb-3">
+            <summary>Ver listado tabular de delegaciones</summary>
+            <div class="delegaciones-table-wrap">
+                <table class="table table-hover align-middle mb-0" aria-label="Delegaciones municipales">
+                    <thead><tr><th>Código</th><th>Delegación</th><th>Comuna</th><th>Estado</th><th>Funcionarios</th><th>Acción</th></tr></thead>
+                    <tbody id="tablaDelegacionesBody"><tr><td colspan="6">Cargando delegaciones…</td></tr></tbody>
+                </table>
+            </div>
+        </details>
         <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mt-3">
             <span class="small text-muted" id="paginacionInfoDelegaciones">Cargando…</span>
             <div class="btn-group" aria-label="Páginas de delegaciones">

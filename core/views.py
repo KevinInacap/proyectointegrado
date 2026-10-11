@@ -8,10 +8,13 @@ from django.core.exceptions import ValidationError
 from django.core.mail import EmailMultiAlternatives
 from django.template.loader import render_to_string
 from django.db import transaction
+from django.db.models import F, Value
+from django.db.models.functions import Replace, Upper
 from django.utils import timezone
 from datetime import timedelta
 import secrets
 import re
+import unicodedata
 from .models import PasswordRecoveryCode
 from organization.models import UserProfile
 
@@ -49,40 +52,43 @@ def _find_profile_for_login(identifier):
 
     normalized_rut = _normalize_rut(identifier)
     if normalized_rut and normalized_rut[:-1].isdigit():
-        matches = [
-            profile for profile in UserProfile.objects.select_related('user').filter(deleted_at__isnull=True)
-            if _normalize_rut(profile.rut) == normalized_rut
-        ]
+        matches = list(UserProfile.objects.select_related('user')
+                       .filter(deleted_at__isnull=True)
+                       .annotate(normalized_rut=Upper(Replace(Replace(F('rut'), Value('.'), Value('')), Value('-'), Value(''))))
+                       .filter(normalized_rut=normalized_rut)[:2])
         if len(matches) == 1:
             return matches[0]
     return None
 
 
-def _role_redirect(role_name):
-    normalized = (role_name or '').strip().casefold()
-    if normalized in {'verificador', 'verificador técnico'}:
-        return 'activities:dashboard_verificador'
-    if normalized in {'gestor territorial', 'funcionario', 'funcionario / gestor territorial'}:
-        return 'activities:dashboard_gestor'
-    if normalized == 'administrador general':
-        return 'activities:dashboard_admin'
-    if normalized in {'coordinador del sistema', 'coordinador'}:
-        return 'activities:dashboard_coordinador'
-    if normalized in {'delegado municipal', 'delegado'}:
-        return 'activities:dashboard_delegado'
-    if normalized == 'usuario de consulta':
-        return 'activities:dashboard_consulta'
-    return 'core:login'
+def _normalized_label(value):
+    value = unicodedata.normalize('NFKD', value or '')
+    return ''.join(char for char in value if not unicodedata.combining(char)).strip().casefold()
+
+
+def dashboard_route_for_position(position_name):
+    """Cargo selecciona el panel; los permisos del rol se validan aparte."""
+    return {
+        'administrador general': 'activities:dashboard_admin',
+        'coordinador del sistema': 'activities:dashboard_coordinador',
+        'delegado municipal': 'activities:dashboard_delegado',
+        'gestor territorial': 'activities:dashboard_gestor',
+        'verificador tecnico': 'activities:dashboard_verificador',
+        'asistente social': 'activities:dashboard_asistente',
+        'auditor municipal': 'activities:dashboard_auditor',
+    }.get(_normalized_label(position_name), 'activities:dashboard_cargo' if _normalized_label(position_name) else 'core:login')
 
 
 def _start_session_for_user(request, user, profile):
     role_name = profile.roles.filter(deleted_at__isnull=True).values_list('name', flat=True).first()
-    destination = _role_redirect(role_name)
+    position_name = profile.position.name if profile.position and profile.position.status == 'Activo' and profile.position.deleted_at is None else None
+    destination = dashboard_route_for_position(position_name)
     if destination == 'core:login':
-        messages.error(request, 'No tienes un rol habilitado para acceder.')
+        messages.error(request, 'Tu cuenta todavía no tiene un cargo activo con panel asignado. Contacta a administración.')
         return redirect('core:login')
     login(request, user)
-    request.session['user_role'] = role_name
+    request.session['user_role'] = role_name or ''
+    request.session['user_position'] = position_name
     request.session['user_name'] = profile.full_name
     request.session['user_rut'] = profile.rut
     request.session['user_delegation'] = profile.delegation.name if profile.delegation else 'Sin delegación asignada'
@@ -90,7 +96,7 @@ def _start_session_for_user(request, user, profile):
 
 def login_view(request):
     if not getattr(getattr(request, 'user', None), 'is_authenticated', False):
-        for key in ('user_role', 'user_name', 'user_rut', 'user_delegation'):
+        for key in ('user_role', 'user_position', 'user_name', 'user_rut', 'user_delegation'):
             request.session.pop(key, None)
     if request.method == 'POST':
         identifier = request.POST.get('username', '').strip()
@@ -136,9 +142,9 @@ def password_recovery_view(request):
                 request.session.pop('recovery_user_id', None)
                 request.session.pop('recovery_verified_code_id', None)
                 identifier = request.POST.get('identifier', '').strip()
-                profile = UserProfile.objects.select_related('user').filter(rut__iexact=identifier, deleted_at__isnull=True).first()
-                if not profile:
-                    profile = UserProfile.objects.select_related('user').filter(email__iexact=identifier, deleted_at__isnull=True).first()
+                # Comparte la misma resolución normalizada del login: acepta el RUT
+                # con o sin puntos/guion y falla de forma cerrada si hay duplicados.
+                profile = _find_profile_for_login(identifier)
                 if profile and profile.status == 'Activo' and profile.user.is_active and profile.email:
                     try:
                         with transaction.atomic():

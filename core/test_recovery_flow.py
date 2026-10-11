@@ -52,3 +52,12 @@ class PasswordRecoveryFlowTests(TestCase):
 
         reused = self.client.post('/recuperar-clave/', {'action': 'verify_code', 'code': code})
         self.assertEqual(reused.status_code, 400)
+
+    def test_recovery_accepts_rut_without_formatting(self):
+        requested = self.client.post('/recuperar-clave/', {
+            'action': 'request_code', 'identifier': '123456785',
+        })
+
+        self.assertEqual(requested.status_code, 200)
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertIn('persona@example.com', mail.outbox[0].to)

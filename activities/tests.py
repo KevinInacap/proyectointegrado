@@ -4,7 +4,7 @@ from django.contrib.auth import get_user_model
 from django.test import TestCase
 from django.urls import reverse
 
-from organization.models import Delegation, Role, UserProfile
+from organization.models import Delegation, Position, Role, UserProfile
 from .models import Activity, ServiceCatalog, Vecino
 
 
@@ -20,6 +20,7 @@ class AttentionApiSecurityTests(TestCase):
         )
         self.profile.roles.add(self.role)
         self.client.force_login(self.user)
+
         self.url = reverse('activities:api_atenciones')
         self.catalog = ServiceCatalog.objects.create(
             area='Social', service='Orientación', attention_type='Social',
@@ -124,49 +125,63 @@ class DashboardAccessTests(TestCase):
         )
         self.client.force_login(self.user)
 
+    def set_position(self, name):
+        self.profile.position, _ = Position.objects.get_or_create(name=name)
+        self.profile.save(update_fields=['position', 'updated_at'])
+
     def test_session_role_does_not_grant_admin_dashboard(self):
         session = self.client.session
         session['user_role'] = 'Administrador General'
         session.save()
         self.assertNotEqual(self.client.get(reverse('activities:dashboard_admin')).status_code, 200)
 
-    def test_readonly_role_landing_is_distinct_and_restricted(self):
-        for role_name, route in (
-            ('Coordinador del Sistema', 'dashboard_coordinador'),
-            ('Delegado Municipal', 'dashboard_delegado'),
-            ('Usuario de Consulta', 'dashboard_consulta'),
+    def test_cargo_dashboard_is_simple_personalized_and_route_restricted(self):
+        for position_name, role_name, route in (
+            ('Coordinador del Sistema', 'Gestor de prueba', 'dashboard_coordinador'),
+            ('Delegado Municipal', 'Gestor de prueba', 'dashboard_delegado'),
+            ('Asistente Social', 'Gestor de prueba', 'dashboard_asistente'),
         ):
+            self.set_position(position_name)
             self.profile.roles.clear()
             role, _ = Role.objects.get_or_create(name=role_name)
+            if not role.permissions_data:
+                role.permissions_data = ['lectura', 'edicion']
+                role.save(update_fields=['permissions_data', 'updated_at'])
             self.profile.roles.add(role)
             response = self.client.get(reverse('activities:' + route))
             self.assertEqual(response.status_code, 200)
-            self.assertContains(response, 'Módulos habilitados para')
-            for other in {'dashboard_coordinador', 'dashboard_delegado', 'dashboard_consulta'} - {route}:
+            self.assertContains(response, 'Accesos de ' + position_name)
+            self.assertContains(response, 'Usuario Rol')
+            self.assertContains(response, 'Centro de prueba')
+            self.assertContains(response, 'Disponible más adelante')
+            self.assertNotContains(response, 'Registrar atención')
+            for other in {'dashboard_coordinador', 'dashboard_delegado', 'dashboard_asistente'} - {route}:
                 self.assertNotEqual(self.client.get(reverse('activities:' + other)).status_code, 200)
 
-    def test_role_modules_are_distinct_and_direct_urls_are_restricted(self):
-        cases = (
-            ('Coordinador del Sistema', 'dashboard_coordinador', 'metas', 'equipo'),
-            ('Delegado Municipal', 'dashboard_delegado', 'equipo', 'metas'),
-            ('Usuario de Consulta', 'dashboard_consulta', 'indicadores', 'equipo'),
-        )
-        for role_name, route, allowed_module, forbidden_module in cases:
+    def test_cargo_panels_are_presentational_not_operational(self):
+        for position_name, route in (
+            ('Coordinador del Sistema', 'dashboard_coordinador'),
+            ('Delegado Municipal', 'dashboard_delegado'),
+        ):
+            self.set_position(position_name)
             self.profile.roles.clear()
-            role, _ = Role.objects.get_or_create(name=role_name)
+            role, _ = Role.objects.get_or_create(name=position_name)
             if not role.permissions_data:
                 role.permissions_data = ['lectura']
                 role.save(update_fields=['permissions_data', 'updated_at'])
             self.profile.roles.add(role)
             url = reverse('activities:' + route)
-            self.assertEqual(self.client.get(f'{url}?module={allowed_module}').status_code, 200)
-            self.assertEqual(self.client.get(f'{url}?module={forbidden_module}').status_code, 404)
+            response = self.client.get(f'{url}?module=atenciones&q=prueba')
+            self.assertEqual(response.status_code, 200)
+            self.assertNotContains(response, 'name="q"')
+            self.assertNotContains(response, '?module=')
 
     def test_operational_dashboards_use_profile_identity_without_mock_records(self):
         for role_name, route in (
             ('Gestor Territorial', 'dashboard_gestor'),
             ('Verificador Técnico', 'dashboard_verificador'),
         ):
+            self.set_position(role_name)
             self.profile.roles.clear()
             role, _ = Role.objects.get_or_create(name=role_name)
             self.profile.roles.add(role)
@@ -174,12 +189,18 @@ class DashboardAccessTests(TestCase):
             self.assertEqual(response.status_code, 200)
             self.assertContains(response, 'Usuario Rol')
             self.assertContains(response, 'Centro de prueba')
+            self.assertContains(response, 'Faro Monumental de La Serena')
+            if any(code in role.permissions_data for code in ('lectura', 'edicion', 'derivacion', 'cierre')):
+                self.assertContains(response, 'Disponible más adelante')
+            else:
+                self.assertContains(response, 'Tu rol no tiene accesos habilitados')
             self.assertNotContains(response, 'Panel demostrativo')
             self.assertNotContains(response, 'Kevin Encina')
             self.assertNotContains(response, 'ACT-2026-0839')
 
     def test_admin_dashboard_get_does_not_seed_activities(self):
-        role, _ = Role.objects.get_or_create(name='Administrador General')
+        self.set_position('Administrador General')
+        role, _ = Role.objects.get_or_create(name='Administrador')
         self.profile.roles.add(role)
         before = Activity.objects.count()
         response = self.client.get(reverse('activities:dashboard_admin'))
@@ -189,13 +210,13 @@ class DashboardAccessTests(TestCase):
         self.assertContains(response, 'id="mapaDelegacionesReal"')
         self.assertEqual(Activity.objects.count(), before)
 
-    def test_coordinator_and_delegate_aliases_route_to_their_own_landing(self):
-        for role_name, route in (
-            ('Coordinador', 'dashboard_coordinador'),
-            ('Coordinador del Sistema', 'dashboard_coordinador'),
-            ('Delegado', 'dashboard_delegado'),
-            ('Delegado Municipal', 'dashboard_delegado'),
+    def test_position_selects_dashboard_independently_of_role(self):
+        for position_name, role_name, route in (
+            ('Coordinador del Sistema', 'Verificador Técnico', 'dashboard_coordinador'),
+            ('Delegado Municipal', 'Usuario de Consulta', 'dashboard_delegado'),
+            ('Auditor Municipal', 'Gestor Territorial', 'dashboard_auditor'),
         ):
+            self.set_position(position_name)
             self.profile.roles.clear()
             role, _ = Role.objects.get_or_create(name=role_name)
             self.profile.roles.add(role)
@@ -206,6 +227,76 @@ class DashboardAccessTests(TestCase):
             )
             self.assertEqual(self.client.get(reverse('activities:' + route)).status_code, 200)
 
+    def test_every_builtin_position_opens_its_assigned_dashboard(self):
+        routes = {
+            'Administrador General': 'dashboard_admin',
+            'Asistente Social': 'dashboard_asistente',
+            'Auditor Municipal': 'dashboard_auditor',
+            'Coordinador del Sistema': 'dashboard_coordinador',
+            'Delegado Municipal': 'dashboard_delegado',
+            'Gestor Territorial': 'dashboard_gestor',
+            'Verificador Técnico': 'dashboard_verificador',
+        }
+        for position_name, route in routes.items():
+            with self.subTest(position=position_name):
+                self.set_position(position_name)
+                self.profile.roles.clear()
+                role_name = 'Administrador' if position_name == 'Administrador General' else 'Perfil de prueba'
+                role, _ = Role.objects.get_or_create(name=role_name)
+                self.profile.roles.add(role)
+                response = self.client.get(reverse('activities:dashboard'), follow=True)
+                self.assertEqual(response.status_code, 200)
+                self.assertEqual(response.redirect_chain[-1][0], reverse('activities:' + route))
+                if position_name != 'Administrador General':
+                    self.assertContains(response, position_name)
+                    self.assertContains(response, 'Tu rol no tiene accesos habilitados')
+
+    def test_admin_cargo_selects_panel_without_granting_admin_apis(self):
+        self.set_position('Administrador General')
+        role, _ = Role.objects.get_or_create(name='Verificador Técnico', defaults={'permissions_data': ['lectura']})
+        role.permissions_data = ['lectura']
+        role.save(update_fields=['permissions_data', 'updated_at'])
+        self.profile.roles.add(role)
+        self.assertEqual(self.client.get(reverse('activities:dashboard')).url, reverse('activities:dashboard_admin'))
+        self.assertEqual(self.client.get('/organization/users/').status_code, 403)
+
+    def test_administrator_role_grants_management_without_changing_cargo_panel(self):
+        from django.urls import reverse
+
+        other = Activity.objects.create(
+            activity_code='GLOBAL-ADMIN-1', activity_date='2026-01-02',
+            problem_description='Registro de otra delegación', executed_action='Prueba',
+            delegation=Delegation.objects.create(name='Compañías de prueba', scope='Norte'),
+        )
+        self.set_position('Delegado Municipal')
+        self.profile.roles.clear()
+        self.profile.roles.add(Role.objects.get(name='Administrador'))
+
+        self.assertRedirects(
+            self.client.get(reverse('activities:dashboard')),
+            reverse('activities:dashboard_delegado'),
+            fetch_redirect_response=False,
+        )
+        self.assertNotEqual(self.client.get(reverse('activities:dashboard_admin')).status_code, 200)
+        self.assertEqual(self.client.get('/organization/users/').status_code, 200)
+        self.assertIn(
+            other.activity_code,
+            [item['activity_code'] for item in self.client.get(reverse('activities:api_atenciones')).json()['atenciones']],
+        )
+
+    def test_new_custom_cargo_gets_a_role_limited_dashboard(self):
+        self.set_position('Cargo Especializado')
+        role = Role.objects.create(name='Consulta de usuarios', permissions_data=['usuarios.view'])
+        self.profile.roles.add(role)
+        self.assertEqual(self.client.get(reverse('activities:dashboard')).url, reverse('activities:dashboard_cargo'))
+        response = self.client.get(reverse('activities:dashboard_cargo'))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Cargo Especializado')
+        self.assertContains(response, 'Panel de trabajo')
+        self.assertContains(response, 'Tu rol no tiene accesos habilitados')
+        self.assertNotContains(response, 'Gestión de Usuarios y Personal')
+        self.assertNotContains(response, 'Registrar atención')
+
 
 class RolePermissionToggleApiTests(TestCase):
     def setUp(self):
@@ -215,22 +306,22 @@ class RolePermissionToggleApiTests(TestCase):
             email='admin-role-toggle@example.test',
         )
         self.admin_role, _ = Role.objects.get_or_create(
-            name='Administrador General', defaults={'is_system': True}
+            name='Administrador', defaults={'is_system': True}
         )
         self.admin_profile.roles.add(self.admin_role)
         self.target_role, _ = Role.objects.get_or_create(
             name='Coordinador', defaults={'permissions_data': ['lectura', 'atenciones.view']}
         )
-        self.target_role.permissions_data = ['lectura', 'atenciones.view']
-        self.target_role.save(update_fields=['permissions_data', 'updated_at'])
+        from organization.access import set_role_permission_codes
+        set_role_permission_codes(self.target_role, ['lectura', 'atenciones.view'])
         self.client.force_login(self.admin)
         self.url = '/api/roles/toggle-permiso/'
 
-    def toggle(self, permission, enabled):
+    def toggle(self, permission, enabled, role_name=None):
         import json
         return self.client.post(
             self.url,
-            data=json.dumps({'rol_name': self.target_role.name, 'permiso': permission, 'enabled': enabled}),
+            data=json.dumps({'rol_name': role_name or self.target_role.name, 'permiso': permission, 'enabled': enabled}),
             content_type='application/json',
         )
 
@@ -257,7 +348,30 @@ class RolePermissionToggleApiTests(TestCase):
             content_type='application/json',
         )
         self.assertEqual(response.status_code, 400)
-        self.assertEqual(self.target_role.permissions_data, ['lectura', 'atenciones.view'])
+        self.assertEqual(self.target_role.permissions_data, ['atenciones.view', 'lectura'])
+
+    def test_administrator_role_is_full_and_its_switches_cannot_claim_to_revoke_access(self):
+        from organization.access import role_permission_codes
+        from organization.views import _all_system_perm_codes
+
+        expected = set(_all_system_perm_codes())
+        self.assertTrue(expected.issubset(role_permission_codes(self.admin_role)))
+        self.assertEqual(self.toggle('lectura', False, role_name=self.admin_role.name).status_code, 403)
+        self.admin_role.refresh_from_db()
+        self.assertTrue(expected.issubset(role_permission_codes(self.admin_role)))
+
+    def test_role_grants_are_stored_in_both_the_json_compatibility_field_and_relation(self):
+        from organization.models import PermissionDefinition
+        from organization.access import set_role_permission_codes
+
+        permission = PermissionDefinition.objects.get(code='atenciones.view')
+        set_role_permission_codes(self.target_role, ['atenciones.view', 'cargos.view'])
+        self.assertEqual(set(self.target_role.permissions_data), {'atenciones.view', 'cargos.view'})
+        self.assertEqual(
+            set(self.target_role.permission_definitions.values_list('code', flat=True)),
+            {'atenciones.view', 'cargos.view'},
+        )
+        self.assertTrue(permission.is_system)
 
         regular = get_user_model().objects.create_user(username='regular-role-toggle', password='test-pass')
         UserProfile.objects.create(
@@ -267,7 +381,7 @@ class RolePermissionToggleApiTests(TestCase):
         self.client.force_login(regular)
         denied = self.toggle('lectura', False)
         self.assertEqual(denied.status_code, 403)
-        self.assertEqual(self.target_role.permissions_data, ['lectura', 'atenciones.view'])
+        self.assertEqual(self.target_role.permissions_data, ['atenciones.view', 'cargos.view'])
 
 
 class ActivityCreatePageTests(TestCase):
@@ -280,6 +394,7 @@ class ActivityCreatePageTests(TestCase):
         self.profile = UserProfile.objects.create(
             user=self.user, rut='13579246-0', full_name='Gestor de Formulario',
             email='gestor-form@example.test', delegation=self.delegation,
+            position=Position.objects.get_or_create(name='Gestor Territorial')[0],
         )
         role, _ = Role.objects.get_or_create(
             name='Gestor Territorial', defaults={'permissions_data': ['lectura', 'edicion']},
@@ -310,20 +425,18 @@ class ActivityCreatePageTests(TestCase):
         data.update(changes)
         return data
 
-    def test_form_shows_active_catalogs_and_only_assigned_delegation(self):
+    def test_create_form_keeps_catalogs_and_dashboard_stays_presentational(self):
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'Registrar una atención')
         self.assertContains(response, 'Registro Social de Hogares')
-        self.assertContains(response, 'value="{}"'.format(self.delegation.pk))
-        self.assertNotContains(response, 'value="{}"'.format(self.other_delegation.pk))
+        self.assertContains(response, 'name="delegation" value="{}"'.format(self.delegation.pk))
+        self.assertNotContains(response, 'name="delegation" value="{}"'.format(self.other_delegation.pk))
         dashboard = self.client.get(reverse('activities:dashboard_gestor'))
         self.assertEqual(dashboard.status_code, 200)
-        self.assertContains(dashboard, 'id="caseAttentionType"')
-        self.assertContains(dashboard, 'Registro Social de Hogares')
-        from django.utils import timezone
-        expected_date = timezone.localdate().isoformat()
-        self.assertContains(dashboard, f'value="{expected_date}" max="{expected_date}"')
+        self.assertContains(dashboard, 'Trabajo territorial')
+        self.assertContains(dashboard, 'Disponible más adelante')
+        self.assertNotContains(dashboard, 'id="caseAttentionType"')
 
     def test_valid_form_persists_type_subtype_responsible_and_delegation(self):
         response = self.client.post(self.url, self.payload())

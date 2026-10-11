@@ -1,0 +1,87 @@
+{% load static %}
+<!doctype html>
+<html lang="es">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#68121e">
+    <title>{{ position_name }} | SGR La Serena</title>
+    <link rel="stylesheet" href="{% static 'css/dashboard_position.css' %}">
+</head>
+<body>
+    <div class="dashboard-shell">
+        <aside class="side-panel" aria-label="Navegación y perfil">
+            <a class="brand" href="{% url 'activities:dashboard' %}" aria-label="Inicio del Sistema de Gestión de Resultados">
+                <img src="{% static 'images/laserena_horizontal_blanco.svg' %}" alt="Ilustre Municipalidad de La Serena">
+            </a>
+
+            <div class="profile-card">
+                <span class="avatar" aria-hidden="true">{{ first_name|first|upper }}</span>
+                <div class="profile-copy">
+                    <strong>{{ full_name }}</strong>
+                    <span>{{ position_name }}</span>
+                    <small>{% if delegation_code %}{{ delegation_code }} · {% endif %}{{ delegation_name }}</small>
+                </div>
+            </div>
+
+            <nav class="primary-nav" aria-label="Menú principal">
+                <a class="nav-link is-current" href="{% url 'activities:dashboard' %}" aria-current="page">
+                    <span class="nav-mark" aria-hidden="true">⌂</span>
+                    <span>Inicio</span>
+                </a>
+            </nav>
+
+            <div class="sidebar-photo" role="img" aria-label="Faro Monumental de La Serena">
+                <div class="photo-caption"><span>La Serena</span><small>Siempre cerca de ti</small></div>
+            </div>
+        </aside>
+
+        <main class="main-content">
+            <header class="page-heading">
+                <div>
+                    <p class="eyebrow">Sistema de Gestión de Resultados</p>
+                    <h1>Hola, {{ first_name }}</h1>
+                    <p class="lead">{{ dashboard_description }}</p>
+                </div>
+                <a class="logout-link" href="{% url 'core:logout' %}">Cerrar sesión</a>
+            </header>
+
+            <section class="welcome-panel" aria-labelledby="panel-title">
+                <div class="welcome-copy">
+                    <span class="status-label"><span aria-hidden="true"></span> Panel disponible</span>
+                    <h2 id="panel-title">{{ dashboard_subtitle }}</h2>
+                    <p>Tu cargo define este panel. Los accesos visibles responden a los permisos vigentes de tu rol.</p>
+                </div>
+                <div class="assignment" aria-label="Datos de tu asignación">
+                    <div><span>Cargo</span><strong>{{ position_name }}</strong></div>
+                    <div><span>Rol</span><strong>{{ role_name }}</strong></div>
+                    <div><span>Delegación</span><strong>{% if delegation_code %}{{ delegation_code }} · {% endif %}{{ delegation_name }}</strong></div>
+                </div>
+            </section>
+
+            <section class="work-section" aria-labelledby="work-title">
+                <div class="section-heading">
+                    <div>
+                        <p class="eyebrow">Tu espacio de trabajo</p>
+                        <h2 id="work-title">Accesos de {{ position_name }}</h2>
+                    </div>
+                    <p class="section-note">Los módulos se habilitarán por etapas.</p>
+                </div>
+                <div class="work-grid">
+                    {% for card in dashboard_cards %}
+                    <article class="work-card" style="--card-order: {{ forloop.counter0 }}">
+                        <span class="card-number" aria-hidden="true">0{{ forloop.counter }}</span>
+                        <h3>{{ card.title }}</h3>
+                        <p>{{ card.description }}</p>
+                        <span class="coming-soon">Disponible más adelante</span>
+                    </article>
+                    {% endfor %}
+                    {% if not dashboard_cards %}<p class="empty-access">Tu rol no tiene accesos habilitados por ahora. Consulta con la administración si necesitas un permiso.</p>{% endif %}
+                </div>
+            </section>
+
+            <footer class="page-footer">Ilustre Municipalidad de La Serena <span aria-hidden="true">·</span> Gestión social y atención ciudadana</footer>
+        </main>
+    </div>
+</body>
+</html>

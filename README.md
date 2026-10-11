@@ -35,8 +35,7 @@ flowchart LR
 
 - **Servidor:** Python y Django.
 - **Interfaz:** plantillas HTML, CSS y JavaScript, con componentes de Bootstrap.
-- **Persistencia local:** SQLite para desarrollo y pruebas.
-- **Base prevista para despliegue:** MySQL, configurada por variables de entorno.
+- **Persistencia:** SQLite para un inicio rápido o MySQL mediante variables de entorno. Las pruebas locales de esta entrega se ejecutaron con MySQL.
 - **Control de versiones:** Git.
 
 ## Ejecutar en local
@@ -74,6 +73,8 @@ El esquema SQL de `database/` es material de referencia académica, no una herra
 
 Para una presentación local con datos ficticios, ejecuta `python manage.py seed_presentation` después de las migraciones. Agrega tres ejemplos por catálogo y puede repetirse sin duplicarlos. Los perfiles de ejemplo están inactivos y no tienen contraseña de acceso; no reemplaza usuarios, cargos ni permisos existentes. Solo está habilitado en desarrollo (`DEBUG`).
 
+Si necesitas una dotación de ensayo, `python manage.py seed_academic_users` agrega cinco cuentas ficticias por cada una de las seis delegaciones, con correos `@pnk.cl`. Es idempotente y solo funciona en desarrollo. Las cuentas no tienen contraseña utilizable hasta que un administrador se la asigne; no son identidades reales ni deben enviarse correos a ellas.
+
 ```bash
 python manage.py check
 python manage.py makemigrations --check --dry-run
@@ -81,6 +82,8 @@ python manage.py test
 ```
 
 La configuración local no certifica un despliegue en AWS. Antes de alojar el sistema se deben definir y comprobar la instancia, MySQL, correo, dominio, seguridad de producción y respaldos.
+
+El registro de pruebas y los pendientes exactos de la segunda evaluación están en [Verificación de la segunda evaluación](docs/VERIFICACION_SEGUNDA_EVALUACION.md).
 
 ---
 

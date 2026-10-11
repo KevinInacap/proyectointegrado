@@ -19,6 +19,14 @@ class AuthenticationTests(SimpleTestCase):
     def setUp(self):
         self.factory = RequestFactory()
 
+    def test_dashboard_destination_is_selected_by_cargo(self):
+        from .views import dashboard_route_for_position
+        self.assertEqual(dashboard_route_for_position('Administrador General'), 'activities:dashboard_admin')
+        self.assertEqual(dashboard_route_for_position('Verificador Técnico'), 'activities:dashboard_verificador')
+        self.assertEqual(dashboard_route_for_position('Auditor Municipal'), 'activities:dashboard_auditor')
+        self.assertEqual(dashboard_route_for_position('Cargo Especializado'), 'activities:dashboard_cargo')
+        self.assertEqual(dashboard_route_for_position(None), 'core:login')
+
     def request(self, path='/', data=None, session=None):
         request = self.factory.post(path, data) if data is not None else self.factory.get(path)
         request.session = session if session is not None else {}
@@ -50,11 +58,11 @@ class AuthenticationTests(SimpleTestCase):
         self.assertEqual(response.status_code, 401)
 
     @patch.object(views, 'render', side_effect=fake_render)
-    @patch.object(views.UserProfile.objects, 'select_related')
+    @patch.object(views, '_find_profile_for_login')
     @patch.object(views.PasswordRecoveryCode.objects, 'filter')
     @patch.object(views, '_send_password_recovery_email')
     def test_unknown_recovery_is_generic(self, send, codes, profiles, _render):
-        profiles.return_value.filter.return_value.first.return_value = None
+        profiles.return_value = None
         response = views.password_recovery_view(self.request(data={'action': 'request_code', 'identifier': 'nadie@example.com'}))
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.context_data['step'], 'verify')
@@ -63,7 +71,7 @@ class AuthenticationTests(SimpleTestCase):
         codes.assert_not_called()
 
     @patch.object(views, 'render', side_effect=fake_render)
-    @patch.object(views.UserProfile.objects, 'select_related')
+    @patch.object(views, '_find_profile_for_login')
     @patch.object(views, '_send_password_recovery_email')
     def test_session_limit_skips_lookup_and_preserves_current_code(self, send, profiles, _render):
         session = {'recovery_last_request_at': timezone.now().timestamp(), 'recovery_user_id': 3,
@@ -77,13 +85,13 @@ class AuthenticationTests(SimpleTestCase):
 
     @patch.object(views, 'render', side_effect=fake_render)
     @patch.object(views.transaction, 'atomic', return_value=nullcontext())
-    @patch.object(views.UserProfile.objects, 'select_related')
+    @patch.object(views, '_find_profile_for_login')
     @patch.object(views.PasswordRecoveryCode.objects, 'filter')
     @patch.object(views, '_send_password_recovery_email')
     def test_account_limit_blocks_new_session_resend(self, send, codes, profiles, _atomic, _render):
         profile = SimpleNamespace(user=get_user_model()(pk=3, is_active=True), user_id=3,
                                   email='a@example.com', full_name='Ana', status='Activo')
-        profiles.return_value.filter.return_value.first.return_value = profile
+        profiles.return_value = profile
         codes.return_value.order_by.return_value.first.return_value = SimpleNamespace(created_at=timezone.now())
         with patch.object(get_user_model().objects, 'select_for_update'):
             response = views.password_recovery_view(self.request(data={'action': 'request_code', 'identifier': 'a@example.com'}))
@@ -93,14 +101,14 @@ class AuthenticationTests(SimpleTestCase):
 
     @patch.object(views, 'render', side_effect=fake_render)
     @patch.object(views.transaction, 'atomic', return_value=nullcontext())
-    @patch.object(views.UserProfile.objects, 'select_related')
+    @patch.object(views, '_find_profile_for_login')
     @patch.object(views.PasswordRecoveryCode.objects, 'filter')
     @patch.object(views.PasswordRecoveryCode.objects, 'create')
     @patch.object(views, '_send_password_recovery_email', side_effect=RuntimeError('offline'))
     def test_smtp_failure_keeps_uniform_response_and_old_code(self, send, create, codes, profiles, _atomic, _render):
         profile = SimpleNamespace(user=get_user_model()(pk=3, is_active=True), user_id=3,
                                   email='a@example.com', full_name='Ana', status='Activo')
-        profiles.return_value.filter.return_value.first.return_value = profile
+        profiles.return_value = profile
         codes.return_value.order_by.return_value.first.return_value = None
         with patch.object(get_user_model().objects, 'select_for_update'):
             response = views.password_recovery_view(self.request(data={'action': 'request_code', 'identifier': 'a@example.com'}))
@@ -112,13 +120,13 @@ class AuthenticationTests(SimpleTestCase):
 
     @patch.object(views, 'render', side_effect=fake_render)
     @patch.object(views.transaction, 'atomic', return_value=nullcontext())
-    @patch.object(views.UserProfile.objects, 'select_related')
+    @patch.object(views, '_find_profile_for_login')
     @patch.object(views.PasswordRecoveryCode.objects, 'filter')
     @patch.object(views.PasswordRecoveryCode.objects, 'create')
     @patch.object(views, '_send_password_recovery_email')
     def test_resend_invalidates_old_code_and_verification(self, send, create, codes, profiles, _atomic, _render):
         profile = SimpleNamespace(user=get_user_model()(pk=3, is_active=True), user_id=3, email='a@example.com', full_name='Ana', status='Activo')
-        profiles.return_value.filter.return_value.first.return_value = profile
+        profiles.return_value = profile
         codes.return_value.order_by.return_value.first.return_value = None
         send.return_value = 1
         session = {'recovery_verified_code_id': 7, 'recovery_user_id': 3}

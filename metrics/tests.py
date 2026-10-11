@@ -1,7 +1,7 @@
 import json
 from django.contrib.auth import get_user_model
 from django.test import TestCase, override_settings
-from organization.models import Position
+from organization.models import Position, Role, UserProfile
 from .models import AttentionType, MeasurementItem, MeasurementPeriod, SubAttention
 
 
@@ -23,6 +23,29 @@ class CatalogAPITests(TestCase):
         self.assertEqual(self.send('post', '/items/', {'code': 'X', 'name': 'X'}).status_code, 403)
         self.client.force_login(self.staff)
         self.assertEqual(self.client.get('/items/').status_code, 403)
+
+    def test_application_administrator_can_use_all_catalogs_without_django_staff(self):
+        account = get_user_model().objects.create_user('app_catalog_admin', password='ClaveSegura92!')
+        profile = UserProfile.objects.create(
+            user=account, rut='13.714.021-0', full_name='Admin Catálogos', email='catalogos@example.test',
+        )
+        profile.roles.add(Role.objects.get(name='Administrador'))
+        self.client.force_login(account)
+        for path in ('/items/', '/goals/', '/attention-types/', '/subattentions/', '/management-types/'):
+            with self.subTest(path=path):
+                self.assertEqual(self.client.get(path).status_code, 200)
+        self.assertEqual(self.send('post', '/attention-types/', {'code': 'PR-1', 'name': 'Prueba de catálogo'}).status_code, 201)
+
+    def test_period_reference_is_authorized_and_read_only(self):
+        period = MeasurementPeriod.objects.create(
+            name='Semestre 2026', start_date='2026-01-01', end_date='2026-06-30',
+        )
+        self.assertEqual(self.client.get('/periods/').status_code, 403)
+        self.client.force_login(self.admin)
+        response = self.client.get('/periods/')
+        self.assertEqual(response.status_code, 200)
+        self.assertIn({'id': period.pk, 'name': 'Semestre 2026', 'status': 'Abierto'}, response.json()['results'])
+        self.assertEqual(self.client.post('/periods/').status_code, 405)
 
     def test_management_types_persist_and_require_admin(self):
         self.assertEqual(self.client.get('/management-types/').status_code, 403)

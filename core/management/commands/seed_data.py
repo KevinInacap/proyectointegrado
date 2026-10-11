@@ -7,7 +7,8 @@ from django.contrib.contenttypes.models import ContentType
 from django.utils import timezone
 
 from core.models import AuditLog
-from organization.models import Delegation, Position, Role, UserProfile
+from organization.models import Delegation, Position, Role, UserProfile, PermissionDefinition
+from organization.access import ADMINISTRATOR_ROLE_NAME, set_role_permission_codes
 from organization.views import SYSTEM_PERMISSIONS_CATALOG
 from activities.models import ServiceCatalog, Activity, Evidence, Validation
 from metrics.models import MeasurementPeriod, MeasurementItem, Goal, DailyIndicator, PerformanceAdjustment
@@ -65,88 +66,79 @@ class Command(BaseCommand):
         self.stdout.write(self.style.SUCCESS("[OK] Delegaciones maestras cargadas."))
 
         # -------------------------------------------------------------
-        # 2. TABLAS MAESTRAS: CARGOS Y ROLES
-        # -------------------------------------------------------------
-        pos_gestor, _ = Position.objects.get_or_create(
-            name="Gestor Territorial",
-            defaults={"description": "Atención ciudadana y levantamiento de requerimientos en terreno.", "status": "Activo"}
-        )
-        pos_verificador, _ = Position.objects.get_or_create(
-            name="Verificador de Evidencias",
-            defaults={"description": "Revisión y validación formal de evidencias y respaldos fotográficos.", "status": "Activo"}
-        )
-        pos_director, _ = Position.objects.get_or_create(
-            name="Director de Delegación",
-            defaults={"description": "Supervisión global de operaciones y cumplimiento de metas.", "status": "Activo"}
-        )
-
-        role_admin, _ = Role.objects.get_or_create(
-            name="Administrador General",
-            defaults={"description": "Control de usuarios, configuración y auditoría transversal."}
-        )
-        role_gestor, _ = Role.objects.get_or_create(
-            name="Gestor Territorial",
-            defaults={"description": "Registro operativo de actividades y agenda colectiva."}
-        )
-        role_verificador, _ = Role.objects.get_or_create(
-            name="Verificador",
-            defaults={"description": "Aprobación y rechazo formal de actividades."}
-        )
-        self.stdout.write(self.style.SUCCESS("[OK] Cargos y Roles maestros creados."))
-
-        # -------------------------------------------------------------
         # 2. TABLAS MAESTRAS: CARGOS Y ROLES INSTITUCIONALES
         # -------------------------------------------------------------
+        pos_admin, _ = Position.objects.get_or_create(
+            name="Administrador General",
+            defaults={"description": "Administración y seguridad integral del SGR", "status": "Activo"}
+        )
         pos_coordinador, _ = Position.objects.get_or_create(
-            name="Coordinador General SGR",
-            defaults={"description": "Supervisión transversal de indicadores, metas comunales y auditoría.", "status": "Activo"}
+            name="Coordinador del Sistema",
+            defaults={"description": "Coordinación operativa y seguimiento comunal.", "status": "Activo"}
         )
         pos_delegado, _ = Position.objects.get_or_create(
             name="Delegado Municipal",
-            defaults={"description": "Jefatura territorial a cargo de la gestión y tubo de trabajo de la delegación.", "status": "Activo"}
+            defaults={"description": "Dirección territorial de una delegación municipal.", "status": "Activo"}
         )
         pos_gestor, _ = Position.objects.get_or_create(
             name="Gestor Territorial",
-            defaults={"description": "Atención ciudadana en terreno, registro de actividades y requerimientos.", "status": "Activo"}
+            defaults={"description": "Gestión de actividades y atención en terreno.", "status": "Activo"}
         )
         pos_asistente_social, _ = Position.objects.get_or_create(
-            name="Asistente Social Territorial",
-            defaults={"description": "Atención de casos sociales, subsidios, RSH y derivaciones.", "status": "Activo"}
+            name="Asistente Social",
+            defaults={"description": "Atención social y acompañamiento de casos.", "status": "Activo"}
         )
         pos_verificador, _ = Position.objects.get_or_create(
             name="Verificador Técnico",
-            defaults={"description": "Revisión técnica, auditoría y validación documental de evidencias.", "status": "Activo"}
+            defaults={"description": "Revisión y validación de evidencias.", "status": "Activo"}
         )
-        pos_director, _ = Position.objects.get_or_create(
-            name="Director de Delegación",
-            defaults={"description": "Supervisión global de operaciones y cumplimiento de metas.", "status": "Activo"}
+        pos_auditor, _ = Position.objects.get_or_create(
+            name="Auditor Municipal",
+            defaults={"description": "Fiscalización, calidad y auditoría.", "status": "Activo"}
         )
 
         role_admin, _ = Role.objects.get_or_create(
-            name="Administrador General",
+            name=ADMINISTRATOR_ROLE_NAME,
             defaults={"description": "Configuración integral, parámetros, usuarios y auditoría transversal.", "is_system": True}
         )
         role_admin.is_system = True
-        role_admin.permissions_data = [
+        admin_permissions = [
             permission['code']
             for module in SYSTEM_PERMISSIONS_CATALOG
             for permission in module['permissions']
         ]
-        role_admin.save(update_fields=['is_system', 'permissions_data', 'updated_at'])
+        for module in SYSTEM_PERMISSIONS_CATALOG:
+            for permission in module['permissions']:
+                PermissionDefinition.objects.update_or_create(
+                    code=permission['code'],
+                    defaults={
+                        'module_id': module['module_id'],
+                        'name': permission['name'],
+                        'description': permission['desc'],
+                        'is_system': True,
+                        'deleted_at': None,
+                    },
+                )
+        set_role_permission_codes(
+            role_admin,
+            [*admin_permissions, 'lectura', 'edicion', 'derivacion', 'cierre'],
+        )
+        role_admin.is_system = True
+        role_admin.save(update_fields=['is_system', 'updated_at'])
         role_coordinador, _ = Role.objects.get_or_create(
-            name="Coordinador",
+            name="Coordinador del Sistema",
             defaults={"description": "Supervisión institucional, metas y reportes consolidados comunales."}
         )
         role_delegado, _ = Role.objects.get_or_create(
-            name="Delegado",
+            name="Delegado Municipal",
             defaults={"description": "Jefatura de delegación y gestión del tubo de trabajo colectivo."}
         )
         role_funcionario, _ = Role.objects.get_or_create(
-            name="Funcionario",
+            name="Gestor Territorial",
             defaults={"description": "Registro operativo de actividades, atenciones, compromisos y evidencias."}
         )
         role_verificador, _ = Role.objects.get_or_create(
-            name="Verificador",
+            name="Verificador Técnico",
             defaults={"description": "Revisión técnica, aprobación o rechazo de evidencias registradas."}
         )
         role_consulta, _ = Role.objects.get_or_create(
@@ -169,7 +161,8 @@ class Command(BaseCommand):
         for role, permissions in role_permission_defaults:
             if not role.permissions_data:
                 role.permissions_data = permissions
-                role.save(update_fields=['permissions_data', 'updated_at'])
+            role.is_system = True
+            role.save(update_fields=['permissions_data', 'is_system', 'updated_at'])
         self.stdout.write(self.style.SUCCESS("[OK] Cargos y 6 Roles maestros institucionales creados."))
 
         # -------------------------------------------------------------
@@ -251,8 +244,8 @@ class Command(BaseCommand):
                 "email": "admin@example.invalid",
                 "first_name": "Demo",
                 "last_name": "Administrador",
-                "is_staff": True,
-                "is_superuser": True,
+                "is_staff": False,
+                "is_superuser": False,
             }
         )
         if created:
@@ -266,7 +259,7 @@ class Command(BaseCommand):
                 "full_name": "Usuario Demo Administrador",
                 "email": "admin@example.invalid",
                 "delegation": del_centro,
-                "position": pos_director,
+                "position": pos_admin,
                 "status": "Activo"
             }
         )
@@ -434,7 +427,7 @@ class Command(BaseCommand):
                 "full_name": "Usuario Demo Consulta",
                 "email": "consulta@example.invalid",
                 "delegation": del_centro,
-                "position": pos_director,
+                "position": pos_auditor,
                 "status": "Activo"
             }
         )

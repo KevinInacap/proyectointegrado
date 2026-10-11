@@ -5,8 +5,10 @@ from core.models import BaseModel
 
 class Delegation(BaseModel):
     STATUS_CHOICES = [('Activo', 'Activo'), ('Inactivo', 'Inactivo')]
+    code = models.CharField(max_length=20, unique=True, null=True, blank=True, verbose_name="Código de delegación")
     name = models.CharField(max_length=100, unique=True, verbose_name="Nombre de la delegación")
     scope = models.CharField(max_length=100, verbose_name="Ámbito territorial")
+    commune = models.CharField(max_length=100, default='La Serena', verbose_name='Comuna')
     address = models.CharField(max_length=200, blank=True, default='', verbose_name="Dirección")
     phone = models.CharField(max_length=30, blank=True, default='', verbose_name="Teléfono")
     email = models.EmailField(max_length=120, blank=True, default='', verbose_name="Correo de contacto")
@@ -23,6 +25,14 @@ class Delegation(BaseModel):
 
     def __str__(self):
         return self.name
+
+    def save(self, *args, **kwargs):
+        # El identificador no depende del nombre: renombrar una sede no cambia su código.
+        creating = self.pk is None
+        super().save(*args, **kwargs)
+        if creating and not self.code:
+            self.code = f'DEL-{self.pk:03d}'
+            type(self).objects.filter(pk=self.pk).update(code=self.code)
 
 
 class Position(BaseModel):
@@ -45,6 +55,10 @@ class Role(BaseModel):
     description = models.CharField(max_length=255, blank=True, default='', verbose_name="Descripción del rol")
     is_system = models.BooleanField(default=False, verbose_name="Rol de sistema protegido")
     permissions_data = models.JSONField(default=list, blank=True, verbose_name="Permisos y funciones asignadas")
+    permission_definitions = models.ManyToManyField(
+        'PermissionDefinition', blank=True, related_name='roles',
+        verbose_name="Permisos detallados del catálogo"
+    )
 
     class Meta:
         verbose_name = "Rol"

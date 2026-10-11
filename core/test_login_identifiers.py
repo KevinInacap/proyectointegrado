@@ -1,12 +1,12 @@
 from django.contrib.auth import get_user_model
 from django.test import TestCase
 
-from organization.models import Role, UserProfile
+from organization.models import Position, Role, UserProfile
 
 
 class EmailAndRutLoginTests(TestCase):
     def setUp(self):
-        self.role, _ = Role.objects.get_or_create(name='Administrador General')
+        self.role, _ = Role.objects.get_or_create(name='Administrador')
         user = get_user_model().objects.create_user(
             username='login-prueba', password='ClavePruebaSegura2026!'
         )
@@ -16,6 +16,7 @@ class EmailAndRutLoginTests(TestCase):
             full_name='Cuenta de Prueba',
             email='Persona.Prueba@example.com',
             status='Activo',
+            position=Position.objects.get_or_create(name='Administrador General')[0],
         )
         profile.roles.add(self.role)
 

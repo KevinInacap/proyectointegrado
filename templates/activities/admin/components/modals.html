@@ -1092,7 +1092,7 @@
             <div class="modal-content shadow border-0" style="border-radius: 16px; overflow: hidden;">
                 <div class="modal-header bg-danger text-white py-3 px-4">
                     <h5 class="modal-title fw-bold fs-6 text-white m-0" style="color: #FFFFFF !important;">
-                        <i class="bi bi-exclamation-triangle-fill me-2 text-warning"></i> Confirmar Eliminación de Rol
+                        <i class="bi bi-exclamation-triangle-fill me-2 text-warning"></i> Dar de baja rol
                     </h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
                         aria-label="Cerrar"></button>
@@ -1104,12 +1104,10 @@
                     <h5 class="fw-bold mb-2" id="lblEliminarRolNombre" style="color: var(--muni-navy);">¿Eliminar este
                         Rol?</h5>
                     <p class="text-secondary small mb-3" id="lblEliminarRolAviso">
-                        Esta acción dará de baja el rol de forma permanente en la base de datos municipal.
+                        El rol dejará de aparecer y de conceder permisos. El registro se conserva para auditoría.
                     </p>
                     <div class="alert alert-warning py-2 text-start small mb-0" id="boxEliminarRolDetalle">
-                        <i class="bi bi-shield-lock-fill me-1"></i> Los roles fundamentales como
-                        <strong>Administrador</strong>, <strong>Operador</strong> y <strong>Consultor</strong> están
-                        protegidos y no pueden eliminarse.
+                        <i class="bi bi-shield-lock-fill me-1"></i> Los roles de sistema están protegidos. Un rol con funcionarios asignados debe quedar sin usuarios antes de su baja.
                     </div>
                 </div>
                 <div class="modal-footer bg-light py-2 px-4 d-flex justify-content-end gap-2">
@@ -1117,7 +1115,7 @@
                         data-bs-dismiss="modal">Cancelar</button>
                     <button type="button" class="btn btn-danger rounded-pill px-4 fw-bold" id="btnConfirmarEliminarRol"
                         onclick="ejecutarEliminarRolConfirmado()">
-                        Eliminar Definitivamente
+                        Dar de baja rol
                     </button>
                 </div>
             </div>
@@ -1175,7 +1173,7 @@
 
     <!-- CATÁLOGOS REALES: DELEGACIONES Y CARGOS -->
     <div class="modal fade" id="modalCatalogosOrganizacion" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-xl modal-dialog-centered">
+        <div class="modal-dialog modal-xl modal-dialog-centered modal-fullscreen-lg-down">
             <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
                 <div class="modal-header text-white border-0 px-4 py-3" style="background: linear-gradient(110deg,#172d50,#203f6d);">
                     <div>
@@ -1199,19 +1197,26 @@
                                         <div class="row g-2">
                                             <div class="col-7"><label class="form-label small fw-bold mb-1">Nombre</label><input id="catalogoDelegacionNombre" class="form-control form-control-sm" maxlength="100" required placeholder="Delegación Oriente"></div>
                                             <div class="col-5"><label class="form-label small fw-bold mb-1">Estado</label><select id="catalogoDelegacionEstado" class="form-select form-select-sm"><option>Activo</option><option>Inactivo</option></select></div>
+                                            <div class="col-12"><label class="form-label small fw-bold mb-1" for="catalogoDelegacionCodigo">Código estable</label><input id="catalogoDelegacionCodigo" class="form-control form-control-sm" maxlength="20" pattern="[A-Za-z0-9-]{2,20}" placeholder="Automático si se deja vacío" aria-describedby="ayudaCodigoDelegacion"><small id="ayudaCodigoDelegacion" class="text-muted">Identifica la sede aunque cambie su nombre.</small></div>
                                             <div class="col-12"><label class="form-label small fw-bold mb-1">Ámbito territorial</label><input id="catalogoDelegacionAmbito" class="form-control form-control-sm" maxlength="100" required placeholder="Zona urbana oriente"></div>
-                                            <div class="col-7"><label class="form-label small fw-bold mb-1">Dirección</label><input id="catalogoDelegacionDireccion" class="form-control form-control-sm" maxlength="200" placeholder="Calle y número"></div>
-                                            <div class="col-5"><label class="form-label small fw-bold mb-1">Teléfono</label><input id="catalogoDelegacionTelefono" class="form-control form-control-sm" maxlength="30" placeholder="+56 51..."></div>
-                                            <div class="col-12"><label class="form-label small fw-bold mb-1">Correo</label><input id="catalogoDelegacionCorreo" type="email" class="form-control form-control-sm" maxlength="120" placeholder="delegacion@laserena.cl"></div>
-                                            <div class="col-6"><label class="form-label small fw-bold mb-1">Horario</label><input id="catalogoDelegacionHorario" class="form-control form-control-sm" maxlength="120" placeholder="Lun-Vie 08:30-14:00"></div>
-                                            <div class="col-6"><label class="form-label small fw-bold mb-1">Encargado/a</label><input id="catalogoDelegacionEncargado" class="form-control form-control-sm" maxlength="150" placeholder="Nombre completo"></div>
-                                            <div class="col-12"><label class="form-label small fw-bold mb-1">Fotografía</label><input id="catalogoDelegacionFoto" class="form-control form-control-sm" maxlength="255" placeholder="/static/img/sede.jpg o URL https://..."></div>
-                                            <div class="col-12"><label class="form-label small fw-bold mb-1">Descripción territorial</label><textarea id="catalogoDelegacionDescripcion" class="form-control form-control-sm" rows="2" maxlength="1200" placeholder="Cobertura y servicios principales"></textarea></div>
+                                            <div class="col-12"><label class="form-label small fw-bold mb-1" for="catalogoDelegacionComuna">Comuna</label><input id="catalogoDelegacionComuna" class="form-control form-control-sm" maxlength="100" required value="La Serena"></div>
+                                            <div class="col-12"><label class="form-label small fw-bold mb-1">Dirección</label><input id="catalogoDelegacionDireccion" class="form-control form-control-sm" maxlength="200" placeholder="Calle y número"></div>
+                                            <details class="col-12 delegacion-extra-fields" id="delegacionExtraFields">
+                                                <summary>Contacto y detalles opcionales</summary>
+                                                <div class="row g-2 pt-2">
+                                                    <div class="col-6"><label class="form-label small fw-bold mb-1">Teléfono</label><input id="catalogoDelegacionTelefono" class="form-control form-control-sm" maxlength="30" placeholder="+56 51..."></div>
+                                                    <div class="col-6"><label class="form-label small fw-bold mb-1">Correo</label><input id="catalogoDelegacionCorreo" type="email" class="form-control form-control-sm" maxlength="120" placeholder="delegacion@laserena.cl"></div>
+                                                    <div class="col-6"><label class="form-label small fw-bold mb-1">Horario</label><input id="catalogoDelegacionHorario" class="form-control form-control-sm" maxlength="120" placeholder="Lun-Vie 08:30-14:00"></div>
+                                                    <div class="col-6"><label class="form-label small fw-bold mb-1">Encargado/a</label><input id="catalogoDelegacionEncargado" class="form-control form-control-sm" maxlength="150" placeholder="Nombre completo"></div>
+                                                    <div class="col-12"><label class="form-label small fw-bold mb-1">Fotografía</label><input id="catalogoDelegacionFoto" class="form-control form-control-sm" maxlength="255" placeholder="/static/img/sede.jpg o URL https://..."></div>
+                                                    <div class="col-12"><label class="form-label small fw-bold mb-1">Descripción territorial</label><textarea id="catalogoDelegacionDescripcion" class="form-control form-control-sm" rows="2" maxlength="1200" placeholder="Cobertura y servicios principales"></textarea></div>
+                                                </div>
+                                            </details>
                                         </div>
                                         <div class="d-flex gap-2 mt-3"><button class="btn btn-primary flex-grow-1 fw-semibold" type="submit"><i class="bi bi-database-check me-1"></i>Guardar</button><button class="btn btn-light border" type="button" onclick="limpiarFormDelegacion()">Limpiar</button></div>
                                     </form>
                                 </div>
-                                <div class="col-lg-7"><div id="listaCatalogoDelegaciones" class="row g-2"></div></div>
+                                <div class="col-lg-7"><details id="delegacionesListaDetalles" open><summary>Delegaciones registradas</summary><div id="listaCatalogoDelegaciones" class="row g-2 pt-2"></div></details></div>
                             </div>
                         </div>
                         <div class="tab-pane fade" id="panelCatalogoCargos">
