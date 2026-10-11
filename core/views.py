@@ -23,7 +23,14 @@ def _normalize_rut(value):
 
 
 def _find_profile_for_login(identifier):
-    """Resuelve únicamente RUT o nombre completo; el correo no es credencial de acceso."""
+    """Resuelve una cuenta por RUT o correo electrónico registrado."""
+    normalized_identifier = (identifier or '').strip()
+    if '@' in normalized_identifier:
+        matches = UserProfile.objects.select_related('user').filter(
+            email__iexact=normalized_identifier, deleted_at__isnull=True
+        )
+        return matches.first() if matches.count() == 1 else None
+
     normalized_rut = _normalize_rut(identifier)
     if normalized_rut and normalized_rut[:-1].isdigit():
         matches = [
@@ -32,8 +39,7 @@ def _find_profile_for_login(identifier):
         ]
         if len(matches) == 1:
             return matches[0]
-    matches = UserProfile.objects.select_related('user').filter(full_name__iexact=identifier, deleted_at__isnull=True)
-    return matches.first() if matches.count() == 1 else None
+    return None
 
 
 def _role_redirect(role_name):
@@ -73,8 +79,8 @@ def login_view(request):
     if request.method == 'POST':
         identifier = request.POST.get('username', '').strip()
         password = request.POST.get('password', '')
-        user = authenticate(request, username=identifier, password=password) if identifier and password and '@' not in identifier else None
-        if user is None and identifier and password and '@' not in identifier:
+        user = None
+        if identifier and password:
             profile = _find_profile_for_login(identifier)
             if profile and profile.user:
                 user = authenticate(request, username=profile.user.username, password=password)
