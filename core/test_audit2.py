@@ -136,7 +136,7 @@ class Audit2AuthTests(TestCase):
         self.assertNotContains(response, 'Redirigiendo al panel', status_code=401)
 
     def test_mail_failure_has_same_public_response_as_unknown_account(self):
-        with patch('core.views.send_mail', side_effect=RuntimeError('offline')):
+        with patch('core.views._send_password_recovery_email', side_effect=RuntimeError('offline')):
             failed = self.client.post('/recuperar-clave/', {'identifier': self.profile.email})
         unknown = Client().post('/recuperar-clave/', {'identifier': 'unknown@example.test'})
         self.assertEqual(failed.status_code, unknown.status_code)

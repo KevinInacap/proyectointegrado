@@ -3,11 +3,15 @@ from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.hashers import make_password, check_password
 from django.contrib.auth.password_validation import validate_password
+from django.conf import settings
 from django.core.exceptions import ValidationError
-from django.core.mail import send_mail
+from django.core.mail import EmailMultiAlternatives
+from django.template.loader import render_to_string
 from django.db import transaction
 from django.utils import timezone
 from datetime import timedelta
+from email.mime.image import MIMEImage
+from pathlib import Path
 import secrets
 import re
 from .models import PasswordRecoveryCode
@@ -16,6 +20,27 @@ from organization.models import UserProfile
 
 class _RecoveryEmailError(Exception):
     """Fallo de entrega que no debe cambiar la respuesta pública."""
+
+
+def _send_password_recovery_email(full_name, recipient, code):
+    """Envía texto y HTML con la fotografía del portal adjunta por CID."""
+    context = {'full_name': full_name, 'code': code, 'valid_minutes': 10}
+    subject = 'Tu código para recuperar el acceso | Municipalidad de La Serena'
+    message = EmailMultiAlternatives(
+        subject=subject,
+        body=render_to_string('emails/password_recovery.txt', context),
+        from_email=settings.DEFAULT_FROM_EMAIL,
+        to=[recipient],
+    )
+    message.attach_alternative(render_to_string('emails/password_recovery.html', context), 'text/html')
+
+    hero_path = Path(settings.BASE_DIR) / 'static' / 'img' / 'faro_laserena_bg.jpg'
+    with hero_path.open('rb') as hero_file:
+        hero = MIMEImage(hero_file.read(), _subtype='jpeg')
+    hero.add_header('Content-ID', '<password-recovery-hero>')
+    hero.add_header('Content-Disposition', 'inline', filename='la-serena.jpg')
+    message.attach(hero)
+    return message.send(fail_silently=False)
 
 
 def _normalize_rut(value):
@@ -134,13 +159,7 @@ def password_recovery_view(request):
                             else:
                                 code = f'{secrets.randbelow(1000000):06d}'
                                 try:
-                                    sent = send_mail(
-                                        'Código de recuperación — SGR La Serena',
-                                        f'Hola {profile.full_name}, tu código de recuperación es: {code}. Expira en 10 minutos.',
-                                        None,
-                                        [profile.email],
-                                        fail_silently=False,
-                                    )
+                                    sent = _send_password_recovery_email(profile.full_name, profile.email, code)
                                 except Exception as exc:
                                     raise _RecoveryEmailError from exc
                                 if sent != 1:

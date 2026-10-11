@@ -52,7 +52,7 @@ class AuthenticationTests(SimpleTestCase):
     @patch.object(views, 'render', side_effect=fake_render)
     @patch.object(views.UserProfile.objects, 'select_related')
     @patch.object(views.PasswordRecoveryCode.objects, 'filter')
-    @patch.object(views, 'send_mail')
+    @patch.object(views, '_send_password_recovery_email')
     def test_unknown_recovery_is_generic(self, send, codes, profiles, _render):
         profiles.return_value.filter.return_value.first.return_value = None
         response = views.password_recovery_view(self.request(data={'action': 'request_code', 'identifier': 'nadie@example.com'}))
@@ -64,7 +64,7 @@ class AuthenticationTests(SimpleTestCase):
 
     @patch.object(views, 'render', side_effect=fake_render)
     @patch.object(views.UserProfile.objects, 'select_related')
-    @patch.object(views, 'send_mail')
+    @patch.object(views, '_send_password_recovery_email')
     def test_session_limit_skips_lookup_and_preserves_current_code(self, send, profiles, _render):
         session = {'recovery_last_request_at': timezone.now().timestamp(), 'recovery_user_id': 3,
                    'recovery_verified_code_id': 7}
@@ -79,7 +79,7 @@ class AuthenticationTests(SimpleTestCase):
     @patch.object(views.transaction, 'atomic', return_value=nullcontext())
     @patch.object(views.UserProfile.objects, 'select_related')
     @patch.object(views.PasswordRecoveryCode.objects, 'filter')
-    @patch.object(views, 'send_mail')
+    @patch.object(views, '_send_password_recovery_email')
     def test_account_limit_blocks_new_session_resend(self, send, codes, profiles, _atomic, _render):
         profile = SimpleNamespace(user=get_user_model()(pk=3, is_active=True), user_id=3,
                                   email='a@example.com', full_name='Ana', status='Activo')
@@ -96,7 +96,7 @@ class AuthenticationTests(SimpleTestCase):
     @patch.object(views.UserProfile.objects, 'select_related')
     @patch.object(views.PasswordRecoveryCode.objects, 'filter')
     @patch.object(views.PasswordRecoveryCode.objects, 'create')
-    @patch.object(views, 'send_mail', side_effect=RuntimeError('offline'))
+    @patch.object(views, '_send_password_recovery_email', side_effect=RuntimeError('offline'))
     def test_smtp_failure_keeps_uniform_response_and_old_code(self, send, create, codes, profiles, _atomic, _render):
         profile = SimpleNamespace(user=get_user_model()(pk=3, is_active=True), user_id=3,
                                   email='a@example.com', full_name='Ana', status='Activo')
@@ -115,7 +115,7 @@ class AuthenticationTests(SimpleTestCase):
     @patch.object(views.UserProfile.objects, 'select_related')
     @patch.object(views.PasswordRecoveryCode.objects, 'filter')
     @patch.object(views.PasswordRecoveryCode.objects, 'create')
-    @patch.object(views, 'send_mail')
+    @patch.object(views, '_send_password_recovery_email')
     def test_resend_invalidates_old_code_and_verification(self, send, create, codes, profiles, _atomic, _render):
         profile = SimpleNamespace(user=get_user_model()(pk=3, is_active=True), user_id=3, email='a@example.com', full_name='Ana', status='Activo')
         profiles.return_value.filter.return_value.first.return_value = profile

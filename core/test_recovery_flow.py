@@ -24,7 +24,20 @@ class PasswordRecoveryFlowTests(TestCase):
         })
         self.assertEqual(requested.status_code, 200)
         self.assertEqual(len(mail.outbox), 1)
-        code = re.search(r'\b\d{6}\b', mail.outbox[0].body).group()
+        message = mail.outbox[0]
+        self.assertIn('10 minutos', message.body)
+        self.assertEqual(len(message.alternatives), 1)
+        html_body = message.alternatives[0][0]
+        self.assertIn('cid:password-recovery-hero', html_body)
+        self.assertIn('Qué hacer ahora', html_body)
+        self.assertIn('Persona Prueba', html_body)
+        self.assertIn('doble clic', html_body)
+        self.assertTrue(any(
+            attachment.get('Content-ID') == '<password-recovery-hero>'
+            for attachment in message.attachments
+        ))
+        code = re.search(r'\b\d{6}\b', message.body).group()
+        self.assertRegex(html_body, r'letter-spacing:9px[^>]*>\d{6}</span>')
 
         verified = self.client.post('/recuperar-clave/', {
             'action': 'verify_code', 'code': code,
