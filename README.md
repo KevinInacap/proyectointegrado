@@ -66,9 +66,13 @@ En Windows PowerShell, activa el entorno con:
 
 La aplicación toma sus parámetros desde variables de entorno. `.env.example` muestra los nombres disponibles; copia sus valores a un `.env` local y define una clave privada de Django, base de datos y correo según el entorno. El archivo `.env` está excluido de Git: no publiques claves, contraseñas ni datos personales.
 
+El proyecto ya incluye el controlador `mysqlclient` y admite MySQL con `DB_ENGINE=mysql`, `DB_NAME`, `DB_USER`, `DB_PASSWORD`, `DB_HOST` y `DB_PORT`. Antes de cambiar el motor, configura una cuenta MySQL con permisos sobre una base vacía y respalda la base actual. Después aplica `python manage.py migrate`; mover registros de SQLite a MySQL requiere exportarlos e importarlos por separado. No cambies el `.env` compartido ni subas credenciales al repositorio.
+
 El esquema SQL de `database/` es material de referencia académica, no una herramienta de actualización. Para preparar una base usa las migraciones de Django; no ejecutes el esquema de referencia sobre una base con información.
 
 ## Pruebas
+
+Para una presentación local con datos ficticios, ejecuta `python manage.py seed_presentation` después de las migraciones. Agrega tres ejemplos por catálogo y puede repetirse sin duplicarlos. Los perfiles de ejemplo están inactivos y no tienen contraseña de acceso; no reemplaza usuarios, cargos ni permisos existentes. Solo está habilitado en desarrollo (`DEBUG`).
 
 ```bash
 python manage.py check

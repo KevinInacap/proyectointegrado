@@ -7,6 +7,7 @@ from django.utils import timezone
 
 from metrics.models import AttentionType, SubAttention
 from organization.models import Delegation, Role, UserProfile
+from core.models import AuditLog
 from .models import Activity, ServiceCatalog
 
 
@@ -16,7 +17,7 @@ class AttentionAuditTests(TestCase):
         self.user = get_user_model().objects.create_user(username='attention-audit')
         self.profile = UserProfile.objects.create(user=self.user, rut='22222222-2',
             full_name='Audit', email='attention@example.com', delegation=self.delegation)
-        self.role = Role.objects.create(name='Audit writer', permissions_data=['lectura', 'edicion'])
+        self.role = Role.objects.create(name='Audit writer', permissions_data=['lectura', 'edicion', 'cierre'])
         self.profile.roles.add(self.role)
         self.client.force_login(self.user)
         self.kind = AttentionType.objects.create(code='TYPE', name='Social')
@@ -74,3 +75,35 @@ class AttentionAuditTests(TestCase):
         self.assertEqual(record['attention_type'], self.kind.name)
         self.assertEqual(record['subattention_type'], self.sub.name)
         self.assertEqual(record['service'], 'Servicio')
+
+    def test_admin_crud_for_activity_is_audited_and_cannot_change_verification(self):
+        created = self.post()
+        self.assertEqual(created.status_code, 201, created.content)
+        activity = Activity.objects.get(pk=created.json()['id'])
+        detail = reverse('activities:api_atencion_detail', args=[activity.pk])
+
+        updated = self.client.put(detail, json.dumps({
+            'contact_name': 'Nombre corregido',
+            'problem_description': 'Solicitud corregida',
+            'executed_action': 'Derivación registrada',
+            'activity_date': '2026-09-18',
+            'attention_type_id': self.kind.pk,
+            'subattention_id': self.other.pk,
+        }), content_type='application/json')
+        self.assertEqual(updated.status_code, 200, updated.content)
+        activity.refresh_from_db()
+        self.assertEqual(activity.contact_name, 'Nombre corregido')
+        self.assertEqual(activity.subattention_id, self.other.pk)
+        self.assertEqual(activity.activity_date.isoformat(), '2026-09-18')
+        self.assertTrue(AuditLog.objects.filter(affected_table='actividad', affected_record_id=str(activity.pk), action='UPDATE').exists())
+
+        rejected = self.client.put(detail, json.dumps({'status': 'Approved'}), content_type='application/json')
+        self.assertEqual(rejected.status_code, 403)
+        activity.refresh_from_db()
+        self.assertEqual(activity.validation_status, 'Pending')
+
+        deleted = self.client.delete(detail)
+        self.assertEqual(deleted.status_code, 200, deleted.content)
+        activity.refresh_from_db()
+        self.assertIsNotNone(activity.deleted_at)
+        self.assertTrue(AuditLog.objects.filter(affected_table='actividad', affected_record_id=str(activity.pk), action='DELETE').exists())

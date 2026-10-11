@@ -2,12 +2,12 @@ from datetime import timedelta
 
 from django.contrib.auth import get_user_model
 from django.contrib.auth.hashers import make_password
-from django.test import TestCase
+from django.test import Client, TestCase
 from django.utils import timezone
 
 from core.models import PasswordRecoveryCode
 from core.test_audit2 import WEAK_PASSWORDS, STRONG_PASSWORD
-from organization.models import Role, UserProfile
+from organization.models import Delegation, Position, Role, UserProfile
 
 
 class Audit2OrganizationTests(TestCase):
@@ -70,6 +70,43 @@ class Audit2OrganizationTests(TestCase):
             self.assertEqual(self.post(f'/api/users/{self.target_profile.pk}/{operation}/', {'password': 'OtraClave57!'}).status_code, 200)
             record.refresh_from_db()
             self.assertIsNotNone(record.used_at)
+
+    def test_admin_reset_password_can_login_using_rut_and_registered_email(self):
+        role, _ = Role.objects.get_or_create(name='Gestor Territorial')
+        self.target_profile.roles.add(role)
+        new_password = 'NuevaClavePrueba2026!'
+        response = self.post(f'/api/users/{self.target_profile.pk}/reset-password/', {'password': new_password})
+        self.assertEqual(response.status_code, 200, response.content)
+        self.assertTrue(response.json()['is_active'])
+        self.assertEqual(response.json()['account_status'], 'Activo')
+        self.assertTrue(response.json()['has_active_role'])
+        self.target.refresh_from_db()
+        self.assertTrue(self.target.check_password(new_password))
+
+        for identifier in (self.target_profile.rut, self.target_profile.email):
+            with self.subTest(identifier=identifier):
+                login_client = Client()
+                logged_in = login_client.post('/', {'username': identifier, 'password': new_password})
+                self.assertEqual(logged_in.status_code, 302)
+                self.assertTrue('_auth_user_id' in login_client.session)
+
+    def test_admin_can_reassign_user_role_delegation_and_position(self):
+        delegation = Delegation.objects.create(name='Delegación de prueba', scope='Centro')
+        position = Position.objects.create(name='Cargo de prueba')
+        role = Role.objects.create(name='Rol de prueba', permissions_data=['lectura'])
+        response = self.post(f'/api/users/{self.target_profile.pk}/update/', {
+            'full_name': self.target_profile.full_name,
+            'email': self.target_profile.email,
+            'rut': self.target_profile.rut,
+            'delegation_id': delegation.pk,
+            'position_id': position.pk,
+            'role_ids': [role.pk],
+        })
+        self.assertEqual(response.status_code, 200, response.content)
+        self.target_profile.refresh_from_db()
+        self.assertEqual(self.target_profile.delegation_id, delegation.pk)
+        self.assertEqual(self.target_profile.position_id, position.pk)
+        self.assertEqual(list(self.target_profile.roles.values_list('id', flat=True)), [role.pk])
 
     def test_plain_text_fields_reject_stored_html(self):
         payload = '<img src=x onerror=alert(1)>'

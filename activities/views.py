@@ -836,6 +836,7 @@ def _attention_result(a):
         'title': a.problem_description, 'description': a.executed_action,
         'problem_description': a.problem_description,
         'executed_action': a.executed_action,
+        'activity_date_iso': a.activity_date.isoformat(),
         'stage': 2 if a.is_collective_agenda else 1,
         'date': a.activity_date.strftime('%d/%m/%Y'),
         'activity_date': a.activity_date.strftime('%d/%m/%Y'),
@@ -881,6 +882,10 @@ def api_atenciones(request):
     code = _attention_text(data, 'activity_code', 50) if 'activity_code' in data else ''
     if code is None or (code and not re.fullmatch(r'[A-Za-z0-9-]+', code)):
         return JsonResponse({'success': False, 'message': 'Código inválido.'}, status=400)
+    try:
+        activity_date = datetime.date.fromisoformat(data.get('activity_date', timezone.localdate().isoformat()))
+    except (TypeError, ValueError):
+        return JsonResponse({'success': False, 'message': 'Fecha de atención o visita inválida.'}, status=400)
     from django.db import transaction
     from django.db.models import Q
     from uuid import uuid4
@@ -895,6 +900,7 @@ def api_atenciones(request):
                 if (existing.user_id == request.user.pk and existing.deleted_at is None
                         and existing.contact_name == contact and existing.problem_description == problem
                         and existing.executed_action == action and existing.delegation_id == delegation.id
+                        and existing.activity_date == activity_date
                         and existing.contact_phone == phone and existing.catalog_id == (catalog.pk if catalog else None)
                         and existing.attention_type_id == (attention_type.pk if attention_type else None)
                         and existing.subattention_id == (subattention.pk if subattention else None)
@@ -906,6 +912,7 @@ def api_atenciones(request):
             existing = _activity_scope(request).filter(
                 user=request.user, delegation=delegation, contact_name=contact,
                 problem_description=problem, executed_action=action,
+                activity_date=activity_date,
                 catalog=catalog, attention_type=attention_type, subattention=subattention,
                 contact_phone=phone, is_collective_agenda=data.get('is_collective_agenda', False),
                 created_at__gte=cutoff
@@ -915,7 +922,7 @@ def api_atenciones(request):
             code = f"ACT-{timezone.now():%Y%m%d}-{uuid4().hex[:12].upper()}"
         typed_fields = {'attention_type': attention_type, 'subattention': subattention} if attention_type else {}
         act = Activity.objects.create(
-            activity_code=code, activity_date=timezone.localdate(),
+            activity_code=code, activity_date=activity_date,
             problem_description=problem, executed_action=action,
             contact_name=contact, contact_phone=phone,
             is_collective_agenda=data.get('is_collective_agenda', False),
@@ -937,14 +944,31 @@ def api_atencion_detail(request, pk):
     if request.method == 'GET':
         return JsonResponse({'success': True, 'atencion': _attention_result(a)})
     if request.method == 'DELETE':
-        a.deleted_at = timezone.now()
-        a.save(update_fields=['deleted_at', 'updated_at'])
+        previous = _attention_result(a)
+        with transaction.atomic():
+            a.deleted_at = timezone.now()
+            a.save(update_fields=['deleted_at', 'updated_at'])
+            AuditLog.objects.create(
+                user=request.user,
+                affected_table='actividad',
+                affected_record_id=str(a.pk),
+                action='DELETE',
+                previous_value=previous,
+                new_value={'deleted_at': a.deleted_at.isoformat()},
+                source_ip=request.META.get('REMOTE_ADDR'),
+            )
         return JsonResponse({'success': True, 'message': 'Atención dada de baja.'})
     data = _attention_payload(request)
     if data is None:
         return JsonResponse({'success': False, 'message': 'Solicitud JSON inválida.'}, status=400)
-    if 'validation_status' in data:
-        return JsonResponse({'success': False, 'message': 'La validación corresponde al verificador.'}, status=403)
+    if 'validation_status' in data or 'status' in data:
+        return JsonResponse({'success': False, 'message': 'La validación corresponde al Verificador Técnico.'}, status=403)
+    previous = _attention_result(a)
+    if 'activity_date' in data:
+        try:
+            a.activity_date = datetime.date.fromisoformat(data['activity_date'])
+        except (TypeError, ValueError):
+            return JsonResponse({'success': False, 'message': 'Fecha de atención o visita inválida.'}, status=400)
     if 'delegation' in data:
         delegation = _delegation_for_write(request, data['delegation'])
         if not delegation:
@@ -969,7 +993,17 @@ def api_atencion_detail(request, pk):
             if value is None:
                 return JsonResponse({'success': False, 'message': f'{key} inválido.'}, status=400)
             setattr(a, key, value)
-    a.save()
+    with transaction.atomic():
+        a.save()
+        AuditLog.objects.create(
+            user=request.user,
+            affected_table='actividad',
+            affected_record_id=str(a.pk),
+            action='UPDATE',
+            previous_value=previous,
+            new_value=_attention_result(a),
+            source_ip=request.META.get('REMOTE_ADDR'),
+        )
     return JsonResponse({'success': True, 'message': 'Atención actualizada.'})
 
 

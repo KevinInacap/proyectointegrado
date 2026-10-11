@@ -162,7 +162,13 @@
             </div>
         </div>
 
-        <!-- 4. Ficha de Inspección Rápida de Funcionario (Liquid Glass sin pantalla oscura) -->
+        <div class="table-context-indicator" role="status" aria-live="polite">
+            <span><strong>Mantenedores</strong><span class="context-divider">/</span><strong>Usuarios</strong></span>
+            <span id="usuariosOrdenActual">Orden: Nombre · A–Z</span>
+            <span id="usuariosFilasActuales">Esperando registros</span>
+        </div>
+
+        <!-- 4. Ficha de Inspección Rápida de Funcionario -->
         <div id="panelDetalleUsuario" style="display: none;">
             <!-- Contenido cargado dinámicamente al seleccionar cualquier funcionario -->
         </div>
@@ -178,14 +184,14 @@
                                     onchange="toggleSeleccionarTodosUsuarios(this.checked)">
                             </th>
                             <th style="width: 38px; text-align: center;">#</th>
-                            <th class="sortable" onclick="ordenarUsuarios('full_name')">
+                            <th class="sortable" data-sort-column="full_name" aria-sort="ascending" onclick="ordenarUsuarios('full_name')">
                                 Funcionario / Contacto <i class="bi bi-arrow-down-up sort-icon"></i>
                             </th>
-                            <th class="sortable" onclick="ordenarUsuarios('delegation_name')">
+                            <th class="sortable" data-sort-column="delegation_name" aria-sort="none" onclick="ordenarUsuarios('delegation_name')">
                                 Sede & Cargo <i class="bi bi-arrow-down-up sort-icon"></i>
                             </th>
                             <th>Rol Asignado</th>
-                            <th class="text-center sortable" onclick="ordenarUsuarios('status')" style="width: 100px;">
+                            <th class="text-center sortable" data-sort-column="status" aria-sort="none" onclick="ordenarUsuarios('status')" style="width: 100px;">
                                 Estado
                             </th>
                             <th class="text-end" style="width: 145px; padding-right: 1.25rem;">Acciones</th>

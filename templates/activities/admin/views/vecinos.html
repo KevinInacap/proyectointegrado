@@ -16,18 +16,11 @@
                         </div>
                     </div>
 
-                    <div class="table-meta-indicators">
-                        <div class="meta-stat-group">
-                            <span class="meta-stat-item"><i class="bi bi-database me-1 text-primary"></i> <strong
-                                    id="lblTotalVecinos">12.458</strong> vecinos</span>
-                            <span class="meta-stat-item"><i class="bi bi-check2-circle me-1 text-success"></i> <strong
-                                    id="lblActivosVecinos">12.102</strong> activos</span>
-                            <span class="meta-stat-item"><i class="bi bi-dash-circle me-1 text-danger"></i> <strong
-                                    id="lblInactivosVecinos">356</strong> inactivos</span>
-                        </div>
-                        <div>
-                            <i class="bi bi-clock-history me-1"></i> Sincronizado: <strong>01/10/2026 16:32</strong>
-                        </div>
+                    <div class="vecinos-summary" aria-label="Resumen de registros">
+                        <span><strong id="lblTotalVecinos">—</strong> registros</span>
+                        <span><strong id="lblActivosVecinos">—</strong> activos</span>
+                        <span><strong id="lblInactivosVecinos">—</strong> inactivos</span>
+                        <span class="vecinos-updated" id="vecinosUltimaActualizacion">Esperando datos</span>
                     </div>
 
                     <div class="excel-toolbar">
@@ -70,10 +63,6 @@
                                             onchange="toggleColumna('col-terr', this.checked)"><label
                                             class="form-check-label small" for="colTerritorio">Territorio</label></div>
                                     <div class="form-check mb-1"><input class="form-check-input" type="checkbox"
-                                            id="colGestion" checked
-                                            onchange="toggleColumna('col-gest', this.checked)"><label
-                                            class="form-check-label small" for="colGestion">Gestión</label></div>
-                                    <div class="form-check mb-1"><input class="form-check-input" type="checkbox"
                                             id="colEstado" checked
                                             onchange="toggleColumna('col-est', this.checked)"><label
                                             class="form-check-label small" for="colEstado">Estado</label></div>
@@ -98,17 +87,6 @@
                         </div>
                     </div>
 
-                    <!-- Filtros Rápidos de Sector Comunal -->
-                    <div class="d-flex align-items-center gap-2 mb-3 flex-wrap p-2 bg-light rounded-3 border">
-                        <span class="text-secondary small fw-bold"><i class="bi bi-geo-alt-fill text-danger me-1"></i> Sectores Comunales:</span>
-                        <button class="btn btn-sm btn-white border rounded-pill px-3 py-1 small fw-semibold shadow-xs" onclick="filtrarSectorVecinoRapido('')">Todos</button>
-                        <button class="btn btn-sm btn-white border rounded-pill px-3 py-1 small fw-semibold shadow-xs" onclick="filtrarSectorVecinoRapido('Centro')">La Serena Centro</button>
-                        <button class="btn btn-sm btn-white border rounded-pill px-3 py-1 small fw-semibold shadow-xs" onclick="filtrarSectorVecinoRapido('Las Compañías')">Las Compañías - El Brillador</button>
-                        <button class="btn btn-sm btn-white border rounded-pill px-3 py-1 small fw-semibold shadow-xs" onclick="filtrarSectorVecinoRapido('La Pampa')">La Pampa - Vista Hermosa</button>
-                        <button class="btn btn-sm btn-white border rounded-pill px-3 py-1 small fw-semibold shadow-xs" onclick="filtrarSectorVecinoRapido('Tierras Blancas')">Tierras Blancas - Sector B</button>
-                        <button class="btn btn-sm btn-white border rounded-pill px-3 py-1 small fw-semibold shadow-xs" onclick="filtrarSectorVecinoRapido('Rural')">Sector Rural - Valle de Elqui</button>
-                    </div>
-
                     <!-- Panel de Filtros -->
                     <div class="advanced-filters-panel" id="panelFiltrosAvanzados">
                         <div class="row g-2">
@@ -125,26 +103,10 @@
                                 <label class="form-label small fw-bold">Territorio / Delegación</label>
                                 <select class="form-select form-select-sm" id="filtroTerritorioVecino"
                                     onchange="ejecutarFiltroCompletoVecinos()">
-                                    <option value="">Todas las Delegaciones</option>
-                                    <option value="Centro">La Serena Centro</option>
-                                    <option value="Norte">Norte (Las Compañías)</option>
-                                    <option value="Sur">Sur (La Pampa)</option>
-                                    <option value="Oriente">Oriente (San Joaquín)</option>
-                                    <option value="Rural">Sector Rural</option>
+                                    <option value="">Todos los territorios</option>
                                 </select>
                             </div>
-                            <div class="col-md-3">
-                                <label class="form-label small fw-bold">Tipo de Gestión</label>
-                                <select class="form-select form-select-sm" id="filtroGestionVecino"
-                                    onchange="ejecutarFiltroCompletoVecinos()">
-                                    <option value="">Todas las Gestiones</option>
-                                    <option value="Solicitud">Solicitud</option>
-                                    <option value="Reclamo">Reclamo</option>
-                                    <option value="Consulta">Consulta</option>
-                                    <option value="Orientación">Orientación</option>
-                                </select>
-                            </div>
-                            <div class="col-md-3 d-flex align-items-end gap-2">
+                            <div class="col-md-6 d-flex align-items-end gap-2">
                                 <button class="btn btn-sm btn-primary w-100 fw-bold"
                                     onclick="ejecutarFiltroCompletoVecinos()">Aplicar</button>
                                 <button class="btn btn-sm btn-outline-secondary" onclick="limpiarFiltrosVecinos()"><i
@@ -154,6 +116,12 @@
                     </div>
 
                     <div class="active-filter-chips" id="contenedorChipsFiltros"></div>
+
+                    <div class="vecinos-table-context" role="status" aria-live="polite">
+                        <span><strong>Mantenedores</strong><span class="context-divider">/</span><strong>Vecinos</strong></span>
+                        <span id="vecinosOrdenActual">Orden: Nombre · A–Z</span>
+                        <span id="vecinosFilasActuales">0 resultados</span>
+                    </div>
 
                     <!-- Barra de Acciones Masivas -->
                     <div class="bulk-actions-bar" id="bulkActionsBar">
@@ -175,7 +143,7 @@
                     <!-- Tabla de Vecinos -->
                     <div class="excel-table-wrapper">
                         <div class="table-responsive">
-                            <table class="custom-clean-table" id="tablaVecinos">
+                            <table class="custom-clean-table vecinos-clean-table" id="tablaVecinos">
                                 <thead>
                                     <tr>
                                         <th style="width: 36px;" class="text-center">
@@ -183,18 +151,17 @@
                                                 onchange="toggleSeleccionarTodosVecinos(this.checked)">
                                         </th>
                                         <th style="width: 45px;">#</th>
-                                        <th class="sortable" onclick="ordenarTablaVecinos('nombre')">Nombre Completo <i
+                                        <th class="sortable" data-sort-column="nombre" aria-sort="ascending" onclick="ordenarTablaVecinos('nombre')">Nombre Completo <i
                                                 class="bi bi-arrow-down-up sort-icon"></i></th>
-                                        <th class="col-rut sortable" onclick="ordenarTablaVecinos('rut')">RUT <i
+                                        <th class="col-rut sortable" data-sort-column="rut" aria-sort="none" onclick="ordenarTablaVecinos('rut')">RUT <i
                                                 class="bi bi-arrow-down-up sort-icon"></i></th>
                                         <th class="col-dir">Dirección</th>
                                         <th class="col-tel">Teléfono</th>
-                                        <th class="col-terr sortable" onclick="ordenarTablaVecinos('territorio')">
+                                        <th class="col-terr sortable" data-sort-column="territorio" aria-sort="none" onclick="ordenarTablaVecinos('territorio')">
                                             Territorio <i class="bi bi-arrow-down-up sort-icon"></i></th>
-                                        <th class="col-gest">Gestión</th>
-                                        <th class="col-est sortable" onclick="ordenarTablaVecinos('estado')">Estado <i
+                                        <th class="col-est sortable" data-sort-column="estado" aria-sort="none" onclick="ordenarTablaVecinos('estado')">Estado <i
                                                 class="bi bi-arrow-down-up sort-icon"></i></th>
-                                        <th class="text-end" style="width: 110px;">Acciones</th>
+                                        <th class="text-end" style="width: 170px;">Acciones</th>
                                     </tr>
                                 </thead>
                                 <tbody id="tablaVecinosBody"></tbody>
