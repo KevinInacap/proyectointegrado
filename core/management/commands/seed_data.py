@@ -1,6 +1,8 @@
 from datetime import date, timedelta
-from django.core.management.base import BaseCommand
+import os
+from django.core.management.base import BaseCommand, CommandError
 from django.contrib.auth.models import User, Group, Permission
+from django.conf import settings
 from django.contrib.contenttypes.models import ContentType
 from django.utils import timezone
 
@@ -16,7 +18,29 @@ from social.models import SocialCase, SocialManagement
 class Command(BaseCommand):
     help = "Carga reproducible de datos maestros, operacionales, auditoría y usuarios de prueba (Evaluación Sumativa II)"
 
+    def add_arguments(self, parser):
+        parser.add_argument(
+            '--include-demo-data',
+            action='store_true',
+            help='Agrega usuarios y registros ficticios para una demostración local; requiere SGR_SEED_PASSWORD.',
+        )
+
     def handle(self, *args, **options):
+        if not settings.DEBUG:
+            raise CommandError('La carga de datos de demostración está bloqueada cuando DEBUG=False.')
+        seed_password = os.environ.get('SGR_SEED_PASSWORD', '').strip()
+        if options['include_demo_data'] and not seed_password:
+            raise CommandError(
+                'Para cargar usuarios de prueba define SGR_SEED_PASSWORD en tu entorno local. '
+                'No se aceptan cuentas de demostración sin una clave inicial privada.'
+            )
+
+        def set_initial_password(user):
+            if seed_password:
+                user.set_password(seed_password)
+            else:
+                user.set_unusable_password()
+
         self.stdout.write(self.style.NOTICE("Iniciando carga reproducible de datos SGR..."))
 
         # -------------------------------------------------------------
@@ -127,8 +151,25 @@ class Command(BaseCommand):
         )
         role_consulta, _ = Role.objects.get_or_create(
             name="Usuario de Consulta",
-            defaults={"description": "Visualización de tableros, reportes e indicadores sin facultades de edición."}
+            defaults={
+                "description": "Visualización de tableros, reportes e indicadores sin facultades de edición.",
+                "permissions_data": ['lectura'],
+            }
         )
+        # The application checks these persisted role permissions at request time;
+        # Django Groups alone do not authorize its SGR endpoints. Fill only empty
+        # system-role matrices so rerunning the seed does not overwrite custom grants.
+        role_permission_defaults = (
+            (role_coordinador, ['lectura', 'edicion', 'derivacion']),
+            (role_delegado, ['lectura', 'edicion', 'derivacion']),
+            (role_funcionario, ['lectura', 'edicion', 'derivacion']),
+            (role_verificador, ['lectura', 'edicion', 'cierre']),
+            (role_consulta, ['lectura']),
+        )
+        for role, permissions in role_permission_defaults:
+            if not role.permissions_data:
+                role.permissions_data = permissions
+                role.save(update_fields=['permissions_data', 'updated_at'])
         self.stdout.write(self.style.SUCCESS("[OK] Cargos y 6 Roles maestros institucionales creados."))
 
         # -------------------------------------------------------------
@@ -192,6 +233,14 @@ class Command(BaseCommand):
 
         self.stdout.write(self.style.SUCCESS("[OK] 6 Grupos y permisos granulares de Django configurados (RBAC institucional)."))
 
+        if not options['include_demo_data']:
+            self.stdout.write(self.style.SUCCESS(
+                'Carga de catálogos completada: delegaciones, cargos, roles y permisos quedaron intactos. '
+                'No se agregaron usuarios ni datos operativos ficticios. '
+                'Los registros existentes no se eliminan ni modifican.'
+            ))
+            return
+
         # -------------------------------------------------------------
         # 4. USUARIOS DE PRUEBA Y PERFILES (Matriz SGR Completa)
         # -------------------------------------------------------------
@@ -199,22 +248,23 @@ class Command(BaseCommand):
         user_admin, created = User.objects.get_or_create(
             username="admin",
             defaults={
-                "email": "admin@laserena.cl",
-                "first_name": "Administrador",
-                "last_name": "General",
+                "email": "admin@example.invalid",
+                "first_name": "Demo",
+                "last_name": "Administrador",
                 "is_staff": True,
                 "is_superuser": True,
             }
         )
-        user_admin.set_password("Admin1234!")
+        if created:
+            set_initial_password(user_admin)
         user_admin.groups.add(group_admin)
         user_admin.save()
         profile_admin, _ = UserProfile.objects.get_or_create(
             user=user_admin,
             defaults={
-                "rut": "11.111.111-1",
-                "full_name": "Administrador General del Sistema",
-                "email": "admin@laserena.cl",
+                "rut": "00.000.001-0",
+                "full_name": "Usuario Demo Administrador",
+                "email": "admin@example.invalid",
                 "delegation": del_centro,
                 "position": pos_director,
                 "status": "Activo"
@@ -223,25 +273,26 @@ class Command(BaseCommand):
         profile_admin.roles.add(role_admin)
 
         # 4.2 Coordinador del Sistema
-        user_coordinador, _ = User.objects.get_or_create(
+        user_coordinador, created = User.objects.get_or_create(
             username="coordinador",
             defaults={
-                "email": "coordinacion.sgr@laserena.cl",
-                "first_name": "Marcelo",
-                "last_name": "Salazar",
+                "email": "coordinador@example.invalid",
+                "first_name": "Demo",
+                "last_name": "Coordinador",
                 "is_staff": True,
                 "is_superuser": False,
             }
         )
-        user_coordinador.set_password("Coordinador1234!")
+        if created:
+            set_initial_password(user_coordinador)
         user_coordinador.groups.add(group_coordinador)
         user_coordinador.save()
         profile_coord, _ = UserProfile.objects.get_or_create(
             user=user_coordinador,
             defaults={
-                "rut": "13.456.789-0",
-                "full_name": "Marcelo Salazar Peña",
-                "email": "coordinacion.sgr@laserena.cl",
+                "rut": "00.000.002-0",
+                "full_name": "Usuario Demo Coordinador",
+                "email": "coordinador@example.invalid",
                 "delegation": del_centro,
                 "position": pos_coordinador,
                 "status": "Activo"
@@ -250,25 +301,26 @@ class Command(BaseCommand):
         profile_coord.roles.add(role_coordinador)
 
         # 4.3 Delegado Municipal (Jefatura Las Compañías)
-        user_delegado, _ = User.objects.get_or_create(
+        user_delegado, created = User.objects.get_or_create(
             username="delegado_companias",
             defaults={
-                "email": "delegado.companias@laserena.cl",
-                "first_name": "Gonzalo",
-                "last_name": "Pizarro",
+                "email": "delegado@example.invalid",
+                "first_name": "Demo",
+                "last_name": "Delegado",
                 "is_staff": True,
                 "is_superuser": False,
             }
         )
-        user_delegado.set_password("Delegado1234!")
+        if created:
+            set_initial_password(user_delegado)
         user_delegado.groups.add(group_delegado)
         user_delegado.save()
         profile_delegado, _ = UserProfile.objects.get_or_create(
             user=user_delegado,
             defaults={
-                "rut": "14.234.567-8",
-                "full_name": "Gonzalo Pizarro Rojas",
-                "email": "delegado.companias@laserena.cl",
+                "rut": "00.000.003-0",
+                "full_name": "Usuario Demo Delegado",
+                "email": "delegado@example.invalid",
                 "delegation": del_companias,
                 "position": pos_delegado,
                 "status": "Activo"
@@ -280,22 +332,23 @@ class Command(BaseCommand):
         user_companias, created = User.objects.get_or_create(
             username="funcionario_companias",
             defaults={
-                "email": "gestor.companias@laserena.cl",
-                "first_name": "Rodrigo",
-                "last_name": "Tapia",
+                "email": "funcionario1@example.invalid",
+                "first_name": "Demo",
+                "last_name": "Funcionario 1",
                 "is_staff": True,
                 "is_superuser": False,
             }
         )
-        user_companias.set_password("Funcionario1234!")
+        if created:
+            set_initial_password(user_companias)
         user_companias.groups.add(group_funcionario)
         user_companias.save()
         profile_companias, _ = UserProfile.objects.get_or_create(
             user=user_companias,
             defaults={
-                "rut": "17.892.456-3",
-                "full_name": "Rodrigo Tapia Gallardo",
-                "email": "gestor.companias@laserena.cl",
+                "rut": "00.000.004-0",
+                "full_name": "Usuario Demo Funcionario 1",
+                "email": "funcionario1@example.invalid",
                 "delegation": del_companias,
                 "position": pos_gestor,
                 "status": "Activo"
@@ -307,22 +360,23 @@ class Command(BaseCommand):
         user_centro, created = User.objects.get_or_create(
             username="funcionario_centro",
             defaults={
-                "email": "gestora.centro@laserena.cl",
-                "first_name": "Camila",
-                "last_name": "Araya",
+                "email": "funcionario2@example.invalid",
+                "first_name": "Demo",
+                "last_name": "Funcionario 2",
                 "is_staff": True,
                 "is_superuser": False,
             }
         )
-        user_centro.set_password("Funcionario1234!")
+        if created:
+            set_initial_password(user_centro)
         user_centro.groups.add(group_funcionario)
         user_centro.save()
         profile_centro, _ = UserProfile.objects.get_or_create(
             user=user_centro,
             defaults={
-                "rut": "18.345.678-K",
-                "full_name": "Camila Araya Miranda",
-                "email": "gestora.centro@laserena.cl",
+                "rut": "00.000.005-0",
+                "full_name": "Usuario Demo Funcionario 2",
+                "email": "funcionario2@example.invalid",
                 "delegation": del_centro,
                 "position": pos_gestor,
                 "status": "Activo"
@@ -334,22 +388,23 @@ class Command(BaseCommand):
         user_verificador, created = User.objects.get_or_create(
             username="verificador",
             defaults={
-                "email": "verificador@laserena.cl",
-                "first_name": "Esteban",
-                "last_name": "Morales",
+                "email": "verificador@example.invalid",
+                "first_name": "Demo",
+                "last_name": "Verificador",
                 "is_staff": True,
                 "is_superuser": False,
             }
         )
-        user_verificador.set_password("Verificador1234!")
+        if created:
+            set_initial_password(user_verificador)
         user_verificador.groups.add(group_verificador)
         user_verificador.save()
         profile_verificador, _ = UserProfile.objects.get_or_create(
             user=user_verificador,
             defaults={
-                "rut": "15.678.901-2",
-                "full_name": "Esteban Morales Vega",
-                "email": "verificador@laserena.cl",
+                "rut": "00.000.006-0",
+                "full_name": "Usuario Demo Verificador",
+                "email": "verificador@example.invalid",
                 "delegation": del_companias,
                 "position": pos_verificador,
                 "status": "Activo"
@@ -358,25 +413,26 @@ class Command(BaseCommand):
         profile_verificador.roles.add(role_verificador)
 
         # 4.7 Usuario de Consulta / Auditoría
-        user_consulta, _ = User.objects.get_or_create(
+        user_consulta, created = User.objects.get_or_create(
             username="consulta",
             defaults={
-                "email": "auditoria.externa@laserena.cl",
-                "first_name": "Valeria",
-                "last_name": "Cáceres",
+                "email": "consulta@example.invalid",
+                "first_name": "Demo",
+                "last_name": "Consulta",
                 "is_staff": True,
                 "is_superuser": False,
             }
         )
-        user_consulta.set_password("Consulta1234!")
+        if created:
+            set_initial_password(user_consulta)
         user_consulta.groups.add(group_consulta)
         user_consulta.save()
         profile_consulta, _ = UserProfile.objects.get_or_create(
             user=user_consulta,
             defaults={
-                "rut": "16.789.012-3",
-                "full_name": "Valeria Cáceres Soto",
-                "email": "auditoria.externa@laserena.cl",
+                "rut": "00.000.007-0",
+                "full_name": "Usuario Demo Consulta",
+                "email": "consulta@example.invalid",
                 "delegation": del_centro,
                 "position": pos_director,
                 "status": "Activo"
@@ -652,7 +708,7 @@ class Command(BaseCommand):
         # -------------------------------------------------------------
         # Caso Social en Las Compañías
         caso1, _ = SocialCase.objects.get_or_create(
-            user_rut="14.223.344-5",
+            user_rut="00.000.101-0",
             defaults={
                 "user_name": "Elena Morales Castro",
                 "contact_phone": "+56944332211",
@@ -683,7 +739,7 @@ class Command(BaseCommand):
 
         # Caso Social en Centro Histórico
         caso2, _ = SocialCase.objects.get_or_create(
-            user_rut="16.554.433-2",
+            user_rut="00.000.102-0",
             defaults={
                 "user_name": "Jorge Benítez Rojas",
                 "contact_phone": "+56933221100",
@@ -742,10 +798,7 @@ class Command(BaseCommand):
             "\n=======================================================\n"
             " CARGA REPRODUCIBLE DE DATOS COMPLETADA CON EXITO \n"
             "=======================================================\n"
-            "Cuentas de prueba listas para la demostracion:\n"
-            " - Administrador:       admin / Admin1234!\n"
-            " - Gestor Las Companias: funcionario_companias / Funcionario1234!\n"
-            " - Gestora Centro:       funcionario_centro / Funcionario1234!\n"
-            " - Verificador:          verificador / Verificador1234!\n"
+            "Cuentas de prueba disponibles solo en desarrollo.\n"
+            "Las claves existentes no se modificaron; rota las claves iniciales antes de compartir el entorno.\n"
             "======================================================="
         ))

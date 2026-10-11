@@ -999,8 +999,9 @@ body {
 .serena-sedes-pills-bar {
     display: flex !important;
     align-items: center !important;
+    flex-wrap: wrap !important;
     gap: 0.65rem !important;
-    overflow-x: visible !important;
+    overflow-x: clip !important;
     padding-bottom: 0.6rem !important;
     margin-bottom: 1.25rem !important;
     scrollbar-width: thin !important;
@@ -1034,23 +1035,99 @@ body {
 }
 
 .serena-sede-pill.active {
-    background: var(--muni-navy) !important;
-    color: #FFFFFF !important;
-    border-color: var(--muni-navy) !important;
+    background: #F8FAFC !important;
+    background: color-mix(in srgb, var(--delegation-color, var(--muni-navy)) 13%, #FFFFFF) !important;
+    color: var(--delegation-color, var(--muni-navy)) !important;
+    border-color: var(--delegation-color, var(--muni-navy)) !important;
     transform: none !important;
-    box-shadow: 0 4px 14px rgba(27, 54, 93, 0.22) !important;
+    box-shadow: 0 2px 8px rgba(27, 54, 93, 0.08) !important;
 }
 
 .serena-sede-pill .pill-dot {
     width: 8px !important;
     height: 8px !important;
     border-radius: 50% !important;
-    background: #94A3B8 !important;
+    background: var(--delegation-color, #94A3B8) !important;
     transition: background 0.2s ease !important;
 }
 
 .serena-sede-pill.active .pill-dot {
-    background: #F59E0B !important;
+    background: var(--delegation-color, #F59E0B) !important;
+}
+
+.mapa-delegaciones-real {
+    width: 100%;
+    height: 410px;
+    min-height: 320px;
+    overflow: hidden;
+    border: 1px solid #D8E0E9;
+    border-radius: 14px;
+    background: #E8EEF2;
+    z-index: 0;
+}
+
+.mapa-delegaciones-loader { padding: 0.6rem 0.8rem; color: #53677D; font-size: 0.78rem; }
+.mapa-delegaciones-loader.oculto { display: none; }
+
+.mapa-delegaciones-real .maplibregl-canvas { outline: none; }
+.mapa-delegaciones-real .maplibregl-ctrl-group { overflow: hidden; border: 1px solid rgba(27, 54, 93, .14); border-radius: 10px; box-shadow: 0 3px 12px rgba(15, 32, 56, .12); }
+.mapa-delegaciones-real .maplibregl-ctrl-attrib { font-size: 10px; }
+.map-focus-swatch { width: 11px; height: 11px; flex: 0 0 11px; border-radius: 50%; background: var(--delegation-color, #C41230); box-shadow: 0 0 0 4px color-mix(in srgb, var(--delegation-color, #C41230) 16%, transparent); }
+
+.mapa-delegacion-tooltip {
+    border: 0;
+    border-radius: 5px;
+    box-shadow: 0 1px 5px rgba(15, 32, 56, 0.16);
+    color: #17314F;
+    font: 600 12px/1.2 "Plus Jakarta Sans", sans-serif;
+}
+
+.mapa-fuente {
+    margin: 0.65rem 0 0;
+    color: #64748B;
+    font-size: 0.72rem;
+}
+
+.mapa-fuente a { color: #435B72; text-decoration: underline; text-underline-offset: 2px; }
+.mapa-error { padding: 2rem; color: #7F1D1D; font-size: 0.9rem; }
+
+.dia-calendario-item {
+    position: relative;
+    width: 38px;
+    height: 38px;
+    justify-self: center;
+    border: 1px solid transparent;
+    border-radius: 50%;
+    background: transparent;
+    color: #26384A;
+    cursor: pointer;
+    transition: transform 180ms cubic-bezier(.2,.75,.25,1), background-color 180ms ease, color 180ms ease, border-color 180ms ease, box-shadow 180ms ease;
+}
+
+.dia-calendario-item:hover { transform: translateY(-1px); background: #FFF1F3; border-color: rgba(196,18,48,.18); }
+.dia-calendario-item.fin-de-semana { color: #778391; }
+.dia-calendario-item.dia-calendario-adyacente { color: #9AA4B0; }
+.dia-calendario-item.hoy-destacado { border-color: rgba(196,18,48,.48); color: #9F1830; font-weight: 800; }
+.dia-calendario-item.hoy-destacado::after { position: absolute; bottom: 2px; left: 50%; width: 4px; height: 4px; border-radius: 50%; background: #C41230; content: ''; transform: translateX(-50%); }
+.dia-calendario-item.seleccionado { background: linear-gradient(145deg,#D91E3B 0%,#A60F2B 72%,#7E1326 100%); border-color: rgba(255,255,255,.48); color: #FFFFFF; font-weight: 800; box-shadow: 0 4px 12px rgba(155,18,44,.28), inset 0 1px 0 rgba(255,255,255,.24); transform: translateY(-1px); }
+.dia-calendario-item.seleccionado::after { display: none; }
+.dia-calendario-item:focus-visible { outline: 3px solid rgba(196, 18, 48, 0.3); outline-offset: 3px; }
+.calendario-fecha-seleccionada { display: flex; min-height: 2rem; align-items: center; gap: .4rem; margin: 0.65rem 0 0; padding: .4rem .65rem; border: 1px solid rgba(196,18,48,.12); border-radius: 10px; background: linear-gradient(105deg,rgba(196,18,48,.07),rgba(255,255,255,.74)); color: #43546A; font-size: 0.76rem; font-weight: 600; }
+.calendario-fecha-seleccionada:not(:empty)::before { color: #B51232; font-family: bootstrap-icons; content: '\f1f1'; }
+.dashboard-empty-state { padding: 1.15rem 1.25rem; border: 1px solid rgba(27,54,93,.08); background: linear-gradient(110deg,rgba(255,255,255,.94),rgba(249,250,252,.82)); }
+.dashboard-empty-icon { display:flex; width:38px; height:38px; flex:0 0 38px; align-items:center; justify-content:center; border-radius:11px; background:rgba(196,18,48,.08); color:#B51232; }
+
+.role-profile-card .role-card-icon { display:flex; width:36px; height:36px; flex:0 0 36px; align-items:center; justify-content:center; border-radius:10px; font-size:1.05rem; }
+.role-profile-card .role-card-title { margin:0; color:var(--muni-navy); font-size:0.94rem; font-weight:700; }
+.role-profile-card .role-card-kind,.role-profile-card .role-card-users { font-size:0.7rem; }
+.role-profile-card .role-card-description { min-height:2.5em; margin:0 0 0.4rem; color:#657180; font-size:0.76rem; line-height:1.4; }
+.role-profile-card .role-perm-matrix-bar { margin-top:0.75rem; }
+.role-profile-card .perm-mini-switch input:checked + .perm-mini-slider { background-color:var(--role-card-accent, var(--muni-red)); box-shadow:0 0 8px rgba(196,18,48,.18); }
+.role-cards-grid[data-ready="false"] { visibility:hidden; min-height:240px; }
+.role-cards-grid[data-ready="true"] { visibility:visible; }
+
+@media (max-width: 576px) {
+    .mapa-delegaciones-real { height: 320px; min-height: 280px; }
 }
 
 .serena-map-layout {

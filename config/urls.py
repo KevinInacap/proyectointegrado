@@ -10,6 +10,7 @@ urlpatterns = [
     path('organization/', include(('organization.urls', 'organization_direct'), namespace='organization_direct')),
     path('api/', include(('activities.urls', 'api'), namespace='api')),
     path('api/', include('organization.urls')),
+    path('api/catalogs/', include('metrics.urls')),
 ]
 
 if settings.DEBUG:

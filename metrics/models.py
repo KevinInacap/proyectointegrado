@@ -63,6 +63,7 @@ class MeasurementItem(BaseModel):
         ('Inactivo', 'Inactivo'),
     ]
 
+    code = models.CharField(max_length=30, unique=True, null=True, blank=True, verbose_name="Código del ítem")
     name = models.CharField(max_length=120, unique=True, verbose_name="Nombre del ítem de medición")
     description = models.TextField(blank=True, default='', verbose_name="Descripción operativa")
     item_type = models.CharField(max_length=30, choices=TYPE_CHOICES, default='Cuantitativo', verbose_name="Tipo de ítem")
@@ -82,6 +83,8 @@ class Goal(BaseModel):
     Metas y ponderadores por cargo, ítem y período (RF-006, RF-007, RN-001).
     Tabla: meta
     """
+    code = models.CharField(max_length=30, unique=True, null=True, blank=True, verbose_name="Código de la meta")
+    status = models.CharField(max_length=20, choices=MeasurementItem.STATUS_CHOICES, default='Activo')
     period = models.ForeignKey(
         MeasurementPeriod,
         on_delete=models.CASCADE,
@@ -112,6 +115,8 @@ class Goal(BaseModel):
 
     def clean(self):
         super().clean()
+        if self.target_value is not None and self.target_value <= 0:
+            raise ValidationError({'target_value': 'La meta debe ser positiva.'})
         if self.weight is not None and (self.weight <= 0 or self.weight > 100):
             raise ValidationError({
                 'weight': 'La ponderación de la meta debe ser un porcentaje positivo entre 1% y 100%.'
@@ -119,6 +124,43 @@ class Goal(BaseModel):
 
     def __str__(self):
         return f"{self.position} | {self.item}: {self.target_value} ({self.weight}%)"
+
+
+class AttentionType(BaseModel):
+    code = models.CharField(max_length=30, unique=True)
+    name = models.CharField(max_length=120, unique=True)
+    description = models.TextField(blank=True, default='')
+    status = models.CharField(max_length=20, choices=MeasurementItem.STATUS_CHOICES, default='Activo')
+
+    class Meta:
+        ordering = ['name', 'id']
+
+    def __str__(self):
+        return self.name
+
+
+class SubAttention(BaseModel):
+    code = models.CharField(max_length=30, unique=True)
+    name = models.CharField(max_length=120)
+    attention_type = models.ForeignKey(AttentionType, on_delete=models.PROTECT, related_name='subattentions')
+    description = models.TextField(blank=True, default='')
+    status = models.CharField(max_length=20, choices=MeasurementItem.STATUS_CHOICES, default='Activo')
+
+    class Meta:
+        ordering = ['attention_type_id', 'name', 'id']
+        constraints = [models.UniqueConstraint(fields=['attention_type', 'name'], name='unique_subattention_name_per_type')]
+
+    def clean(self):
+        super().clean()
+        if self.pk and self.attention_type_id and self.activities.exclude(
+            attention_type_id=self.attention_type_id
+        ).exists():
+            raise ValidationError({
+                'attention_type': 'No se puede cambiar el tipo de una subatención utilizada por actividades.'
+            })
+
+    def __str__(self):
+        return self.name
 
 
 class DailyIndicator(BaseModel):

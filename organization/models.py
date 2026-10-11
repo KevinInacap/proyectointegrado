@@ -4,15 +4,7 @@ from django.core.exceptions import ValidationError
 from core.models import BaseModel
 
 class Delegation(BaseModel):
-    """
-    Unidades territoriales de la Municipalidad de La Serena (RF-001).
-    Tabla: delegacion
-    """
-    STATUS_CHOICES = [
-        ('Activo', 'Activo'),
-        ('Inactivo', 'Inactivo'),
-    ]
-
+    STATUS_CHOICES = [('Activo', 'Activo'), ('Inactivo', 'Inactivo')]
     name = models.CharField(max_length=100, unique=True, verbose_name="Nombre de la delegación")
     scope = models.CharField(max_length=100, verbose_name="Ámbito territorial")
     address = models.CharField(max_length=200, blank=True, default='', verbose_name="Dirección")
@@ -34,15 +26,7 @@ class Delegation(BaseModel):
 
 
 class Position(BaseModel):
-    """
-    Cargos y funciones de funcionarios medidos en la Matriz SGR (RF-003).
-    Tabla: cargo
-    """
-    STATUS_CHOICES = [
-        ('Activo', 'Activo'),
-        ('Inactivo', 'Inactivo'),
-    ]
-
+    STATUS_CHOICES = [('Activo', 'Activo'), ('Inactivo', 'Inactivo')]
     name = models.CharField(max_length=100, unique=True, verbose_name="Nombre del cargo")
     description = models.TextField(blank=True, default='', verbose_name="Descripción del cargo")
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='Activo', verbose_name="Estado")
@@ -57,10 +41,6 @@ class Position(BaseModel):
 
 
 class Role(BaseModel):
-    """
-    Roles del sistema municipal (RF-002, RNF-005).
-    Tabla: rol
-    """
     name = models.CharField(max_length=50, unique=True, verbose_name="Nombre del rol")
     description = models.CharField(max_length=255, blank=True, default='', verbose_name="Descripción del rol")
     is_system = models.BooleanField(default=False, verbose_name="Rol de sistema protegido")
@@ -76,7 +56,6 @@ class Role(BaseModel):
 
 
 class PermissionDefinition(BaseModel):
-    """Permiso configurable creado desde el panel administrativo."""
     module_id = models.CharField(max_length=50, verbose_name="Módulo")
     code = models.CharField(max_length=100, unique=True, verbose_name="Código")
     name = models.CharField(max_length=120, verbose_name="Nombre")
@@ -92,59 +71,37 @@ class PermissionDefinition(BaseModel):
 
 
 class UserProfile(BaseModel):
-    """
-    Perfil institucional del funcionario municipal (RF-002).
-    Tabla: usuario
-    """
-    STATUS_CHOICES = [
-        ('Activo', 'Activo'),
-        ('Inactivo', 'Inactivo'),
-        ('Bloqueado', 'Bloqueado'),
-    ]
-
+    STATUS_CHOICES = [('Activo', 'Activo'), ('Inactivo', 'Inactivo'), ('Bloqueado', 'Bloqueado')]
     user = models.OneToOneField(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.CASCADE,
-        related_name='profile',
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='profile',
         verbose_name="Cuenta de usuario"
     )
     rut = models.CharField(max_length=12, unique=True, verbose_name="RUT")
     full_name = models.CharField(max_length=150, verbose_name="Nombre completo")
     email = models.EmailField(max_length=100, unique=True, verbose_name="Correo electrónico institucional")
     delegation = models.ForeignKey(
-        Delegation,
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        related_name='users',
-        verbose_name="Delegación asignada"
+        Delegation, on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='users', verbose_name="Delegación asignada"
     )
     position = models.ForeignKey(
-        Position,
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        related_name='users',
-        verbose_name="Cargo asignado"
+        Position, on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='users', verbose_name="Cargo asignado"
     )
     roles = models.ManyToManyField(
-        Role,
-        blank=True,
-        related_name='users',
-        verbose_name="Roles autorizados"
+        Role, blank=True, related_name='users', verbose_name="Roles autorizados"
     )
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='Activo', verbose_name="Estado")
 
     def clean(self):
         super().clean()
-        if self.delegation and getattr(self.delegation, 'status', None) == 'Inactivo':
-            raise ValidationError({
-                'delegation': 'No se puede asignar un funcionario a una delegación en estado Inactivo.'
-            })
-        if self.position and getattr(self.position, 'status', None) == 'Inactivo':
-            raise ValidationError({
-                'position': 'No se puede asignar un cargo que se encuentra en estado Inactivo.'
-            })
+        if self.delegation and (
+            self.delegation.status != 'Activo' or self.delegation.deleted_at is not None
+        ):
+            raise ValidationError({'delegation': 'La delegación debe estar activa y vigente.'})
+        if self.position and (
+            self.position.status != 'Activo' or self.position.deleted_at is not None
+        ):
+            raise ValidationError({'position': 'El cargo debe estar activo y vigente.'})
 
     class Meta:
         verbose_name = "Perfil de Funcionario"
@@ -153,4 +110,3 @@ class UserProfile(BaseModel):
 
     def __str__(self):
         return f"{self.full_name} ({self.rut})"
-

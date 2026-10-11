@@ -4,7 +4,7 @@ from django.core.exceptions import ValidationError
 from django.utils import timezone
 from core.models import BaseModel
 from organization.models import Delegation
-from metrics.models import MeasurementPeriod, MeasurementItem
+from metrics.models import MeasurementPeriod, MeasurementItem, AttentionType, SubAttention
 
 class ServiceCatalog(BaseModel):
     """
@@ -88,6 +88,14 @@ class Activity(BaseModel):
         related_name='activities',
         verbose_name="Clasificación en catálogo"
     )
+    attention_type = models.ForeignKey(
+        AttentionType, on_delete=models.PROTECT, null=True, blank=True,
+        related_name='activities', verbose_name='Tipo de atención',
+    )
+    subattention = models.ForeignKey(
+        SubAttention, on_delete=models.PROTECT, null=True, blank=True,
+        related_name='activities', verbose_name='Sub Atención',
+    )
     activity_date = models.DateField(verbose_name="Fecha de actividad")
     problem_description = models.TextField(verbose_name="Descripción del problema")
     executed_action = models.TextField(verbose_name="Acción ejecutada")
@@ -122,6 +130,15 @@ class Activity(BaseModel):
 
     def clean(self):
         super().clean()
+        if self.subattention_id and not self.attention_type_id:
+            raise ValidationError({
+                'attention_type': 'Debe seleccionar un Tipo de Atención para la Sub Atención.'
+            })
+        if self.attention_type_id and self.subattention_id:
+            if self.subattention.attention_type_id != self.attention_type_id:
+                raise ValidationError({
+                    'subattention': 'La Sub Atención no pertenece al Tipo seleccionado.'
+                })
         if self.activity_date and self.activity_date > timezone.now().date():
             raise ValidationError({
                 'activity_date': 'La fecha de la actividad no puede ser posterior a la fecha actual.'

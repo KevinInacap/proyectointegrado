@@ -83,28 +83,55 @@
             </div>
         </div>
 
-        <!-- 3. Barra de Filtro Rápido por Sector Comunal -->
-        <div class="delegacion-filter-pills-bar">
-            <button class="delegacion-filter-pill active" id="btn-filtro-todas" onclick="filtrarDelegacionesPorSector('todas')">
-                <i class="bi bi-grid-fill"></i> Todas las Sedes (6)
+        <!-- 3. Búsqueda y filtros combinables de delegaciones -->
+        <div class="d-flex flex-wrap align-items-center gap-2 my-3">
+            <input type="search" class="form-control rounded-pill" id="buscarDelegaciones" maxlength="150"
+                placeholder="Buscar por nombre, sector, dirección o contacto" aria-label="Buscar delegaciones">
+            <select class="form-select rounded-pill w-auto" id="estadoDelegaciones" aria-label="Filtrar delegaciones por estado">
+                <option value="">Todos los estados</option>
+                <option value="Activo">Activas</option>
+                <option value="Inactivo">Inactivas</option>
+            </select>
+            <select class="form-select rounded-pill w-auto" id="tamanoPaginaDelegaciones" aria-label="Delegaciones por página">
+                <option value="6">6 por página</option>
+                <option value="12">12 por página</option>
+                <option value="24">24 por página</option>
+            </select>
+            <button type="button" class="btn btn-outline-success rounded-pill" onclick="exportarDelegacionesExcel()">
+                <i class="bi bi-file-earmark-excel me-1"></i> Exportar a Excel
             </button>
-            <button class="delegacion-filter-pill" id="btn-filtro-urbano" onclick="filtrarDelegacionesPorSector('urbano')">
+            <span class="small text-muted ms-auto" id="resumenDelegaciones" aria-live="polite"></span>
+        </div>
+
+        <!-- 4. Barra de Filtro Rápido por Sector Comunal -->
+        <div class="delegacion-filter-pills-bar">
+            <button type="button" class="delegacion-filter-pill active" id="btn-filtro-todas" onclick="filtrarDelegacionesPorSector('todas')">
+                <i class="bi bi-grid-fill"></i> Todas las Sedes
+            </button>
+            <button type="button" class="delegacion-filter-pill" id="btn-filtro-urbano" onclick="filtrarDelegacionesPorSector('urbano')">
                 <i class="bi bi-building"></i> Casco Urbano & Barrios
             </button>
-            <button class="delegacion-filter-pill" id="btn-filtro-costa" onclick="filtrarDelegacionesPorSector('costa')">
+            <button type="button" class="delegacion-filter-pill" id="btn-filtro-costa" onclick="filtrarDelegacionesPorSector('costa')">
                 <i class="bi bi-water"></i> Borde Costero & Turismo
             </button>
-            <button class="delegacion-filter-pill" id="btn-filtro-rural" onclick="filtrarDelegacionesPorSector('rural')">
+            <button type="button" class="delegacion-filter-pill" id="btn-filtro-rural" onclick="filtrarDelegacionesPorSector('rural')">
                 <i class="bi bi-tree-fill"></i> Sector Rural & Caletas
             </button>
         </div>
 
-        <!-- 4. GRID DE LAS 6 DELEGACIONES CON FOTOGRAFÍA REAL HD 4K Y GLASSMORPHISM -->
+        <!-- 5. GRID DE DELEGACIONES -->
         <div class="delegacion-grid" id="delegacionesCardsGrid">
             <!-- Las 6 tarjetas se renderizan vía JS con sus fotos HD, badges y métricas -->
         </div>
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mt-3">
+            <span class="small text-muted" id="paginacionInfoDelegaciones">Cargando…</span>
+            <div class="btn-group" aria-label="Páginas de delegaciones">
+                <button type="button" class="btn btn-outline-secondary btn-sm" id="paginaAnteriorDelegaciones" onclick="cambiarPaginaDelegaciones(-1)">Anterior</button>
+                <button type="button" class="btn btn-outline-secondary btn-sm" id="paginaSiguienteDelegaciones" onclick="cambiarPaginaDelegaciones(1)">Siguiente</button>
+            </div>
+        </div>
 
-        <!-- 5. PANEL DE DETALLE EXCLUSIVO DE LA DELEGACIÓN SELECCIONADA -->
+        <!-- 6. PANEL DE DETALLE EXCLUSIVO DE LA DELEGACIÓN SELECCIONADA -->
         <div id="panelDetalleDelegacion" class="delegacion-detail-panel" style="display: none;">
             <!-- Contenido enriquecido cargado dinámicamente al seleccionar cualquier delegación -->
         </div>

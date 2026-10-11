@@ -469,6 +469,16 @@
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
         }
 
+        .btn-submit-muni:disabled {
+            cursor: wait;
+            opacity: 0.9;
+            transform: none;
+        }
+
+        .btn-submit-muni:disabled:hover {
+            box-shadow: 0 10px 24px rgba(70, 5, 20, 0.24);
+        }
+
         .btn-submit-muni:focus-visible {
             outline: 2px solid #FFFFFF;
             outline-offset: 3px;
@@ -481,71 +491,6 @@
 
         .btn-submit-muni:hover i {
             transform: translateX(3px);
-        }
-
-        /* ==========================================================================
-           7. ACCESOS RBAC: MICRO-CÁPSULAS DE VIDRIO SIN BORDES
-           ========================================================================== */
-        .demo-quick-access {
-            margin-top: 1.05rem;
-            display: flex;
-            flex-direction: column;
-            gap: 0.45rem;
-            align-items: center;
-        }
-
-        .demo-label {
-            font-size: 10px;
-            font-weight: 600;
-            color: rgba(255, 255, 255, 0.82);
-            text-transform: uppercase;
-            letter-spacing: 0.60px;
-            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
-        }
-
-        .demo-chips-group {
-            display: flex;
-            gap: 6px;
-            justify-content: center;
-            flex-wrap: wrap;
-        }
-
-        .demo-chip {
-            background: rgba(255, 255, 255, 0.07);
-            backdrop-filter: blur(6px);
-            -webkit-backdrop-filter: blur(6px);
-            border: none;
-            color: #FFFFFF;
-            font-size: 11px;
-            font-weight: 550;
-            padding: 5px 11px;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: all var(--motion-duration) var(--motion-ease);
-            user-select: none;
-            display: inline-flex;
-            align-items: center;
-            gap: 4.5px;
-            text-decoration: none;
-            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
-        }
-
-        .demo-chip:hover {
-            background: rgba(255, 255, 255, 0.14);
-            color: #FFFFFF;
-            transform: translateY(-1px);
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.16);
-        }
-
-        .demo-chip:focus-visible {
-            outline: 2px solid rgba(255, 255, 255, 0.6);
-            outline-offset: 2px;
-            color: #FFFFFF;
-        }
-
-        .demo-chip i {
-            font-size: 10px;
-            opacity: 0.85;
         }
 
         /* Pie del panel: texto blanco legible y discreto */
@@ -715,24 +660,6 @@
                         <i class="bi bi-arrow-right" aria-hidden="true"></i>
                     </button>
 
-                    <!-- Accesos Rápidos Demo (RBAC) -->
-                    <div class="demo-quick-access">
-                        <span class="demo-label">Acceso Rápido Demo (RBAC)</span>
-                        <div class="demo-chips-group">
-                            <a href="{% url 'core:login' %}?rol=admin" class="demo-chip"
-                                title="Vista Alcaldía y Control Comunal">
-                                <i class="bi bi-building" aria-hidden="true"></i> Admin / Alcaldía
-                            </a>
-                            <a href="{% url 'core:login' %}?rol=verificador" class="demo-chip"
-                                title="Vista Supervisor y Auditoría">
-                                <i class="bi bi-patch-check" aria-hidden="true"></i> Verificador / Supervisor
-                            </a>
-                            <a href="{% url 'core:login' %}?rol=gestor" class="demo-chip"
-                                title="Vista Terreno y Tubo de Trabajo">
-                                <i class="bi bi-geo-alt" aria-hidden="true"></i> Gestor / Terreno
-                            </a>
-                        </div>
-                    </div>
                 </form>
 
                 <footer class="auth-card-footer">
@@ -757,6 +684,7 @@
             const icon = document.getElementById('eyeIcon');
             const form = document.getElementById('loginForm');
             const usernameInput = document.getElementById('username');
+            const submitButton = document.getElementById('btnSubmit');
 
             // Alternar visibilidad de contraseña
             if (toggle && pwd && icon) {
@@ -770,16 +698,18 @@
 
             // Validación & Envío
             if (form && usernameInput && pwd) {
+                let submitting = false;
                 form.addEventListener('submit', function (e) {
                     e.preventDefault();
+                    if (submitting) return;
                     const rut = usernameInput.value.trim();
-                    const password = pwd.value.trim();
+                    const password = pwd.value;
 
                     if (!rut || !password) {
                         Swal.fire({
                             icon: 'warning',
                             title: 'Campos requeridos',
-                            text: 'Por favor, ingrese su RUT y contraseña institucional.',
+                            text: 'Por favor, ingrese su usuario, RUT o nombre y su contraseña.',
                             confirmButtonColor: '#B80003',
                             background: '#0F172A',
                             color: '#ffffff'
@@ -788,9 +718,7 @@
                     }
 
                     const identifierPattern = /^[A-Za-zÁÉÍÓÚÜÑáéíóúüñ0-9kK._\-\s]+$/;
-                    const suspiciousPattern = /[<>'";`]|--|\/\*|\*\/|\b(script|union|select|insert|update|delete|drop|alert)\b/i;
-
-                    if (!identifierPattern.test(rut) || rut.length > 150 || suspiciousPattern.test(rut) || suspiciousPattern.test(password)) {
+                    if (!identifierPattern.test(rut) || rut.length > 150) {
                         Swal.fire({
                             icon: 'warning',
                             title: 'Carácter no permitido',
@@ -802,19 +730,13 @@
                         return;
                     }
 
-                    Swal.fire({
-                        icon: 'success',
-                        title: 'Autenticación exitosa',
-                        text: 'Redirigiendo al panel...',
-                        showConfirmButton: false,
-                        timer: 850,
-                        background: '#0F172A',
-                        color: '#ffffff'
-                    });
-
-                    setTimeout(function () {
-                        form.submit();
-                    }, 850);
+                    submitting = true;
+                    if (submitButton) {
+                        submitButton.disabled = true;
+                        submitButton.setAttribute('aria-busy', 'true');
+                        submitButton.innerHTML = '<span>Validando acceso…</span><span class="spinner-border spinner-border-sm" aria-hidden="true"></span>';
+                    }
+                    form.submit();
                 });
             }
         });
