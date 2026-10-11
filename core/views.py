@@ -10,8 +10,6 @@ from django.template.loader import render_to_string
 from django.db import transaction
 from django.utils import timezone
 from datetime import timedelta
-from email.mime.image import MIMEImage
-from pathlib import Path
 import secrets
 import re
 from .models import PasswordRecoveryCode
@@ -23,7 +21,7 @@ class _RecoveryEmailError(Exception):
 
 
 def _send_password_recovery_email(full_name, recipient, code):
-    """Envía texto y HTML con la fotografía del portal adjunta por CID."""
+    """Envía el correo de recuperación en formato HTML y texto plano."""
     context = {'full_name': full_name, 'code': code, 'valid_minutes': 10}
     subject = 'Tu código para recuperar el acceso | Municipalidad de La Serena'
     message = EmailMultiAlternatives(
@@ -33,13 +31,6 @@ def _send_password_recovery_email(full_name, recipient, code):
         to=[recipient],
     )
     message.attach_alternative(render_to_string('emails/password_recovery.html', context), 'text/html')
-
-    hero_path = Path(settings.BASE_DIR) / 'static' / 'img' / 'faro_laserena_bg.jpg'
-    with hero_path.open('rb') as hero_file:
-        hero = MIMEImage(hero_file.read(), _subtype='jpeg')
-    hero.add_header('Content-ID', '<password-recovery-hero>')
-    hero.add_header('Content-Disposition', 'inline', filename='la-serena.jpg')
-    message.attach(hero)
     return message.send(fail_silently=False)
 
 
