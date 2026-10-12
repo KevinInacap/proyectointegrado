@@ -2388,10 +2388,15 @@
                                             <i class="bi bi-file-earmark-pdf-fill text-danger"></i> Credencial PDF
                                         </a>
                                     </li>
-                                    <li><hr class="dropdown-divider my-1"></li>
                                     <li>
                                         <a class="dropdown-item py-2 fw-semibold text-${isActivo ? 'danger' : 'success'} rounded-2 d-flex align-items-center gap-2" href="javascript:void(0)" onclick="toggleEstadoUsuario(${u.id})">
                                             <i class="bi bi-power"></i> ${isActivo ? 'Desactivar Acceso' : 'Activar Acceso'}
+                                        </a>
+                                    </li>
+                                    <li><hr class="dropdown-divider my-1"></li>
+                                    <li>
+                                        <a class="dropdown-item py-2 fw-semibold text-danger rounded-2 d-flex align-items-center gap-2" href="javascript:void(0)" onclick="eliminarUsuario(${u.id})">
+                                            <i class="bi bi-trash3 text-danger"></i> Eliminar Funcionario
                                         </a>
                                     </li>
                                 </ul>
@@ -2648,6 +2653,59 @@
             } catch (err) {
                 console.error("Error toggle:", err);
                 mostrarToast('⚠ Error al cambiar estado del usuario.');
+            }
+        }
+
+        async function eliminarUsuario(id) {
+            const u = datasetUsuarios.find(item => item.id === id);
+            const nombre = u ? u.full_name : 'este funcionario';
+
+            const result = await Swal.fire({
+                title: '¿Eliminar Funcionario?',
+                text: `¿Estás seguro de que deseas dar de baja a "${nombre}"? Esta acción desactivará su cuenta institucional.`,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#B80003',
+                cancelButtonColor: '#6c757d',
+                confirmButtonText: '<i class="bi bi-trash3-fill me-1"></i> Sí, eliminar',
+                cancelButtonText: 'Cancelar'
+            });
+
+            if (!result.isConfirmed) return;
+
+            try {
+                const res = await fetch(`/api/users/${id}/delete/`, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': getCookie('csrftoken') || '',
+                        'Content-Type': 'application/json'
+                    }
+                });
+                const data = await res.json();
+                if (!data.success) {
+                    Swal.fire({
+                        title: 'No se pudo eliminar',
+                        text: data.message || 'Error al eliminar usuario.',
+                        icon: 'error',
+                        confirmButtonColor: '#B80003'
+                    });
+                    return;
+                }
+                Swal.fire({
+                    title: 'Usuario Eliminado',
+                    text: data.message || 'El funcionario ha sido dado de baja exitosamente.',
+                    icon: 'success',
+                    confirmButtonColor: '#B80003'
+                });
+                cargarUsuariosDesdeDB(false);
+            } catch (err) {
+                console.error("Error al eliminar usuario:", err);
+                Swal.fire({
+                    title: 'Error de Servidor',
+                    text: 'Ocurrió un error al procesar la solicitud de baja.',
+                    icon: 'error',
+                    confirmButtonColor: '#B80003'
+                });
             }
         }
 
