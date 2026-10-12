@@ -48,6 +48,7 @@ cd proyectointegrado
 python -m venv .venv
 source .venv/Scripts/activate
 pip install -r requirements.txt
+cp .env.example .env
 python manage.py migrate
 python manage.py seed_data
 python manage.py runserver
@@ -55,15 +56,16 @@ python manage.py runserver
 
 Abre <http://127.0.0.1:8000/>. `seed_data` prepara los catálogos institucionales sin crear cuentas ni actividad ficticia. Para acceder, usa una cuenta creada por el administrador del entorno; este repositorio no publica contraseñas ni credenciales compartidas.
 
-En Windows PowerShell, activa el entorno con:
+En Windows PowerShell, activa el entorno y copia la configuración local con:
 
 ```powershell
 .venv\Scripts\Activate.ps1
+Copy-Item .env.example .env
 ```
 
 ## Configuración
 
-La aplicación toma sus parámetros desde variables de entorno. `.env.example` muestra los nombres disponibles; copia sus valores a un `.env` local y define una clave privada de Django, base de datos y correo según el entorno. El archivo `.env` está excluido de Git: no publiques claves, contraseñas ni datos personales.
+La aplicación toma sus parámetros desde variables de entorno. El ejemplo permite arrancar localmente con SQLite y una clave **solo de desarrollo**; cada persona debe copiarlo a su propio `.env`. No copies el `.env` de AWS ni subas claves o contraseñas a Git. Para un servidor, cambia `DEBUG=False`, usa una `SECRET_KEY` aleatoria privada y configura la base y el correo del entorno.
 
 El proyecto ya incluye el controlador `mysqlclient` y admite MySQL con `DB_ENGINE=mysql`, `DB_NAME`, `DB_USER`, `DB_PASSWORD`, `DB_HOST` y `DB_PORT`. Antes de cambiar el motor, configura una cuenta MySQL con permisos sobre una base vacía y respalda la base actual. Después aplica `python manage.py migrate`; mover registros de SQLite a MySQL requiere exportarlos e importarlos por separado. No cambies el `.env` compartido ni subas credenciales al repositorio.
 
