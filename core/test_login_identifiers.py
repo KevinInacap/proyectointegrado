@@ -42,3 +42,16 @@ class EmailAndRutLoginTests(TestCase):
             'password': 'ClavePruebaSegura2026!',
         })
         self.assertEqual(response.status_code, 401)
+
+    def test_login_accepts_exact_username(self):
+        response = self.client.post('/', {
+            'username': 'LOGIN-PRUEBA', 'password': 'ClavePruebaSegura2026!',
+        })
+        self.assertRedirects(response, '/activities/dashboard/admin/', fetch_redirect_response=False)
+
+    def test_text_containing_a_rut_is_not_a_rut_identity(self):
+        response = self.client.post('/', {
+            'username': 'intruso215714047', 'password': 'ClavePruebaSegura2026!',
+        })
+        self.assertEqual(response.status_code, 401)
+        self.assertNotIn('_auth_user_id', self.client.session)

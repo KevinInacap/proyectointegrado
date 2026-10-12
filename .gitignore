@@ -12,3 +12,5 @@ sgr_municipal*.backup
 *.swp
 .DS_Store
 .agents/
+*.pem
+*.key

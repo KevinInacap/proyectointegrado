@@ -25,10 +25,15 @@
             </div>
 
             <nav class="primary-nav" aria-label="Menú principal">
-                <a class="nav-link is-current" href="{% url 'activities:dashboard' %}" aria-current="page">
+                <a class="nav-link {% if not selected_module and not module_forbidden %}is-current{% endif %}" href="{% url 'activities:dashboard' %}" {% if not selected_module and not module_forbidden %}aria-current="page"{% endif %}>
                     <span class="nav-mark" aria-hidden="true">⌂</span>
                     <span>Inicio</span>
                 </a>
+                {% for card in dashboard_cards %}
+                <a class="nav-link {% if selected_module.slug == card.slug %}is-current{% endif %}" href="{{ card.url }}" {% if selected_module.slug == card.slug %}aria-current="page"{% endif %}>
+                    <span class="nav-mark" aria-hidden="true">{{ forloop.counter|stringformat:"02d" }}</span><span>{{ card.title }}</span>
+                </a>
+                {% endfor %}
             </nav>
 
             <div class="sidebar-photo" role="img" aria-label="Faro Monumental de La Serena">
@@ -37,6 +42,10 @@
         </aside>
 
         <main class="main-content">
+            <div class="identity-bar" aria-label="Contexto de trabajo">
+                <span><strong>{{ full_name }}</strong><small>{{ role_name }}</small></span>
+                <span><small>Delegación activa</small><strong>{% if delegation_code %}{{ delegation_code }} · {% endif %}{{ delegation_name }}</strong></span>
+            </div>
             <header class="page-heading">
                 <div>
                     <p class="eyebrow">Sistema de Gestión de Resultados</p>
@@ -59,6 +68,21 @@
                 </div>
             </section>
 
+            {% if selected_module or module_forbidden %}
+            <section class="module-panel" aria-labelledby="module-title">
+                <a class="module-back" href="{% url 'activities:dashboard' %}">← Volver a mi inicio</a>
+                {% if module_forbidden %}
+                <p class="eyebrow">Acceso restringido</p>
+                <h2 id="module-title">Este módulo no está autorizado para tu perfil</h2>
+                <p>Tu permiso pudo haber cambiado. Vuelve al inicio para consultar los accesos disponibles o comunícate con la administración.</p>
+                {% else %}
+                <p class="eyebrow">{{ position_name }} · {{ selected_module.title }}</p>
+                <h2 id="module-title">{{ selected_module.title }}</h2>
+                <p>{{ selected_module.description }}</p>
+                <div class="development-note" role="status"><strong>Funcionalidad en desarrollo</strong><p>Esta sección permite conocer el espacio de trabajo de tu cargo. Las operaciones estarán disponibles en una próxima etapa; aquí todavía no se registran ni modifican datos.</p></div>
+                {% endif %}
+            </section>
+            {% else %}
             <section class="work-section" aria-labelledby="work-title">
                 <div class="section-heading">
                     <div>
@@ -74,11 +98,13 @@
                         <h3>{{ card.title }}</h3>
                         <p>{{ card.description }}</p>
                         <span class="coming-soon">Disponible más adelante</span>
+                        <a class="module-link" href="{{ card.url }}" aria-label="Abrir {{ card.title }}">Abrir sección <span aria-hidden="true">→</span></a>
                     </article>
                     {% endfor %}
                     {% if not dashboard_cards %}<p class="empty-access">Tu rol no tiene accesos habilitados por ahora. Consulta con la administración si necesitas un permiso.</p>{% endif %}
                 </div>
             </section>
+            {% endif %}
 
             <footer class="page-footer">Ilustre Municipalidad de La Serena <span aria-hidden="true">·</span> Gestión social y atención ciudadana</footer>
         </main>

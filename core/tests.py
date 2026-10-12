@@ -52,10 +52,13 @@ class AuthenticationTests(SimpleTestCase):
         self.assertEqual(_messages.call_args.args[1], 'Usuario o contraseña incorrectos.')
 
     @patch.object(views, 'render', side_effect=fake_render)
+    @patch.object(views, '_find_profile_for_login')
     @patch.object(views, 'authenticate')
     @patch.object(views.messages, 'error')
-    def test_inactive_profile_cannot_login(self, _messages, auth, _render):
-        auth.return_value = SimpleNamespace(is_active=True, profile=SimpleNamespace(status='Bloqueado'))
+    def test_inactive_profile_cannot_login(self, _messages, auth, profile_mock, _render):
+        fake_user = SimpleNamespace(username='usuario')
+        profile_mock.return_value = SimpleNamespace(user=fake_user)
+        auth.return_value = SimpleNamespace(is_active=True, profile=SimpleNamespace(status='Bloqueado', deleted_at=None))
         with patch.object(views.LoginThrottle.objects, 'filter') as throttle, patch.object(views, '_record_login_failure', return_value=False):
             throttle.return_value.first.return_value = None
             response = views.login_view(self.request(data={'username': 'usuario', 'password': 'clave'}))

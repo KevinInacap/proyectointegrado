@@ -143,11 +143,13 @@
                     tr.append(element('td', 'py-3 px-3', value ?? ''));
                 });
                 const actions = element('td', 'py-3 px-3 text-end text-nowrap');
+                const view = button('Ver', () => viewRecord(panel, record.id), 'btn btn-sm btn-outline-secondary rounded-pill me-2');
+                view.setAttribute('aria-label', `Consultar ${record.name || record.code}`);
                 const edit = button('Editar', () => editRecord(panel, record.id), 'btn btn-sm btn-outline-secondary rounded-pill me-2');
                 const remove = button('Eliminar', () => deleteRecord(panel, record), 'btn btn-sm btn-outline-danger rounded-pill');
                 edit.setAttribute('aria-label', `Editar ${record.name || record.code}`);
                 remove.setAttribute('aria-label', `Eliminar ${record.name || record.code}`);
-                actions.append(edit, remove);
+                actions.append(view, edit, remove);
                 tr.append(actions);
                 panel.body.append(tr);
             });
@@ -191,6 +193,17 @@
         input.value = value ?? '';
         wrap.append(label, input);
         form.append(wrap);
+    }
+    async function viewRecord(panel, id) {
+        try {
+            const [record, refs] = await Promise.all([request(endpoint(panel.catalog, id)), references(panel.catalog)]);
+            const details = element('dl', 'text-start');
+            definitions[panel.catalog].columns.forEach(([key, label]) => {
+                const reference = refs[key]?.find(item => Number(item.id) === Number(record[key]));
+                details.append(element('dt', 'small text-muted mt-3', label), element('dd', '', reference?.name || record[key] || 'Sin información'));
+            });
+            await Swal.fire({titleText: `Consulta de ${definitions[panel.catalog].title}`, html: details, confirmButtonText: 'Cerrar', confirmButtonColor: '#8B1D2C'});
+        } catch (error) { await Swal.fire({icon: 'error', titleText: 'No se pudo consultar', text: error.message}); }
     }
     async function editRecord(panel, id) {
         if (panel.editing) return;
@@ -236,6 +249,7 @@
             if (result.isConfirmed) {
                 notice(panel, 'Registro guardado en el servidor.');
                 await refreshRelated(panel);
+                Swal.fire({icon: 'success', titleText: 'Registro guardado', confirmButtonColor: '#8B1D2C'});
             }
         } catch (error) { notice(panel, error.message, true); }
         finally { panel.editing = false; }
@@ -265,6 +279,7 @@
             if (result.isConfirmed) {
                 notice(panel, 'Registro eliminado en el servidor.');
                 await refreshRelated(panel);
+                Swal.fire({icon: 'success', titleText: 'Registro eliminado', confirmButtonColor: '#8B1D2C'});
             }
         } catch (error) { notice(panel, error.message, true); }
         finally { panel.editing = false; }
@@ -277,11 +292,14 @@
         notice(panel, 'Preparando el Excel con todas las páginas que cumplen los filtros…');
         try {
             const rows = [];
+            const filterSnapshot = panelQuery(panel, 1, 100);
             let page = 1;
             let count = 0;
             do {
-                const data = await request(`${endpoint(panel.catalog)}?${panelQuery(panel, page, 100)}`);
+                filterSnapshot.set('page', page);
+                const data = await request(`${endpoint(panel.catalog)}?${filterSnapshot}`);
                 if (!Array.isArray(data.results)) throw new Error('La respuesta del listado no es válida.');
+                if (!data.results.length && rows.length < data.count) throw new Error('El listado cambió durante la exportación. Recarga y vuelve a intentar.');
                 count = data.count;
                 data.results.forEach(record => {
                     const row = {};

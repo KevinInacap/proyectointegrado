@@ -81,6 +81,12 @@ class TypeForm(CatalogForm):
 
 
 class SubForm(CatalogForm):
+    def clean_attention_type(self):
+        attention_type = self.cleaned_data['attention_type']
+        if (not self.instance.pk or attention_type.pk != self.instance.attention_type_id) and attention_type.status != 'Activo':
+            raise forms.ValidationError('Selecciona un Tipo de Atención activo.')
+        return attention_type
+
     class Meta:
         model = SubAttention
         fields = ('code', 'name', 'attention_type', 'description', 'status')

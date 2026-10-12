@@ -620,11 +620,11 @@
 
                     <!-- Campo RUT / Usuario -->
                     <div class="form-field-group">
-                        <label class="form-field-label" for="username">Correo electrónico o RUT</label>
+                        <label class="form-field-label" for="username">Usuario, correo electrónico o RUT</label>
                         <div class="input-glass-container">
                             <i class="bi bi-person input-prefix-icon" aria-hidden="true"></i>
                             <input type="text" id="username" name="username" class="form-control-glass"
-                                placeholder="12.345.678-K o nombre@correo.com" required autocomplete="username">
+                                placeholder="Tu usuario, correo o RUT" required autocomplete="username">
                         </div>
                     </div>
 
@@ -709,7 +709,7 @@
                         Swal.fire({
                             icon: 'warning',
                             title: 'Campos requeridos',
-                            text: 'Por favor, ingrese su usuario, RUT o nombre y su contraseña.',
+                            text: 'Ingresa tu usuario, correo o RUT y tu contraseña.',
                             confirmButtonColor: '#B80003',
                             background: '#0F172A',
                             color: '#ffffff'
@@ -722,7 +722,7 @@
                         Swal.fire({
                             icon: 'warning',
                             title: 'Carácter no permitido',
-                            text: 'Ingrese un correo electrónico válido o un RUT.',
+                            text: 'Ingresa tu nombre de usuario, un correo válido o un RUT.',
                             confirmButtonColor: '#B80003',
                             background: '#0F172A',
                             color: '#ffffff'

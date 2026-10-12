@@ -74,7 +74,7 @@ def _record_login_failure(key, now):
 
 
 def _find_profile_for_login(identifier):
-    """Resuelve una cuenta por RUT o correo electrónico registrado."""
+    """Resuelve una identidad exacta por usuario, correo o RUT, sin coincidencias parciales."""
     normalized_identifier = (identifier or '').strip()
     if '@' in normalized_identifier:
         matches = UserProfile.objects.select_related('user').filter(
@@ -83,14 +83,19 @@ def _find_profile_for_login(identifier):
         return matches.first() if matches.count() == 1 else None
 
     normalized_rut = _normalize_rut(identifier)
-    if normalized_rut and normalized_rut[:-1].isdigit():
+    if re.fullmatch(r'[0-9.]+-?[0-9kK]', normalized_identifier):
         matches = list(UserProfile.objects.select_related('user')
                        .filter(deleted_at__isnull=True)
                        .annotate(normalized_rut=Upper(Replace(Replace(F('rut'), Value('.'), Value('')), Value('-'), Value(''))))
                        .filter(normalized_rut=normalized_rut)[:2])
         if len(matches) == 1:
             return matches[0]
-    return None
+        if matches:
+            return None
+    matches = list(UserProfile.objects.select_related('user').filter(
+        user__username__iexact=normalized_identifier, deleted_at__isnull=True,
+    )[:2])
+    return matches[0] if len(matches) == 1 else None
 
 
 def _normalized_label(value):
@@ -108,6 +113,7 @@ def dashboard_route_for_position(position_name):
         'verificador tecnico': 'activities:dashboard_verificador',
         'asistente social': 'activities:dashboard_asistente',
         'auditor municipal': 'activities:dashboard_auditor',
+        'usuario de consulta': 'activities:dashboard_consulta',
     }.get(_normalized_label(position_name), 'activities:dashboard_cargo' if _normalized_label(position_name) else 'core:login')
 
 

@@ -4,6 +4,8 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from django.core.exceptions import ValidationError
 from django.utils import timezone
+from django.utils.text import slugify
+from django.urls import reverse
 from .models import Activity, Evidence, Validation
 from organization.models import Delegation, UserProfile
 from core.models import AuditLog
@@ -151,8 +153,8 @@ POSITION_DASHBOARD_CONTENT = {
 }
 
 
-def _position_dashboard(request, expected_position=None):
-    """Panel visual sin operaciones; el cargo define el panel y el rol se muestra aparte."""
+def _position_dashboard(request, expected_position=None, module_slug=None):
+    """El cargo define las pantallas y los permisos vigentes autorizan cada navegación."""
     profile = _actor(request)
     if not profile or not profile.position or profile.position.status != 'Activo' or profile.position.deleted_at is not None:
         return redirect('core:login')
@@ -171,23 +173,32 @@ def _position_dashboard(request, expected_position=None):
         for code in role_permission_codes(role)
     }
     cards = [
-        {'title': title, 'description': description}
+        {'title': title, 'description': description, 'slug': slugify(title),
+         'url': reverse('activities:dashboard_module', args=[slugify(title)])}
         for title, description, required in details['cards']
         if required in granted or request.user.is_superuser
     ]
+    selected_module = next((card for card in cards if card['slug'] == module_slug), None)
     context = {
         'full_name': profile.full_name or request.user.get_username(),
         'first_name': first_name,
         'position_name': position_name,
-        'role_name': profile.roles.filter(deleted_at__isnull=True).values_list('name', flat=True).first() or 'Sin rol asignado',
+        'role_name': ', '.join(profile.roles.filter(deleted_at__isnull=True).values_list('name', flat=True)) or 'Sin rol asignado',
         'delegation_name': profile.delegation.name if profile.delegation else 'Sin delegación asignada',
         'delegation_code': profile.delegation.code if profile.delegation else '',
         'dashboard_subtitle': details['subtitle'],
         'dashboard_description': details['description'],
         'dashboard_cards': cards,
         'is_placeholder': True,
+        'selected_module': selected_module,
+        'module_forbidden': bool(module_slug and not selected_module),
     }
-    return render(request, 'activities/dashboard_position.html', context)
+    return render(request, 'activities/dashboard_position.html', context,
+                  status=403 if context['module_forbidden'] else 200)
+
+
+def dashboard_module_view(request, module_slug):
+    return _position_dashboard(request, module_slug=module_slug)
 
 
 def dashboard_coordinador_view(request):

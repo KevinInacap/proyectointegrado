@@ -8,6 +8,7 @@
                                 style="color: var(--muni-navy); font-size: 1.65rem; letter-spacing: -0.3px;">Roles</h2>
                         </div>
                         <div class="d-flex align-items-center gap-2">
+                            <button type="button" class="btn btn-outline-secondary rounded-pill px-3 py-1 fw-semibold small" onclick="exportarExcelRoles()">Exportar a Excel</button>
                             <button class="btn btn-outline-secondary rounded-pill px-3 py-1 fw-semibold small"
                                 onclick="abrirModalMatrizMyAdmin()" title="Ver matriz completa de permisos">
                                 <i class="bi bi-grid-3x3 me-1"></i> Matriz de Permisos
@@ -176,7 +177,7 @@
                                 <span class="input-group-text bg-white border-end-0 text-muted"><i
                                         class="bi bi-search"></i></span>
                                 <input type="text" class="form-control border-start-0" id="searchRolesInput"
-                                    onkeyup="filtrarRoles()" placeholder="Buscar...">
+                                    oninput="filtrarRoles()" placeholder="Buscar por nombre, descripción o permiso">
                             </div>
                             <select class="form-select form-select-sm" id="filtroTipoRol" onchange="filtrarRoles()"
                                 style="width: auto;">

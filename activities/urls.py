@@ -14,6 +14,7 @@ urlpatterns = [
     path('dashboard/asistente-social/', views.dashboard_asistente_view, name='dashboard_asistente'),
     path('dashboard/auditoria/', views.dashboard_auditor_view, name='dashboard_auditor'),
     path('dashboard/cargo/', views.dashboard_cargo_view, name='dashboard_cargo'),
+    path('dashboard/modulo/<slug:module_slug>/', views.dashboard_module_view, name='dashboard_module'),
     path('nueva/', views.activity_create_view, name='activity_create'),
     path('api/vecinos/', views.api_vecinos, name='api_vecinos_prefixed'),
     path('api/vecinos/<int:pk>/', views.api_vecino_detail, name='api_vecino_detail_prefixed'),

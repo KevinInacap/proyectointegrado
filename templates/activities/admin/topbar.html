@@ -47,7 +47,7 @@
                 <div class="dropdown">
                     <button class="user-dropdown-btn" type="button" data-bs-toggle="dropdown" aria-expanded="false">
                         <span class="user-avatar-img" aria-hidden="true">{{ user_name|default:user.get_full_name|default:user.username|slice:":1"|upper }}</span>
-                        <span class="user-identity d-none d-sm-flex">
+                        <span class="user-identity">
                             <span class="user-info-text">{{ user_name|default:user.get_full_name|default:user.username|default:'Usuario Municipal' }}</span>
                             <span class="user-context-text">
                                 {{ user_role|default:'Sin rol asignado' }}

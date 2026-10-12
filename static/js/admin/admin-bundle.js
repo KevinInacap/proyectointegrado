@@ -4471,12 +4471,12 @@
                 tr.innerHTML = `
                     <td class="text-center fw-semibold text-secondary" style="font-size: 0.90rem;">${rowNum}</td>
                     <td>
-                        <span class="fw-bold" style="color: var(--muni-navy); font-size: 0.94rem;">${r.name}</span>
+                        <span class="fw-bold" style="color: var(--muni-navy); font-size: 0.94rem;">${escapeHtml(r.name)}</span>
                     </td>
-                    <td class="text-secondary" style="font-size: 0.88rem;">${r.description || 'Sin descripción'}</td>
+                    <td class="text-secondary" style="font-size: 0.88rem;">${escapeHtml(r.description || 'Sin descripción')}<small class="d-block mt-1">Estado: Activo · Alcance: ${r.is_admin_role ? 'Comunal' : 'Delegación asignada'}</small></td>
                     <td>${permsHtml}</td>
                     <td class="text-center">
-                        <span class="badge bg-light text-dark border px-2 py-1" style="font-size: 0.80rem;" title="${(r.users_sample || []).join(', ') || 'Sin funcionarios vinculados'}">
+                        <span class="badge bg-light text-dark border px-2 py-1" style="font-size: 0.80rem;" title="${escapeHtml((r.users_sample || []).join(', ') || 'Sin funcionarios vinculados')}">
                             ${r.users_count || 0}
                         </span>
                     </td>
@@ -4953,12 +4953,10 @@
                     body: JSON.stringify({ module_id: moduleId, code, name, desc })
                 });
                 const data = await res.json();
-                if (data.success && data.catalog) {
-                    datasetCatalogPermisos = data.catalog;
-                } else {
-                    const targetMod = datasetCatalogPermisos.find(m => m.module_id === moduleId) || datasetCatalogPermisos[0];
-                    targetMod.permissions.push({ code, name, desc });
+                if (!res.ok || data.success !== true || !Array.isArray(data.catalog)) {
+                    throw new Error(data.message || 'El servidor no confirmó el guardado.');
                 }
+                datasetCatalogPermisos = data.catalog;
 
                 // Darle automáticamente la nueva función al Administrador
                 const adminRol = datasetRoles.find(r => r.name === 'Administrador');
@@ -4971,11 +4969,7 @@
                 filtrarRoles();
                 mostrarToast(`Nueva función "${name}" agregada exitosamente.`);
             } catch (err) {
-                const targetMod = datasetCatalogPermisos.find(m => m.module_id === moduleId) || datasetCatalogPermisos[0];
-                targetMod.permissions.push({ code, name, desc });
-                if (bsModalNuevaFuncion) bsModalNuevaFuncion.hide();
-                filtrarRoles();
-                mostrarToast(`Nueva función "${name}" registrada.`);
+                Swal.fire({icon: 'error', title: 'No se guardó la función', text: err.message || 'Comprueba tu conexión e inténtalo otra vez.'});
             }
         }
 
@@ -5000,7 +4994,7 @@
             `;
             datasetRoles.forEach(r => {
                 headHtml += `<th style="min-width: 130px;">
-                    <div class="fw-bold" style="font-size: 0.82rem; color: var(--muni-navy);">${r.name}</div>
+                    <div class="fw-bold" style="font-size: 0.82rem; color: var(--muni-navy);">${escapeHtml(r.name)}</div>
                     <span class="text-muted" style="font-size: 0.68rem;">${r.permissions_count || 0} perms</span>
                 </th>`;
             });
@@ -5031,7 +5025,7 @@
                         const isChecked = (r.permissions || []).includes(p.code);
                         bodyHtml += `
                             <td>
-                                <input type="checkbox" class="myadmin-toggle-switch" data-role-id="${r.id}" data-perm-code="${p.code}" ${isChecked ? 'checked' : ''}>
+                                <input type="checkbox" class="myadmin-toggle-switch" data-role-id="${r.id}" data-perm-code="${escapeHtml(p.code)}" aria-label="${escapeHtml(p.name)} para ${escapeHtml(r.name)}" ${isChecked ? 'checked' : ''} ${r.is_system || r.is_admin_role ? 'disabled title="Rol de sistema protegido; usa sus controles generales habilitados"' : ''}>
                             </td>
                         `;
                     });
@@ -5046,7 +5040,7 @@
 
         async function guardarMatrizTransversalGlobal() {
             const table = document.getElementById('tablaMatrizTransversal');
-            if (!table) return;
+            if (!table || table.dataset.saving === 'true') return;
 
             const checkboxes = table.querySelectorAll('input.myadmin-toggle-switch');
             const rolePermsMap = {};
@@ -5060,15 +5054,18 @@
                 }
             });
 
-            // Guardar en la base de datos para cada rol modificado
+            table.dataset.saving = 'true';
+            const failures = [];
+            // Cada respuesta debe confirmar persistencia antes de actualizar la vista.
             let updatedCount = 0;
             for (const [rId, perms] of Object.entries(rolePermsMap)) {
                 const role = datasetRoles.find(r => r.id === parseInt(rId));
-                if (role) {
-                    role.permissions = perms;
-                    role.permissions_count = perms.length;
+                if (role && !role.is_system && !role.is_admin_role) {
+                    const displayed = new Set([...checkboxes].filter(cb => Number(cb.dataset.roleId) === Number(rId)).map(cb => cb.dataset.permCode));
+                    const complete = [...new Set([...perms, ...(role.permissions || []).filter(code => !displayed.has(code))])];
+                    if (JSON.stringify([...complete].sort()) === JSON.stringify([...(role.permissions || [])].sort())) continue;
                     try {
-                        await fetch(`/api/roles/${rId}/update/`, {
+                        const response = await fetch(`/api/roles/${rId}/update/`, {
                             method: 'POST',
                             headers: {
                                 'Content-Type': 'application/json',
@@ -5077,19 +5074,27 @@
                             body: JSON.stringify({
                                 name: role.name,
                                 description: role.description,
-                                permissions: perms
+                                permissions: complete
                             })
                         });
+                        const data = await response.json();
+                        if (!response.ok || data.success !== true) throw new Error(data.message || 'Guardado rechazado.');
                         updatedCount++;
                     } catch (e) {
-                        console.warn("Error guardando rol en matriz:", e);
+                        failures.push(`${role.name}: ${e.message}`);
                     }
                 }
             }
 
-            if (bsModalMatrizMyAdmin) bsModalMatrizMyAdmin.hide();
-            filtrarRoles();
-            mostrarToast(`Matriz de permisos guardada: ${updatedCount} roles actualizados.`);
+            table.dataset.saving = 'false';
+            await initRolesView(false);
+            if (failures.length) {
+                Swal.fire({icon: 'error', title: 'Hay cambios sin guardar', text: `${updatedCount} roles guardados. ${failures.join(' ')}`});
+                abrirModalMatrizMyAdmin();
+            } else {
+                if (bsModalMatrizMyAdmin) bsModalMatrizMyAdmin.hide();
+                mostrarToast(updatedCount ? `Matriz guardada: ${updatedCount} roles actualizados.` : 'No hay cambios pendientes.');
+            }
         }
 
         // ==============================================================================
@@ -5659,6 +5664,7 @@
                 if (!resp.ok || data.success !== true) {
                     throw new Error(data.message || 'No se pudo guardar el permiso.');
                 }
+                await initRolesView(false);
                 Swal.fire({
                     toast: true,
                     position: 'top-end',
