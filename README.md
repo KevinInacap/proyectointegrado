@@ -56,11 +56,17 @@ python manage.py runserver
 
 Abre <http://127.0.0.1:8000/>. `seed_data` prepara los catálogos institucionales sin crear cuentas ni actividad ficticia. Para acceder, usa una cuenta creada por el administrador del entorno; este repositorio no publica contraseñas ni credenciales compartidas.
 
-En Windows PowerShell, activa el entorno y copia la configuración local con:
+Si prefieres Windows PowerShell, ejecuta el equivalente sin activar el entorno (así no dependes de la política de ejecución):
 
 ```powershell
-.venv\Scripts\Activate.ps1
+git clone https://github.com/KevinInacap/proyectointegrado.git
+Set-Location proyectointegrado
+py -m venv .venv
+.\.venv\Scripts\python.exe -m pip install -r requirements.txt
 Copy-Item .env.example .env
+.\.venv\Scripts\python.exe manage.py migrate
+.\.venv\Scripts\python.exe manage.py seed_data
+.\.venv\Scripts\python.exe manage.py runserver
 ```
 
 ## Configuración
