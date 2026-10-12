@@ -45,7 +45,9 @@ class AuthenticationTests(SimpleTestCase):
     @patch.object(views, '_find_profile_for_login', return_value=None)
     @patch.object(views.messages, 'error')
     def test_invalid_login_is_generic(self, _messages, _profile, _auth, _render):
-        response = views.login_view(self.request(data={'username': 'nadie', 'password': 'secreto'}))
+        with patch.object(views.LoginThrottle.objects, 'filter') as throttle, patch.object(views, '_record_login_failure', return_value=False):
+            throttle.return_value.first.return_value = None
+            response = views.login_view(self.request(data={'username': 'nadie', 'password': 'secreto'}))
         self.assertEqual(response.status_code, 401)
         self.assertEqual(_messages.call_args.args[1], 'Usuario o contraseña incorrectos.')
 
@@ -54,7 +56,9 @@ class AuthenticationTests(SimpleTestCase):
     @patch.object(views.messages, 'error')
     def test_inactive_profile_cannot_login(self, _messages, auth, _render):
         auth.return_value = SimpleNamespace(is_active=True, profile=SimpleNamespace(status='Bloqueado'))
-        response = views.login_view(self.request(data={'username': 'usuario', 'password': 'clave'}))
+        with patch.object(views.LoginThrottle.objects, 'filter') as throttle, patch.object(views, '_record_login_failure', return_value=False):
+            throttle.return_value.first.return_value = None
+            response = views.login_view(self.request(data={'username': 'usuario', 'password': 'clave'}))
         self.assertEqual(response.status_code, 401)
 
     @patch.object(views, 'render', side_effect=fake_render)

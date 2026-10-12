@@ -66,3 +66,14 @@ class PasswordRecoveryCode(BaseModel):
     @property
     def is_valid(self):
         return self.used_at is None and timezone.now() < self.expires_at and self.attempts < 5
+
+
+class LoginThrottle(models.Model):
+    """Contador temporal de intentos por IP; no conserva direcciones en claro."""
+    ip_key = models.CharField(max_length=64, primary_key=True)
+    failures = models.PositiveSmallIntegerField(default=0)
+    window_started_at = models.DateTimeField(default=timezone.now)
+    blocked_until = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        db_table = 'limite_intentos_login'

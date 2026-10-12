@@ -11,8 +11,8 @@ from django.core.exceptions import ValidationError
 from django.test import Client, TestCase, override_settings
 from django.utils import timezone
 
-from core.models import PasswordRecoveryCode
-from organization.models import Role, UserProfile
+from core.models import LoginThrottle, PasswordRecoveryCode
+from organization.models import Position, Role, UserProfile
 
 
 WEAK_PASSWORDS = ('Ab1!xyz', 'abcdefgh9!', 'ABCDEFGH9!', 'Abcdefghi!', 'Abcdefghi9', 'Abcdefghi9 ')
@@ -153,6 +153,32 @@ class Audit2AuthTests(TestCase):
                                   content_type='application/json')
         self.assertEqual(response.status_code, 403)
         self.assertFalse(Role.objects.filter(name='Sin CSRF').exists())
+
+    def test_login_rate_limit_is_per_origin_and_expires(self):
+        for attempt in range(20):
+            response = self.client.post('/', {'username': self.profile.email, 'password': 'incorrecta'},
+                                        REMOTE_ADDR='198.51.100.10')
+            self.assertEqual(response.status_code, 429 if attempt == 19 else 401)
+        self.assertEqual(LoginThrottle.objects.count(), 1)
+        self.assertEqual(self.client.post('/', {
+            'username': self.profile.email, 'password': 'Anterior49!'
+        }, REMOTE_ADDR='198.51.100.10').status_code, 429)
+        self.assertEqual(self.client.post('/', {
+            'username': self.profile.email, 'password': 'Anterior49!'
+        }, REMOTE_ADDR='198.51.100.10', HTTP_X_REAL_IP='198.51.100.99').status_code, 429)
+        self.assertEqual(self.client.post('/', {
+            'username': self.profile.email, 'password': 'incorrecta'
+        }, REMOTE_ADDR='198.51.100.11').status_code, 401)
+
+        throttle = LoginThrottle.objects.get(failures=20)
+        throttle.blocked_until = timezone.now() - timedelta(seconds=1)
+        throttle.save(update_fields=['blocked_until'])
+        self.profile.position, _ = Position.objects.get_or_create(name='Administrador General')
+        self.profile.save(update_fields=['position', 'updated_at'])
+        self.assertEqual(self.client.post('/', {
+            'username': self.profile.email, 'password': 'Anterior49!'
+        }, REMOTE_ADDR='198.51.100.10').status_code, 302)
+        self.assertFalse(LoginThrottle.objects.filter(pk=throttle.pk).exists())
 
     def test_mail_failure_has_same_public_response_as_unknown_account(self):
         with patch('core.views._send_password_recovery_email', side_effect=RuntimeError('offline')):

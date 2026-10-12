@@ -12,10 +12,13 @@ from django.db.models import F, Value
 from django.db.models.functions import Replace, Upper
 from django.utils import timezone
 from datetime import timedelta
+import hashlib
+import hmac
+import ipaddress
 import secrets
 import re
 import unicodedata
-from .models import PasswordRecoveryCode
+from .models import LoginThrottle, PasswordRecoveryCode
 from organization.models import UserProfile
 
 
@@ -42,6 +45,32 @@ def _send_password_recovery_email(full_name, recipient, code):
 
 def _normalize_rut(value):
     return re.sub(r'[^0-9kK]', '', value or '').upper()
+
+
+def _login_rate_key(request):
+    """Usa la IP real solo cuando la petición viene del proxy local de confianza."""
+    origin = request.META.get('REMOTE_ADDR', '')
+    if origin in ('127.0.0.1', '::1'):
+        origin = request.META.get('HTTP_X_REAL_IP', origin)
+    try:
+        origin = str(ipaddress.ip_address(origin))
+    except (TypeError, ValueError):
+        origin = 'origen-desconocido'
+    return hmac.new(settings.SECRET_KEY.encode(), origin.encode(), hashlib.sha256).hexdigest()
+
+
+def _record_login_failure(key, now):
+    with transaction.atomic():
+        attempt, _ = LoginThrottle.objects.select_for_update().get_or_create(ip_key=key)
+        if now - attempt.window_started_at >= timedelta(minutes=5):
+            attempt.failures = 0
+            attempt.window_started_at = now
+            attempt.blocked_until = None
+        attempt.failures += 1
+        if attempt.failures >= 20:
+            attempt.blocked_until = now + timedelta(minutes=5)
+        attempt.save(update_fields=['failures', 'window_started_at', 'blocked_until'])
+        return bool(attempt.blocked_until and attempt.blocked_until > now)
 
 
 def _find_profile_for_login(identifier):
@@ -102,6 +131,12 @@ def login_view(request):
         for key in ('user_role', 'user_position', 'user_name', 'user_rut', 'user_delegation'):
             request.session.pop(key, None)
     if request.method == 'POST':
+        now = timezone.now()
+        rate_key = _login_rate_key(request)
+        throttle = LoginThrottle.objects.filter(pk=rate_key).first()
+        if throttle and throttle.blocked_until and throttle.blocked_until > now:
+            messages.error(request, 'Demasiados intentos. Intenta de nuevo en unos minutos.')
+            return render(request, 'login.html', status=429)
         identifier = request.POST.get('username', '').strip()
         password = request.POST.get('password', '')
         user = None
@@ -111,14 +146,17 @@ def login_view(request):
                 user = authenticate(request, username=profile.user.username, password=password)
 
         if user is None or not user.is_active:
-            messages.error(request, 'Usuario o contraseña incorrectos.')
-            return render(request, 'login.html', status=401)
+            limited = _record_login_failure(rate_key, now)
+            messages.error(request, 'Demasiados intentos. Intenta de nuevo en unos minutos.' if limited else 'Usuario o contraseña incorrectos.')
+            return render(request, 'login.html', status=429 if limited else 401)
 
         profile = getattr(user, 'profile', None)
         if profile is None or profile.status != 'Activo' or profile.deleted_at is not None:
-            messages.error(request, 'Usuario o contraseña incorrectos.')
-            return render(request, 'login.html', status=401)
+            limited = _record_login_failure(rate_key, now)
+            messages.error(request, 'Demasiados intentos. Intenta de nuevo en unos minutos.' if limited else 'Usuario o contraseña incorrectos.')
+            return render(request, 'login.html', status=429 if limited else 401)
 
+        LoginThrottle.objects.filter(pk=rate_key).delete()
         return _start_session_for_user(request, user, profile)
 
     return render(request, 'login.html')
