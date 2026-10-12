@@ -135,6 +135,25 @@ class Audit2AuthTests(TestCase):
         self.assertNotContains(response, 'Autenticación exitosa', status_code=401)
         self.assertNotContains(response, 'Redirigiendo al panel', status_code=401)
 
+    def test_sql_injection_like_identifier_never_bypasses_login_or_api(self):
+        attacker = Client()
+        for identifier in ("' OR '1'='1' --", "audit@example.test' OR '1'='1"):
+            with self.subTest(identifier=identifier):
+                response = attacker.post('/', {'username': identifier, 'password': 'incorrecta'})
+                self.assertEqual(response.status_code, 401)
+                self.assertNotIn('_auth_user_id', attacker.session)
+        self.assertEqual(attacker.get('/api/users/').status_code, 403)
+        self.assertEqual(attacker.get('/api/roles/').status_code, 403)
+        self.assertEqual(attacker.get('/activities/dashboard/admin/').status_code, 302)
+
+    def test_admin_write_requires_csrf_token(self):
+        protected = Client(enforce_csrf_checks=True)
+        protected.force_login(self.user)
+        response = protected.post('/api/roles/create/', data='{"name":"Sin CSRF","permissions":[]}',
+                                  content_type='application/json')
+        self.assertEqual(response.status_code, 403)
+        self.assertFalse(Role.objects.filter(name='Sin CSRF').exists())
+
     def test_mail_failure_has_same_public_response_as_unknown_account(self):
         with patch('core.views._send_password_recovery_email', side_effect=RuntimeError('offline')):
             failed = self.client.post('/recuperar-clave/', {'identifier': self.profile.email})

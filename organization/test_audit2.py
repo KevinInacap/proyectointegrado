@@ -265,3 +265,73 @@ class Audit2OrganizationTests(TestCase):
         self.assertContains(page, 'Aquí se consultarán los registros de atención.')
         self.assertNotContains(page, 'Aquí se revisará el estado de las solicitudes.')
         self.assertNotContains(page, 'Aquí se mostrarán las tareas asignadas.')
+
+    def test_non_admin_cannot_read_or_change_other_delegations(self):
+        own = Delegation.objects.create(name='Sede propia', scope='Centro')
+        other = Delegation.objects.create(name='Sede ajena', scope='Sur')
+        self.admin_profile.delegation = own
+        self.admin_profile.save(update_fields=['delegation', 'updated_at'])
+        self.target_profile.delegation = other
+        self.target_profile.save(update_fields=['delegation', 'updated_at'])
+        shared = Role.objects.create(name='Rol compartido', permissions_data=[])
+        self.admin_profile.roles.clear()
+        self.admin_profile.roles.add(shared)
+        self.target_profile.roles.add(shared)
+        limited = Role.objects.create(name='Permisos territoriales', permissions_data=[
+            'delegaciones.view', 'delegaciones.create', 'delegaciones.edit',
+            'delegaciones.delete', 'usuarios.view', 'roles.view',
+        ])
+        self.admin_profile.roles.add(limited)
+
+        listed = self.client.get('/api/delegations/')
+        self.assertEqual(listed.status_code, 200)
+        self.assertEqual([row['id'] for row in listed.json()['delegations']], [own.pk])
+        users = self.client.get('/api/users/').json()
+        self.assertEqual([row['id'] for row in users['delegations']], [own.pk])
+        self.assertEqual([row['id'] for row in users['users']], [self.admin_profile.pk])
+        role = next(row for row in self.client.get('/api/roles/').json()['roles'] if row['id'] == shared.pk)
+        self.assertEqual(role['users_count'], 1)
+        self.assertEqual(role['users_sample'], [self.admin_profile.full_name])
+
+        self.assertEqual(self.post('/api/delegations/', {'name': 'Otra sede', 'scope': 'Nueva'}).status_code, 403)
+        self.assertEqual(self.post(f'/api/delegations/{other.pk}/update/', {'name': 'Intrusión'}).status_code, 404)
+        self.assertEqual(self.post(f'/api/delegations/{other.pk}/toggle-status/', {}).status_code, 404)
+        self.assertEqual(self.post(f'/api/delegations/{own.pk}/update/', {'scope': 'Centro actualizado'}).status_code, 200)
+        other.refresh_from_db()
+        self.assertEqual(other.name, 'Sede ajena')
+
+    def test_role_configuration_requires_an_administrator_even_with_granular_grants(self):
+        self.admin_profile.roles.clear()
+        limited = Role.objects.create(name='Editor limitado', permissions_data=[
+            'roles.create', 'roles.edit', 'roles.delete', 'roles.manage_features',
+        ])
+        target_role = Role.objects.create(name='Rol objetivo', permissions_data=['lectura'])
+        self.admin_profile.roles.add(limited)
+        cases = (
+            ('/api/roles/create/', {'name': 'Rol escalado', 'permissions': ['usuarios.edit']}),
+            (f'/api/roles/{target_role.pk}/update/', {'permissions': ['usuarios.edit']}),
+            (f'/api/roles/{target_role.pk}/delete/', {}),
+            (f'/api/roles/{target_role.pk}/duplicate/', {'name': 'Copia escalada'}),
+            ('/api/roles/permissions/add-custom/', {'module_id': 'prueba', 'code': 'prueba.edit', 'name': 'Nuevo permiso'}),
+        )
+        for path, data in cases:
+            with self.subTest(path=path):
+                self.assertEqual(self.post(path, data).status_code, 403)
+        target_role.refresh_from_db()
+        self.assertEqual(target_role.permissions_data, ['lectura'])
+        self.assertFalse(Role.objects.filter(name='Rol escalado').exists())
+
+    def test_administrator_name_is_reserved_for_system_role(self):
+        self.assertEqual(self.post('/api/roles/create/', {
+            'name': 'Administrador General', 'permissions': [],
+        }).status_code, 400)
+        self.assertFalse(Role.objects.filter(name='Administrador General').exists())
+        custom = Role.objects.create(name='Rol de prueba', permissions_data=[])
+        self.assertEqual(self.post(f'/api/roles/{custom.pk}/update/', {
+            'name': 'Administrador General', 'permissions': [],
+        }).status_code, 400)
+        self.assertEqual(self.post(f'/api/roles/{custom.pk}/duplicate/', {
+            'name': 'Administrador General',
+        }).status_code, 400)
+        custom.refresh_from_db()
+        self.assertEqual(custom.name, 'Rol de prueba')
