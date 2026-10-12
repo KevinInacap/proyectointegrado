@@ -33,6 +33,7 @@ deployed_marker="$backup_dir/deployed.sha"
 if [[ "$current" == "$target" && -f "$deployed_marker" && "$(< "$deployed_marker")" == "$target" ]]; then
     sudo systemctl is-active --quiet sgr
     curl --fail --silent --show-error --max-time 8 --output /dev/null http://127.0.0.1/
+    curl --fail --silent --show-error --max-time 8 --output /dev/null http://127.0.0.1/static/css/dashboard_position.css
     echo "Portal al día y saludable: ${current:0:8}"
     exit 0
 fi
@@ -65,11 +66,16 @@ fi
 .venv/bin/python manage.py check --database default
 .venv/bin/python manage.py migrate --noinput
 .venv/bin/python manage.py collectstatic --noinput --verbosity 0
+# Nginx sirve /var/www/sgr/static, no STATIC_ROOT. Publicar también los
+# archivos nuevos de cada panel evita páginas sin estilos tras actualizar.
+sudo install -d -o nginx -g nginx -m 755 /var/www/sgr/static
+sudo rsync -a --chown=nginx:nginx "$project_root/staticfiles/" /var/www/sgr/static/
 sudo systemctl restart sgr
 
 for attempt in 1 2 3 4 5; do
     if sudo systemctl is-active --quiet sgr && \
-       curl --fail --silent --max-time 8 --output /dev/null http://127.0.0.1/; then
+       curl --fail --silent --max-time 8 --output /dev/null http://127.0.0.1/ && \
+       curl --fail --silent --max-time 8 --output /dev/null http://127.0.0.1/static/css/dashboard_position.css; then
         printf '%s\n' "$target" > "$deployed_marker"
         chmod 600 "$deployed_marker"
         echo "Despliegue correcto: ${target:0:8}"
