@@ -40,7 +40,7 @@ flowchart LR
 
 ## Ejecutar en local
 
-Requiere Python instalado y Git para clonar el repositorio. Desde Git Bash:
+Requiere Python 3.12 o superior y Git para clonar el repositorio. Desde Git Bash:
 
 ```bash
 git clone https://github.com/KevinInacap/proyectointegrado.git
@@ -55,6 +55,8 @@ python manage.py runserver
 ```
 
 Abre <http://127.0.0.1:8000/>. `seed_data` prepara los catálogos institucionales sin crear cuentas ni actividad ficticia. Para acceder, usa una cuenta creada por el administrador del entorno; este repositorio no publica contraseñas ni credenciales compartidas.
+
+Si ya tenías una copia del proyecto, ejecuta `git pull origin main` antes de copiar `.env.example`: la clave de ejemplo para desarrollo se agregó recientemente. Conserva tu `.env` existente si ya tiene una configuración propia.
 
 Si prefieres Windows PowerShell, ejecuta el equivalente sin activar el entorno (así no dependes de la política de ejecución):
 
