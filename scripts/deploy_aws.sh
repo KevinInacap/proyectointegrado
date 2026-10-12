@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Actualiza la instancia de AWS desde main sin tocar el .env ni los datos.
+# Actualiza la instancia de AWS desde main sin sobrescribir .env ni borrar datos.
 set -Eeuo pipefail
 
 project_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -27,20 +27,21 @@ PY
 git fetch origin main
 current="$(git rev-parse HEAD)"
 target="$(git rev-parse FETCH_HEAD)"
+backup_dir="$(dirname "$project_root")/sgr-backups"
+deployed_marker="$backup_dir/deployed.sha"
 
-if [[ "$current" == "$target" ]]; then
+if [[ "$current" == "$target" && -f "$deployed_marker" && "$(< "$deployed_marker")" == "$target" ]]; then
     sudo systemctl is-active --quiet sgr
     curl --fail --silent --show-error --max-time 8 --output /dev/null http://127.0.0.1/
     echo "Portal al día y saludable: ${current:0:8}"
     exit 0
 fi
-if ! git merge-base --is-ancestor "$current" "$target"; then
+if [[ "$current" != "$target" ]] && ! git merge-base --is-ancestor "$current" "$target"; then
     echo 'main no es una actualización directa; revisa las ramas antes de desplegar.' >&2
     exit 1
 fi
 
 umask 077
-backup_dir="$(dirname "$project_root")/sgr-backups"
 install -d -m 700 "$backup_dir"
 chmod 700 "$backup_dir"
 stamp="$(date -u +%Y%m%d-%H%M%S)"
@@ -57,10 +58,10 @@ cp -p .env "$env_backup"
 chmod 600 "$db_backup" "$env_backup"
 echo "Respaldo privado creado: $(basename "$db_backup")"
 
-git merge --ff-only "$target"
-if ! git diff --quiet "$current" "$target" -- requirements.txt; then
-    .venv/bin/python -m pip install --disable-pip-version-check -r requirements.txt
+if [[ "$current" != "$target" ]]; then
+    git merge --ff-only "$target"
 fi
+.venv/bin/python -m pip install --disable-pip-version-check -r requirements.txt
 .venv/bin/python manage.py check --database default
 .venv/bin/python manage.py migrate --noinput
 .venv/bin/python manage.py collectstatic --noinput --verbosity 0
@@ -69,6 +70,8 @@ sudo systemctl restart sgr
 for attempt in 1 2 3 4 5; do
     if sudo systemctl is-active --quiet sgr && \
        curl --fail --silent --max-time 8 --output /dev/null http://127.0.0.1/; then
+        printf '%s\n' "$target" > "$deployed_marker"
+        chmod 600 "$deployed_marker"
         echo "Despliegue correcto: ${target:0:8}"
         exit 0
     fi

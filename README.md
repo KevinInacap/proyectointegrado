@@ -79,7 +79,7 @@ El proyecto ya incluye el controlador `mysqlclient` y admite MySQL con `DB_ENGIN
 
 ## Actualizar la instancia AWS
 
-Subir cambios a GitHub no cambia automáticamente la instancia. En EC2 Instance Connect, la primera vez trae este procedimiento con `cd ~/proyectointegrado && git pull --ff-only origin main`. Después, para cada nueva versión publicada en `main`, basta con:
+Subir cambios a GitHub no cambia automáticamente la instancia. En EC2 Instance Connect, la primera vez trae este procedimiento con `cd ~/proyectointegrado && git pull --ff-only origin main` y luego ejecuta el comando siguiente. Para cada versión posterior publicada en `main`, basta con el mismo comando:
 
 ```bash
 cd ~/proyectointegrado && bash scripts/deploy_aws.sh
