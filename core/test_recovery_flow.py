@@ -1,9 +1,11 @@
 import re
+from unittest.mock import patch
 
 from django.contrib.auth import get_user_model
 from django.core import mail
 from django.test import TestCase, override_settings
 
+from core.models import PasswordRecoveryCode
 from organization.models import UserProfile
 
 
@@ -61,3 +63,14 @@ class PasswordRecoveryFlowTests(TestCase):
         self.assertEqual(requested.status_code, 200)
         self.assertEqual(len(mail.outbox), 1)
         self.assertIn('persona@example.com', mail.outbox[0].to)
+
+    @override_settings(DEBUG=False, EMAIL_BACKEND='django.core.mail.backends.console.EmailBackend')
+    def test_production_without_smtp_does_not_log_or_store_a_code(self):
+        with patch('core.views.EmailMultiAlternatives') as email_message:
+            response = self.client.post('/recuperar-clave/', {
+                'action': 'request_code', 'identifier': 'persona@example.com',
+            })
+
+        self.assertEqual(response.status_code, 200)
+        self.assertFalse(PasswordRecoveryCode.objects.exists())
+        email_message.assert_not_called()

@@ -25,6 +25,9 @@ class _RecoveryEmailError(Exception):
 
 def _send_password_recovery_email(full_name, recipient, code):
     """Envía el correo de recuperación en formato HTML y texto plano."""
+    if not settings.DEBUG and settings.EMAIL_BACKEND == 'django.core.mail.backends.console.EmailBackend':
+        # En producción jamás mostrar un código de recuperación en los logs.
+        raise _RecoveryEmailError('El correo saliente no está configurado.')
     context = {'full_name': full_name, 'code': code, 'valid_minutes': 10}
     subject = 'Tu código para recuperar el acceso | Municipalidad de La Serena'
     message = EmailMultiAlternatives(

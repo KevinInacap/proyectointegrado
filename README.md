@@ -77,6 +77,20 @@ La aplicación toma sus parámetros desde variables de entorno. El ejemplo permi
 
 El proyecto ya incluye el controlador `mysqlclient` y admite MySQL con `DB_ENGINE=mysql`, `DB_NAME`, `DB_USER`, `DB_PASSWORD`, `DB_HOST` y `DB_PORT`. Antes de cambiar el motor, configura una cuenta MySQL con permisos sobre una base vacía y respalda la base actual. Después aplica `python manage.py migrate`; mover registros de SQLite a MySQL requiere exportarlos e importarlos por separado. No cambies el `.env` compartido ni subas credenciales al repositorio.
 
+## Actualizar la instancia AWS
+
+Subir cambios a GitHub no cambia automáticamente la instancia. En EC2 Instance Connect, la primera vez trae este procedimiento con `cd ~/proyectointegrado && git pull --ff-only origin main`. Después, para cada nueva versión publicada en `main`, basta con:
+
+```bash
+cd ~/proyectointegrado && bash scripts/deploy_aws.sh
+```
+
+El comando rechaza cambios locales en archivos versionados, exige una actualización directa, respalda MariaDB y `.env` en una carpeta privada, instala dependencias si cambiaron, aplica migraciones, reúne archivos estáticos y reinicia el portal. Al final comprueba que la página responda. Si falla, conserva el respaldo e informa el error; no borra datos ni fuerza la rama. En AWS Academy es preferible este despliegue controlado a dejar una clave SSH de la instancia en GitHub para ejecutar cada push automáticamente.
+
+El correo de recuperación requiere una clave de aplicación de Gmail **solo en el servidor**. Para configurarlo una vez, ejecuta `./.venv/bin/python scripts/configure_smtp_account.py` desde la carpeta del proyecto en EC2 Instance Connect e introduce allí la clave cuando la pida. El programa no la muestra, prueba un envío a la cuenta remitente, guarda la configuración en el `.env` privado y reinicia el portal. No pegues esa clave en GitHub ni en el chat. Comprueba que llegue el mensaje de prueba y después solicita un código real de recuperación.
+
+La IP pública actualmente usa HTTP: hasta que se configure HTTPS, no es adecuado introducir credenciales reales por esa conexión.
+
 El esquema SQL de `database/` es material de referencia académica, no una herramienta de actualización. Para preparar una base usa las migraciones de Django; no ejecutes el esquema de referencia sobre una base con información.
 
 ## Pruebas
