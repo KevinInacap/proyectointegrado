@@ -3207,9 +3207,10 @@
             const detalle = tipo === 'delegacion' ? item.scope : (item.description || 'Sin descripción registrada');
             const editar = tipo === 'delegacion' ? `editarDelegacionCatalogo(${item.id})` : `editarCargoCatalogo(${item.id})`;
             const alternar = tipo === 'delegacion' ? `alternarDelegacionCatalogo(${item.id})` : `alternarCargoCatalogo(${item.id})`;
+            const borrarBtn = tipo === 'cargo' ? `<button class="btn btn-outline-danger" type="button" onclick="eliminarCargoCatalogo(${item.id})" title="Eliminar cargo"><i class="bi bi-trash3"></i></button>` : '';
             return `<div class="col-md-6" style="min-width:0"><article class="bg-white border rounded-4 p-3 shadow-sm h-100 overflow-hidden" style="min-width:0">
                 <div class="d-flex justify-content-between gap-2" style="min-width:0"><div class="flex-grow-1" style="min-width:0"><div class="fw-bold text-dark text-truncate">${escaparHtmlCatalogo(item.name)}</div><div class="small text-muted text-truncate">${tipo === 'delegacion' ? escaparHtmlCatalogo(item.code || '') + ' · ' : ''}${escaparHtmlCatalogo(detalle)}</div></div><span class="badge ${activo ? 'bg-success-subtle text-success' : 'bg-secondary-subtle text-secondary'} align-self-start flex-shrink-0">${item.status}</span></div>
-                <div class="d-flex justify-content-between align-items-center mt-2"><small class="text-muted"><i class="bi bi-people me-1"></i>${item.users_count} usuario(s)</small><div class="btn-group btn-group-sm"><button class="btn btn-outline-primary" type="button" onclick="${editar}" title="Editar"><i class="bi bi-pencil"></i></button><button class="btn btn-outline-${activo ? 'danger' : 'success'}" type="button" onclick="${alternar}" title="${activo ? 'Desactivar' : 'Activar'}"><i class="bi bi-${activo ? 'pause-circle' : 'play-circle'}"></i></button></div></div>
+                <div class="d-flex justify-content-between align-items-center mt-2"><small class="text-muted"><i class="bi bi-people me-1"></i>${item.users_count} usuario(s)</small><div class="btn-group btn-group-sm"><button class="btn btn-outline-primary" type="button" onclick="${editar}" title="Editar"><i class="bi bi-pencil"></i></button><button class="btn btn-outline-${activo ? 'warning' : 'success'}" type="button" onclick="${alternar}" title="${activo ? 'Desactivar' : 'Activar'}"><i class="bi bi-${activo ? 'pause-circle' : 'play-circle'}"></i></button>${borrarBtn}</div></div>
             </article></div>`;
         }
 
@@ -3238,7 +3239,7 @@
                 const activo = item.status === 'Activo';
                 return `<div class="col-md-6 col-xl-4"><article class="bg-white border rounded-4 p-3 shadow-sm h-100 overflow-hidden">
                     <div class="d-flex justify-content-between gap-3 align-items-start"><div style="min-width:0"><h5 class="fw-bold mb-1 text-truncate" style="color:var(--muni-navy)">${escaparHtmlCatalogo(item.name)}</h5><p class="small text-muted mb-0">${escaparHtmlCatalogo(item.description || 'Sin descripción registrada')}</p></div><span class="badge ${activo ? 'bg-success-subtle text-success' : 'bg-secondary-subtle text-secondary'}">${item.status}</span></div>
-                    <div class="d-flex justify-content-between align-items-center mt-3 pt-2 border-top"><small class="text-muted"><i class="bi bi-people-fill me-1"></i>${item.users_count} funcionario(s)</small><div class="btn-group btn-group-sm"><button class="btn btn-outline-primary" onclick="editarCargoDesdeVista(${item.id})"><i class="bi bi-pencil me-1"></i>Editar</button><button class="btn btn-outline-${activo ? 'danger' : 'success'}" onclick="alternarCargoCatalogo(${item.id})"><i class="bi bi-${activo ? 'pause-circle' : 'play-circle'}"></i></button></div></div>
+                    <div class="d-flex justify-content-between align-items-center mt-3 pt-2 border-top"><small class="text-muted"><i class="bi bi-people-fill me-1"></i>${item.users_count} funcionario(s)</small><div class="btn-group btn-group-sm"><button class="btn btn-outline-primary" onclick="editarCargoDesdeVista(${item.id})"><i class="bi bi-pencil me-1"></i>Editar</button><button class="btn btn-outline-${activo ? 'warning' : 'success'}" onclick="alternarCargoCatalogo(${item.id})" title="${activo ? 'Inactivar' : 'Activar'}"><i class="bi bi-${activo ? 'pause-circle' : 'play-circle'}"></i></button><button class="btn btn-outline-danger" onclick="eliminarCargoCatalogo(${item.id})" title="Eliminar cargo"><i class="bi bi-trash3"></i></button></div></div>
                 </article></div>`;
             }).join('') || '<div class="col-12 text-center text-muted py-4">No hay cargos registrados.</div>';
         }
@@ -3378,6 +3379,36 @@
 
         async function alternarCargoCatalogo(id) {
             try { await enviarCatalogo(`/organization/positions/${id}/toggle-status/`, {}); } catch (error) { Swal.fire('No se pudo cambiar el estado', error.message, 'error'); }
+        }
+
+        async function eliminarCargoCatalogo(id) {
+            const item = catalogoCargosDB.find(i => i.id === id);
+            const nombre = item ? item.name : 'este cargo';
+            if (item && item.users_count > 0) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'No se puede eliminar el cargo',
+                    text: `El cargo "${nombre}" tiene ${item.users_count} funcionario(s) asignado(s). Para eliminarlo, primero debes reasignar a esos funcionarios en el mantenedor de Usuarios.`,
+                    confirmButtonColor: '#B80003'
+                });
+                return;
+            }
+            const result = await Swal.fire({
+                title: '¿Eliminar cargo institucional?',
+                text: `¿Estás seguro de que deseas eliminar permanentemente el cargo "${nombre}"?`,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#B80003',
+                cancelButtonColor: '#6c757d',
+                confirmButtonText: '<i class="bi bi-trash3-fill me-1"></i> Sí, eliminar',
+                cancelButtonText: 'Cancelar'
+            });
+            if (!result.isConfirmed) return;
+            try {
+                await enviarCatalogo(`/organization/positions/${id}/delete/`, {});
+            } catch (error) {
+                Swal.fire('No se pudo eliminar el cargo', error.message, 'error');
+            }
         }
 
         /* ==========================================================================

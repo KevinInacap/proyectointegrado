@@ -17,6 +17,7 @@ urlpatterns = [
     path('positions/', views.api_positions, name='api_positions'),
     path('positions/<int:pk>/update/', views.api_position_update, name='api_position_update'),
     path('positions/<int:pk>/toggle-status/', views.api_position_toggle, name='api_position_toggle'),
+    path('positions/<int:pk>/delete/', views.api_position_delete, name='api_position_delete'),
     
     # Roles & Permisos (RBAC MyAdmin)
     path('roles/', views.api_roles_list, name='api_roles_list'),

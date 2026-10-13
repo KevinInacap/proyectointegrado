@@ -638,17 +638,15 @@ def api_user_delete(request, pk):
                 previous_value={'full_name': nombre, 'rut': profile.rut, 'email': profile.email}
             )
             
-            # Baja lógica: conserva historial, evidencias y auditoría.
-            profile.deleted_at = timezone.now()
-            profile.status = 'Inactivo'
-            profile.save(update_fields=['deleted_at', 'status', 'updated_at'])
+            # Eliminación real en cascada: se refleja al instante en MySQL y phpMyAdmin
             if user_auth:
-                user_auth.is_active = False
-                user_auth.save(update_fields=['is_active'])
+                user_auth.delete()
+            else:
+                profile.delete()
 
         return JsonResponse({
             'success': True,
-            'message': f"El usuario '{nombre}' fue dado de baja y conservado en la auditoría."
+            'message': f"El usuario '{nombre}' fue eliminado exitosamente del sistema y de la base de datos."
         })
 
     except Exception:
@@ -1551,5 +1549,24 @@ def api_position_toggle(request, pk):
         item.save(update_fields=['status', 'updated_at'])
         _catalog_audit(request, 'cargo', item, 'UPDATE', previous)
     return JsonResponse({'success': True, 'message': f"Cargo {item.status.lower()} correctamente.", 'status': item.status})
+
+
+@permission_gate({'POST': 'cargos.delete', 'DELETE': 'cargos.delete'})
+def api_position_delete(request, pk):
+    """Elimina permanentemente un cargo institucional si no tiene funcionarios asignados."""
+    if request.method not in ('POST', 'DELETE'):
+        return JsonResponse({'success': False, 'message': 'Método no permitido.'}, status=405)
+    item = get_object_or_404(Position, id=pk, deleted_at__isnull=True)
+    assigned_count = item.users.filter(deleted_at__isnull=True).count()
+    if assigned_count > 0:
+        return JsonResponse({
+            'success': False,
+            'message': f"No se puede eliminar el cargo '{item.name}' porque tiene {assigned_count} funcionario(s) asignado(s). Reasigna los funcionarios antes de eliminarlo."
+        }, status=400)
+    with transaction.atomic():
+        _catalog_audit(request, 'cargo', item, 'DELETE', {'name': item.name, 'description': item.description})
+        item.delete()
+    return JsonResponse({'success': True, 'message': f"Cargo '{item.name}' eliminado exitosamente de la base de datos."})
+
 
 
