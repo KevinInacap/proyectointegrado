@@ -638,17 +638,15 @@ def api_user_delete(request, pk):
                 previous_value={'full_name': nombre, 'rut': profile.rut, 'email': profile.email}
             )
             
-            # Baja lógica: conserva historial, evidencias y auditoría.
-            profile.deleted_at = timezone.now()
-            profile.status = 'Inactivo'
-            profile.save(update_fields=['deleted_at', 'status', 'updated_at'])
+            # Eliminación real en cascada: se refleja al instante en MySQL y phpMyAdmin
             if user_auth:
-                user_auth.is_active = False
-                user_auth.save(update_fields=['is_active'])
+                user_auth.delete()
+            else:
+                profile.delete()
 
         return JsonResponse({
             'success': True,
-            'message': f"El usuario '{nombre}' fue dado de baja y conservado en la auditoría."
+            'message': f"El usuario '{nombre}' fue eliminado exitosamente del sistema y de la base de datos."
         })
 
     except Exception:
