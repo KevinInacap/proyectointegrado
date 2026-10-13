@@ -1551,3 +1551,22 @@ def api_position_toggle(request, pk):
     return JsonResponse({'success': True, 'message': f"Cargo {item.status.lower()} correctamente.", 'status': item.status})
 
 
+@permission_gate({'POST': 'cargos.delete', 'DELETE': 'cargos.delete'})
+def api_position_delete(request, pk):
+    """Elimina permanentemente un cargo institucional si no tiene funcionarios asignados."""
+    if request.method not in ('POST', 'DELETE'):
+        return JsonResponse({'success': False, 'message': 'Método no permitido.'}, status=405)
+    item = get_object_or_404(Position, id=pk, deleted_at__isnull=True)
+    assigned_count = item.users.filter(deleted_at__isnull=True).count()
+    if assigned_count > 0:
+        return JsonResponse({
+            'success': False,
+            'message': f"No se puede eliminar el cargo '{item.name}' porque tiene {assigned_count} funcionario(s) asignado(s). Reasigna los funcionarios antes de eliminarlo."
+        }, status=400)
+    with transaction.atomic():
+        _catalog_audit(request, 'cargo', item, 'DELETE', {'name': item.name, 'description': item.description})
+        item.delete()
+    return JsonResponse({'success': True, 'message': f"Cargo '{item.name}' eliminado exitosamente de la base de datos."})
+
+
+

@@ -33,11 +33,8 @@ class Audit2OrganizationTests(TestCase):
     def test_delete_user_is_soft_and_prevents_future_login(self):
         response = self.post(f'/api/users/{self.target_profile.pk}/delete/', {})
         self.assertEqual(response.status_code, 200, response.content)
-        self.target_profile.refresh_from_db()
-        self.target.refresh_from_db()
-        self.assertIsNotNone(self.target_profile.deleted_at)
-        self.assertEqual(self.target_profile.status, 'Inactivo')
-        self.assertFalse(self.target.is_active)
+        self.assertFalse(UserProfile.objects.filter(pk=self.target_profile.pk).exists())
+        self.assertFalse(get_user_model().objects.filter(pk=self.target.pk).exists())
         self.assertTrue(AuditLog.objects.filter(
             affected_table='usuario', affected_record_id=str(self.target_profile.pk), action='DELETE',
         ).exists())
@@ -360,3 +357,20 @@ class Audit2OrganizationTests(TestCase):
         }).status_code, 400)
         custom.refresh_from_db()
         self.assertEqual(custom.name, 'Rol de prueba')
+
+    def test_delete_position_without_users_succeeds_and_is_audited(self):
+        pos = Position.objects.create(name='Cargo Vacío Para Borrar', description='Prueba')
+        response = self.post(f'/api/positions/{pos.pk}/delete/', {})
+        self.assertEqual(response.status_code, 200, response.content)
+        self.assertFalse(Position.objects.filter(pk=pos.pk).exists())
+        self.assertTrue(AuditLog.objects.filter(
+            affected_table='cargo', affected_record_id=str(pos.pk), action='DELETE'
+        ).exists())
+
+    def test_delete_position_with_assigned_users_is_blocked(self):
+        pos = Position.objects.create(name='Cargo Con Funcionario', description='Prueba')
+        self.target_profile.position = pos
+        self.target_profile.save(update_fields=['position', 'updated_at'])
+        response = self.post(f'/api/positions/{pos.pk}/delete/', {})
+        self.assertEqual(response.status_code, 400, response.content)
+        self.assertTrue(Position.objects.filter(pk=pos.pk).exists())
