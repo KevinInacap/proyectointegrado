@@ -179,6 +179,14 @@ def logout_view(request):
 
 def password_recovery_view(request):
     """Recuperación con respuesta pública uniforme y código de un solo uso."""
+    now = timezone.now()
+    if request.method == 'GET':
+        last_req = request.session.get('recovery_last_request_at')
+        if (request.GET.get('reset') or request.GET.get('step') == 'request' or
+                (isinstance(last_req, (int, float)) and now.timestamp() - last_req > 600)):
+            request.session.pop('recovery_pending', None)
+            request.session.pop('recovery_user_id', None)
+            request.session.pop('recovery_verified_code_id', None)
     recovery_user_id = request.session.get('recovery_user_id')
     if request.method == 'POST':
         action = request.POST.get('action', 'request_code')

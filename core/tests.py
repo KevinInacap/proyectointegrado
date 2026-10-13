@@ -165,6 +165,23 @@ class AuthenticationTests(SimpleTestCase):
         self.assertEqual(response.context_data['step'], 'new_password')
 
     @patch.object(views, 'render', side_effect=fake_render)
+    def test_get_reset_returns_step_request_and_clears_session(self, _render):
+        session = {'recovery_pending': True, 'recovery_user_id': 3, 'recovery_verified_code_id': 7}
+        response = views.password_recovery_view(self.request(path='/?reset=1', session=session))
+        self.assertEqual(response.context_data['step'], 'request')
+        self.assertNotIn('recovery_pending', session)
+        self.assertNotIn('recovery_user_id', session)
+
+    @patch.object(views, 'render', side_effect=fake_render)
+    def test_stale_recovery_session_expires_to_step_request(self, _render):
+        stale_time = (timezone.now() - timedelta(minutes=15)).timestamp()
+        session = {'recovery_pending': True, 'recovery_last_request_at': stale_time, 'recovery_user_id': 3}
+        response = views.password_recovery_view(self.request(session=session))
+        self.assertEqual(response.context_data['step'], 'request')
+        self.assertNotIn('recovery_pending', session)
+
+
+    @patch.object(views, 'render', side_effect=fake_render)
     def test_unknown_code_has_same_error_as_wrong_code(self, _render):
         session = {'recovery_pending': True}
         response = views.password_recovery_view(self.request(data={'action': 'verify_code', 'code': '000000'}, session=session))
