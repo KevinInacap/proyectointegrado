@@ -11,7 +11,7 @@ from .models import CollectiveAgenda
 class AdminAgendaApiTests(TestCase):
     def setUp(self):
         self.delegation = Delegation.objects.create(name="Delegación de prueba", scope="Sector de prueba")
-        self.admin_role = Role.objects.create(name="Administrador")
+        self.admin_role, _ = Role.objects.get_or_create(name="Administrador")
         self.admin = get_user_model().objects.create_user(username="admin-agenda", password="test-pass")
         self.profile = UserProfile.objects.create(
             user=self.admin,

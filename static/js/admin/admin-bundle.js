@@ -3617,7 +3617,10 @@
 
         function sincronizarDelegacionesVisualesDesdeDB() {
             if (typeof datasetDelegacionesDetalle === 'undefined') return;
-            Object.values(datasetDelegacionesDetalle).forEach(item => { item.dbStatus = 'Inactivo'; });
+            Object.values(datasetDelegacionesDetalle).forEach(item => {
+                item.dbId = null;
+                item.dbStatus = 'Inactivo';
+            });
             catalogoDelegacionesDB.forEach(item => {
                 const key = claveVisualDelegacion(item);
                 const base = datasetDelegacionesDetalle[key] || {
