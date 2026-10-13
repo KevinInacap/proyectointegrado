@@ -4058,3 +4058,30 @@
     #modalAuditoria .modal-content { height: calc(100dvh - 1rem); }
     #modalAuditoria .modal-body { padding: .75rem !important; }
 }
+
+/* Auditoría: aplicar ancho explícito sobre Bootstrap y evitar tablas comprimidas por caché/orden de estilos. */
+#modalAuditoria .modal-dialog.modal-auditoria-dialog {
+    width: min(96vw, 1600px) !important;
+    max-width: min(96vw, 1600px) !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+}
+#modalAuditoria .modal-content {
+    height: min(90vh, 900px) !important;
+}
+#modalAuditoria .audit-table-wrap {
+    overflow-x: auto;
+}
+#modalAuditoria .audit-table-wrap table {
+    min-width: 1120px;
+}
+@media (max-width: 767.98px) {
+    #modalAuditoria .modal-dialog.modal-auditoria-dialog {
+        width: calc(100vw - 1rem) !important;
+        max-width: calc(100vw - 1rem) !important;
+        margin: .5rem !important;
+    }
+    #modalAuditoria .modal-content {
+        height: calc(100dvh - 1rem) !important;
+    }
+}
