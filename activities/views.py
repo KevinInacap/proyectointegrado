@@ -98,8 +98,13 @@ def _session_role_required(request, allowed_roles):
 def _position_required(request, expected_position):
     profile = _actor(request)
     if (not profile or not profile.position or profile.position.status != 'Activo'
-            or profile.position.deleted_at is not None
-            or _normalized_label(profile.position.name) != _normalized_label(expected_position)):
+            or profile.position.deleted_at is not None):
+        return redirect('core:login')
+    if isinstance(expected_position, (list, tuple, set)):
+        expected_list = [_normalized_label(p) for p in expected_position]
+        if _normalized_label(profile.position.name) not in expected_list:
+            return redirect('core:login')
+    elif _normalized_label(profile.position.name) != _normalized_label(expected_position):
         return redirect('core:login')
     return None
 
@@ -226,11 +231,12 @@ def dashboard_cargo_view(request):
 
 
 def dashboard_admin_view(request):
-    access_denied = _position_required(request, 'Administrador General')
+    access_denied = _position_required(request, ['Administrador General', 'SuperAdministrador', 'Super Administrador'])
     if access_denied:
         return access_denied
+    profile = _actor(request)
     if not _is_admin(request):
-        return _position_dashboard(request, 'Administrador General')
+        return _position_dashboard(request, profile.position.name if profile and profile.position else 'Administrador General')
     from django.db.models import Count, Q
     from core.models import AuditLog
     from metrics.models import DailyIndicator, Goal, MeasurementPeriod
