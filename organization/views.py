@@ -206,7 +206,11 @@ def _validate_delegation_details(data):
         return 'Los campos de la delegación no pueden contener etiquetas HTML.'
     name, scope, commune = (_text(data, field) for field in ('name', 'scope', 'commune'))
     label_pattern = r"[^\W_][\w .,'’&/-]{1,99}"
-    if any(not re.fullmatch(label_pattern, value, flags=re.UNICODE) for value in (name, scope, commune)):
+    if any(
+        not re.fullmatch(label_pattern, value, flags=re.UNICODE)
+        or not re.search(r'[^\W\d_]', value, flags=re.UNICODE)
+        for value in (name, scope, commune)
+    ):
         return 'Nombre, ámbito y comuna deben contener texto válido de 3 a 100 caracteres.'
     address = _text(data, 'address')
     if address and not re.fullmatch(r"[^\W_][\w .,#º°/-]{0,199}", address, flags=re.UNICODE):
@@ -1454,7 +1458,7 @@ def api_delegations(request):
         return JsonResponse({'success': False, 'message': 'Ya existe una delegación con ese nombre.'}, status=400)
     if code is None or (code and (not re.fullmatch(r'[A-Za-z0-9-]{2,20}', code) or Delegation.objects.filter(code__iexact=code).exists())):
         return JsonResponse({'success': False, 'message': 'Código inválido o ya utilizado.'}, status=400)
-    detail_error = _validate_delegation_details(data)
+    detail_error = _validate_delegation_details({**data, 'commune': commune})
     if detail_error:
         return JsonResponse({'success': False, 'message': detail_error}, status=400)
     if any(len(_text(data, field)) > limit for field, limit in (
