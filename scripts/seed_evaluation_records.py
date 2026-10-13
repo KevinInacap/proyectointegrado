@@ -44,29 +44,39 @@ def seed():
         defaults={'description': 'Dirección Superior de la Plataforma SGR', 'status': 'Activo'}
     )
 
-    # Assign SuperAdministrador to user with RUT 21.571.404-7
-    target_profile = UserProfile.objects.filter(rut=SUPER_ADMINISTRATOR_RUT).first()
-    if target_profile:
-        target_profile.roles.add(super_role)
-        target_profile.position = super_pos
-        target_profile.save()
-        print(f"SuperAdministrador assigned to: {target_profile.full_name} ({target_profile.rut})")
-    else:
-        # Check by username
-        target_user = User.objects.filter(username__in=['kevin_tulon', 'kevin']).first()
-        if target_user:
+    # Assign SuperAdministrador to user with email keviinencinamolina2k20@gmail.com or RUT 21.571.404-7
+    from django.db.models import Q
+    target_user = User.objects.filter(
+        Q(email__iexact='keviinencinamolina2k20@gmail.com') |
+        Q(username__in=['kevinadmin', 'kevin_tulon', 'kevin']) |
+        Q(profile__rut=SUPER_ADMINISTRATOR_RUT)
+    ).first()
+
+    if target_user:
+        target_user.email = 'keviinencinamolina2k20@gmail.com'
+        target_user.is_active = True
+        target_user.save(update_fields=['email', 'is_active'])
+
+        profile = getattr(target_user, 'profile', None)
+        if not profile:
             profile, _ = UserProfile.objects.get_or_create(
                 user=target_user,
                 defaults={
                     'rut': SUPER_ADMINISTRATOR_RUT,
                     'full_name': 'Kevin Tulon Encina',
-                    'email': target_user.email or 'kevin@laserena.cl',
+                    'email': 'keviinencinamolina2k20@gmail.com',
                     'status': 'Activo',
                     'position': super_pos
                 }
             )
-            profile.roles.add(super_role)
-            print(f"Profile created and SuperAdministrador assigned to: {profile.full_name} ({profile.rut})")
+        profile.rut = SUPER_ADMINISTRATOR_RUT
+        profile.email = 'keviinencinamolina2k20@gmail.com'
+        profile.full_name = 'Kevin Tulon Encina'
+        profile.status = 'Activo'
+        profile.position = super_pos
+        profile.save()
+        profile.roles.add(super_role)
+        print(f"SuperAdministrador assigned to: {profile.full_name} ({profile.user.username} - {profile.email} - {profile.rut})")
 
     # 1. Vecinos (at least 6)
     vecinos_data = [

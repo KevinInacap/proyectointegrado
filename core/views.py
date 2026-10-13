@@ -8,7 +8,7 @@ from django.core.exceptions import ValidationError
 from django.core.mail import EmailMultiAlternatives
 from django.template.loader import render_to_string
 from django.db import transaction
-from django.db.models import F, Value
+from django.db.models import F, Value, Q
 from django.db.models.functions import Replace, Upper
 from django.utils import timezone
 from datetime import timedelta
@@ -78,8 +78,9 @@ def _find_profile_for_login(identifier):
     normalized_identifier = (identifier or '').strip()
     if '@' in normalized_identifier:
         matches = UserProfile.objects.select_related('user').filter(
-            email__iexact=normalized_identifier, deleted_at__isnull=True
-        )
+            Q(email__iexact=normalized_identifier) | Q(user__email__iexact=normalized_identifier),
+            deleted_at__isnull=True
+        ).distinct()
         return matches.first() if matches.count() == 1 else None
 
     normalized_rut = _normalize_rut(identifier)
@@ -194,7 +195,10 @@ def password_recovery_view(request):
                 # Comparte la misma resolución normalizada del login: acepta el RUT
                 # con o sin puntos/guion y falla de forma cerrada si hay duplicados.
                 profile = _find_profile_for_login(identifier)
-                if profile and profile.status == 'Activo' and profile.user.is_active and profile.email:
+                if profile and profile.status == 'Activo' and profile.user.is_active and (profile.email or (profile.user and profile.user.email)):
+                    recipient = profile.email if ('@' in str(profile.email or '')) else profile.user.email
+                    if '@' in identifier and identifier.lower() in [str(profile.email or '').lower(), str(getattr(profile.user, 'email', '') or '').lower()]:
+                        recipient = identifier
                     try:
                         with transaction.atomic():
                             # El bloqueo serializa solicitudes de sesiones distintas para la misma cuenta.
@@ -205,7 +209,7 @@ def password_recovery_view(request):
                             else:
                                 code = f'{secrets.randbelow(1000000):06d}'
                                 try:
-                                    sent = _send_password_recovery_email(profile.full_name, profile.email, code)
+                                    sent = _send_password_recovery_email(profile.full_name, recipient, code)
                                 except Exception as exc:
                                     raise _RecoveryEmailError from exc
                                 if sent != 1:
