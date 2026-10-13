@@ -1,4 +1,5 @@
 import json
+import logging
 import re
 from copy import deepcopy
 from functools import wraps
@@ -19,6 +20,8 @@ from .access import (
     set_role_permission_codes,
 )
 from core.models import AuditLog, PasswordRecoveryCode
+
+logger = logging.getLogger(__name__)
 
 
 def admin_only(view_func):
@@ -648,8 +651,9 @@ def api_user_delete(request, pk):
             'message': f"El usuario '{nombre}' fue dado de baja y conservado en la auditoría."
         })
 
-    except Exception as e:
-        return JsonResponse({'success': False, 'message': f"Error al eliminar usuario: {str(e)}"}, status=500)
+    except Exception:
+        logger.exception('No se pudo dar de baja al funcionario %s', pk)
+        return JsonResponse({'success': False, 'message': 'No se pudo dar de baja al funcionario. Inténtalo nuevamente.'}, status=500)
 
 @permission_gate({'POST': 'usuarios.reset_password'})
 def api_user_reset_password(request, pk):

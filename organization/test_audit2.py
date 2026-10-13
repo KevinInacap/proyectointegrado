@@ -5,7 +5,7 @@ from django.contrib.auth.hashers import make_password
 from django.test import Client, TestCase
 from django.utils import timezone
 
-from core.models import PasswordRecoveryCode
+from core.models import AuditLog, PasswordRecoveryCode
 from core.test_audit2 import WEAK_PASSWORDS, STRONG_PASSWORD
 from organization.models import Delegation, Position, Role, UserProfile
 
@@ -29,6 +29,31 @@ class Audit2OrganizationTests(TestCase):
     def payload(self, **changes):
         return dict(username='audit_new', full_name='Persona Nueva', email='new@example.test',
                     rut='9.876.543-3', password=STRONG_PASSWORD, **changes)
+
+    def test_delete_user_is_soft_and_prevents_future_login(self):
+        response = self.post(f'/api/users/{self.target_profile.pk}/delete/', {})
+        self.assertEqual(response.status_code, 200, response.content)
+        self.target_profile.refresh_from_db()
+        self.target.refresh_from_db()
+        self.assertIsNotNone(self.target_profile.deleted_at)
+        self.assertEqual(self.target_profile.status, 'Inactivo')
+        self.assertFalse(self.target.is_active)
+        self.assertTrue(AuditLog.objects.filter(
+            affected_table='usuario', affected_record_id=str(self.target_profile.pk), action='DELETE',
+        ).exists())
+        self.assertNotEqual(Client().post('/', {
+            'username': self.target_profile.email, 'password': STRONG_PASSWORD,
+        }).status_code, 302)
+
+    def test_delete_user_rejects_self_and_principal_admin(self):
+        self.assertEqual(self.post(f'/api/users/{self.admin_profile.pk}/delete/', {}).status_code, 400)
+        principal = get_user_model().objects.create_user('admin', password=STRONG_PASSWORD)
+        profile = UserProfile.objects.create(
+            user=principal, rut='13.456.789-2', full_name='Admin principal', email='principal@example.test',
+        )
+        self.assertEqual(self.post(f'/api/users/{profile.pk}/delete/', {}).status_code, 400)
+        principal.refresh_from_db()
+        self.assertTrue(principal.is_active)
 
     def test_all_password_endpoints_reject_missing_components(self):
         for password in WEAK_PASSWORDS:

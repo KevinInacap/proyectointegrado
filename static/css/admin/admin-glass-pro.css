@@ -1568,15 +1568,27 @@ body {
     backdrop-filter: blur(24px) saturate(180%) !important;
     border: 1.5px solid rgba(255, 255, 255, 0.95) !important;
     border-radius: 20px !important;
-    overflow-x: hidden !important;
+    overflow: visible !important;
     width: 100% !important;
     box-shadow: 0 12px 32px -6px rgba(27, 54, 93, 0.08), inset 0 1px 0 #FFFFFF !important;
     margin-bottom: 1.5rem !important;
 }
 
 .usuario-table-container .table-responsive {
-    overflow-x: hidden !important;
+    overflow: visible !important;
     width: 100% !important;
+}
+
+/* El menú de acciones debe quedar por encima de las filas siguientes y
+   poder salir de la tabla, incluso en la última fila. */
+.usuario-clean-table tbody tr {
+    position: relative;
+}
+.usuario-clean-table tbody tr:has(.dropdown-menu.show) {
+    z-index: 20;
+}
+.usuario-clean-table .dropdown-menu.show {
+    z-index: 1090 !important;
 }
 
 .usuario-clean-table {

@@ -606,8 +606,8 @@
 
                 {% if messages %}
                 {% for message in messages %}
-                <div class="alert alert-danger alert-dismissible fade show small py-2 px-3 mb-3 border-0" role="alert"
-                    style="background-color: rgba(184, 0, 3, 0.88); backdrop-filter: blur(8px); color: #ffffff; border-radius: 8px;">
+                <div class="alert alert-{% if message.tags == 'error' %}danger{% else %}info{% endif %} alert-dismissible fade show small py-2 px-3 mb-3 border-0" role="alert" data-login-message="{{ message }}" data-login-level="{{ message.tags }}"
+                    style="background-color: {% if message.tags == 'error' %}rgba(184, 0, 3, 0.88){% else %}rgba(27, 54, 93, 0.88){% endif %}; backdrop-filter: blur(8px); color: #ffffff; border-radius: 8px;">
                     <i class="bi bi-exclamation-circle me-1"></i> {{ message }}
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="alert"
                         aria-label="Cerrar"></button>
@@ -679,6 +679,20 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', function () {
+            const serverMessages = [...document.querySelectorAll('[data-login-message]')];
+            if (serverMessages.length && window.Swal) {
+                const message = serverMessages.map((entry) => entry.getAttribute('data-login-message')).join('\n');
+                const hasError = serverMessages.some((entry) => entry.getAttribute('data-login-level') === 'error');
+                serverMessages.forEach((entry) => entry.remove());
+                Swal.fire({
+                    icon: hasError ? 'error' : 'info',
+                    title: hasError ? 'No se pudo iniciar sesión' : 'Sesión finalizada',
+                    text: message,
+                    confirmButtonColor: '#B80003',
+                    background: '#0F172A',
+                    color: '#ffffff'
+                });
+            }
             const toggle = document.getElementById('togglePassword');
             const pwd = document.getElementById('password');
             const icon = document.getElementById('eyeIcon');
