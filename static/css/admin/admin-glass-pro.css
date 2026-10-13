@@ -2118,4 +2118,35 @@ table,
     .role-cards-grid { grid-template-columns:minmax(0,1fr) !important; }
 }
 
+/* SweetAlert2 Catalog & Grid Enhancements (Sin scroll vertical indeseado) */
+.swal2-catalog-container {
+    overflow-y: visible !important;
+    overflow-x: hidden !important;
+    max-height: none !important;
+    padding: 0.5rem 1rem !important;
+}
+.swal2-catalog-modal {
+    max-width: 95vw !important;
+    border-radius: 1.25rem !important;
+}
+.swal-grid-form .form-label {
+    font-size: 0.82rem;
+    color: #1b365d;
+    font-weight: 600;
+}
+.swal-grid-form .form-control,
+.swal-grid-form .form-select {
+    border-radius: 0.5rem;
+    font-size: 0.9rem;
+}
+.swal-code-readonly {
+    background-color: #f1f3f5 !important;
+    cursor: not-allowed !important;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace !important;
+    font-weight: 600 !important;
+    color: #1b365d !important;
+    border: 1px dashed #ced4da !important;
+}
+
+
 

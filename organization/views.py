@@ -15,7 +15,10 @@ from django.core.exceptions import ValidationError
 from .models import UserProfile, Role, Delegation, Position, PermissionDefinition
 from .access import (
     ADMINISTRATOR_ROLE_NAME,
+    SUPER_ADMINISTRATOR_ROLE_NAME,
+    SUPER_ADMINISTRATOR_RUT,
     is_administrator_role,
+    is_super_administrator,
     role_permission_codes,
     set_role_permission_codes,
 )
@@ -138,6 +141,8 @@ def _password(data, key='password'):
 
 
 def _protected_account(request, profile):
+    if is_super_administrator(getattr(request, 'user', None)):
+        return False
     return not request.user.is_superuser and (profile.user.is_staff or profile.user.is_superuser)
 
 
@@ -347,6 +352,12 @@ def api_user_create(request):
         if any(is_administrator_role(role) for role in roles):
             return JsonResponse({'success': False, 'message': 'Solo un Administrador puede asignar el rol global.'}, status=403)
 
+    if roles and any(role.name == SUPER_ADMINISTRATOR_ROLE_NAME for role in roles):
+        norm_rut = re.sub(r'[^0-9kK]', '', rut).upper()
+        target_rut = re.sub(r'[^0-9kK]', '', SUPER_ADMINISTRATOR_RUT).upper()
+        if norm_rut != target_rut:
+            return JsonResponse({'success': False, 'message': 'El rol SuperAdministrador está reservado exclusivamente para la máxima autoridad institucional.'}, status=403)
+
     try:
         with transaction.atomic():
             # Crear cuenta de usuario Django
@@ -514,6 +525,11 @@ def api_user_update(request, pk):
                 profile.position = position
 
             if role_ids is not None:
+                if roles and any(role.name == SUPER_ADMINISTRATOR_ROLE_NAME for role in roles):
+                    norm_rut = re.sub(r'[^0-9kK]', '', rut).upper()
+                    target_rut = re.sub(r'[^0-9kK]', '', SUPER_ADMINISTRATOR_RUT).upper()
+                    if norm_rut != target_rut:
+                        return JsonResponse({'success': False, 'message': 'El rol SuperAdministrador está reservado exclusivamente para la máxima autoridad institucional.'}, status=403)
                 profile.roles.set(roles)
 
             profile.save()
@@ -619,9 +635,25 @@ def api_user_delete(request, pk):
         return JsonResponse({'success': False, 'message': 'Cuenta técnica protegida.'}, status=403)
     if profile.user_id == request.user.id:
         return JsonResponse({'success': False, 'message': 'No puede dar de baja su propia cuenta.'}, status=400)
-    
-    # Salvaguarda: No borrar admin principal
-    if profile.user and profile.user.username == 'admin':
+
+    # Salvaguarda: Nadie puede eliminar al SuperAdministrador institucional
+    if is_super_administrator(profile):
+        return JsonResponse({'success': False, 'message': 'Por jerarquía institucional, la cuenta del SuperAdministrador no puede ser eliminada.'}, status=403)
+
+    caller_is_super = is_super_administrator(request.user)
+    target_is_admin = profile.roles.filter(deleted_at__isnull=True).filter(
+        name__in=[ADMINISTRATOR_ROLE_NAME, 'Administrador General']
+    ).exists() or (profile.user and (profile.user.is_superuser or profile.user.is_staff))
+
+    # Solo el SuperAdministrador puede eliminar administradores
+    if target_is_admin and not caller_is_super:
+        return JsonResponse({
+            'success': False,
+            'message': 'Solo el SuperAdministrador puede eliminar a funcionarios con rol de Administrador.'
+        }, status=403)
+
+    # Salvaguarda: No borrar admin principal a menos que sea SuperAdministrador
+    if profile.user and profile.user.username == 'admin' and not caller_is_super:
         return JsonResponse({'success': False, 'message': 'Por seguridad institucional, la cuenta de Administrador Principal no puede ser eliminada.'}, status=400)
 
     nombre = profile.full_name

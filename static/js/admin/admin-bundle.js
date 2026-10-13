@@ -803,6 +803,7 @@
                 if (bsModalVecino) bsModalVecino.hide();
                 await cargarVecinosDesdeDB(false);
                 mostrarToast('✓ ' + data.message);
+                Swal.fire({icon: 'success', title: 'Vecino guardado', text: data.message || 'Datos del vecino guardados exitosamente.', confirmButtonColor: '#1B365D'});
             } catch (error) {
                 Swal.fire({icon: 'error', title: 'No se guardó el vecino', text: error.message, confirmButtonColor: '#A30F32'});
             }
@@ -818,6 +819,7 @@
                     if (!response.ok || !data.success) throw new Error(data.message || 'No fue posible eliminar el vecino.');
                     await cargarVecinosDesdeDB(false);
                     mostrarToast('✓ ' + data.message);
+                    Swal.fire({icon: 'success', title: 'Vecino dado de baja', text: data.message || 'El vecino ha sido dado de baja correctamente.', confirmButtonColor: '#1B365D'});
                 } catch (error) {
                     Swal.fire({icon: 'error', title: 'No se eliminó el vecino', text: error.message, confirmButtonColor: '#A30F32'});
                 }
@@ -2897,6 +2899,12 @@
                 mostrarToast('✓ ' + data.message);
                 if (bsModalUsuario) bsModalUsuario.hide();
                 cargarUsuariosDesdeDB(false);
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Funcionario guardado',
+                    text: data.message || 'El funcionario ha sido guardado exitosamente en la base de datos.',
+                    confirmButtonColor: '#1B365D'
+                });
 
             } catch (err) {
                 console.error("Error guardando:", err);
@@ -2941,17 +2949,35 @@
                 const data = await res.json();
 
                 if (!data.success) {
-                    mostrarToast('⚠ ' + data.message);
+                    if (bsModalEliminarUsuario) bsModalEliminarUsuario.hide();
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Acceso Denegado',
+                        text: data.message || 'No se pudo eliminar el funcionario.',
+                        confirmButtonColor: '#A30F32'
+                    });
                     return;
                 }
 
-                mostrarToast('✓ ' + data.message);
                 if (bsModalEliminarUsuario) bsModalEliminarUsuario.hide();
+                mostrarToast('✓ ' + data.message);
                 cargarUsuariosDesdeDB(false);
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Funcionario Eliminado',
+                    text: data.message || 'El funcionario ha sido eliminado exitosamente.',
+                    confirmButtonColor: '#1B365D'
+                });
 
             } catch (err) {
                 console.error("Error eliminar:", err);
-                mostrarToast('⚠ Error al eliminar usuario.');
+                if (bsModalEliminarUsuario) bsModalEliminarUsuario.hide();
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error al eliminar',
+                    text: 'No fue posible completar la eliminación en el servidor.',
+                    confirmButtonColor: '#A30F32'
+                });
             } finally {
                 btn.disabled = false;
                 spinner.style.display = 'none';

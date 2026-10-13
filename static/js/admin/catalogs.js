@@ -86,15 +86,46 @@
         }
         return {};
     }
+
+    const prefixMap = {
+        'goals': 'MET',
+        'management-types': 'GES',
+        'subattentions': 'SUB',
+        'items': 'ITM',
+        'attention-types': 'TIP'
+    };
+
+    function generateCode(catalog, existingRows = []) {
+        const prefix = prefixMap[catalog] || 'CAT';
+        let maxSeq = existingRows.length;
+        existingRows.forEach(row => {
+            if (row && row.code) {
+                const nums = String(row.code).match(/\d+/g);
+                if (nums && nums.length > 0) {
+                    const n = parseInt(nums[0], 10);
+                    if (!isNaN(n) && n > maxSeq) maxSeq = n;
+                }
+            }
+        });
+        const seq = String(maxSeq + 1).padStart(3, '0');
+        const salt = Math.random().toString(36).substring(2, 5).toUpperCase();
+        return `${prefix}-${seq}-${salt}`;
+    }
+
     function notice(panel, message, error = false) {
         panel.message.className = `alert ${error ? 'alert-danger' : 'alert-success'} mt-3`;
         panel.message.textContent = message;
         panel.message.hidden = !message;
-        if (error && panel.root.classList.contains('active') && window.Swal) {
-            Swal.fire({ icon: 'error', titleText: 'No se pudo completar la acción', text: message,
-                confirmButtonColor: '#8B1D2C' });
+        if (error && window.Swal) {
+            Swal.fire({
+                icon: 'error',
+                titleText: 'No se pudo completar la acción',
+                text: message,
+                confirmButtonColor: '#8B1D2C'
+            });
         }
     }
+
     function panelQuery(panel, page, pageSize) {
         const query = new URLSearchParams({ page, page_size: pageSize, search: panel.search.value.trim() });
         if (panel.status.value) query.set('status', panel.status.value);
@@ -105,11 +136,13 @@
         }
         return query;
     }
+
     function updateReferenceFilter(select, placeholder, rows, selected = '') {
         select.replaceChildren(new Option(placeholder, ''));
         rows.forEach(row => select.add(new Option(row.name, row.id)));
         if ([...select.options].some(option => option.value === selected)) select.value = selected;
     }
+
     function syncReferenceFilters(panel, refs) {
         if (panel.catalog === 'subattentions' && refs.attention_type) {
             const current = panel.attentionType.value;
@@ -120,6 +153,7 @@
             if (refs.item) updateReferenceFilter(panel.item, 'Todos los ítems', refs.item, panel.item.value);
         }
     }
+
     async function load(panel) {
         const revision = ++panel.revision;
         panel.previous.disabled = panel.next.disabled = true;
@@ -137,6 +171,7 @@
             if (!Array.isArray(data.results)) throw new Error('Respuesta de catálogo no válida.');
             const pages = Math.max(1, Math.ceil(data.count / Number(panel.size.value)));
             if (panel.page > pages) { panel.page = pages; return load(panel); }
+            panel.lastResults = data.results;
             panel.refs = refs;
             syncReferenceFilters(panel, refs);
             panel.body.replaceChildren();
@@ -173,14 +208,28 @@
             if (revision === panel.revision) panel.root.setAttribute('aria-busy', 'false');
         }
     }
-    function field(form, key, value, choices) {
-        const wrap = element('div', 'mb-3');
+
+    function field(form, key, value, choices, isGrid = true) {
+        const wrapClass = isGrid
+            ? (key === 'description' ? 'col-12 mb-2' : 'col-12 col-md-6 mb-2')
+            : 'mb-3';
+        const wrap = element('div', wrapClass);
         const label = element('label', 'form-label small fw-bold', labels[key]);
         label.htmlFor = `catalog-field-${key}`;
+        if (key === 'code') {
+            const badge = element('span', 'badge bg-secondary ms-2', 'Bloqueado');
+            badge.style.fontSize = '0.68rem';
+            label.append(badge);
+        }
         const input = element(choices ? 'select' : key === 'description' ? 'textarea' : 'input', choices ? 'form-select' : 'form-control');
         input.name = key;
         input.id = label.htmlFor;
         input.required = key !== 'description';
+        if (key === 'code') {
+            input.readOnly = true;
+            input.className += ' swal-code-readonly';
+            input.title = 'Código generado automáticamente por el sistema (inmutable)';
+        }
         if (choices) {
             input.append(new Option('Seleccione…', ''));
             choices.forEach(choice => input.append(new Option(choice.name, choice.id)));
@@ -193,11 +242,12 @@
         } else if (key !== 'description') {
             input.type = 'text';
             input.maxLength = key === 'name' ? 120 : 30;
-        } else input.rows = 3;
+        } else input.rows = 2;
         input.value = value ?? '';
         wrap.append(label, input);
         form.append(wrap);
     }
+
     async function viewRecord(panel, id) {
         try {
             const [record, refs] = await Promise.all([request(endpoint(panel.catalog, id)), references(panel.catalog)]);
@@ -209,22 +259,40 @@
             await Swal.fire({titleText: `Consulta de ${definitions[panel.catalog].title}`, html: details, confirmButtonText: 'Cerrar', confirmButtonColor: '#8B1D2C'});
         } catch (error) { await Swal.fire({icon: 'error', titleText: 'No se pudo consultar', text: error.message}); }
     }
+
     async function editRecord(panel, id) {
         if (panel.editing) return;
         panel.editing = true;
         try {
-            const [record, refs] = await Promise.all([id === undefined ? Promise.resolve({ status: 'Activo', item_type: 'Cuantitativo', unit_of_measure: 'Atenciones' }) : request(endpoint(panel.catalog, id)), references(panel.catalog)]);
-            const form = element('form', 'text-start');
+            const autoCode = id === undefined ? generateCode(panel.catalog, panel.lastResults || []) : '';
+            const [record, refs] = await Promise.all([
+                id === undefined
+                    ? Promise.resolve({ code: autoCode, status: 'Activo', item_type: 'Cuantitativo', unit_of_measure: 'Atenciones' })
+                    : request(endpoint(panel.catalog, id)),
+                references(panel.catalog)
+            ]);
+            const isGoal = panel.catalog === 'goals';
+            const form = element('form', 'text-start row g-2 swal-grid-form');
             form.noValidate = true;
             form.addEventListener('submit', event => { event.preventDefault(); Swal.clickConfirm(); });
             const choices = values => values.map(value => ({ id: value, name: value }));
-            const fields = panel.catalog === 'goals' ? ['code', 'period', 'position', 'item', 'target_value', 'unit_of_measure', 'weight', 'status'] : ['code', 'name', ...(panel.catalog === 'subattentions' ? ['attention_type'] : []), 'description', ...(panel.catalog === 'items' ? ['item_type'] : []), 'status'];
-            fields.forEach(key => field(form, key, record[key], refs[key] || (key === 'status' ? choices(['Activo', 'Inactivo']) : key === 'item_type' ? choices(['Cuantitativo', 'Porcentual']) : undefined)));
+            const fields = isGoal
+                ? ['code', 'period', 'position', 'item', 'target_value', 'unit_of_measure', 'weight', 'status']
+                : ['code', 'name', ...(panel.catalog === 'subattentions' ? ['attention_type'] : []), 'description', ...(panel.catalog === 'items' ? ['item_type'] : []), 'status'];
+            fields.forEach(key => field(form, key, record[key], refs[key] || (key === 'status' ? choices(['Activo', 'Inactivo']) : key === 'item_type' ? choices(['Cuantitativo', 'Porcentual']) : undefined), true));
             let saving = false;
             const result = await Swal.fire({
                 titleText: `${id === undefined ? 'Crear' : 'Editar'} ${definitions[panel.catalog].title}`,
-                html: form, showCancelButton: true, confirmButtonText: 'Guardar', cancelButtonText: 'Cancelar', confirmButtonColor: '#1B365D', showLoaderOnConfirm: true,
-                allowOutsideClick: () => !saving, allowEscapeKey: () => !saving,
+                html: form,
+                width: isGoal ? '820px' : '700px',
+                customClass: { popup: 'swal2-catalog-modal', htmlContainer: 'swal2-catalog-container' },
+                showCancelButton: true,
+                confirmButtonText: 'Guardar',
+                cancelButtonText: 'Cancelar',
+                confirmButtonColor: '#1B365D',
+                showLoaderOnConfirm: true,
+                allowOutsideClick: () => !saving,
+                allowEscapeKey: () => !saving,
                 preConfirm: async () => {
                     if (saving) return false;
                     for (const input of form.elements) if (input.type === 'text') input.value = input.value.trim();
@@ -253,7 +321,12 @@
             if (result.isConfirmed) {
                 notice(panel, 'Registro guardado en el servidor.');
                 await refreshRelated(panel);
-                Swal.fire({icon: 'success', titleText: 'Registro guardado', confirmButtonColor: '#8B1D2C'});
+                Swal.fire({
+                    icon: 'success',
+                    titleText: 'Registro guardado',
+                    text: 'El registro se guardó exitosamente en la base de datos.',
+                    confirmButtonColor: '#1B365D'
+                });
             }
         } catch (error) { notice(panel, error.message, true); }
         finally { panel.editing = false; }
@@ -283,7 +356,12 @@
             if (result.isConfirmed) {
                 notice(panel, 'Registro eliminado en el servidor.');
                 await refreshRelated(panel);
-                Swal.fire({icon: 'success', titleText: 'Registro eliminado', confirmButtonColor: '#8B1D2C'});
+                Swal.fire({
+                    icon: 'success',
+                    titleText: 'Registro eliminado',
+                    text: 'El registro fue eliminado de la base de datos.',
+                    confirmButtonColor: '#1B365D'
+                });
             }
         } catch (error) { notice(panel, error.message, true); }
         finally { panel.editing = false; }

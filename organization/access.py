@@ -1,10 +1,11 @@
-"""Shared identifiers and helpers for SGR application-level authorization."""
-
+import re
 import unicodedata
 
 
 ADMINISTRATOR_ROLE_NAME = 'Administrador'
-LEGACY_ADMINISTRATOR_ROLE_NAMES = {'administrador general'}
+SUPER_ADMINISTRATOR_ROLE_NAME = 'SuperAdministrador'
+SUPER_ADMINISTRATOR_RUT = '21.571.404-7'
+LEGACY_ADMINISTRATOR_ROLE_NAMES = {'administrador general', 'superadministrador', 'super administrador'}
 
 
 def _normalized_name(value):
@@ -12,11 +13,34 @@ def _normalized_name(value):
     return ''.join(char for char in value if not unicodedata.combining(char)).strip().casefold()
 
 
+def is_super_administrator(user_or_profile):
+    """Verifica si el usuario es el SuperAdministrador institucional autorizado."""
+    if not user_or_profile:
+        return False
+    profile = getattr(user_or_profile, 'profile', user_or_profile)
+    rut = getattr(profile, 'rut', '')
+    if not rut:
+        return False
+    norm_rut = re.sub(r'[^0-9kK]', '', str(rut)).upper()
+    target_rut = re.sub(r'[^0-9kK]', '', SUPER_ADMINISTRATOR_RUT).upper()
+    if norm_rut != target_rut:
+        return False
+    if hasattr(profile, 'roles'):
+        return profile.roles.filter(
+            deleted_at__isnull=True,
+            name__in=[SUPER_ADMINISTRATOR_ROLE_NAME, 'Super Administrador', 'superadministrador']
+        ).exists()
+    return False
+
+
 def is_administrator_role(role_or_name):
     """Recognize the canonical system role and its pre-migration name only."""
     name = getattr(role_or_name, 'name', role_or_name)
     normalized = _normalized_name(name)
-    return normalized == _normalized_name(ADMINISTRATOR_ROLE_NAME) or normalized in LEGACY_ADMINISTRATOR_ROLE_NAMES
+    return (
+        normalized in (_normalized_name(ADMINISTRATOR_ROLE_NAME), _normalized_name(SUPER_ADMINISTRATOR_ROLE_NAME))
+        or normalized in LEGACY_ADMINISTRATOR_ROLE_NAMES
+    )
 
 
 def role_permission_codes(role):

@@ -106,6 +106,8 @@ def _normalized_label(value):
 def dashboard_route_for_position(position_name):
     """Cargo selecciona el panel; los permisos del rol se validan aparte."""
     return {
+        'superadministrador': 'activities:dashboard_admin',
+        'super administrador': 'activities:dashboard_admin',
         'administrador general': 'activities:dashboard_admin',
         'coordinador del sistema': 'activities:dashboard_coordinador',
         'delegado municipal': 'activities:dashboard_delegado',
