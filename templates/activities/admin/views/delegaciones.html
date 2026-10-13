@@ -1,5 +1,5 @@
 <section id="view-delegaciones" class="maintainer-view">
-    <div class="maintainer-card p-4">
+    <div class="liquid-glass-card p-4">
         <!-- 1. Header Oficial de Delegaciones -->
         <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4 pb-3 border-bottom">
             <div>
@@ -19,7 +19,7 @@
                 </p>
             </div>
             <div class="d-flex align-items-center gap-2">
-                <button class="btn btn-danger rounded-pill px-3 fw-semibold" onclick="abrirCatalogosOrganizacion('delegaciones')">
+                <button class="liquid-glass-btn-primary" onclick="abrirCatalogosOrganizacion('delegaciones')">
                     <i class="bi bi-plus-lg me-1"></i> Nueva delegación
                 </button>
                 <span class="badge bg-light text-secondary border px-3 py-2 rounded-pill small fw-semibold">
@@ -93,10 +93,21 @@
                 <option value="Inactivo">Inactivas</option>
             </select>
             <select class="form-select rounded-pill w-auto" id="tamanoPaginaDelegaciones" aria-label="Delegaciones por página">
-                <option value="6">6 por página</option>
-                <option value="12">12 por página</option>
-                <option value="24">24 por página</option>
+                <option value="10" selected>10 por página</option>
+                <option value="20">20 por página</option>
+                <option value="30">30 por página</option>
+                <option value="40">40 por página</option>
+                <option value="50">50 por página</option>
             </select>
+            <div class="dropdown">
+                <button class="btn btn-danger dropdown-toggle rounded-pill" type="button" id="selectorVistaDelegaciones" data-bs-toggle="dropdown" aria-expanded="false">
+                    <i class="bi bi-grid-3x3-gap me-1"></i><span id="etiquetaVistaDelegaciones">Tarjeta</span>
+                </button>
+                <ul class="dropdown-menu" aria-labelledby="selectorVistaDelegaciones">
+                    <li><button class="dropdown-item active" type="button" data-vista-delegaciones="cards" aria-pressed="true">Tarjeta</button></li>
+                    <li><button class="dropdown-item" type="button" data-vista-delegaciones="tabla" aria-pressed="false">Lista</button></li>
+                </ul>
+            </div>
             <button type="button" class="btn btn-outline-success rounded-pill" onclick="exportarDelegacionesExcel()">
                 <i class="bi bi-file-earmark-excel me-1"></i> Exportar a Excel
             </button>
@@ -123,15 +134,14 @@
         <div class="delegacion-grid" id="delegacionesCardsGrid">
             <!-- Las fichas se renderizan con la identidad cromática territorial y métricas -->
         </div>
-        <details class="delegaciones-listado mb-3">
-            <summary>Ver listado tabular de delegaciones</summary>
+        <div class="delegaciones-listado mb-3" id="delegacionesTablaVista" hidden>
             <div class="delegaciones-table-wrap">
                 <table class="table table-hover align-middle mb-0" aria-label="Delegaciones municipales">
                     <thead><tr><th>Código</th><th>Delegación</th><th>Comuna</th><th>Estado</th><th>Funcionarios</th><th>Acción</th></tr></thead>
                     <tbody id="tablaDelegacionesBody"><tr><td colspan="6">Cargando delegaciones…</td></tr></tbody>
                 </table>
             </div>
-        </details>
+        </div>
         <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mt-3">
             <span class="small text-muted" id="paginacionInfoDelegaciones">Cargando…</span>
             <div class="btn-group" aria-label="Páginas de delegaciones">
@@ -146,3 +156,4 @@
         </div>
     </div>
 </section>
+

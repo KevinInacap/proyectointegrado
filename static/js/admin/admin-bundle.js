@@ -13,6 +13,8 @@
         let bsModalUsuario, bsModalEliminarUsuario, bsModalPasswordUsuario;
         let bsModalNuevaAtencion, bsModalExpedienteAtencion;
         let datasetAtenciones = [], atencionSeleccionadaId = null;
+        let filasPorPaginaAtenciones = 10, paginaActualAtenciones = 1;
+        let controlesPaginacionAtencionesInicializados = false;
         window.datasetAtenciones = datasetAtenciones;
         let datasetUsuarios = [], filasFiltradasUsuarios = [];
         window.datasetUsuarios = datasetUsuarios;
@@ -922,7 +924,7 @@
         }
 
         function cambiarFilasPorPagina(val) {
-            filasPorPagina = parseInt(val);
+            filasPorPagina = Math.min(50, Math.max(10, parseInt(val, 10) || 10));
             paginaActual = 1;
             renderTablaVecinos();
         }
@@ -2712,7 +2714,7 @@
         }
 
         function cambiarFilasPorPaginaUsuarios(cant) {
-            filasPorPaginaUsuarios = parseInt(cant);
+            filasPorPaginaUsuarios = Math.min(50, Math.max(10, parseInt(cant, 10) || 10));
             paginaActualUsuarios = 1;
             renderTablaUsuarios();
         }
@@ -3268,6 +3270,10 @@
         let catalogoDelegacionesDB = [];
         let catalogoCargosDB = [];
         let catalogosOrganizacionInicializados = false;
+        let formularioOrganizacionCerradoInicializado = false;
+        let paginaActualCargos = 1;
+        let filasPorPaginaCargos = 10;
+        let controlesPaginacionCargosInicializados = false;
 
         function escaparHtmlCatalogo(valor) {
             const div = document.createElement('div');
@@ -3327,6 +3333,19 @@
         }
 
         async function initCargosView() {
+            if (!controlesPaginacionCargosInicializados) {
+                const pageSize = document.getElementById('tamanoPaginaCargos');
+                const previous = document.getElementById('paginaAnteriorCargos');
+                const next = document.getElementById('paginaSiguienteCargos');
+                pageSize?.addEventListener('change', () => {
+                    filasPorPaginaCargos = Math.min(50, Math.max(10, Number(pageSize.value) || 10));
+                    paginaActualCargos = 1;
+                    renderCargosMantenedor();
+                });
+                previous?.addEventListener('click', () => { paginaActualCargos = Math.max(1, paginaActualCargos - 1); renderCargosMantenedor(); });
+                next?.addEventListener('click', () => { paginaActualCargos += 1; renderCargosMantenedor(); });
+                controlesPaginacionCargosInicializados = true;
+            }
             try { await cargarCatalogosOrganizacion(); }
             catch (error) { Swal.fire('No fue posible cargar los cargos', error.message, 'error'); }
         }
@@ -3340,7 +3359,16 @@
             setText('kpiCargosTotal', catalogoCargosDB.length);
             setText('kpiCargosActivos', active.length);
             setText('kpiCargosAsignaciones', assignments);
-            container.innerHTML = catalogoCargosDB.map(item => {
+            const pages = Math.max(1, Math.ceil(catalogoCargosDB.length / filasPorPaginaCargos));
+            paginaActualCargos = Math.min(paginaActualCargos, pages);
+            const start = catalogoCargosDB.length ? (paginaActualCargos - 1) * filasPorPaginaCargos + 1 : 0;
+            const end = Math.min(catalogoCargosDB.length, paginaActualCargos * filasPorPaginaCargos);
+            setText('paginacionInfoCargos', `Mostrando ${start}-${end} de ${catalogoCargosDB.length} · Página ${paginaActualCargos} de ${pages}`);
+            const previous = document.getElementById('paginaAnteriorCargos');
+            const next = document.getElementById('paginaSiguienteCargos');
+            if (previous) previous.disabled = paginaActualCargos <= 1;
+            if (next) next.disabled = paginaActualCargos >= pages;
+            container.innerHTML = catalogoCargosDB.slice(start ? start - 1 : 0, end).map(item => {
                 const activo = item.status === 'Activo';
                 return `<div class="col-md-6 col-xl-4"><article class="bg-white border rounded-4 p-3 shadow-sm h-100 overflow-hidden">
                     <div class="d-flex justify-content-between gap-3 align-items-start"><div style="min-width:0"><h5 class="fw-bold mb-1 text-truncate" style="color:var(--muni-navy)">${escaparHtmlCatalogo(item.name)}</h5><p class="small text-muted mb-0">${escaparHtmlCatalogo(item.description || 'Sin descripción registrada')}</p></div><span class="badge ${activo ? 'bg-success-subtle text-success' : 'bg-secondary-subtle text-secondary'}">${item.status}</span></div>
@@ -3362,7 +3390,16 @@
                 document.getElementById('formCatalogoCargo')?.addEventListener('submit', guardarCargoCatalogo);
                 catalogosOrganizacionInicializados = true;
             }
+            if (!formularioOrganizacionCerradoInicializado) {
+                modalEl.addEventListener('hidden.bs.modal', () => {
+                    limpiarFormDelegacion();
+                    limpiarFormCargo();
+                });
+                formularioOrganizacionCerradoInicializado = true;
+            }
             try {
+                limpiarFormDelegacion();
+                limpiarFormCargo();
                 await cargarCatalogosOrganizacion();
                 const esCargos = pestaña === 'cargos';
                 const panelDelegaciones = document.getElementById('panelCatalogoDelegaciones');
@@ -3388,7 +3425,9 @@
         }
 
         function limpiarFormDelegacion() {
-            document.getElementById('formCatalogoDelegacion')?.reset();
+            const form = document.getElementById('formCatalogoDelegacion');
+            form?.reset();
+            form?.querySelectorAll('input, textarea, select').forEach(field => field.setCustomValidity(''));
             document.getElementById('catalogoDelegacionId').value = '';
             document.getElementById('tituloFormDelegacion').textContent = 'Nueva delegación';
         }
@@ -3439,13 +3478,17 @@
 
         async function guardarDelegacionCatalogo(event) {
             event.preventDefault();
+            const form = document.getElementById('formCatalogoDelegacion');
+            ['catalogoDelegacionNombre', 'catalogoDelegacionAmbito', 'catalogoDelegacionComuna'].forEach(id => {
+                const field = document.getElementById(id);
+                field.setCustomValidity(field.value.trim() ? '' : 'Este campo es obligatorio y no puede contener solo espacios.');
+            });
+            const photo = document.getElementById('catalogoDelegacionFoto');
+            const photoValue = photo.value.trim();
+            photo.setCustomValidity(!photoValue || /^(?:\/static\/(?!.*\.\.)[A-Za-z0-9_./-]+|https?:\/\/[^\s"'<>]+)$/i.test(photoValue)
+                ? '' : 'Usa una ruta /static/ segura o una dirección URL http(s).');
+            if (!form.reportValidity()) return;
             const id = document.getElementById('catalogoDelegacionId').value;
-            if (!document.getElementById('catalogoDelegacionNombre').value.trim() ||
-                !document.getElementById('catalogoDelegacionAmbito').value.trim() ||
-                !document.getElementById('catalogoDelegacionComuna').value.trim()) {
-                Swal.fire({icon: 'warning', title: 'Campos requeridos', text: 'Indica nombre, ámbito territorial y comuna de la delegación.'});
-                return;
-            }
             try {
                 await enviarCatalogo(id ? `/organization/delegations/${id}/update/` : '/organization/delegations/', {
                     name: document.getElementById('catalogoDelegacionNombre').value.trim(),
@@ -3670,7 +3713,8 @@
         let filtroEstadoDelegacion = '';
         let busquedaDelegacion = '';
         let paginaActualDelegaciones = 1;
-        let filasPorPaginaDelegaciones = 6;
+        let filasPorPaginaDelegaciones = 10;
+        let vistaDelegacionesActiva = 'cards';
 
         function normalizarBusquedaDelegacion(value) {
             return String(value || '').trim().toLocaleLowerCase('es-CL').normalize('NFD').replace(/[\u0300-\u036f]/g, '');
@@ -3774,14 +3818,33 @@
             renderizarDelegacionesCards(zona);
         }
 
+        function seleccionarVistaDelegaciones(vista) {
+            vistaDelegacionesActiva = vista === 'tabla' ? 'tabla' : 'cards';
+            const cards = document.getElementById('delegacionesCardsGrid');
+            const table = document.getElementById('delegacionesTablaVista');
+            const label = document.getElementById('etiquetaVistaDelegaciones');
+            if (cards) cards.hidden = vistaDelegacionesActiva !== 'cards';
+            if (table) table.hidden = vistaDelegacionesActiva !== 'tabla';
+            if (label) label.textContent = vistaDelegacionesActiva === 'tabla' ? 'Lista' : 'Tarjeta';
+            document.querySelectorAll('[data-vista-delegaciones]').forEach(option => {
+                const active = option.dataset.vistaDelegaciones === vistaDelegacionesActiva;
+                option.classList.toggle('active', active);
+                option.setAttribute('aria-pressed', String(active));
+            });
+        }
+
         async function initDelegacionesView() {
             document.getElementById('buscarDelegaciones')?.addEventListener('input', buscarDelegaciones);
             document.getElementById('estadoDelegaciones')?.addEventListener('change', filtrarEstadoDelegaciones);
             document.getElementById('tamanoPaginaDelegaciones')?.addEventListener('change', event => {
-                filasPorPaginaDelegaciones = Number(event.target.value) || 6;
+                filasPorPaginaDelegaciones = Math.min(50, Math.max(10, Number(event.target.value) || 10));
                 paginaActualDelegaciones = 1;
                 renderizarDelegacionesCards(filtroZonaActivo);
             });
+            document.querySelectorAll('[data-vista-delegaciones]').forEach(option => {
+                option.addEventListener('click', () => seleccionarVistaDelegaciones(option.dataset.vistaDelegaciones));
+            });
+            seleccionarVistaDelegaciones(vistaDelegacionesActiva);
             try { await cargarCatalogosOrganizacion(); }
             catch (error) { console.warn('No fue posible sincronizar las fichas territoriales:', error); }
             renderizarDelegacionesCards(filtroZonaActivo);
@@ -3790,6 +3853,7 @@
         function renderizarDelegacionesCards(filtro = 'todas') {
             const grid = document.getElementById('delegacionesCardsGrid');
             if (!grid) return;
+            seleccionarVistaDelegaciones(vistaDelegacionesActiva);
             grid.innerHTML = '';
 
             const filtered = delegacionesFiltradas();
@@ -3814,10 +3878,24 @@
                     const actionCell = row.insertCell();
                     const action = document.createElement('button');
                     action.type = 'button';
-                    action.className = 'btn btn-sm btn-outline-danger rounded-pill';
+                    action.className = 'btn btn-sm btn-outline-secondary rounded-pill me-1';
                     action.textContent = 'Ver ficha';
                     action.addEventListener('click', () => seleccionarDelegacion(item.id));
                     actionCell.append(action);
+                    const edit = document.createElement('button');
+                    edit.type = 'button';
+                    edit.className = 'btn btn-sm btn-danger rounded-pill me-1';
+                    edit.textContent = 'Editar';
+                    edit.addEventListener('click', () => {
+                        abrirCatalogosOrganizacion('delegaciones').then(() => editarDelegacionCatalogo(item.dbId));
+                    });
+                    actionCell.append(edit);
+                    const toggle = document.createElement('button');
+                    toggle.type = 'button';
+                    toggle.className = 'btn btn-sm btn-outline-danger rounded-pill';
+                    toggle.textContent = item.dbStatus === 'Activo' ? 'Inactivar' : 'Activar';
+                    toggle.addEventListener('click', () => alternarDelegacionCatalogo(item.dbId));
+                    actionCell.append(toggle);
                 });
             }
             if (!items.length) {
@@ -3902,6 +3980,26 @@
                         </div>
                     </div>
                 `;
+                const actions = document.createElement('div');
+                actions.className = 'd-flex justify-content-end gap-2 px-3 pb-2';
+                const edit = document.createElement('button');
+                edit.type = 'button';
+                edit.className = 'btn btn-sm btn-danger rounded-pill';
+                edit.innerHTML = '<i class="bi bi-pencil me-1"></i>Editar';
+                edit.addEventListener('click', event => {
+                    event.stopPropagation();
+                    abrirCatalogosOrganizacion('delegaciones').then(() => editarDelegacionCatalogo(d.dbId));
+                });
+                const toggle = document.createElement('button');
+                toggle.type = 'button';
+                toggle.className = 'btn btn-sm btn-outline-danger rounded-pill';
+                toggle.textContent = d.dbStatus === 'Activo' ? 'Inactivar' : 'Activar';
+                toggle.addEventListener('click', event => {
+                    event.stopPropagation();
+                    alternarDelegacionCatalogo(d.dbId);
+                });
+                actions.append(edit, toggle);
+                card.append(actions);
                 grid.appendChild(card);
             });
             if (typeof initSpotlightEffect === 'function') initSpotlightEffect();
@@ -5450,6 +5548,23 @@
                 if (data.success && Array.isArray(data.atenciones)) {
                     datasetAtenciones = data.atenciones;
                     window.datasetAtenciones = datasetAtenciones;
+                    if (!controlesPaginacionAtencionesInicializados) {
+                        const size = document.getElementById('tamanoPaginaAtenciones');
+                        size?.addEventListener('change', () => {
+                            filasPorPaginaAtenciones = Math.min(50, Math.max(10, Number(size.value) || 10));
+                            paginaActualAtenciones = 1;
+                            filtrarAtenciones();
+                        });
+                        document.getElementById('paginaAnteriorAtenciones')?.addEventListener('click', () => {
+                            paginaActualAtenciones = Math.max(1, paginaActualAtenciones - 1);
+                            filtrarAtenciones(false);
+                        });
+                        document.getElementById('paginaSiguienteAtenciones')?.addEventListener('click', () => {
+                            paginaActualAtenciones += 1;
+                            filtrarAtenciones(false);
+                        });
+                        controlesPaginacionAtencionesInicializados = true;
+                    }
                     renderTablaAtenciones(datasetAtenciones);
                 }
             } catch (err) {
@@ -5468,6 +5583,16 @@
             if (!tbody) return;
 
             if (totalLbl) totalLbl.textContent = items.length;
+            const pages = Math.max(1, Math.ceil(items.length / filasPorPaginaAtenciones));
+            paginaActualAtenciones = Math.min(paginaActualAtenciones, pages);
+            const start = items.length ? (paginaActualAtenciones - 1) * filasPorPaginaAtenciones + 1 : 0;
+            const end = Math.min(items.length, paginaActualAtenciones * filasPorPaginaAtenciones);
+            const info = document.getElementById('paginacionInfoAtenciones');
+            const previous = document.getElementById('paginaAnteriorAtenciones');
+            const next = document.getElementById('paginaSiguienteAtenciones');
+            if (info) info.textContent = `Mostrando ${start}-${end} de ${items.length} · Página ${paginaActualAtenciones} de ${pages}`;
+            if (previous) previous.disabled = paginaActualAtenciones <= 1;
+            if (next) next.disabled = paginaActualAtenciones >= pages;
 
             if (items.length === 0) {
                 tbody.innerHTML = `
@@ -5486,7 +5611,8 @@
                 return span.innerHTML;
             };
 
-            tbody.innerHTML = items.map((a) => {
+            const visibleItems = items.slice(start - 1, end);
+            tbody.innerHTML = visibleItems.map((a) => {
                 const badgeClass = a.status === 'Approved' ? 'bg-success-subtle text-success border-success-subtle' :
                                    a.status === 'Requires correction' ? 'bg-danger-subtle text-danger border-danger-subtle' :
                                    'bg-warning-subtle text-warning-emphasis border-warning-subtle';
@@ -5548,8 +5674,8 @@
             catalogsForAttentionForm = (async () => {
                 const [delegationResponse, typeResponse, subResponse] = await Promise.all([
                     fetch('/api/delegations/', { credentials: 'same-origin', headers: { Accept: 'application/json' } }),
-                    fetch('/api/catalogs/attention-types/?page_size=100', { credentials: 'same-origin', headers: { Accept: 'application/json' } }),
-                    fetch('/api/catalogs/subattentions/?page_size=100', { credentials: 'same-origin', headers: { Accept: 'application/json' } })
+                    fetch('/api/catalogs/attention-types/?page_size=50', { credentials: 'same-origin', headers: { Accept: 'application/json' } }),
+                    fetch('/api/catalogs/subattentions/?page_size=50', { credentials: 'same-origin', headers: { Accept: 'application/json' } })
                 ]);
                 if (!delegationResponse.ok || !typeResponse.ok || !subResponse.ok) {
                     catalogsForAttentionForm = null;
@@ -5852,7 +5978,8 @@
             }
         }
 
-        function filtrarAtenciones() {
+        function filtrarAtenciones(resetPage = true) {
+            if (resetPage) paginaActualAtenciones = 1;
             const query = (document.getElementById('txtBuscarAtencion')?.value || '').toLowerCase().trim();
             const delegacion = (document.getElementById('selFiltroDelegacionAtencion')?.value || '').trim();
             const validacion = (document.getElementById('selFiltroValidacionAtencion')?.value || '').trim();
@@ -6372,5 +6499,6 @@
                 }
             });
         });
+
 
 

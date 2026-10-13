@@ -199,11 +199,31 @@ def _is_valid_chilean_rut(value):
 
 
 def _validate_delegation_details(data):
-    text_fields = ('name', 'scope', 'address', 'phone', 'schedule', 'manager_name', 'description')
+    text_fields = ('name', 'scope', 'commune', 'address', 'phone', 'schedule', 'manager_name', 'description')
     if any(_text(data, field) is None for field in text_fields):
         return 'Los campos de texto deben ser cadenas.'
     if any(re.search(r'[<>]', _text(data, field)) for field in text_fields):
         return 'Los campos de la delegación no pueden contener etiquetas HTML.'
+    name, scope, commune = (_text(data, field) for field in ('name', 'scope', 'commune'))
+    label_pattern = r"[^\W_][\w .,'’&/-]{1,99}"
+    if any(
+        not re.fullmatch(label_pattern, value, flags=re.UNICODE)
+        or not re.search(r'[^\W\d_]', value, flags=re.UNICODE)
+        for value in (name, scope, commune)
+    ):
+        return 'Nombre, ámbito y comuna deben contener texto válido de 3 a 100 caracteres.'
+    address = _text(data, 'address')
+    if address and not re.fullmatch(r"[^\W_][\w .,#º°/-]{0,199}", address, flags=re.UNICODE):
+        return 'La dirección contiene caracteres no válidos.'
+    phone = _text(data, 'phone')
+    if phone and not re.fullmatch(r'\+?[0-9][0-9() .-]{6,29}', phone):
+        return 'El teléfono debe tener entre 7 y 30 dígitos o signos telefónicos.'
+    schedule = _text(data, 'schedule')
+    if schedule and not re.fullmatch(r"[\w :.,/-]{1,120}", schedule, flags=re.UNICODE):
+        return 'El horario contiene caracteres no válidos.'
+    manager = _text(data, 'manager_name')
+    if manager and not re.fullmatch(r"[^\W_][\w .'-]{1,149}", manager, flags=re.UNICODE):
+        return 'El nombre de la persona encargada contiene caracteres no válidos.'
     email = _text(data, 'email')
     if email is None:
         return 'El correo de contacto no tiene un formato válido.'
@@ -321,6 +341,8 @@ def api_user_create(request):
         return JsonResponse({'success': False, 'message': 'Contraseña insegura.', 'details': exc.messages}, status=400)
     if not username or not full_name or not email or not rut:
         return JsonResponse({'success': False, 'message': 'Nombre, RUT, Correo y Usuario son obligatorios.'}, status=400)
+    if len(username) > 150 or len(full_name) > 150 or len(email) > 100 or len(rut) > 12:
+        return JsonResponse({'success': False, 'message': 'Usuario, nombre, correo o RUT superan el largo permitido.'}, status=400)
 
     if not _is_valid_chilean_rut(rut):
         return JsonResponse({'success': False, 'message': 'RUT inválido. Revisa el número y el dígito verificador.'}, status=400)
@@ -444,7 +466,8 @@ def api_user_update(request, pk):
     )):
         return JsonResponse({'success': False, 'message': 'Solo un superusuario puede administrar acceso técnico.'}, status=403)
 
-    if None in (full_name, email, rut, password) or not full_name or len(full_name) > 150 or not _valid_status(status, True):
+    if (None in (full_name, email, rut, password) or not full_name or len(full_name) > 150
+            or len(email) > 100 or len(rut) > 12 or not _valid_status(status, True)):
         return JsonResponse({'success': False, 'message': 'Datos de usuario inválidos.'}, status=400)
     try:
         validate_email(email)
@@ -1435,12 +1458,12 @@ def api_delegations(request):
         return JsonResponse({'success': False, 'message': 'Ya existe una delegación con ese nombre.'}, status=400)
     if code is None or (code and (not re.fullmatch(r'[A-Za-z0-9-]{2,20}', code) or Delegation.objects.filter(code__iexact=code).exists())):
         return JsonResponse({'success': False, 'message': 'Código inválido o ya utilizado.'}, status=400)
-    detail_error = _validate_delegation_details(data)
+    detail_error = _validate_delegation_details({**data, 'commune': commune})
     if detail_error:
         return JsonResponse({'success': False, 'message': detail_error}, status=400)
     if any(len(_text(data, field)) > limit for field, limit in (
         ('address', 200), ('phone', 30), ('email', 120), ('schedule', 120),
-        ('manager_name', 150), ('photo_url', 255)
+        ('manager_name', 150), ('photo_url', 255), ('description', 500)
     )):
         return JsonResponse({'success': False, 'message': 'Detalle demasiado largo.'}, status=400)
     with transaction.atomic():
@@ -1477,7 +1500,7 @@ def api_delegation_update(request, pk):
     if not code or not re.fullmatch(r'[A-Za-z0-9-]{2,20}', code) or Delegation.objects.filter(code__iexact=code).exclude(id=pk).exists():
         return JsonResponse({'success': False, 'message': 'Código inválido o ya utilizado.'}, status=400)
     merged = {field: getattr(item, field) for field in (
-        'name', 'scope', 'address', 'phone', 'email', 'schedule',
+        'name', 'scope', 'commune', 'address', 'phone', 'email', 'schedule',
         'manager_name', 'photo_url', 'description'
     )}
     merged.update({key: data.get(key) for key in merged if key in data})
@@ -1486,7 +1509,7 @@ def api_delegation_update(request, pk):
         return JsonResponse({'success': False, 'message': detail_error}, status=400)
     if any(len(_text(merged, field)) > limit for field, limit in (
         ('address', 200), ('phone', 30), ('email', 120), ('schedule', 120),
-        ('manager_name', 150), ('photo_url', 255)
+        ('manager_name', 150), ('photo_url', 255), ('description', 500)
     )):
         return JsonResponse({'success': False, 'message': 'Detalle demasiado largo.'}, status=400)
     previous = {'code': item.code, 'name': item.name, 'scope': item.scope, 'commune': item.commune, 'status': item.status, 'address': item.address,
@@ -1566,7 +1589,7 @@ def api_positions(request):
     data = _get_request_data(request)
     name, description = _text(data, 'name'), _text(data, 'description')
     status = data.get('status', 'Activo')
-    if name is None or description is None or not name or len(name) > 100:
+    if name is None or description is None or not name or len(name) > 100 or len(description) > 500:
         return JsonResponse({'success': False, 'message': 'Nombre o descripción inválidos.'}, status=400)
     if status not in ('Activo', 'Inactivo'):
         return JsonResponse({'success': False, 'message': 'Estado inválido.'}, status=400)
@@ -1587,7 +1610,7 @@ def api_position_update(request, pk):
     name = _text(data, 'name', item.name)
     description = _text(data, 'description', item.description)
     status = data.get('status', item.status)
-    if name is None or description is None or not name or len(name) > 100 or status not in ('Activo', 'Inactivo'):
+    if name is None or description is None or not name or len(name) > 100 or len(description) > 500 or status not in ('Activo', 'Inactivo'):
         return JsonResponse({'success': False, 'message': 'Revisa el nombre y estado.'}, status=400)
     if status == 'Inactivo' and item.status == 'Activo' and item.users.filter(deleted_at__isnull=True, status='Activo').exists():
         return JsonResponse({'success': False, 'message': 'El cargo tiene funcionarios activos.'}, status=400)
@@ -1632,6 +1655,7 @@ def api_position_delete(request, pk):
         _catalog_audit(request, 'cargo', item, 'DELETE', {'name': item.name, 'description': item.description})
         item.delete()
     return JsonResponse({'success': True, 'message': f"Cargo '{item.name}' eliminado exitosamente de la base de datos."})
+
 
 
 

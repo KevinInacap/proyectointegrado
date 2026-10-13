@@ -87,11 +87,11 @@
 
                 <div class="col-12">
                     <label class="form-label" for="problem_description">Descripción de la solicitud <span class="attention-required">*</span></label>
-                    <textarea class="form-control" id="problem_description" name="problem_description" rows="3" maxlength="10000" required>{{ form_values.problem_description|default:'' }}</textarea>
+                    <textarea class="form-control" id="problem_description" name="problem_description" rows="3" maxlength="1000" required>{{ form_values.problem_description|default:'' }}</textarea>
                 </div>
                 <div class="col-12">
                     <label class="form-label" for="executed_action">Acción realizada o derivación <span class="attention-required">*</span></label>
-                    <textarea class="form-control" id="executed_action" name="executed_action" rows="3" maxlength="10000" required>{{ form_values.executed_action|default:'' }}</textarea>
+                    <textarea class="form-control" id="executed_action" name="executed_action" rows="3" maxlength="1000" required>{{ form_values.executed_action|default:'' }}</textarea>
                 </div>
                 <div class="col-12">
                     <div class="form-check">
