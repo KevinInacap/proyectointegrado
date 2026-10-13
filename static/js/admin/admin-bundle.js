@@ -3425,7 +3425,9 @@
         }
 
         function limpiarFormDelegacion() {
-            document.getElementById('formCatalogoDelegacion')?.reset();
+            const form = document.getElementById('formCatalogoDelegacion');
+            form?.reset();
+            form?.querySelectorAll('input, textarea, select').forEach(field => field.setCustomValidity(''));
             document.getElementById('catalogoDelegacionId').value = '';
             document.getElementById('tituloFormDelegacion').textContent = 'Nueva delegación';
         }
@@ -3476,13 +3478,17 @@
 
         async function guardarDelegacionCatalogo(event) {
             event.preventDefault();
+            const form = document.getElementById('formCatalogoDelegacion');
+            ['catalogoDelegacionNombre', 'catalogoDelegacionAmbito', 'catalogoDelegacionComuna'].forEach(id => {
+                const field = document.getElementById(id);
+                field.setCustomValidity(field.value.trim() ? '' : 'Este campo es obligatorio y no puede contener solo espacios.');
+            });
+            const photo = document.getElementById('catalogoDelegacionFoto');
+            const photoValue = photo.value.trim();
+            photo.setCustomValidity(!photoValue || /^(?:\/static\/(?!.*\.\.)[A-Za-z0-9_./-]+|https?:\/\/[^\s"'<>]+)$/i.test(photoValue)
+                ? '' : 'Usa una ruta /static/ segura o una dirección URL http(s).');
+            if (!form.reportValidity()) return;
             const id = document.getElementById('catalogoDelegacionId').value;
-            if (!document.getElementById('catalogoDelegacionNombre').value.trim() ||
-                !document.getElementById('catalogoDelegacionAmbito').value.trim() ||
-                !document.getElementById('catalogoDelegacionComuna').value.trim()) {
-                Swal.fire({icon: 'warning', title: 'Campos requeridos', text: 'Indica nombre, ámbito territorial y comuna de la delegación.'});
-                return;
-            }
             try {
                 await enviarCatalogo(id ? `/organization/delegations/${id}/update/` : '/organization/delegations/', {
                     name: document.getElementById('catalogoDelegacionNombre').value.trim(),
@@ -3816,20 +3822,15 @@
             vistaDelegacionesActiva = vista === 'tabla' ? 'tabla' : 'cards';
             const cards = document.getElementById('delegacionesCardsGrid');
             const table = document.getElementById('delegacionesTablaVista');
-            const cardsButton = document.getElementById('btnVistaDelegacionesCards');
-            const tableButton = document.getElementById('btnVistaDelegacionesTabla');
+            const label = document.getElementById('etiquetaVistaDelegaciones');
             if (cards) cards.hidden = vistaDelegacionesActiva !== 'cards';
             if (table) table.hidden = vistaDelegacionesActiva !== 'tabla';
-            if (cardsButton) {
-                cardsButton.classList.toggle('btn-danger', vistaDelegacionesActiva === 'cards');
-                cardsButton.classList.toggle('btn-outline-danger', vistaDelegacionesActiva !== 'cards');
-                cardsButton.setAttribute('aria-pressed', String(vistaDelegacionesActiva === 'cards'));
-            }
-            if (tableButton) {
-                tableButton.classList.toggle('btn-danger', vistaDelegacionesActiva === 'tabla');
-                tableButton.classList.toggle('btn-outline-danger', vistaDelegacionesActiva !== 'tabla');
-                tableButton.setAttribute('aria-pressed', String(vistaDelegacionesActiva === 'tabla'));
-            }
+            if (label) label.textContent = vistaDelegacionesActiva === 'tabla' ? 'Lista' : 'Tarjeta';
+            document.querySelectorAll('[data-vista-delegaciones]').forEach(option => {
+                const active = option.dataset.vistaDelegaciones === vistaDelegacionesActiva;
+                option.classList.toggle('active', active);
+                option.setAttribute('aria-pressed', String(active));
+            });
         }
 
         async function initDelegacionesView() {
@@ -3840,8 +3841,9 @@
                 paginaActualDelegaciones = 1;
                 renderizarDelegacionesCards(filtroZonaActivo);
             });
-            document.getElementById('btnVistaDelegacionesCards')?.addEventListener('click', () => seleccionarVistaDelegaciones('cards'));
-            document.getElementById('btnVistaDelegacionesTabla')?.addEventListener('click', () => seleccionarVistaDelegaciones('tabla'));
+            document.querySelectorAll('[data-vista-delegaciones]').forEach(option => {
+                option.addEventListener('click', () => seleccionarVistaDelegaciones(option.dataset.vistaDelegaciones));
+            });
             seleccionarVistaDelegaciones(vistaDelegacionesActiva);
             try { await cargarCatalogosOrganizacion(); }
             catch (error) { console.warn('No fue posible sincronizar las fichas territoriales:', error); }
@@ -6497,5 +6499,6 @@
                 }
             });
         });
+
 
 
