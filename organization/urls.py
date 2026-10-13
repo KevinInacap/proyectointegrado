@@ -14,6 +14,7 @@ urlpatterns = [
     path('delegations/', views.api_delegations, name='api_delegations'),
     path('delegations/<int:pk>/update/', views.api_delegation_update, name='api_delegation_update'),
     path('delegations/<int:pk>/toggle-status/', views.api_delegation_toggle, name='api_delegation_toggle'),
+    path('delegations/<int:pk>/delete/', views.api_delegation_delete, name='api_delegation_delete'),
     path('positions/', views.api_positions, name='api_positions'),
     path('positions/<int:pk>/update/', views.api_position_update, name='api_position_update'),
     path('positions/<int:pk>/toggle-status/', views.api_position_toggle, name='api_position_toggle'),

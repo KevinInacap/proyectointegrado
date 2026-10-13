@@ -264,29 +264,60 @@
             </div>
         </div>
 
-        <!-- Columna Derecha: información de servicios pendiente de validación institucional -->
+        <!-- Servicios verificados en canales oficiales de la Municipalidad de La Serena -->
         <div class="col-lg-6">
-            <div class="dashboard-panel h-100 dashboard-empty-state d-flex align-items-center">
-                <div class="d-flex align-items-start gap-3">
-                    <span class="dashboard-empty-icon"><i class="bi bi-info-circle"></i></span>
-                    <div>
-                        <h3 class="h6 fw-bold mb-1" style="color:var(--muni-navy)">Servicios municipales</h3>
-                        <p class="small text-secondary mb-0">Los horarios, teléfonos y avisos de servicio se publicarán aquí cuando exista una fuente institucional que permita mantenerlos actualizados.</p>
+            <div class="dashboard-panel h-100 p-4">
+                <div class="d-flex justify-content-between align-items-start gap-2 mb-3">
+                    <div><span class="small text-uppercase fw-bold text-muted">Atención directa</span><h3 class="h5 fw-bold mb-0" style="color:var(--muni-navy)">Servicios municipales</h3></div>
+                    <i class="bi bi-headset fs-4 text-primary"></i>
+                </div>
+                <div class="row g-3">
+                    <div class="col-sm-6">
+                        <article class="border rounded-3 p-3 h-100">
+                            <div class="small text-muted mb-1">Mesa central municipal</div>
+                            <a class="fw-bold fs-5 text-decoration-none" href="tel:+56512206600">+56 51 220 6600</a>
+                            <div class="small text-muted mt-1">Arturo Prat 451, La Serena</div>
+                        </article>
+                    </div>
+                    <div class="col-sm-6">
+                        <article class="border rounded-3 p-3 h-100">
+                            <div class="small text-muted mb-1">Seguridad Ciudadana</div>
+                            <a class="fw-bold fs-5 text-decoration-none" href="tel:+56512206720">+56 51 220 6720</a>
+                            <div class="small text-muted mt-1">Orientación telefónica municipal</div>
+                        </article>
+                    </div>
+                    <div class="col-12 d-flex align-items-center justify-content-between flex-wrap gap-2">
+                        <a class="btn btn-sm btn-outline-primary rounded-pill" href="https://laserena.cl/" target="_blank" rel="noopener">Portal municipal <i class="bi bi-box-arrow-up-right ms-1"></i></a>
+                        <a class="small text-muted" href="https://transparencia.laserena.cl/ptransact.php?n=87" target="_blank" rel="noopener">Fuente oficial · Seguridad Ciudadana</a>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Novedades: solo se presentan registros institucionales; no se inventan noticias en el panel. -->
-    <div class="dashboard-panel dashboard-empty-state mb-4">
-        <div class="d-flex align-items-start gap-3">
-            <span class="dashboard-empty-icon"><i class="bi bi-megaphone"></i></span>
-            <div>
-                <h3 class="h6 fw-bold mb-1" style="color:var(--muni-navy)">Novedades municipales</h3>
-                <p class="small text-secondary mb-0">Las noticias y operativos aparecerán aquí cuando se conecte una fuente institucional. No se muestran avisos de ejemplo como si fueran publicaciones vigentes.</p>
+    <!-- Publicaciones enlazadas directamente al portal oficial municipal -->
+    <div class="dashboard-panel p-4 mb-4">
+        <div class="d-flex justify-content-between align-items-start gap-3 flex-wrap mb-3">
+            <div><span class="small text-uppercase fw-bold text-muted">Portal municipal · publicaciones recientes</span><h3 class="h5 fw-bold mb-0" style="color:var(--muni-navy)">Novedades municipales</h3></div>
+            <a class="btn btn-sm btn-outline-primary rounded-pill" href="https://laserena.cl/" target="_blank" rel="noopener">Ver todas las noticias <i class="bi bi-box-arrow-up-right ms-1"></i></a>
+        </div>
+        <div class="row g-3">
+            <div class="col-md-6">
+                <a class="d-block h-100 p-3 border rounded-3 text-decoration-none" href="https://laserena.cl/noticia/1384" target="_blank" rel="noopener">
+                    <span class="small text-muted">24 de septiembre de 2026 · Personas mayores</span>
+                    <span class="d-block fw-bold mt-1" style="color:var(--muni-navy)">La Serena alista tres nuevas casas para las personas mayores</span>
+                    <span class="small text-secondary">Dependencias municipales para la Oficina del Adulto Mayor y el Centro Diurno.</span>
+                </a>
+            </div>
+            <div class="col-md-6">
+                <a class="d-block h-100 p-3 border rounded-3 text-decoration-none" href="https://laserena.cl/noticia/1383" target="_blank" rel="noopener">
+                    <span class="small text-muted">24 de septiembre de 2026 · Inclusión</span>
+                    <span class="d-block fw-bold mt-1" style="color:var(--muni-navy)">Avanza la iniciativa de un Centro de Inclusión en La Florida</span>
+                    <span class="small text-secondary">Proyecto municipal junto a la Agrupación Zoé Integración e Inclusión TEA.</span>
+                </a>
             </div>
         </div>
+        <div class="small text-muted mt-3">Información consultada en los canales oficiales el 13 de octubre de 2026. Las publicaciones se abren en laserena.cl.</div>
     </div>
 
 </section>

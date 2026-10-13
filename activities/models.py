@@ -96,6 +96,10 @@ class Activity(BaseModel):
         SubAttention, on_delete=models.PROTECT, null=True, blank=True,
         related_name='activities', verbose_name='Sub Atención',
     )
+    neighbor = models.ForeignKey(
+        'Vecino', on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='activities', verbose_name='Vecino asociado',
+    )
     activity_date = models.DateField(verbose_name="Fecha de actividad")
     problem_description = models.TextField(verbose_name="Descripción del problema")
     executed_action = models.TextField(verbose_name="Acción ejecutada")

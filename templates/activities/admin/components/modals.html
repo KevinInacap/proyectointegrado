@@ -324,6 +324,11 @@
                         <input type="hidden" id="atencionEditId" value="">
                         
                         <div class="row g-2">
+                            <div class="col-12">
+                                <label class="form-label small fw-bold mb-1" for="selAtencionVecino">Vincular ficha de vecino</label>
+                                <select class="form-select form-select-sm" id="selAtencionVecino" onchange="completarDatosVecinoAtencion()"><option value="">Contacto sin ficha de vecino</option></select>
+                                <small class="text-muted">Al guardar el nombre de la atención, también se actualizará el vecino vinculado.</small>
+                            </div>
                             <div class="col-md-6">
                                 <label class="form-label small fw-bold mb-1">Nombre Vecino(a) / Contacto <span class="text-danger">*</span></label>
                                 <input type="text" class="form-control form-control-sm" id="txtAtencionNombre" placeholder="Ej: Patricia Soto Cárdenas" required>
@@ -524,7 +529,7 @@
 
     <!-- MODAL HISTORIAL DE AUDITORÍA Y TRAZABILIDAD (LOG DE ADMINISTRADOR) -->
     <div class="modal fade" id="modalAuditoria" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered modal-xl">
+        <div class="modal-dialog modal-dialog-centered modal-xl modal-auditoria-dialog">
             <div class="modal-content shadow-lg border-0" style="border-radius: 16px; overflow: hidden;">
                 <div class="modal-header text-white py-3 px-4"
                     style="background: linear-gradient(135deg, #1B365D 0%, #102447 100%); border-top: 4px solid #C41230;">
@@ -545,7 +550,7 @@
                     </div>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
-                <div class="modal-body p-4 bg-light">
+                <div class="modal-body p-4 bg-light audit-modal-body">
                     <!-- Barra de filtros del log -->
                     <div
                         class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3 bg-white p-3 rounded-3 border">
@@ -581,7 +586,7 @@
 
                     <!-- Tabla del Log de Auditoría -->
                     <div class="bg-white rounded-3 border shadow-sm overflow-hidden">
-                        <div class="table-responsive">
+                        <div class="table-responsive audit-table-wrap">
                             <table class="table table-hover align-middle mb-0" id="tablaAuditoria">
                                 <thead class="table-light sticky-top"
                                     style="font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.5px; z-index: 1;">
@@ -608,8 +613,12 @@
                 <div
                     class="modal-footer bg-white py-2 px-4 border-top d-flex justify-content-between align-items-center">
                     <span class="small text-muted" id="lblTotalAuditLogs">0 eventos registrados</span>
-                    <button type="button" class="btn btn-secondary btn-sm rounded-pill px-4"
-                        data-bs-dismiss="modal">Cerrar</button>
+                    <div class="d-flex align-items-center gap-2">
+                        <button type="button" class="btn btn-outline-primary btn-sm" id="btnPaginaAnteriorAuditoria" onclick="cambiarPaginaAuditoria(-1)" aria-label="Página anterior"><i class="bi bi-chevron-left"></i></button>
+                        <span class="small text-muted" id="lblPaginaAuditoria">Página 1 de 1</span>
+                        <button type="button" class="btn btn-outline-primary btn-sm" id="btnPaginaSiguienteAuditoria" onclick="cambiarPaginaAuditoria(1)" aria-label="Página siguiente"><i class="bi bi-chevron-right"></i></button>
+                        <button type="button" class="btn btn-secondary btn-sm rounded-pill px-4" data-bs-dismiss="modal">Cerrar</button>
+                    </div>
                 </div>
             </div>
         </div>

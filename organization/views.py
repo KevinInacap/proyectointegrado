@@ -762,7 +762,7 @@ def api_audit_logs(request):
                 target_name = nv.get('full_name') or ov.get('full_name') or f"ID #{l.affected_record_id}"
                 desc = f"Modificó perfil / roles de {target_name}"
         elif l.action == 'DELETE':
-            target_name = ov.get('full_name') or f"ID #{l.affected_record_id}"
+            target_name = ov.get('full_name') or ov.get('name') or f"ID #{l.affected_record_id}"
             desc = f"Eliminó permanentemente a: {target_name}"
         elif l.action == 'VALIDATE':
             decision = nv.get('decision', 'Revisado')
@@ -1191,7 +1191,7 @@ def api_role_delete(request, pk):
             'message': f"El rol '{role.name}' es un rol protegido fundamental de la plataforma municipal y no puede ser eliminado."
         }, status=403)
 
-    assigned_users = role.users.filter(deleted_at__isnull=True).count()
+    assigned_users = role.users.count()
     if assigned_users > 0:
         return JsonResponse({
             'success': False,
@@ -1216,8 +1216,7 @@ def api_role_delete(request, pk):
                 }
             )
 
-            role.deleted_at = timezone.now()
-            role.save(update_fields=['deleted_at', 'updated_at'])
+            role.delete()
 
         return JsonResponse({
             'success': True,
@@ -1518,6 +1517,38 @@ def api_delegation_toggle(request, pk):
         item.save(update_fields=['status', 'updated_at'])
         _catalog_audit(request, 'delegacion', item, 'UPDATE', previous)
     return JsonResponse({'success': True, 'message': f"Delegación {item.status.lower()} correctamente.", 'status': item.status})
+
+
+@permission_gate({'POST': 'delegaciones.delete', 'DELETE': 'delegaciones.delete'})
+def api_delegation_delete(request, pk):
+    """Elimina una delegación sin referencias operativas y registra la auditoría."""
+    if request.method not in ('POST', 'DELETE'):
+        return JsonResponse({'success': False, 'message': 'Método no permitido.'}, status=405)
+    item = get_object_or_404(_delegations_scope(request), id=pk, deleted_at__isnull=True)
+
+    from activities.models import Activity
+    from agenda.models import CollectiveAgenda
+    from social.models import SocialCase
+
+    dependencies = {
+        'funcionarios': item.users.count(),
+        'atenciones': Activity.objects.filter(delegation=item).count(),
+        'compromisos de agenda': CollectiveAgenda.objects.filter(delegation=item).count(),
+        'casos sociales': SocialCase.objects.filter(delegation=item).count(),
+    }
+    in_use = [f"{count} {name}" for name, count in dependencies.items() if count]
+    if in_use:
+        return JsonResponse({
+            'success': False,
+            'message': 'No se puede eliminar la delegación porque tiene registros vinculados: ' + ', '.join(in_use) + '.',
+        }, status=400)
+
+    previous = {'name': item.name, 'code': item.code, 'scope': item.scope}
+    name = item.name
+    with transaction.atomic():
+        _catalog_audit(request, 'delegacion', item, 'DELETE', previous)
+        item.delete()
+    return JsonResponse({'success': True, 'message': f"Delegación '{name}' eliminada de la base de datos."})
 
 
 @permission_gate({'GET': 'cargos.view', 'POST': 'cargos.create'})

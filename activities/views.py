@@ -6,7 +6,7 @@ from django.core.exceptions import ValidationError
 from django.utils import timezone
 from django.utils.text import slugify
 from django.urls import reverse
-from .models import Activity, Evidence, Validation
+from .models import Activity, Evidence, Validation, Vecino
 from organization.models import Delegation, UserProfile
 from core.models import AuditLog
 from core.views import _normalized_label, dashboard_route_for_position
@@ -670,6 +670,7 @@ def _attention_result(a):
     val = a.validations.first()
     return {
         'id': a.id, 'activity_code': a.activity_code,
+        'neighbor_id': a.neighbor_id,
         'evidence_code': evid.evidence_code if evid else '',
         'contact_name': a.contact_name, 'contact_phone': a.contact_phone,
         'delegation': a.delegation.name if a.delegation else '',
@@ -699,7 +700,7 @@ def api_atenciones(request):
     if not _has_matrix_permission(request, permission):
         return _permission_denied(permission)
     if request.method == 'GET':
-        qs = _activity_scope(request).select_related('delegation', 'catalog', 'attention_type', 'subattention').prefetch_related('evidences', 'validations')
+        qs = _activity_scope(request).select_related('delegation', 'catalog', 'attention_type', 'subattention', 'neighbor').prefetch_related('evidences', 'validations')
         return JsonResponse({'success': True, 'atenciones': [_attention_result(a) for a in qs.order_by('-activity_date', '-created_at')]})
 
     data = _attention_payload(request)
@@ -708,6 +709,14 @@ def api_atenciones(request):
     delegation = _delegation_for_write(request, data.get('delegation'))
     if not delegation:
         return JsonResponse({'success': False, 'message': 'Delegación no autorizada o inactiva.'}, status=403)
+    neighbor = None
+    neighbor_id = data.get('neighbor_id')
+    if neighbor_id not in (None, ''):
+        if isinstance(neighbor_id, bool) or not str(neighbor_id).isdecimal():
+            return JsonResponse({'success': False, 'message': 'Vecino asociado no válido.'}, status=400)
+        neighbor = _vecino_scope(request).filter(pk=int(neighbor_id), deleted_at__isnull=True).first()
+        if not neighbor:
+            return JsonResponse({'success': False, 'message': 'El vecino asociado no existe o no está disponible.'}, status=404)
     catalog, error = _attention_catalog(data)
     attention_type, subattention, typed_error = _typed_attention_selection(data)
     if typed_error:
@@ -747,6 +756,7 @@ def api_atenciones(request):
                         and existing.contact_name == contact and existing.problem_description == problem
                         and existing.executed_action == action and existing.delegation_id == delegation.id
                         and existing.activity_date == activity_date
+                        and existing.neighbor_id == (neighbor.pk if neighbor else None)
                         and existing.contact_phone == phone and existing.catalog_id == (catalog.pk if catalog else None)
                         and existing.attention_type_id == (attention_type.pk if attention_type else None)
                         and existing.subattention_id == (subattention.pk if subattention else None)
@@ -773,8 +783,11 @@ def api_atenciones(request):
             contact_name=contact, contact_phone=phone,
             is_collective_agenda=data.get('is_collective_agenda', False),
             validation_status='Pending', delegation=delegation,
-            catalog=catalog, user=request.user, **typed_fields
+            catalog=catalog, user=request.user, neighbor=neighbor, **typed_fields
         )
+        if neighbor and neighbor.nombre != contact:
+            neighbor.nombre = contact
+            neighbor.save(update_fields=['nombre', 'updated_at'])
     return JsonResponse({'success': True, 'id': act.id, 'message': f'Atención {code} registrada.'}, status=201)
 
 
@@ -784,7 +797,7 @@ def api_atencion_detail(request, pk):
     permission = 'lectura' if request.method == 'GET' else ('cierre' if request.method == 'DELETE' else 'edicion')
     if not _has_matrix_permission(request, permission):
         return _permission_denied(permission)
-    a = _activity_scope(request).select_related('delegation', 'catalog', 'attention_type', 'subattention').filter(pk=pk).first()
+    a = _activity_scope(request).select_related('delegation', 'catalog', 'attention_type', 'subattention', 'neighbor').filter(pk=pk).first()
     if not a:
         return JsonResponse({'success': False, 'message': 'Atención no encontrada.'}, status=404)
     if request.method == 'GET':
@@ -815,6 +828,17 @@ def api_atencion_detail(request, pk):
             a.activity_date = datetime.date.fromisoformat(data['activity_date'])
         except (TypeError, ValueError):
             return JsonResponse({'success': False, 'message': 'Fecha de atención o visita inválida.'}, status=400)
+    if 'neighbor_id' in data:
+        neighbor_id = data.get('neighbor_id')
+        if neighbor_id in (None, ''):
+            a.neighbor = None
+        elif isinstance(neighbor_id, bool) or not str(neighbor_id).isdecimal():
+            return JsonResponse({'success': False, 'message': 'Vecino asociado no válido.'}, status=400)
+        else:
+            neighbor = _vecino_scope(request).filter(pk=int(neighbor_id), deleted_at__isnull=True).first()
+            if not neighbor:
+                return JsonResponse({'success': False, 'message': 'El vecino asociado no existe o no está disponible.'}, status=404)
+            a.neighbor = neighbor
     if 'delegation' in data:
         delegation = _delegation_for_write(request, data['delegation'])
         if not delegation:
@@ -840,6 +864,9 @@ def api_atencion_detail(request, pk):
                 return JsonResponse({'success': False, 'message': f'{key} inválido.'}, status=400)
             setattr(a, key, value)
     with transaction.atomic():
+        if a.neighbor_id and a.contact_name and a.neighbor.nombre != a.contact_name:
+            a.neighbor.nombre = a.contact_name
+            a.neighbor.save(update_fields=['nombre', 'updated_at'])
         a.save()
         AuditLog.objects.create(
             user=request.user,

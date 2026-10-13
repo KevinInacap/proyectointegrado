@@ -4022,3 +4022,39 @@
         .report-sparkline-bar.highlight {
             background: #C41230;
         }
+
+
+/* Auditoría: panel ancho y alto controlado con páginas */
+.modal-auditoria-dialog {
+    width: min(96vw, 1600px);
+    max-width: 1600px;
+}
+#modalAuditoria .modal-content {
+    height: min(90vh, 900px);
+}
+#modalAuditoria .audit-modal-body {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    overflow: hidden;
+    padding: 1rem !important;
+}
+#modalAuditoria .audit-table-wrap {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow: auto;
+}
+#modalAuditoria .audit-table-wrap table {
+    width: 100%;
+    table-layout: fixed;
+}
+#modalAuditoria .audit-table-wrap th,
+#modalAuditoria .audit-table-wrap td {
+    overflow-wrap: anywhere;
+    padding: .55rem .65rem;
+}
+@media (max-width: 767.98px) {
+    .modal-auditoria-dialog { width: calc(100vw - 1rem); margin: .5rem; }
+    #modalAuditoria .modal-content { height: calc(100dvh - 1rem); }
+    #modalAuditoria .modal-body { padding: .75rem !important; }
+}

@@ -845,6 +845,8 @@
            ========================================================================== */
         let datasetAuditLogs = [];
         let logsFiltradosAuditoria = [];
+        let paginaAuditoria = 1;
+        const filasPorPaginaAuditoria = 10;
 
         async function cargarLogsAuditoriaDB(mostrarToastAviso = false) {
             const tbody = document.getElementById('tablaAuditoriaBody');
@@ -857,6 +859,7 @@
                 if (data.success && data.logs) {
                     datasetAuditLogs = data.logs;
                     logsFiltradosAuditoria = [...datasetAuditLogs];
+                    paginaAuditoria = 1;
                     renderTablaAuditoria();
                     if (mostrarToastAviso) mostrarToast('✓ Log de auditoría actualizado.');
                 }
@@ -870,62 +873,50 @@
         function renderTablaAuditoria() {
             const tbody = document.getElementById('tablaAuditoriaBody');
             const lblTotal = document.getElementById('lblTotalAuditLogs');
+            const lblPagina = document.getElementById('lblPaginaAuditoria');
+            const btnAnterior = document.getElementById('btnPaginaAnteriorAuditoria');
+            const btnSiguiente = document.getElementById('btnPaginaSiguienteAuditoria');
             if (!tbody) return;
             tbody.innerHTML = '';
-
-            if (lblTotal) lblTotal.textContent = `${logsFiltradosAuditoria.length} eventos registrados`;
-
-            if (logsFiltradosAuditoria.length === 0) {
+            const total = logsFiltradosAuditoria.length;
+            const totalPaginas = Math.max(1, Math.ceil(total / filasPorPaginaAuditoria));
+            paginaAuditoria = Math.min(Math.max(1, paginaAuditoria), totalPaginas);
+            const inicio = (paginaAuditoria - 1) * filasPorPaginaAuditoria;
+            if (lblTotal) lblTotal.textContent = `${total} eventos registrados`;
+            if (lblPagina) lblPagina.textContent = `Página ${paginaAuditoria} de ${totalPaginas}`;
+            if (btnAnterior) btnAnterior.disabled = paginaAuditoria <= 1;
+            if (btnSiguiente) btnSiguiente.disabled = paginaAuditoria >= totalPaginas;
+            if (!total) {
                 tbody.innerHTML = `<tr><td colspan="5" class="text-center py-4 text-muted"><i class="bi bi-info-circle me-1"></i> No se registran eventos con los filtros seleccionados.</td></tr>`;
                 return;
             }
-
-            logsFiltradosAuditoria.forEach(l => {
+            logsFiltradosAuditoria.slice(inicio, inicio + filasPorPaginaAuditoria).forEach(l => {
                 const tr = document.createElement('tr');
-
-                let badgeAction = '';
                 const actUpper = (l.action || '').toUpperCase();
                 const descLower = (l.description || '').toLowerCase();
-
-                if (actUpper === 'CREATE') {
-                    badgeAction = `<span class="badge bg-success text-white px-2 py-1"><i class="bi bi-plus-circle-fill me-1"></i> CREACIÓN</span>`;
-                } else if (actUpper === 'DELETE') {
-                    badgeAction = `<span class="badge bg-danger text-white px-2 py-1"><i class="bi bi-trash-fill me-1"></i> ELIMINACIÓN</span>`;
-                } else if (descLower.includes('estado')) {
-                    badgeAction = `<span class="badge bg-warning text-dark px-2 py-1"><i class="bi bi-toggle2-on me-1"></i> ESTADO</span>`;
-                } else if (descLower.includes('contrase') || descLower.includes('clave')) {
-                    badgeAction = `<span class="badge bg-info text-dark px-2 py-1"><i class="bi bi-key-fill me-1"></i> CONTRASEÑA</span>`;
-                } else {
-                    badgeAction = `<span class="badge bg-primary text-white px-2 py-1"><i class="bi bi-pencil-fill me-1"></i> MODIFICACIÓN</span>`;
-                }
-
+                let badgeAction = actUpper === 'CREATE'
+                    ? `<span class="badge bg-success text-white px-2 py-1"><i class="bi bi-plus-circle-fill me-1"></i> CREACIÓN</span>`
+                    : actUpper === 'DELETE'
+                        ? `<span class="badge bg-danger text-white px-2 py-1"><i class="bi bi-trash-fill me-1"></i> ELIMINACIÓN</span>`
+                        : descLower.includes('estado')
+                            ? `<span class="badge bg-warning text-dark px-2 py-1"><i class="bi bi-toggle2-on me-1"></i> ESTADO</span>`
+                            : descLower.includes('contrase') || descLower.includes('clave')
+                                ? `<span class="badge bg-info text-dark px-2 py-1"><i class="bi bi-key-fill me-1"></i> CONTRASEÑA</span>`
+                                : `<span class="badge bg-primary text-white px-2 py-1"><i class="bi bi-pencil-fill me-1"></i> MODIFICACIÓN</span>`;
                 tr.innerHTML = `
-                    <td class="text-nowrap font-monospace small text-secondary" style="white-space: nowrap !important;">
-                        <i class="bi bi-calendar3 me-1 text-muted"></i>${l.timestamp}
-                    </td>
-                    <td>
-                        <div class="d-flex align-items-center gap-2">
-                            <div class="user-avatar-pill admin" style="width: 28px; height: 28px; font-size: 0.72rem; min-width: 28px;">
-                                <i class="bi bi-person-fill"></i>
-                            </div>
-                            <div>
-                                <span class="fw-bold text-dark d-block small">${l.admin_name}</span>
-                                <small class="text-muted">@${l.admin_username}</small>
-                            </div>
-                        </div>
-                    </td>
+                    <td class="text-nowrap font-monospace small text-secondary"><i class="bi bi-calendar3 me-1 text-muted"></i>${escapeHtml(l.timestamp)}</td>
+                    <td><div class="d-flex align-items-center gap-2"><div class="user-avatar-pill admin" style="width:28px;height:28px;font-size:.72rem;min-width:28px"><i class="bi bi-person-fill"></i></div><div><span class="fw-bold text-dark d-block small">${escapeHtml(l.admin_name)}</span><small class="text-muted">@${escapeHtml(l.admin_username)}</small></div></div></td>
                     <td class="text-center">${badgeAction}</td>
-                    <td>
-                        <span class="fw-semibold text-dark d-block">${l.description}</span>
-                    </td>
-                    <td class="text-end">
-                        <span class="badge bg-light text-secondary border font-monospace px-2 py-1">
-                            ${l.affected_table} #${l.affected_record_id}
-                        </span>
-                    </td>
-                `;
+                    <td><span class="fw-semibold text-dark d-block">${escapeHtml(l.description)}</span></td>
+                    <td class="text-end"><span class="badge bg-light text-secondary border font-monospace px-2 py-1">${escapeHtml(l.affected_table)} #${escapeHtml(l.affected_record_id)}</span></td>`;
                 tbody.appendChild(tr);
             });
+        }
+
+        function cambiarPaginaAuditoria(delta) {
+            const paginas = Math.max(1, Math.ceil(logsFiltradosAuditoria.length / filasPorPaginaAuditoria));
+            paginaAuditoria = Math.min(Math.max(1, paginaAuditoria + delta), paginas);
+            renderTablaAuditoria();
         }
 
         function filtrarLogsAuditoria() {
@@ -952,6 +943,7 @@
                 return matchQ && matchA;
             });
 
+            paginaAuditoria = 1;
             renderTablaAuditoria();
         }
 
@@ -3233,7 +3225,7 @@
             const detalle = tipo === 'delegacion' ? item.scope : (item.description || 'Sin descripción registrada');
             const editar = tipo === 'delegacion' ? `editarDelegacionCatalogo(${item.id})` : `editarCargoCatalogo(${item.id})`;
             const alternar = tipo === 'delegacion' ? `alternarDelegacionCatalogo(${item.id})` : `alternarCargoCatalogo(${item.id})`;
-            const borrarBtn = tipo === 'cargo' ? `<button class="btn btn-outline-danger" type="button" onclick="eliminarCargoCatalogo(${item.id})" title="Eliminar cargo"><i class="bi bi-trash3"></i></button>` : '';
+            const borrarBtn = tipo === 'cargo' ? `<button class="btn btn-outline-danger" type="button" onclick="eliminarCargoCatalogo(${item.id})" title="Eliminar cargo"><i class="bi bi-trash3"></i></button>` : `<button class="btn btn-outline-danger" type="button" onclick="eliminarDelegacionCatalogo(${item.id})" title="Eliminar delegación"><i class="bi bi-trash3"></i></button>`;
             return `<div class="col-md-6" style="min-width:0"><article class="bg-white border rounded-4 p-3 shadow-sm h-100 overflow-hidden" style="min-width:0">
                 <div class="d-flex justify-content-between gap-2" style="min-width:0"><div class="flex-grow-1" style="min-width:0"><div class="fw-bold text-dark text-truncate">${escaparHtmlCatalogo(item.name)}</div><div class="small text-muted text-truncate">${tipo === 'delegacion' ? escaparHtmlCatalogo(item.code || '') + ' · ' : ''}${escaparHtmlCatalogo(detalle)}</div></div><span class="badge ${activo ? 'bg-success-subtle text-success' : 'bg-secondary-subtle text-secondary'} align-self-start flex-shrink-0">${item.status}</span></div>
                 <div class="d-flex justify-content-between align-items-center mt-2"><small class="text-muted"><i class="bi bi-people me-1"></i>${item.users_count} usuario(s)</small><div class="btn-group btn-group-sm"><button class="btn btn-outline-primary" type="button" onclick="${editar}" title="Editar"><i class="bi bi-pencil"></i></button><button class="btn btn-outline-${activo ? 'warning' : 'success'}" type="button" onclick="${alternar}" title="${activo ? 'Desactivar' : 'Activar'}"><i class="bi bi-${activo ? 'pause-circle' : 'play-circle'}"></i></button>${borrarBtn}</div></div>
@@ -3435,6 +3427,24 @@
             } catch (error) {
                 Swal.fire('No se pudo eliminar el cargo', error.message, 'error');
             }
+        }
+
+        async function eliminarDelegacionCatalogo(id) {
+            const item = catalogoDelegacionesDB.find(row => Number(row.id) === Number(id));
+            if (!item) return;
+            if (item.users_count > 0) {
+                Swal.fire({icon:'warning', title:'No se puede eliminar la delegación', text:'Reasigna los funcionarios antes de eliminarla.'});
+                return;
+            }
+            const result = await Swal.fire({
+                title: '¿Eliminar delegación?',
+                text: `La delegación "${item.name}" se eliminará si no tiene atenciones, casos ni compromisos vinculados.`,
+                icon: 'warning', showCancelButton: true, confirmButtonText: 'Eliminar', cancelButtonText: 'Cancelar',
+                confirmButtonColor: '#B80003'
+            });
+            if (!result.isConfirmed) return;
+            try { await enviarCatalogo(`/organization/delegations/${id}/delete/`, {}); }
+            catch (error) { Swal.fire('No se pudo eliminar la delegación', error.message, 'error'); }
         }
 
         /* ==========================================================================
@@ -5493,6 +5503,27 @@
             return catalogsForAttentionForm;
         }
 
+        async function cargarVecinosSelectorAtencion() {
+            const select = document.getElementById('selAtencionVecino');
+            if (!select) return;
+            const response = await fetch('/api/vecinos/');
+            const data = await response.json();
+            if (!response.ok || !data.success) throw new Error(data.message || 'No se pudo cargar el catálogo de vecinos.');
+            const selected = select.value;
+            window.vecinosAtencionCatalogo = data.vecinos || [];
+            select.innerHTML = '<option value="">Contacto sin ficha de vecino</option>' +
+                window.vecinosAtencionCatalogo.map(vecino => `<option value="${Number(vecino.id)}">${escapeHtml(vecino.nombre)} · ${escapeHtml(vecino.rut)}</option>`).join('');
+            if (selected) select.value = selected;
+        }
+
+        function completarDatosVecinoAtencion() {
+            const select = document.getElementById('selAtencionVecino');
+            const vecino = (window.vecinosAtencionCatalogo || []).find(row => Number(row.id) === Number(select?.value));
+            if (!vecino) return;
+            document.getElementById('txtAtencionNombre').value = vecino.nombre || '';
+            document.getElementById('txtAtencionTelefono').value = vecino.telefono || '';
+        }
+
         async function abrirModalNuevaAtencion(editId = null) {
             const form = document.getElementById('formAtencionDB');
             if (form) form.reset();
@@ -5504,7 +5535,7 @@
                 dateInput.value = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
             }
             try {
-                await cargarCatalogosFormularioAtencion(true);
+                await Promise.all([cargarCatalogosFormularioAtencion(true), cargarVecinosSelectorAtencion()]);
             } catch (error) {
                 if (window.Swal) Swal.fire({ icon: 'error', title: 'No se pudo preparar el formulario', text: error.message });
                 return;
@@ -5520,6 +5551,7 @@
                 }
                 document.getElementById('txtAtencionNombre').value = record.contact_name || '';
                 document.getElementById('txtAtencionTelefono').value = record.contact_phone || '';
+                document.getElementById('selAtencionVecino').value = record.neighbor_id || '';
                 if (dateInput) dateInput.value = record.activity_date_iso || '';
                 document.getElementById('selAtencionDelegacion').value = record.delegation || '';
                 document.getElementById('selAtencionTipo').value = record.attention_type_id || '';
@@ -5554,6 +5586,7 @@
             const delegation = document.getElementById('selAtencionDelegacion')?.value;
             const attention_type_id = document.getElementById('selAtencionTipo')?.value;
             const subattention_id = document.getElementById('selAtencionSubtipo')?.value;
+            const neighbor_id = document.getElementById('selAtencionVecino')?.value || '';
             const title = document.getElementById('txtAtencionProblema')?.value?.trim();
             const description = document.getElementById('txtAtencionAccion')?.value?.trim();
 
@@ -5584,7 +5617,8 @@
                         contact_phone: contact_phone,
                         activity_date: activity_date,
                         attention_type_id: attention_type_id,
-                        subattention_id: subattention_id
+                        subattention_id: subattention_id,
+                        neighbor_id: neighbor_id
                     })
                 });
 
