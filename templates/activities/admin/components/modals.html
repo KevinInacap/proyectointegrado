@@ -120,7 +120,7 @@
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
-                    <form id="formVecino" onsubmit="guardarVecino(event)">
+                    <form id="formVecino" novalidate onsubmit="guardarVecino(event)">
                         <input type="hidden" id="vecinoId">
                         <div class="mb-2"><label class="form-label small fw-bold">RUT</label><input type="text"
                                 class="form-control form-control-sm" id="vecinoRut" required></div>
@@ -178,7 +178,7 @@
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
                 </div>
                 <div class="modal-body p-3">
-                    <form id="formUsuarioDB" onsubmit="event.preventDefault(); guardarUsuarioDB();">
+                    <form id="formUsuarioDB" novalidate onsubmit="event.preventDefault(); guardarUsuarioDB();">
                         <input type="hidden" id="usuarioEditId" value="">
 
                         <div class="row g-3">
@@ -320,7 +320,7 @@
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
                 </div>
                 <div class="modal-body p-3">
-                    <form id="formAtencionDB" onsubmit="event.preventDefault(); guardarAtencionDB();">
+                    <form id="formAtencionDB" novalidate onsubmit="event.preventDefault(); guardarAtencionDB();">
                         <input type="hidden" id="atencionEditId" value="">
                         
                         <div class="row g-2">
@@ -871,7 +871,7 @@
                         aria-label="Cerrar"></button>
                 </div>
                 <div class="modal-body p-4 bg-light">
-                    <form id="formRol" onsubmit="guardarRolSubmit(event)">
+                    <form id="formRol" novalidate onsubmit="guardarRolSubmit(event)">
                         <input type="hidden" id="rolFormId">
 
                         <!-- Datos Generales del Rol -->
@@ -982,7 +982,7 @@
                         aria-label="Cerrar"></button>
                 </div>
                 <div class="modal-body p-4 bg-light">
-                    <form id="formNuevaFuncion" onsubmit="guardarNuevaFuncionSubmit(event)">
+                    <form id="formNuevaFuncion" novalidate onsubmit="guardarNuevaFuncionSubmit(event)">
                         <div class="mb-3">
                             <label class="form-label small fw-bold text-secondary">Módulo Institucional <span
                                     class="text-danger">*</span></label>
@@ -1191,7 +1191,7 @@
                         <div class="tab-pane fade show active" id="panelCatalogoDelegaciones">
                             <div class="row g-3 align-items-start">
                                 <div class="col-lg-5">
-                                    <form id="formCatalogoDelegacion" class="bg-white border rounded-4 p-3 shadow-sm">
+                                    <form id="formCatalogoDelegacion" novalidate class="bg-white border rounded-4 p-3 shadow-sm">
                                         <input type="hidden" id="catalogoDelegacionId">
                                         <h6 class="fw-bold text-primary mb-3" id="tituloFormDelegacion">Nueva delegación</h6>
                                         <div class="row g-2">
@@ -1222,7 +1222,7 @@
                         <div class="tab-pane fade" id="panelCatalogoCargos">
                             <div class="row g-3 align-items-start">
                                 <div class="col-lg-4">
-                                    <form id="formCatalogoCargo" class="bg-white border rounded-4 p-3 shadow-sm">
+                                    <form id="formCatalogoCargo" novalidate class="bg-white border rounded-4 p-3 shadow-sm">
                                         <input type="hidden" id="catalogoCargoId">
                                         <h6 class="fw-bold text-primary mb-3" id="tituloFormCargo">Nuevo cargo</h6>
                                         <label class="form-label small fw-bold">Nombre</label>

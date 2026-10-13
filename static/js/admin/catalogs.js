@@ -90,6 +90,10 @@
         panel.message.className = `alert ${error ? 'alert-danger' : 'alert-success'} mt-3`;
         panel.message.textContent = message;
         panel.message.hidden = !message;
+        if (error && panel.root.classList.contains('active') && window.Swal) {
+            Swal.fire({ icon: 'error', titleText: 'No se pudo completar la acción', text: message,
+                confirmButtonColor: '#8B1D2C' });
+        }
     }
     function panelQuery(panel, page, pageSize) {
         const query = new URLSearchParams({ page, page_size: pageSize, search: panel.search.value.trim() });
@@ -211,15 +215,11 @@
         try {
             const [record, refs] = await Promise.all([id === undefined ? Promise.resolve({ status: 'Activo', item_type: 'Cuantitativo', unit_of_measure: 'Atenciones' }) : request(endpoint(panel.catalog, id)), references(panel.catalog)]);
             const form = element('form', 'text-start');
+            form.noValidate = true;
             form.addEventListener('submit', event => { event.preventDefault(); Swal.clickConfirm(); });
             const choices = values => values.map(value => ({ id: value, name: value }));
             const fields = panel.catalog === 'goals' ? ['code', 'period', 'position', 'item', 'target_value', 'unit_of_measure', 'weight', 'status'] : ['code', 'name', ...(panel.catalog === 'subattentions' ? ['attention_type'] : []), 'description', ...(panel.catalog === 'items' ? ['item_type'] : []), 'status'];
             fields.forEach(key => field(form, key, record[key], refs[key] || (key === 'status' ? choices(['Activo', 'Inactivo']) : key === 'item_type' ? choices(['Cuantitativo', 'Porcentual']) : undefined)));
-            const errors = element('div', 'alert alert-danger');
-            errors.style.whiteSpace = 'pre-line';
-            errors.setAttribute('role', 'alert');
-            errors.hidden = true;
-            form.append(errors);
             let saving = false;
             const result = await Swal.fire({
                 titleText: `${id === undefined ? 'Crear' : 'Editar'} ${definitions[panel.catalog].title}`,
@@ -228,17 +228,21 @@
                 preConfirm: async () => {
                     if (saving) return false;
                     for (const input of form.elements) if (input.type === 'text') input.value = input.value.trim();
-                    if (!form.reportValidity()) return false;
+                    const invalid = [...form.elements].find(input => !input.checkValidity());
+                    if (invalid) {
+                        const label = invalid.labels?.[0]?.textContent?.trim() || labels[invalid.name] || 'dato requerido';
+                        Swal.showValidationMessage(`Revisa ${label}: ${invalid.validationMessage}`);
+                        invalid.focus();
+                        return false;
+                    }
                     saving = true;
                     Swal.getCancelButton().disabled = true;
-                    errors.hidden = true;
                     try {
                         const payload = Object.fromEntries(new FormData(form));
                         await request(endpoint(panel.catalog, id), id === undefined ? 'POST' : 'PATCH', payload);
                         return true;
                     } catch (error) {
-                        errors.textContent = error.message;
-                        errors.hidden = false;
+                        Swal.showValidationMessage(error.message);
                         return false;
                     } finally {
                         saving = false;

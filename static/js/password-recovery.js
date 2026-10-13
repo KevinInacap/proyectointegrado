@@ -75,9 +75,22 @@
     const alert = document.querySelector('[data-recovery-message]');
     if (alert && window.Swal) Swal.fire({icon: alert.dataset.recoveryMessage, text: alert.textContent.trim(), confirmButtonText: 'Entendido', confirmButtonColor: '#a31332'});
     document.querySelectorAll('form').forEach(form => {
+        form.noValidate = true;
         let submitting = false;
         form.addEventListener('submit', event => {
             if (submitting) { event.preventDefault(); return; }
+            const invalid = [...form.elements].find(input => input.willValidate && !input.checkValidity());
+            if (invalid) {
+                event.preventDefault();
+                if (window.Swal) Swal.fire({
+                    icon: 'warning', title: 'Revisa los datos',
+                    text: invalid.validationMessage || 'Completa los datos requeridos antes de continuar.',
+                    confirmButtonColor: '#a31332'
+                });
+                else form.reportValidity();
+                invalid.focus();
+                return;
+            }
             const password = form.querySelector('[name="new_password"]');
             if (password && password.value !== form.querySelector('[name="confirm_password"]').value) {
                 event.preventDefault();

@@ -861,6 +861,7 @@
             } catch (err) {
                 console.error("Error al cargar logs de auditoría:", err);
                 if (tbody) tbody.innerHTML = `<tr><td colspan="5" class="text-center py-3 text-danger"><i class="bi bi-exclamation-circle me-1"></i> No se pudo cargar el historial de auditoría.</td></tr>`;
+                if (mostrarToastAviso && window.Swal) Swal.fire({icon: 'error', title: 'Auditoría no disponible', text: 'No se pudo cargar el historial. Inténtalo nuevamente.'});
             }
         }
 
@@ -2798,7 +2799,7 @@
             const rut = document.getElementById('usrRut').value.trim();
             const username = document.getElementById('usrUsername').value.trim();
             const email = document.getElementById('usrEmail').value.trim();
-            const password = document.getElementById('usrPassword').value.trim();
+            const password = document.getElementById('usrPassword').value;
             const status = document.getElementById('usrStatus').value;
             const delegationId = document.getElementById('usrDelegation').value || null;
             const positionId = document.getElementById('usrPosition').value || null;
@@ -2810,11 +2811,11 @@
                 roleIds.push(parseInt(chk.value));
             });
 
-            if (!fullName || !rut || !email) {
+            if (!fullName || !rut || !username || !email) {
                 Swal.fire({
                     icon: 'warning',
                     title: 'Campos requeridos',
-                    text: 'Nombre, RUT y Correo Institucional son obligatorios y no pueden quedar en blanco.'
+                    text: 'Nombre, RUT, usuario y correo son obligatorios y no pueden quedar en blanco.'
                 });
                 return;
             }
@@ -3333,6 +3334,12 @@
         async function guardarDelegacionCatalogo(event) {
             event.preventDefault();
             const id = document.getElementById('catalogoDelegacionId').value;
+            if (!document.getElementById('catalogoDelegacionNombre').value.trim() ||
+                !document.getElementById('catalogoDelegacionAmbito').value.trim() ||
+                !document.getElementById('catalogoDelegacionComuna').value.trim()) {
+                Swal.fire({icon: 'warning', title: 'Campos requeridos', text: 'Indica nombre, ámbito territorial y comuna de la delegación.'});
+                return;
+            }
             try {
                 await enviarCatalogo(id ? `/organization/delegations/${id}/update/` : '/organization/delegations/', {
                     name: document.getElementById('catalogoDelegacionNombre').value.trim(),
@@ -3355,6 +3362,10 @@
         async function guardarCargoCatalogo(event) {
             event.preventDefault();
             const id = document.getElementById('catalogoCargoId').value;
+            if (!document.getElementById('catalogoCargoNombre').value.trim()) {
+                Swal.fire({icon: 'warning', title: 'Nombre requerido', text: 'Indica el nombre del cargo antes de guardar.'});
+                return;
+            }
             try {
                 await enviarCatalogo(id ? `/organization/positions/${id}/update/` : '/organization/positions/', {name: document.getElementById('catalogoCargoNombre').value.trim(), description: document.getElementById('catalogoCargoDescripcion').value.trim(), status: document.getElementById('catalogoCargoEstado').value});
                 limpiarFormCargo();
@@ -4755,8 +4766,8 @@
             const elDesc = document.getElementById('rolFormDescripcion');
             const description = (elDesc && elDesc.value) ? elDesc.value.trim() : '';
 
-            if (!name) {
-                Swal.fire('El nombre del rol es obligatorio.');
+            if (!name || !description) {
+                Swal.fire({icon: 'warning', title: 'Campos requeridos', text: 'Indica el nombre y la descripción del rol.'});
                 return;
             }
 
@@ -4996,8 +5007,8 @@
             const elDesc = document.getElementById('nuevaFuncionDesc');
             const desc = (elDesc && elDesc.value) ? elDesc.value.trim() : '';
 
-            if (!code || !name) {
-                Swal.fire('Código y nombre de la función son requeridos.');
+            if (!moduleId || !code || !name) {
+                Swal.fire({icon: 'warning', title: 'Campos requeridos', text: 'Selecciona el módulo e indica el código y nombre de la función.'});
                 return;
             }
 
@@ -5286,6 +5297,11 @@
                 }
             } catch (err) {
                 console.error('Error cargando atenciones desde MySQL:', err);
+                const tbody = document.getElementById('tablaAtencionesBody');
+                if (tbody) tbody.innerHTML = '<tr><td colspan="8" class="text-center py-4 text-danger">No se pudieron cargar las atenciones. Inténtalo nuevamente.</td></tr>';
+                if (document.getElementById('view-atenciones')?.classList.contains('active') && window.Swal) {
+                    Swal.fire({icon: 'error', title: 'Atenciones no disponibles', text: 'No se pudo consultar el listado. Revisa la conexión e inténtalo nuevamente.'});
+                }
             }
         }
 
