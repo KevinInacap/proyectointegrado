@@ -69,7 +69,7 @@
         const rows = [];
         let page = 1;
         while (true) {
-            const data = await request(`${endpoint(catalog)}?page=${page}&page_size=100`);
+            const data = await request(`${endpoint(catalog)}?page=${page}&page_size=50`);
             if (!Array.isArray(data.results)) throw new Error('Respuesta de catálogo no válida.');
             rows.push(...data.results);
             if (rows.length >= data.count || !data.results.length) return rows;
@@ -242,7 +242,11 @@
         } else if (key !== 'description') {
             input.type = 'text';
             input.maxLength = key === 'name' ? 120 : 30;
-        } else input.rows = 2;
+        } else {
+            input.rows = 2;
+            input.maxLength = 500;
+            input.setAttribute('maxlength', '500');
+        }
         input.value = value ?? '';
         wrap.append(label, input);
         form.append(wrap);
@@ -289,7 +293,7 @@
                 showCancelButton: true,
                 confirmButtonText: 'Guardar',
                 cancelButtonText: 'Cancelar',
-                confirmButtonColor: '#1B365D',
+                confirmButtonColor: '#C41230',
                 showLoaderOnConfirm: true,
                 allowOutsideClick: () => !saving,
                 allowEscapeKey: () => !saving,
@@ -325,7 +329,7 @@
                     icon: 'success',
                     titleText: 'Registro guardado',
                     text: 'El registro se guardó exitosamente en la base de datos.',
-                    confirmButtonColor: '#1B365D'
+                    confirmButtonColor: '#C41230'
                 });
             }
         } catch (error) { notice(panel, error.message, true); }
@@ -360,7 +364,7 @@
                     icon: 'success',
                     titleText: 'Registro eliminado',
                     text: 'El registro fue eliminado de la base de datos.',
-                    confirmButtonColor: '#1B365D'
+                    confirmButtonColor: '#C41230'
                 });
             }
         } catch (error) { notice(panel, error.message, true); }
@@ -427,7 +431,7 @@
             [['', 'Todos los estados'], ['Activo', 'Activo'], ['Inactivo', 'Inactivo']].forEach(([value, label]) => panel.status.add(new Option(label, value)));
             panel.size = element('select', 'form-select rounded-pill w-auto');
             panel.size.setAttribute('aria-label', 'Registros por página');
-            [10, 20, 50].forEach(size => panel.size.append(new Option(`${size} por página`, size)));
+            [10, 20, 30, 40, 50].forEach(size => panel.size.append(new Option(`${size} por página`, size)));
             const filterChanged = () => { panel.page = 1; notice(panel, ''); load(panel); };
             if (catalog === 'subattentions') {
                 panel.attentionType = element('select', 'form-select rounded-pill w-auto');
@@ -459,7 +463,7 @@
             if (panel.attentionType) toolbar.append(panel.attentionType);
             if (panel.position) toolbar.append(panel.position, panel.item);
             panel.exportButton = button('Exportar a Excel', () => exportPanel(panel), 'btn btn-outline-success rounded-pill');
-            toolbar.append(panel.size, panel.exportButton, button('Recargar', () => { notice(panel, ''); load(panel); }), button(`Crear ${definitions[catalog].title}`, () => editRecord(panel), 'btn btn-primary rounded-pill'));
+            toolbar.append(panel.size, panel.exportButton, button('Recargar', () => { notice(panel, ''); load(panel); }, 'btn btn-outline-secondary rounded-pill'), button(`Crear ${definitions[catalog].title}`, () => editRecord(panel), 'btn btn-primary rounded-pill'));
             panel.message = element('div');
             panel.message.hidden = true;
             panel.message.style.whiteSpace = 'pre-line';

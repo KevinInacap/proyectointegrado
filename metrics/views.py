@@ -34,6 +34,9 @@ class CatalogForm(forms.ModelForm):
                 field.queryset = field.queryset.filter(deleted_at__isnull=True)
         self._invalid_types = []
         self.data = self.data.copy()
+        if 'description' in self.fields:
+            self.fields['description'].max_length = 500
+            self.fields['description'].widget.attrs['maxlength'] = 500
         # ModelForm otherwise coerces booleans, arrays and objects to strings/IDs.
         for name, field in self.fields.items():
             if name not in self.data:
@@ -218,8 +221,8 @@ def catalog_collection(request, catalog):
     try:
         page = int(request.GET.get('page', 1))
         size = int(request.GET.get('page_size', 20))
-        if page < 1 or size < 1 or size > 100:
-            raise ValueError('page debe ser positivo y page_size debe estar entre 1 y 100.')
+        if page < 1 or size < 1 or size > 50:
+            raise ValueError('page debe ser positivo y page_size debe estar entre 1 y 50.')
         qs = model.objects.filter(deleted_at__isnull=True)
         search = request.GET.get('search', '').strip()[:150]
         if search:

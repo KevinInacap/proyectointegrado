@@ -1,5 +1,5 @@
 <section id="view-atenciones" class="maintainer-view">
-    <div class="maintainer-card p-4">
+    <div class="liquid-glass-card p-4">
         <!-- Encabezado Oficial de Atenciones Ciudadanas y Casos Sociales -->
         <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4 pb-3 border-bottom">
             <div>
@@ -22,7 +22,7 @@
                 <button class="btn btn-outline-secondary rounded-pill px-3 py-1 fw-bold" onclick="exportarAtencionesExcel()">
                     <i class="bi bi-file-earmark-excel me-1 text-success"></i> Exportar Bitácora
                 </button>
-                <button class="btn btn-primary rounded-pill px-3 py-1 fw-bold shadow-sm" style="background: var(--muni-navy); border: none;" onclick="abrirModalNuevaAtencion()">
+                <button class="liquid-glass-btn-primary" onclick="abrirModalNuevaAtencion()">
                     <i class="bi bi-person-plus-fill me-1"></i> Registrar Atención
                 </button>
             </div>
@@ -52,6 +52,21 @@
                 </select>
             </div>
             <span class="text-muted small">Mostrando <strong id="lblTotalAtenciones">0</strong> casos registrados</span>
+        </div>
+
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+            <label class="small text-muted d-flex align-items-center gap-2" for="tamanoPaginaAtenciones">
+                Mostrar
+                <select class="form-select form-select-sm rounded-pill w-auto" id="tamanoPaginaAtenciones" aria-label="Atenciones por página">
+                    <option value="10" selected>10</option><option value="20">20</option><option value="30">30</option><option value="40">40</option><option value="50">50</option>
+                </select>
+                por página
+            </label>
+            <span class="small text-muted" id="paginacionInfoAtenciones" aria-live="polite"></span>
+            <div class="btn-group" aria-label="Páginas de atenciones">
+                <button type="button" class="btn btn-outline-secondary btn-sm" id="paginaAnteriorAtenciones">Anterior</button>
+                <button type="button" class="btn btn-outline-secondary btn-sm" id="paginaSiguienteAtenciones">Siguiente</button>
+            </div>
         </div>
 
         <!-- Tabla de Casos Sociales y Atenciones SGR (Ajuste Perfecto 100% Sin Scroll Lateral) -->

@@ -360,8 +360,8 @@ def activity_create_view(request):
         date = datetime.date.fromisoformat(request.POST.get('activity_date', ''))
     except (TypeError, ValueError):
         return invalid_form('Ingresa una fecha válida para la atención.')
-    if not all((problem, action, contact)) or len(contact) > 150 or len(phone) > 20:
-        return invalid_form('Completa solicitante, descripción y acción; revisa también el largo del nombre y teléfono.')
+    if not all((problem, action, contact)) or len(contact) > 150 or len(phone) > 20 or len(problem) > 1000 or len(action) > 1000:
+        return invalid_form('Completa solicitante, descripción y acción; usa hasta 1.000 caracteres en cada descripción y revisa el largo del nombre y teléfono.')
     if date > timezone.localdate():
         return invalid_form('La fecha de registro no puede ser futura.')
     if not request.POST.get('attention_type_id') or not request.POST.get('subattention_id'):
@@ -548,6 +548,9 @@ def api_vecinos(request):
                 return JsonResponse({'success': False, 'message': 'Territorio no autorizado.'}, status=403)
         if not payload['nombre'] or not payload['rut'] or not payload['direccion']:
             return JsonResponse({'success': False, 'message': 'Nombre, RUT y dirección son obligatorios.'}, status=400)
+        if (len(payload['nombre']) > 150 or len(payload['rut']) > 15 or len(payload['email'] or '') > 254
+                or len(payload['direccion']) > 255 or len(payload['telefono']) > 20 or len(payload['territorio']) > 100):
+            return JsonResponse({'success': False, 'message': 'Revisa el largo permitido del nombre, RUT, correo, dirección o teléfono.'}, status=400)
         if not _valid_vecino_rut(payload['rut']):
             return JsonResponse({'success': False, 'message': 'RUT inválido. Revisa el número y el dígito verificador.'}, status=400)
         if not _validate_vecino_email(payload['email']):
@@ -596,6 +599,9 @@ def api_vecino_detail(request, pk):
             payload['email'] = vecino.email
         if not payload['nombre'] or not payload['rut'] or not payload['direccion']:
             return JsonResponse({'success': False, 'message': 'Nombre, RUT y dirección son obligatorios.'}, status=400)
+        if (len(payload['nombre']) > 150 or len(payload['rut']) > 15 or len(payload['email'] or '') > 254
+                or len(payload['direccion']) > 255 or len(payload['telefono']) > 20 or len(payload['territorio']) > 100):
+            return JsonResponse({'success': False, 'message': 'Revisa el largo permitido del nombre, RUT, correo, dirección o teléfono.'}, status=400)
         rut_changed = _normalize_vecino_rut(payload['rut']) != _normalize_vecino_rut(vecino.rut)
         if rut_changed and not _valid_vecino_rut(payload['rut']):
             return JsonResponse({'success': False, 'message': 'RUT inválido. Revisa el número y el dígito verificador.'}, status=400)
@@ -767,8 +773,8 @@ def api_atenciones(request):
         return JsonResponse({'success': False, 'message': error}, status=400)
     contact = _attention_text(data, 'contact_name', 150, required=True)
     phone = _attention_text(data, 'contact_phone', 20)
-    problem = _attention_text(data, 'problem_description', 10000) if 'problem_description' in data else _attention_text(data, 'title', 10000, required=True)
-    action = _attention_text(data, 'executed_action', 10000) if 'executed_action' in data else _attention_text(data, 'description', 10000, required=True)
+    problem = _attention_text(data, 'problem_description', 1000) if 'problem_description' in data else _attention_text(data, 'title', 1000, required=True)
+    action = _attention_text(data, 'executed_action', 1000) if 'executed_action' in data else _attention_text(data, 'description', 1000, required=True)
     if not contact or phone is None or not problem or not action:
         return JsonResponse({'success': False, 'message': 'Solicitante, problema o acción inválidos.'}, status=400)
     # Estado enviado por la interfaz no autoriza una aprobación.
@@ -897,7 +903,7 @@ def api_atencion_detail(request, pk):
             return JsonResponse({'success': False, 'message': 'Persistencia Tipo/Sub Atención aún no disponible.'}, status=503)
         a.attention_type = attention_type
         a.subattention = subattention
-    for key, limit in (('contact_name', 150), ('contact_phone', 20), ('problem_description', 10000), ('executed_action', 10000)):
+    for key, limit in (('contact_name', 150), ('contact_phone', 20), ('problem_description', 1000), ('executed_action', 1000)):
         if key in data:
             value = _attention_text(data, key, limit, required=key != 'contact_phone')
             if value is None:

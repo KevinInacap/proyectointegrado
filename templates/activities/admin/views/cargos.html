@@ -19,6 +19,20 @@
             <div class="col-sm-4"><div class="bg-white border rounded-4 p-3 shadow-sm"><small class="text-muted fw-bold text-uppercase">Asignaciones</small><div class="fs-3 fw-bold" style="color:var(--muni-navy)" id="kpiCargosAsignaciones">—</div></div></div>
         </div>
 
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+            <label class="small text-muted d-flex align-items-center gap-2" for="tamanoPaginaCargos">
+                Mostrar
+                <select class="form-select form-select-sm rounded-pill w-auto" id="tamanoPaginaCargos" aria-label="Cargos por página">
+                    <option value="10" selected>10</option><option value="20">20</option><option value="30">30</option><option value="40">40</option><option value="50">50</option>
+                </select>
+                por página
+            </label>
+            <span class="small text-muted" id="paginacionInfoCargos" aria-live="polite"></span>
+            <div class="btn-group" aria-label="Páginas de cargos">
+                <button type="button" class="btn btn-outline-danger btn-sm" id="paginaAnteriorCargos">Anterior</button>
+                <button type="button" class="btn btn-outline-danger btn-sm" id="paginaSiguienteCargos">Siguiente</button>
+            </div>
+        </div>
         <div class="row g-3" id="listaCargosMantenedor">
             <div class="col-12 text-center text-muted py-4"><span class="spinner-border spinner-border-sm me-2"></span>Cargando cargos...</div>
         </div>

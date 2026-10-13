@@ -123,15 +123,15 @@
                     <form id="formVecino" novalidate onsubmit="guardarVecino(event)">
                         <input type="hidden" id="vecinoId">
                         <div class="mb-2"><label class="form-label small fw-bold">RUT</label><input type="text"
-                                class="form-control form-control-sm" id="vecinoRut" required></div>
+                                class="form-control form-control-sm" id="vecinoRut" maxlength="15" required></div>
                         <div class="mb-2"><label class="form-label small fw-bold">Correo electrónico (opcional)</label><input type="email"
                                 class="form-control form-control-sm" id="vecinoEmail" maxlength="254" autocomplete="email"></div>
                         <div class="mb-2"><label class="form-label small fw-bold">Nombre Completo</label><input
-                                type="text" class="form-control form-control-sm" id="vecinoNombre" required></div>
+                                type="text" class="form-control form-control-sm" id="vecinoNombre" maxlength="150" required></div>
                         <div class="mb-2"><label class="form-label small fw-bold">Dirección</label><input type="text"
-                                class="form-control form-control-sm" id="vecinoDireccion" required></div>
+                                class="form-control form-control-sm" id="vecinoDireccion" maxlength="255" required></div>
                         <div class="mb-2"><label class="form-label small fw-bold">Teléfono</label><input type="text"
-                                class="form-control form-control-sm" id="vecinoTelefono"></div>
+                                class="form-control form-control-sm" id="vecinoTelefono" maxlength="20"></div>
                         <div class="row g-2 mb-3">
                             <div class="col-6">
                                 <label class="form-label small fw-bold">Territorio</label>
@@ -195,13 +195,13 @@
                                         <!-- Nombre Completo -->
                                         <div class="col-md-6">
                                             <label class="form-label small fw-bold mb-1">Nombre Completo <span class="text-danger">*</span></label>
-                                            <input type="text" class="form-control form-control-sm" id="usrFullName" placeholder="Ej: Marcela Contreras Vega" required>
+                                            <input type="text" class="form-control form-control-sm" id="usrFullName" maxlength="150" placeholder="Ej: Marcela Contreras Vega" required>
                                         </div>
 
                                         <!-- RUT -->
                                         <div class="col-md-6">
                                             <label class="form-label small fw-bold mb-1">RUT Institucional <span class="text-danger">*</span></label>
-                                            <input type="text" class="form-control form-control-sm" id="usrRut" placeholder="Ej: 15.678.901-2" required onblur="formatearRutInput(this)">
+                                        <input type="text" class="form-control form-control-sm" id="usrRut" maxlength="12" placeholder="Ej: 15.678.901-2" required onblur="formatearRutInput(this)">
                                         </div>
 
                                         <!-- Username -->
@@ -209,14 +209,14 @@
                                             <label class="form-label small fw-bold mb-1">Usuario (Login) <span class="text-danger">*</span></label>
                                             <div class="input-group input-group-sm">
                                                 <span class="input-group-text bg-light text-muted">@</span>
-                                                <input type="text" class="form-control form-control-sm" id="usrUsername" placeholder="marcela_contreras" required>
+                                                <input type="text" class="form-control form-control-sm" id="usrUsername" maxlength="150" placeholder="marcela_contreras" required>
                                             </div>
                                         </div>
 
                                         <!-- Correo Institucional -->
                                         <div class="col-md-6">
                                             <label class="form-label small fw-bold mb-1">Correo Institucional <span class="text-danger">*</span></label>
-                                            <input type="email" class="form-control form-control-sm" id="usrEmail" placeholder="mcontreras@laserena.cl" required>
+                                            <input type="email" class="form-control form-control-sm" id="usrEmail" maxlength="100" placeholder="mcontreras@laserena.cl" required>
                                         </div>
 
                                         <!-- Contraseña -->
@@ -333,11 +333,11 @@
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label small fw-bold mb-1">Nombre Vecino(a) / Contacto <span class="text-danger">*</span></label>
-                                <input type="text" class="form-control form-control-sm" id="txtAtencionNombre" placeholder="Ej: Patricia Soto Cárdenas" required>
+                                <input type="text" class="form-control form-control-sm" id="txtAtencionNombre" maxlength="150" placeholder="Ej: Patricia Soto Cárdenas" required>
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label small fw-bold mb-1">Teléfono o RUT de Contacto</label>
-                                <input type="text" class="form-control form-control-sm" id="txtAtencionTelefono" placeholder="+56 9 8452 1102">
+                                <input type="text" class="form-control form-control-sm" id="txtAtencionTelefono" maxlength="20" placeholder="+56 9 8452 1102">
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label small fw-bold mb-1" for="txtAtencionFecha">Fecha de atención / visita <span class="text-danger">*</span></label>
@@ -369,17 +369,17 @@
                             <div class="col-12 small text-muted" id="atencionResponsableInfo">El usuario y la fecha se registrarán automáticamente.</div>
                             <div class="col-12">
                                 <label class="form-label small fw-bold mb-1">Descripción del Requerimiento / Solicitud <span class="text-danger">*</span></label>
-                                <textarea class="form-control form-control-sm" id="txtAtencionProblema" rows="2" placeholder="Describa el motivo de la atención ciudadana o caso social..." required></textarea>
+                                <textarea class="form-control form-control-sm" id="txtAtencionProblema" rows="2" maxlength="1000" placeholder="Describa el motivo de la atención ciudadana o caso social..." required></textarea>
                             </div>
                             <div class="col-12">
                                 <label class="form-label small fw-bold mb-1">Acción Ejecutada en Terreno / Derivación <span class="text-danger">*</span></label>
-                                <textarea class="form-control form-control-sm" id="txtAtencionAccion" rows="2" placeholder="Acción realizada, revisión de antecedentes o derivación técnica..." required></textarea>
+                                <textarea class="form-control form-control-sm" id="txtAtencionAccion" rows="2" maxlength="1000" placeholder="Acción realizada, revisión de antecedentes o derivación técnica..." required></textarea>
                             </div>
                         </div>
 
                         <div class="d-flex justify-content-end gap-2 mt-3 pt-2 border-top">
                             <button type="button" class="btn btn-outline-secondary rounded-pill px-3 py-1 btn-sm" data-bs-dismiss="modal">Cancelar</button>
-                            <button type="submit" class="btn btn-primary rounded-pill px-4 py-1 btn-sm fw-bold shadow-xs" style="background: var(--muni-navy); border: none;" id="btnGuardarAtencionDB">
+                            <button type="submit" class="btn btn-primary rounded-pill px-4 py-1 btn-sm fw-bold shadow-xs" id="btnGuardarAtencionDB">
                                 <i class="bi bi-check-lg me-1"></i> Guardar Atención
                             </button>
                         </div>
@@ -894,13 +894,13 @@
                                 <div class="col-md-5">
                                     <label class="form-label small fw-bold text-secondary">Nombre del Rol <span
                                             class="text-danger">*</span></label>
-                                    <input type="text" class="form-control" id="rolFormNombre" required
+                                    <input type="text" class="form-control" id="rolFormNombre" maxlength="50" required
                                         placeholder="Ej: Operador de Terreno, Coordinador Social">
                                 </div>
                                 <div class="col-md-7">
                                     <label class="form-label small fw-bold text-secondary">Descripción Institucional
                                         <span class="text-danger">*</span></label>
-                                    <input type="text" class="form-control" id="rolFormDescripcion" required
+                                    <input type="text" class="form-control" id="rolFormDescripcion" maxlength="255" required
                                         placeholder="Ej: Gestión de atenciones ciudadanas y derivaciones territoriales">
                                 </div>
                             </div>
@@ -1012,20 +1012,20 @@
                         <div class="mb-3">
                             <label class="form-label small fw-bold text-secondary">Código del Privilegio (Identificador
                                 Técnico) <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control font-monospace" id="nuevaFuncionCodigo" required
+                            <input type="text" class="form-control font-monospace" id="nuevaFuncionCodigo" maxlength="100" required
                                 placeholder="ej: atenciones.aprobar_urgencia">
                             <div class="form-text small">Formato estándar: <code>modulo.accion_especifica</code></div>
                         </div>
                         <div class="mb-3">
                             <label class="form-label small fw-bold text-secondary">Nombre de la Función <span
                                     class="text-danger">*</span></label>
-                            <input type="text" class="form-control" id="nuevaFuncionNombre" required
+                            <input type="text" class="form-control" id="nuevaFuncionNombre" maxlength="120" required
                                 placeholder="ej: Aprobar Ayudas de Emergencia">
                         </div>
                         <div class="mb-3">
                             <label class="form-label small fw-bold text-secondary">Descripción y Alcance de la
                                 Función</label>
-                            <textarea class="form-control" id="nuevaFuncionDesc" rows="2"
+                            <textarea class="form-control" id="nuevaFuncionDesc" rows="2" maxlength="255"
                                 placeholder="Explique qué permite realizar este privilegio..."></textarea>
                         </div>
                     </form>
@@ -1201,8 +1201,8 @@
                     <div class="tab-content">
                         <div class="tab-pane fade show active" id="panelCatalogoDelegaciones">
                             <div class="row g-3 align-items-start">
-                                <div class="col-lg-5">
-                                    <form id="formCatalogoDelegacion" novalidate class="bg-white border rounded-4 p-3 shadow-sm">
+                                <div class="col-12">
+                                    <form id="formCatalogoDelegacion" novalidate class="liquid-glass-card border-0 p-3 shadow-sm">
                                         <input type="hidden" id="catalogoDelegacionId">
                                         <h6 class="fw-bold text-primary mb-3" id="tituloFormDelegacion">Nueva delegación</h6>
                                         <div class="row g-2">
@@ -1220,20 +1220,19 @@
                                                     <div class="col-6"><label class="form-label small fw-bold mb-1">Horario</label><input id="catalogoDelegacionHorario" class="form-control form-control-sm" maxlength="120" placeholder="Lun-Vie 08:30-14:00"></div>
                                                     <div class="col-6"><label class="form-label small fw-bold mb-1">Encargado/a</label><input id="catalogoDelegacionEncargado" class="form-control form-control-sm" maxlength="150" placeholder="Nombre completo"></div>
                                                     <div class="col-12"><label class="form-label small fw-bold mb-1">Fotografía</label><input id="catalogoDelegacionFoto" class="form-control form-control-sm" maxlength="255" placeholder="/static/img/sede.jpg o URL https://..."></div>
-                                                    <div class="col-12"><label class="form-label small fw-bold mb-1">Descripción territorial</label><textarea id="catalogoDelegacionDescripcion" class="form-control form-control-sm" rows="2" maxlength="1200" placeholder="Cobertura y servicios principales"></textarea></div>
+                                                    <div class="col-12"><label class="form-label small fw-bold mb-1">Descripción territorial</label><textarea id="catalogoDelegacionDescripcion" class="form-control form-control-sm" rows="2" maxlength="500" placeholder="Cobertura y servicios principales"></textarea></div>
                                                 </div>
                                             </details>
                                         </div>
                                         <div class="d-flex gap-2 mt-3"><button class="btn btn-primary flex-grow-1 fw-semibold" type="submit"><i class="bi bi-database-check me-1"></i>Guardar</button><button class="btn btn-light border" type="button" onclick="limpiarFormDelegacion()">Limpiar</button></div>
                                     </form>
                                 </div>
-                                <div class="col-lg-7"><details id="delegacionesListaDetalles" open><summary>Delegaciones registradas</summary><div id="listaCatalogoDelegaciones" class="row g-2 pt-2"></div></details></div>
                             </div>
                         </div>
                         <div class="tab-pane fade" id="panelCatalogoCargos">
                             <div class="row g-3 align-items-start">
-                                <div class="col-lg-4">
-                                    <form id="formCatalogoCargo" novalidate class="bg-white border rounded-4 p-3 shadow-sm">
+                                <div class="col-12">
+                                    <form id="formCatalogoCargo" novalidate class="liquid-glass-card border-0 p-3 shadow-sm">
                                         <input type="hidden" id="catalogoCargoId">
                                         <h6 class="fw-bold text-primary mb-3" id="tituloFormCargo">Nuevo cargo</h6>
                                         <label class="form-label small fw-bold">Nombre</label>
@@ -1245,7 +1244,6 @@
                                         <div class="d-flex gap-2"><button class="btn btn-primary flex-grow-1 fw-semibold" type="submit"><i class="bi bi-database-check me-1"></i>Guardar</button><button class="btn btn-light border" type="button" onclick="limpiarFormCargo()">Limpiar</button></div>
                                     </form>
                                 </div>
-                                <div class="col-lg-8"><div id="listaCatalogoCargos" class="row g-2"></div></div>
                             </div>
                         </div>
                     </div>
