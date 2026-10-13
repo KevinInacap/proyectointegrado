@@ -199,11 +199,27 @@ def _is_valid_chilean_rut(value):
 
 
 def _validate_delegation_details(data):
-    text_fields = ('name', 'scope', 'address', 'phone', 'schedule', 'manager_name', 'description')
+    text_fields = ('name', 'scope', 'commune', 'address', 'phone', 'schedule', 'manager_name', 'description')
     if any(_text(data, field) is None for field in text_fields):
         return 'Los campos de texto deben ser cadenas.'
     if any(re.search(r'[<>]', _text(data, field)) for field in text_fields):
         return 'Los campos de la delegación no pueden contener etiquetas HTML.'
+    name, scope, commune = (_text(data, field) for field in ('name', 'scope', 'commune'))
+    label_pattern = r"[^\W_][\w .,'’&/-]{1,99}"
+    if any(not re.fullmatch(label_pattern, value, flags=re.UNICODE) for value in (name, scope, commune)):
+        return 'Nombre, ámbito y comuna deben contener texto válido de 3 a 100 caracteres.'
+    address = _text(data, 'address')
+    if address and not re.fullmatch(r"[^\W_][\w .,#º°/-]{0,199}", address, flags=re.UNICODE):
+        return 'La dirección contiene caracteres no válidos.'
+    phone = _text(data, 'phone')
+    if phone and not re.fullmatch(r'\+?[0-9][0-9() .-]{6,29}', phone):
+        return 'El teléfono debe tener entre 7 y 30 dígitos o signos telefónicos.'
+    schedule = _text(data, 'schedule')
+    if schedule and not re.fullmatch(r"[\w :.,/-]{1,120}", schedule, flags=re.UNICODE):
+        return 'El horario contiene caracteres no válidos.'
+    manager = _text(data, 'manager_name')
+    if manager and not re.fullmatch(r"[^\W_][\w .'-]{1,149}", manager, flags=re.UNICODE):
+        return 'El nombre de la persona encargada contiene caracteres no válidos.'
     email = _text(data, 'email')
     if email is None:
         return 'El correo de contacto no tiene un formato válido.'
@@ -1480,7 +1496,7 @@ def api_delegation_update(request, pk):
     if not code or not re.fullmatch(r'[A-Za-z0-9-]{2,20}', code) or Delegation.objects.filter(code__iexact=code).exclude(id=pk).exists():
         return JsonResponse({'success': False, 'message': 'Código inválido o ya utilizado.'}, status=400)
     merged = {field: getattr(item, field) for field in (
-        'name', 'scope', 'address', 'phone', 'email', 'schedule',
+        'name', 'scope', 'commune', 'address', 'phone', 'email', 'schedule',
         'manager_name', 'photo_url', 'description'
     )}
     merged.update({key: data.get(key) for key in merged if key in data})
@@ -1635,6 +1651,7 @@ def api_position_delete(request, pk):
         _catalog_audit(request, 'cargo', item, 'DELETE', {'name': item.name, 'description': item.description})
         item.delete()
     return JsonResponse({'success': True, 'message': f"Cargo '{item.name}' eliminado exitosamente de la base de datos."})
+
 
 
 
