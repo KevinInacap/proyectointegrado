@@ -752,6 +752,7 @@
                 const v = datasetVecinos.find(item => item.id === id);
                 if (v) {
                     document.getElementById('vecinoRut').value = v.rut;
+                    document.getElementById('vecinoEmail').value = v.email || '';
                     document.getElementById('vecinoNombre').value = v.nombre;
                     document.getElementById('vecinoDireccion').value = v.direccion;
                     document.getElementById('vecinoTelefono').value = v.telefono;
@@ -774,7 +775,10 @@
                 return;
             }
 
-            if (typeof validarRutChileno === 'function' && !validarRutChileno(rutVal)) {
+            const existente = id ? datasetVecinos.find(item => String(item.id) === String(id)) : null;
+            const normalizarRut = valor => String(valor || '').replace(/[^0-9kK]/g, '').toUpperCase();
+            const rutSinCambios = !!existente && normalizarRut(rutVal) === normalizarRut(existente.rut);
+            if (!rutSinCambios && typeof validarRutChileno === 'function' && !validarRutChileno(rutVal)) {
                 Swal.fire({
                     icon: 'error',
                     title: 'RUT inválido',
@@ -782,10 +786,26 @@
                 });
                 return;
             }
+            const emailVal = document.getElementById('vecinoEmail').value.trim().toLowerCase();
+            if (emailVal && !/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(emailVal)) {
+                Swal.fire({icon:'error', title:'Correo inválido', text:'Ingresa un correo electrónico válido.'});
+                return;
+            }
+            const duplicadoRut = datasetVecinos.some(item => String(item.id) !== String(id) && normalizarRut(item.rut) === normalizarRut(rutVal));
+            if (duplicadoRut) {
+                Swal.fire({icon:'error', title:'RUT duplicado', text:'Ya existe un vecino registrado con ese RUT.'});
+                return;
+            }
+            const duplicadoEmail = emailVal && datasetVecinos.some(item => String(item.id) !== String(id) && String(item.email || '').trim().toLowerCase() === emailVal);
+            if (duplicadoEmail) {
+                Swal.fire({icon:'error', title:'Correo duplicado', text:'Ya existe un vecino registrado con ese correo electrónico.'});
+                return;
+            }
 
             const payload = {
                 nombre: typeof sanitizarTexto === 'function' ? sanitizarTexto(nom) : nom,
                 rut: typeof formatearRutChileno === 'function' ? formatearRutChileno(rutVal) : rutVal,
+                email: emailVal,
                 direccion: typeof sanitizarTexto === 'function' ? sanitizarTexto(dir) : dir,
                 telefono: document.getElementById('vecinoTelefono').value.trim(),
                 territorio: document.getElementById('vecinoTerritorio').value,

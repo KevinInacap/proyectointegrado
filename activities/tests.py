@@ -483,3 +483,53 @@ class AttentionSelectionUnitTests(TestCase):
             self.assertIsNotNone(_typed_attention_selection({
                 'attention_type_id': 11
             })[2])
+
+
+class VecinoApiValidationTests(TestCase):
+    def setUp(self):
+        self.user = get_user_model().objects.create_user(username='admin-vecinos', password='test-pass')
+        self.profile = UserProfile.objects.create(
+            user=self.user, rut='11223344-5', full_name='Admin Vecinos', email='admin-vecinos@example.test',
+        )
+        role, _ = Role.objects.get_or_create(name='Administrador', defaults={'is_system': True})
+        self.profile.roles.add(role)
+        self.client.force_login(self.user)
+        self.url = reverse('activities:api_vecinos')
+        self.payload = {
+            'nombre': 'Vecino de prueba', 'rut': '12.345.678-5', 'email': 'vecino@example.test',
+            'direccion': 'Calle de prueba 123', 'telefono': '', 'territorio': 'Centro', 'estado': 'Activo',
+        }
+
+    def post(self, payload=None):
+        return self.client.post(self.url, json.dumps(payload or self.payload), content_type='application/json')
+
+    def put(self, vecino, payload):
+        return self.client.put(f'{self.url}{vecino.pk}/', json.dumps(payload), content_type='application/json')
+
+    def test_existing_legacy_invalid_rut_can_be_edited_if_unchanged(self):
+        vecino = Vecino.objects.create(nombre='Vecino antiguo', rut='16.241.879-2', direccion='Calle 1')
+        payload = {'nombre': 'Vecino antiguo actualizado', 'rut': vecino.rut, 'direccion': 'Calle 2'}
+        response = self.put(vecino, payload)
+        self.assertEqual(response.status_code, 200)
+        vecino.refresh_from_db()
+        self.assertEqual(vecino.nombre, payload['nombre'])
+        self.assertEqual(vecino.rut, '16.241.879-2')
+
+    def test_changing_rut_requires_valid_check_digit(self):
+        vecino = Vecino.objects.create(nombre='Vecino antiguo', rut='16.241.879-2', direccion='Calle 1')
+        response = self.put(vecino, {'nombre': vecino.nombre, 'rut': '12.345.678-9', 'direccion': vecino.direccion})
+        self.assertEqual(response.status_code, 400)
+        vecino.refresh_from_db()
+        self.assertEqual(vecino.rut, '16.241.879-2')
+
+    def test_rut_and_email_are_unique_case_insensitively_and_across_formats(self):
+        first = self.post()
+        self.assertEqual(first.status_code, 201)
+        existing = Vecino.objects.get(rut='12.345.678-5')
+        duplicate_rut = dict(self.payload, email='otro@example.test', rut='123456785')
+        self.assertEqual(self.post(duplicate_rut).status_code, 400)
+        duplicate_email = dict(self.payload, nombre='Otra persona', rut='11.111.111-1', email='VECINO@EXAMPLE.TEST')
+        self.assertEqual(self.post(duplicate_email).status_code, 400)
+        self.assertEqual(Vecino.objects.count(), 1)
+        existing.refresh_from_db()
+        self.assertEqual(existing.email, 'vecino@example.test')

@@ -238,6 +238,7 @@ class Validation(BaseModel):
 class Vecino(BaseModel):
     nombre = models.CharField(max_length=150, verbose_name="Nombre completo")
     rut = models.CharField(max_length=15, unique=True, verbose_name="RUT")
+    email = models.EmailField(max_length=254, blank=True, null=True, unique=True, verbose_name="Correo electrónico")
     direccion = models.CharField(max_length=255, blank=True, null=True, verbose_name="Dirección")
     telefono = models.CharField(max_length=20, blank=True, null=True, verbose_name="Teléfono")
     territorio = models.CharField(max_length=100, blank=True, null=True, verbose_name="Territorio")

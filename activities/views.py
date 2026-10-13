@@ -3,6 +3,7 @@ from django.db import transaction
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from django.core.exceptions import ValidationError
+from django.core.validators import validate_email
 from django.utils import timezone
 from django.utils.text import slugify
 from django.urls import reverse
@@ -464,6 +465,7 @@ def _vecino_payload(data):
     return {
         'nombre': str(data.get('nombre', '')).strip(),
         'rut': _format_vecino_rut(str(data.get('rut', '')).strip()),
+        'email': str(data.get('email', '')).strip().lower() or None,
         'direccion': str(data.get('direccion', '')).strip(),
         'telefono': str(data.get('telefono', '')).strip(),
         'territorio': str(data.get('territorio', '')).strip(),
@@ -471,11 +473,39 @@ def _vecino_payload(data):
     }
 
 
+def _vecino_rut_exists(rut, exclude_pk=None):
+    qs = Vecino.objects.all()
+    if exclude_pk is not None:
+        qs = qs.exclude(pk=exclude_pk)
+    normalized = _normalize_vecino_rut(rut)
+    return any(_normalize_vecino_rut(existing) == normalized for existing in qs.values_list('rut', flat=True))
+
+
+def _vecino_email_exists(email, exclude_pk=None):
+    if not email:
+        return False
+    qs = Vecino.objects.filter(email__iexact=email)
+    if exclude_pk is not None:
+        qs = qs.exclude(pk=exclude_pk)
+    return qs.exists()
+
+
+def _validate_vecino_email(email):
+    if not email:
+        return True
+    try:
+        validate_email(email)
+    except ValidationError:
+        return False
+    return True
+
+
 def _serialize_vecino(vecino):
     return {
         'id': vecino.id,
         'nombre': vecino.nombre,
         'rut': vecino.rut,
+        'email': vecino.email or '',
         'direccion': vecino.direccion or '',
         'telefono': vecino.telefono or '',
         'territorio': vecino.territorio or '',
@@ -520,10 +550,14 @@ def api_vecinos(request):
             return JsonResponse({'success': False, 'message': 'Nombre, RUT y dirección son obligatorios.'}, status=400)
         if not _valid_vecino_rut(payload['rut']):
             return JsonResponse({'success': False, 'message': 'RUT inválido. Revisa el número y el dígito verificador.'}, status=400)
+        if not _validate_vecino_email(payload['email']):
+            return JsonResponse({'success': False, 'message': 'Correo electrónico no válido.'}, status=400)
         if payload['estado'] not in {'Activo', 'Inactivo'}:
             return JsonResponse({'success': False, 'message': 'Estado de vecino no válido.'}, status=400)
-        if any(_normalize_vecino_rut(v.rut) == _normalize_vecino_rut(payload['rut']) for v in _vecino_scope(request)):
+        if _vecino_rut_exists(payload['rut']):
             return JsonResponse({'success': False, 'message': 'Ya existe un vecino registrado con ese RUT.'}, status=400)
+        if _vecino_email_exists(payload['email']):
+            return JsonResponse({'success': False, 'message': 'Ya existe un vecino registrado con ese correo electrónico.'}, status=400)
         vecino = Vecino.objects.create(**payload)
         AuditLog.objects.create(
             user=request.user if request.user.is_authenticated else None,
@@ -558,13 +592,19 @@ def api_vecino_detail(request, pk):
             profile = _actor(request)
             if payload['territorio'].casefold() != profile.delegation.name.casefold():
                 return JsonResponse({'success': False, 'message': 'Territorio no autorizado.'}, status=403)
+        if 'email' not in data:
+            payload['email'] = vecino.email
         if not payload['nombre'] or not payload['rut'] or not payload['direccion']:
             return JsonResponse({'success': False, 'message': 'Nombre, RUT y dirección son obligatorios.'}, status=400)
-        if not _valid_vecino_rut(payload['rut']):
+        rut_changed = _normalize_vecino_rut(payload['rut']) != _normalize_vecino_rut(vecino.rut)
+        if rut_changed and not _valid_vecino_rut(payload['rut']):
             return JsonResponse({'success': False, 'message': 'RUT inválido. Revisa el número y el dígito verificador.'}, status=400)
-        duplicate = any(_normalize_vecino_rut(v.rut) == _normalize_vecino_rut(payload['rut']) for v in _vecino_scope(request).exclude(pk=vecino.pk))
-        if duplicate:
+        if not _validate_vecino_email(payload['email']):
+            return JsonResponse({'success': False, 'message': 'Correo electrónico no válido.'}, status=400)
+        if _vecino_rut_exists(payload['rut'], exclude_pk=vecino.pk):
             return JsonResponse({'success': False, 'message': 'Ya existe otro vecino registrado con ese RUT.'}, status=400)
+        if _vecino_email_exists(payload['email'], exclude_pk=vecino.pk):
+            return JsonResponse({'success': False, 'message': 'Ya existe otro vecino registrado con ese correo electrónico.'}, status=400)
         previous = _serialize_vecino(vecino)
         for field, value in payload.items():
             setattr(vecino, field, value)
