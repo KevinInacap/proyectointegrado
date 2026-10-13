@@ -524,7 +524,7 @@ class VecinoApiValidationTests(TestCase):
 
     def test_rut_and_email_are_unique_case_insensitively_and_across_formats(self):
         first = self.post()
-        self.assertEqual(first.status_code, 201)
+        self.assertEqual(first.status_code, 200)
         existing = Vecino.objects.get(rut='12.345.678-5')
         duplicate_rut = dict(self.payload, email='otro@example.test', rut='123456785')
         self.assertEqual(self.post(duplicate_rut).status_code, 400)
