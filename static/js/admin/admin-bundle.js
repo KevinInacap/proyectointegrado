@@ -29,6 +29,71 @@
         let calFechaActual = new Date();
         let calFechaHoy = new Date();
         let calFechaSeleccionada = new Date(calFechaHoy.getFullYear(), calFechaHoy.getMonth(), calFechaHoy.getDate());
+        let calCompromisos = [];
+        let calAgendaRequestId = 0;
+
+        function fechaCalendarioISO(fecha) {
+            const year = fecha.getFullYear();
+            const month = String(fecha.getMonth() + 1).padStart(2, '0');
+            const day = String(fecha.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        }
+
+        function renderCompromisosFechaSeleccionada() {
+            const lista = document.getElementById('listaAgendaMunicipal');
+            if (!lista) return;
+            lista.replaceChildren();
+            const fecha = fechaCalendarioISO(calFechaSeleccionada);
+            const items = calCompromisos.filter(item => item.fecha === fecha);
+            if (!items.length) {
+                const empty = document.createElement('span');
+                empty.className = 'text-muted';
+                empty.textContent = 'Sin compromisos registrados para este día.';
+                lista.appendChild(empty);
+                return;
+            }
+            items.forEach(item => {
+                const card = document.createElement('div');
+                card.className = 'border rounded-2 p-2 mb-2';
+                const title = document.createElement('strong');
+                title.className = 'd-block';
+                title.textContent = item.descripcion;
+                const detail = document.createElement('span');
+                detail.className = 'text-muted';
+                detail.textContent = [item.estado, item.area, item.territorio, item.delegacion].filter(Boolean).join(' · ');
+                card.append(title, detail);
+                lista.appendChild(card);
+            });
+        }
+
+        async function cargarAgendaMunicipal() {
+            const badge = document.getElementById('lblEstadoAtencionCalendario');
+            if (!badge) return;
+            const requestId = ++calAgendaRequestId;
+            const desde = new Date(calFechaActual.getFullYear(), calFechaActual.getMonth(), 1);
+            const hasta = new Date(calFechaActual.getFullYear(), calFechaActual.getMonth() + 1, 0);
+            badge.textContent = 'Consultando compromisos…';
+            try {
+                const query = new URLSearchParams({ desde: fechaCalendarioISO(desde), hasta: fechaCalendarioISO(hasta) });
+                const response = await fetch(`/api/agenda/?${query.toString()}`, {
+                    credentials: 'same-origin',
+                    headers: { Accept: 'application/json' }
+                });
+                if (!response.ok) throw new Error('No fue posible consultar la agenda.');
+                const payload = await response.json();
+                if (requestId !== calAgendaRequestId) return;
+                calCompromisos = Array.isArray(payload.results) ? payload.results : [];
+                badge.textContent = `${calCompromisos.length} compromiso${calCompromisos.length === 1 ? '' : 's'} este mes`;
+                renderCompromisosFechaSeleccionada();
+            } catch (error) {
+                if (requestId !== calAgendaRequestId) return;
+                calCompromisos = [];
+                badge.textContent = 'Agenda no disponible';
+                renderCompromisosFechaSeleccionada();
+                console.warn('No se pudo cargar la agenda municipal:', error);
+            }
+        }
+
 
         function actualizarFechaActual() {
             const elFecha = document.getElementById('currentDateDisplay');
@@ -107,6 +172,8 @@
             }
 
             gridDias.innerHTML = html;
+            renderCompromisosFechaSeleccionada();
+            cargarAgendaMunicipal();
         }
 
         function cambiarMesCalendario(delta) {
