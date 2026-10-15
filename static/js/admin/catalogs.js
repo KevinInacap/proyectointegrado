@@ -255,13 +255,38 @@
     async function viewRecord(panel, id) {
         try {
             const [record, refs] = await Promise.all([request(endpoint(panel.catalog, id)), references(panel.catalog)]);
-            const details = element('dl', 'text-start');
+            const details = element('dl', 'text-start m-0');
             definitions[panel.catalog].columns.forEach(([key, label]) => {
                 const reference = refs[key]?.find(item => Number(item.id) === Number(record[key]));
-                details.append(element('dt', 'small text-muted mt-3', label), element('dd', '', reference?.name || record[key] || 'Sin información'));
+                details.append(element('dt', 'small text-muted mt-2 fw-bold', label), element('dd', 'mb-2 text-dark', reference?.name || record[key] || 'Sin información'));
             });
-            await Swal.fire({titleText: `Consulta de ${definitions[panel.catalog].title}`, html: details, confirmButtonText: 'Cerrar', confirmButtonColor: '#8B1D2C'});
-        } catch (error) { await Swal.fire({icon: 'error', titleText: 'No se pudo consultar', text: error.message}); }
+            const viewTitleHtml = `
+                <div class="swal-muni-header-wrap">
+                    <div class="d-flex align-items-center gap-2">
+                        <i class="bi bi-info-circle-fill text-warning fs-5"></i>
+                        <div class="text-start">
+                            <h5 class="modal-title fw-bold m-0 text-white fs-6 text-capitalize">Consulta de ${definitions[panel.catalog].title}</h5>
+                            <small class="text-white-50" style="font-size: 0.75rem;">Detalle del registro en catálogo institucional SGR La Serena</small>
+                        </div>
+                    </div>
+                </div>
+            `;
+            await Swal.fire({
+                title: viewTitleHtml,
+                html: details,
+                showCloseButton: true,
+                customClass: {
+                    popup: 'swal2-catalog-modal',
+                    htmlContainer: 'swal2-catalog-container',
+                    title: 'swal2-catalog-title',
+                    confirmButton: 'btn btn-secondary rounded-pill px-4 py-2 fw-semibold',
+                    actions: 'swal2-catalog-actions',
+                    closeButton: 'swal2-catalog-close'
+                },
+                buttonsStyling: false,
+                confirmButtonText: 'Cerrar'
+            });
+        } catch (error) { await Swal.fire({icon: 'error', titleText: 'No se pudo consultar', text: error.message, confirmButtonColor: '#8B1D2C'}); }
     }
 
     async function editRecord(panel, id) {
@@ -285,15 +310,38 @@
                 : ['code', 'name', ...(panel.catalog === 'subattentions' ? ['attention_type'] : []), 'description', ...(panel.catalog === 'items' ? ['item_type'] : []), 'status'];
             fields.forEach(key => field(form, key, record[key], refs[key] || (key === 'status' ? choices(['Activo', 'Inactivo']) : key === 'item_type' ? choices(['Cuantitativo', 'Porcentual']) : undefined), true));
             let saving = false;
+            const actionText = id === undefined ? 'Crear' : 'Editar';
+            const catalogLabel = definitions[panel.catalog].title;
+            const fullTitle = `${actionText} ${catalogLabel}`;
+            const headerHtml = `
+                <div class="swal-muni-header-wrap">
+                    <div class="d-flex align-items-center gap-2">
+                        <i class="bi bi-tags-fill text-warning fs-5"></i>
+                        <div class="text-start">
+                            <h5 class="modal-title fw-bold m-0 text-white fs-6 text-capitalize">${fullTitle}</h5>
+                            <small class="text-white-50" style="font-size: 0.75rem;">Catálogo oficial de gestión y atención ciudadana SGR La Serena</small>
+                        </div>
+                    </div>
+                </div>
+            `;
             const result = await Swal.fire({
-                titleText: `${id === undefined ? 'Crear' : 'Editar'} ${definitions[panel.catalog].title}`,
+                title: headerHtml,
                 html: form,
                 width: isGoal ? '820px' : '700px',
-                customClass: { popup: 'swal2-catalog-modal', htmlContainer: 'swal2-catalog-container' },
+                showCloseButton: true,
+                customClass: {
+                    popup: 'swal2-catalog-modal',
+                    htmlContainer: 'swal2-catalog-container',
+                    title: 'swal2-catalog-title',
+                    confirmButton: 'btn btn-muni-red rounded-pill px-4 py-2 fw-semibold',
+                    cancelButton: 'btn btn-secondary rounded-pill px-4 py-2 fw-semibold',
+                    actions: 'swal2-catalog-actions',
+                    closeButton: 'swal2-catalog-close'
+                },
+                buttonsStyling: false,
                 showCancelButton: true,
-                confirmButtonText: 'Guardar',
+                confirmButtonText: '<i class="bi bi-database-check me-1"></i> Guardar',
                 cancelButtonText: 'Cancelar',
-                confirmButtonColor: '#C41230',
                 showLoaderOnConfirm: true,
                 allowOutsideClick: () => !saving,
                 allowEscapeKey: () => !saving,
