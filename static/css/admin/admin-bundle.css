@@ -3594,11 +3594,13 @@
             gap: 6px;
             font-size: 0.76rem;
             font-weight: 700;
-            color: #C41230;
-            background: rgba(196, 18, 48, 0.06);
-            border: 1px solid rgba(196, 18, 48, 0.2);
+            color: #1B365D;
+            background: rgba(27, 54, 93, 0.06);
+            border: 1px solid rgba(27, 54, 93, 0.2);
             border-radius: 50px;
-            padding: 4px 12px;
+            padding: 5px 13px;
+            cursor: pointer;
+            white-space: nowrap;
             transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
         }
 
@@ -3608,14 +3610,58 @@
         }
 
         .delegacion-modular-glass-card:hover .btn-expediente-sede-link {
-            background: #C41230;
+            background: #1B365D;
             color: #FFFFFF;
-            border-color: #C41230;
-            box-shadow: 0 4px 12px rgba(196, 18, 48, 0.35);
+            border-color: #1B365D;
+            box-shadow: 0 4px 12px rgba(27, 54, 93, 0.35);
         }
 
         .delegacion-modular-glass-card:hover .btn-expediente-sede-link .expediente-arrow {
-            transform: translateX(6px);
+            transform: translateX(4px);
+        }
+
+        [data-theme="dark"] .delegaciones-listado {
+            background: rgba(30, 41, 59, 0.92);
+            border-color: rgba(51, 65, 85, 0.8);
+        }
+
+        [data-theme="dark"] .delegacion-clean-table th {
+            background: rgba(15, 23, 42, 0.95);
+            color: #E2E8F0;
+            border-color: rgba(51, 65, 85, 0.8);
+        }
+
+        [data-theme="dark"] .delegacion-clean-table td {
+            color: #F1F5F9;
+            border-color: rgba(51, 65, 85, 0.6);
+        }
+
+        [data-theme="dark"] .delegacion-table-row:hover {
+            background-color: rgba(255, 255, 255, 0.05) !important;
+        }
+
+        [data-theme="dark"] .btn-ver-ficha-tecnica {
+            color: #93C5FD;
+            background: linear-gradient(135deg, rgba(30, 58, 138, 0.35) 0%, rgba(59, 130, 246, 0.25) 100%);
+            border-color: rgba(96, 165, 250, 0.35);
+        }
+
+        [data-theme="dark"] .btn-ver-ficha-tecnica:hover {
+            color: #FFFFFF !important;
+            background: linear-gradient(135deg, #1D4ED8 0%, #2563EB 100%) !important;
+            border-color: #3B82F6 !important;
+        }
+
+        [data-theme="dark"] .btn-ver-ficha-tecnica-table {
+            color: #93C5FD;
+            background: rgba(30, 58, 138, 0.3);
+            border-color: rgba(96, 165, 250, 0.35);
+        }
+
+        [data-theme="dark"] .btn-ver-ficha-tecnica-table:hover {
+            color: #FFFFFF !important;
+            background: #2563EB !important;
+            border-color: #3B82F6 !important;
         }
 
         /* Drawer de Cristal para Expediente de Sede */

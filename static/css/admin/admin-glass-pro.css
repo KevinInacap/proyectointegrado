@@ -1328,10 +1328,22 @@ body {
 }
 
 .delegacion-grid {
-    display: grid !important;
+    display: grid;
     grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)) !important;
     gap: 1.5rem !important;
     margin-bottom: 2rem !important;
+}
+
+.delegacion-grid[hidden],
+#delegacionesCardsGrid[hidden],
+.delegacion-grid.d-none {
+    display: none !important;
+}
+
+.delegaciones-listado[hidden],
+#delegacionesTablaVista[hidden],
+.delegaciones-listado.d-none {
+    display: none !important;
 }
 
 /* Tarjeta Modular de Delegación con Fotografía HD 4K y Liquid Glass */
@@ -2055,12 +2067,150 @@ table,
 .role-profile-card:hover,.delegacion-modular-glass-card:hover,.kpi-card:hover { transform:translateY(-3px); box-shadow:0 14px 28px rgba(57,25,34,.1); }
 .delegacion-grid { grid-auto-rows:1fr; align-items:stretch; }
 .delegacion-modular-glass-card { height:100%; }
-.delegaciones-listado { border:1px solid #e3d5da; border-radius:14px; background:rgba(255,255,255,.76); overflow:hidden; }
+.delegaciones-listado {
+    border: 1px solid rgba(226, 232, 240, 0.9);
+    border-radius: 18px;
+    background: rgba(255, 255, 255, 0.96);
+    -webkit-backdrop-filter: blur(20px);
+    backdrop-filter: blur(20px);
+    overflow: hidden;
+    box-shadow: 0 8px 30px rgba(27, 54, 93, 0.08);
+    transition: all 0.25s ease;
+}
 .delegaciones-listado summary { cursor:pointer; padding:12px 16px; color:#782132; font-weight:700; list-style-position:inside; }
 .delegaciones-listado summary:focus-visible { outline:3px solid rgba(196,18,48,.35); outline-offset:-3px; }
-.delegaciones-table-wrap { padding:0 12px 10px; }
-.delegaciones-table-wrap th { color:#612032; font-size:.78rem; }
-.delegaciones-table-wrap td { font-size:.83rem; }
+.delegaciones-table-wrap {
+    padding: 0;
+    overflow-x: auto;
+}
+.delegacion-clean-table {
+    width: 100%;
+    margin-bottom: 0;
+}
+.delegacion-clean-table th {
+    background: rgba(248, 250, 252, 0.98);
+    color: var(--muni-navy, #1B365D);
+    font-size: 0.76rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding: 14px 16px;
+    border-bottom: 2px solid rgba(226, 232, 240, 0.9);
+    white-space: nowrap;
+}
+.delegacion-clean-table td {
+    padding: 13px 16px;
+    font-size: 0.86rem;
+    border-bottom: 1px solid rgba(241, 245, 249, 0.9);
+    vertical-align: middle;
+}
+.delegacion-table-row {
+    transition: background-color 0.18s ease, transform 0.15s ease;
+}
+.delegacion-table-row:hover {
+    background-color: rgba(13, 110, 253, 0.04) !important;
+}
+.delegacion-table-row.table-row-selected {
+    background-color: rgba(13, 110, 253, 0.09) !important;
+    border-left: 4px solid #0D6EFD;
+}
+.delegacion-list-avatar {
+    width: 38px;
+    height: 38px;
+    border-radius: 11px;
+    background: var(--del-color, #1B365D);
+    color: #FFFFFF;
+    font-weight: 800;
+    font-size: 0.82rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.15);
+    flex-shrink: 0;
+}
+.delegacion-list-title {
+    color: var(--muni-navy, #1B365D);
+    cursor: pointer;
+    font-size: 0.92rem;
+    line-height: 1.25;
+    transition: color 0.15s ease;
+}
+.delegacion-list-title:hover {
+    color: var(--muni-red, #C41230);
+    text-decoration: underline;
+}
+
+/* Botón Ver Ficha Técnica: Elegante, Moderno y Pro */
+.btn-ver-ficha-tecnica {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    padding: 7px 15px;
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: #1B365D;
+    background: linear-gradient(135deg, rgba(27, 54, 93, 0.08) 0%, rgba(13, 110, 253, 0.12) 100%);
+    border: 1.5px solid rgba(27, 54, 93, 0.22);
+    border-radius: 50px;
+    cursor: pointer;
+    white-space: nowrap;
+    text-decoration: none;
+    transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    box-shadow: 0 2px 8px rgba(27, 54, 93, 0.06);
+}
+.btn-ver-ficha-tecnica:hover {
+    color: #FFFFFF !important;
+    background: linear-gradient(135deg, #1B365D 0%, #0D6EFD 100%) !important;
+    border-color: #1B365D !important;
+    box-shadow: 0 6px 18px rgba(13, 110, 253, 0.35) !important;
+    transform: translateY(-1px);
+}
+.btn-ver-ficha-tecnica i.bi-arrow-right {
+    transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.btn-ver-ficha-tecnica:hover i.bi-arrow-right {
+    transform: translateX(4px);
+}
+
+.btn-ver-ficha-tecnica-table {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 13px;
+    font-size: 0.79rem;
+    font-weight: 700;
+    color: #1B365D;
+    background: rgba(27, 54, 93, 0.07);
+    border: 1px solid rgba(27, 54, 93, 0.22);
+    border-radius: 50px;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all 0.2s ease;
+}
+.btn-ver-ficha-tecnica-table:hover {
+    color: #FFFFFF !important;
+    background: #1B365D !important;
+    border-color: #1B365D !important;
+    box-shadow: 0 4px 12px rgba(27, 54, 93, 0.3) !important;
+    transform: translateY(-1px);
+}
+
+.btn-card-action {
+    width: 36px;
+    height: 36px;
+    padding: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.88rem;
+    border-radius: 50px !important;
+    flex-shrink: 0;
+    transition: all 0.2s ease;
+}
+.btn-card-action:hover {
+    transform: translateY(-1px);
+}
 .delegacion-extra-fields,.delegacion-extra-fields summary,
 #delegacionesListaDetalles,#delegacionesListaDetalles summary { cursor:pointer; }
 .delegacion-extra-fields summary,#delegacionesListaDetalles summary {

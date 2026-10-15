@@ -3823,9 +3823,26 @@
             const cards = document.getElementById('delegacionesCardsGrid');
             const table = document.getElementById('delegacionesTablaVista');
             const label = document.getElementById('etiquetaVistaDelegaciones');
-            if (cards) cards.hidden = vistaDelegacionesActiva !== 'cards';
-            if (table) table.hidden = vistaDelegacionesActiva !== 'tabla';
-            if (label) label.textContent = vistaDelegacionesActiva === 'tabla' ? 'Lista' : 'Tarjeta';
+            const selectorBtn = document.getElementById('selectorVistaDelegaciones');
+            const esCards = vistaDelegacionesActiva === 'cards';
+
+            if (cards) {
+                cards.hidden = !esCards;
+                cards.style.setProperty('display', esCards ? 'grid' : 'none', 'important');
+            }
+            if (table) {
+                table.hidden = esCards;
+                table.style.setProperty('display', !esCards ? 'block' : 'none', 'important');
+            }
+            if (label) {
+                label.textContent = esCards ? 'Tarjeta' : 'Lista';
+            }
+            if (selectorBtn) {
+                const icon = selectorBtn.querySelector('i');
+                if (icon) {
+                    icon.className = esCards ? 'bi bi-grid-3x3-gap me-1' : 'bi bi-list-ul me-1';
+                }
+            }
             document.querySelectorAll('[data-vista-delegaciones]').forEach(option => {
                 const active = option.dataset.vistaDelegaciones === vistaDelegacionesActiva;
                 option.classList.toggle('active', active);
@@ -3867,36 +3884,80 @@
                 if (!items.length) {
                     const row = tableBody.insertRow();
                     const cell = row.insertCell();
-                    cell.colSpan = 6;
-                    cell.textContent = 'No hay delegaciones para los filtros actuales.';
+                    cell.colSpan = 8;
+                    cell.className = 'text-center py-5 text-muted';
+                    cell.innerHTML = '<i class="bi bi-buildings fs-2 d-block mb-2 text-secondary"></i>No hay delegaciones para los filtros actuales.';
+                } else {
+                    items.forEach(item => {
+                        const row = tableBody.insertRow();
+                        row.className = `delegacion-table-row ${delegacionSeleccionadaActiva === item.id ? 'table-row-selected' : ''}`;
+                        row.id = `row-del-${item.id}`;
+                        row.onclick = (e) => {
+                            if (e.target.closest('button') || e.target.closest('a')) return;
+                            seleccionarDelegacion(item.id);
+                        };
+
+                        const isActivo = item.dbStatus === 'Activo';
+                        const statusBadge = isActivo
+                            ? `<span class="badge rounded-pill bg-success-subtle text-success border border-success-subtle px-2 py-1"><i class="bi bi-check-circle-fill me-1"></i>Activa</span>`
+                            : `<span class="badge rounded-pill bg-secondary-subtle text-secondary border border-secondary-subtle px-2 py-1"><i class="bi bi-x-circle-fill me-1"></i>Inactiva</span>`;
+                        const dotacionCount = item.funcionariosDB ?? (item.funcionarios ? item.funcionarios.length : 0);
+
+                        row.innerHTML = `
+                            <td>
+                                <span class="badge bg-light text-dark border fw-bold px-2 py-1" style="font-size: 0.76rem;">${escaparHtmlCatalogo(item.codigo || '—')}</span>
+                            </td>
+                            <td>
+                                <div class="d-flex align-items-center gap-2">
+                                    <div class="delegacion-list-avatar" style="--del-color: ${item.color || '#1B365D'};">
+                                        ${item.sigla || 'DM'}
+                                    </div>
+                                    <div>
+                                        <div class="fw-bold delegacion-list-title" onclick="seleccionarDelegacion('${item.id}')">${escaparHtmlCatalogo(item.nombre)}</div>
+                                        <div class="small text-muted" style="font-size: 0.76rem;">${escaparHtmlCatalogo(item.comuna || 'La Serena')}</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                <span class="badge bg-white text-secondary border px-2 py-1 rounded-pill small fw-semibold">
+                                    <i class="bi bi-geo-alt-fill text-danger me-1"></i>${escaparHtmlCatalogo(item.sector || 'Sin sector')}
+                                </span>
+                            </td>
+                            <td>
+                                <div class="small text-dark fw-medium text-truncate" style="max-width: 220px;" title="${escaparHtmlCatalogo(item.direccion || '')}">
+                                    <i class="bi bi-geo-alt text-muted me-1"></i>${escaparHtmlCatalogo(item.direccion || 'Sin dirección')}
+                                </div>
+                                ${item.telefono && item.telefono !== 'No registrado' ? `<div class="small text-muted" style="font-size: 0.75rem;"><i class="bi bi-telephone text-primary me-1"></i>${escaparHtmlCatalogo(item.telefono)}</div>` : ''}
+                            </td>
+                            <td>
+                                <div class="small fw-semibold text-dark">
+                                    <i class="bi bi-person-badge text-secondary me-1"></i>${escaparHtmlCatalogo(item.delegado || 'No registrado')}
+                                </div>
+                            </td>
+                            <td class="text-center">
+                                <span class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill px-2 py-1 fw-bold" style="font-size: 0.76rem;">
+                                    <i class="bi bi-people-fill me-1"></i>${dotacionCount}
+                                </span>
+                            </td>
+                            <td class="text-center">
+                                ${statusBadge}
+                            </td>
+                            <td class="text-end">
+                                <div class="d-inline-flex align-items-center gap-1 justify-content-end">
+                                    <button type="button" class="btn btn-ver-ficha-tecnica-table shadow-xs" onclick="event.stopPropagation(); seleccionarDelegacion('${item.id}')" title="Ver ficha técnica territorial">
+                                        <i class="bi bi-card-text me-1"></i><span>Ficha Técnica</span>
+                                    </button>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary rounded-pill px-2 py-1" onclick="event.stopPropagation(); abrirCatalogosOrganizacion('delegaciones').then(() => editarDelegacionCatalogo(${item.dbId}))" title="Editar delegación">
+                                        <i class="bi bi-pencil"></i>
+                                    </button>
+                                    <button type="button" class="btn btn-sm btn-outline-${isActivo ? 'danger' : 'success'} rounded-pill px-2 py-1" onclick="event.stopPropagation(); alternarDelegacionCatalogo(${item.dbId})" title="${isActivo ? 'Inactivar sede' : 'Activar sede'}">
+                                        <i class="bi bi-${isActivo ? 'slash-circle' : 'check2-circle'}"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        `;
+                    });
                 }
-                items.forEach(item => {
-                    const row = tableBody.insertRow();
-                    [item.codigo, item.nombre, item.comuna, item.dbStatus, String(item.funcionariosDB ?? 0)].forEach(value => {
-                        row.insertCell().textContent = value || '—';
-                    });
-                    const actionCell = row.insertCell();
-                    const action = document.createElement('button');
-                    action.type = 'button';
-                    action.className = 'btn btn-sm btn-outline-secondary rounded-pill me-1';
-                    action.textContent = 'Ver ficha';
-                    action.addEventListener('click', () => seleccionarDelegacion(item.id));
-                    actionCell.append(action);
-                    const edit = document.createElement('button');
-                    edit.type = 'button';
-                    edit.className = 'btn btn-sm btn-danger rounded-pill me-1';
-                    edit.textContent = 'Editar';
-                    edit.addEventListener('click', () => {
-                        abrirCatalogosOrganizacion('delegaciones').then(() => editarDelegacionCatalogo(item.dbId));
-                    });
-                    actionCell.append(edit);
-                    const toggle = document.createElement('button');
-                    toggle.type = 'button';
-                    toggle.className = 'btn btn-sm btn-outline-danger rounded-pill';
-                    toggle.textContent = item.dbStatus === 'Activo' ? 'Inactivar' : 'Activar';
-                    toggle.addEventListener('click', () => alternarDelegacionCatalogo(item.dbId));
-                    actionCell.append(toggle);
-                });
             }
             if (!items.length) {
                 grid.innerHTML = '<div class="col-12 text-center text-muted py-4">No hay delegaciones que coincidan con estos filtros.</div>';
@@ -3967,39 +4028,32 @@
                         </div>
                     </div>
 
-                    <!-- Pie de la Tarjeta con Enlace de Cristal -->
-                    <div class="p-3 pt-0">
-                        <div class="d-flex align-items-center justify-content-between pt-2 border-top">
+                    <!-- Pie de la Tarjeta Reestructurado y Elegante -->
+                    <div class="p-3 pt-0 mt-auto">
+                        <div class="d-flex align-items-center justify-content-between pt-2 pb-2 mb-2 border-top">
                             <span class="badge bg-primary-subtle text-primary border border-primary-subtle px-2 py-1" style="font-size: 0.74rem; font-weight: 700;">
-                                <i class="bi bi-folder2-open me-1"></i> ${d.atencionesMes == null ? 'Sin registros' : `${d.atencionesMes} atenciones este mes`}
+                                <i class="bi bi-folder2-open me-1"></i> ${d.atencionesMes == null ? 'Sin registros' : `${d.atencionesMes} atenciones mes`}
                             </span>
-                            <div class="btn-expediente-sede-link" title="Ver ficha territorial de sede">
+                            <span class="text-secondary small fw-semibold" style="font-size: 0.74rem;">
+                                <i class="bi bi-clock text-muted me-1"></i>${d.horario && d.horario !== 'Horario no registrado' ? d.horario : '08:30 - 14:00'}
+                            </span>
+                        </div>
+                        
+                        <div class="d-flex align-items-center gap-2">
+                            <button type="button" class="btn btn-ver-ficha-tecnica flex-grow-1" onclick="event.stopPropagation(); seleccionarDelegacion('${d.id}')" title="Ver ficha técnica territorial">
+                                <i class="bi bi-card-text me-1"></i>
                                 <span>Ver Ficha Técnica</span>
-                                <i class="bi bi-arrow-right expediente-arrow"></i>
-                            </div>
+                                <i class="bi bi-arrow-right ms-auto"></i>
+                            </button>
+                            <button type="button" class="btn btn-sm btn-outline-secondary btn-card-action" onclick="event.stopPropagation(); abrirCatalogosOrganizacion('delegaciones').then(() => editarDelegacionCatalogo(${d.dbId}))" title="Editar delegación">
+                                <i class="bi bi-pencil"></i>
+                            </button>
+                            <button type="button" class="btn btn-sm btn-outline-${d.dbStatus === 'Activo' ? 'danger' : 'success'} btn-card-action" onclick="event.stopPropagation(); alternarDelegacionCatalogo(${d.dbId})" title="${d.dbStatus === 'Activo' ? 'Inactivar sede' : 'Activar sede'}">
+                                <i class="bi bi-${d.dbStatus === 'Activo' ? 'slash-circle' : 'check2-circle'}"></i>
+                            </button>
                         </div>
                     </div>
                 `;
-                const actions = document.createElement('div');
-                actions.className = 'd-flex justify-content-end gap-2 px-3 pb-2';
-                const edit = document.createElement('button');
-                edit.type = 'button';
-                edit.className = 'btn btn-sm btn-danger rounded-pill';
-                edit.innerHTML = '<i class="bi bi-pencil me-1"></i>Editar';
-                edit.addEventListener('click', event => {
-                    event.stopPropagation();
-                    abrirCatalogosOrganizacion('delegaciones').then(() => editarDelegacionCatalogo(d.dbId));
-                });
-                const toggle = document.createElement('button');
-                toggle.type = 'button';
-                toggle.className = 'btn btn-sm btn-outline-danger rounded-pill';
-                toggle.textContent = d.dbStatus === 'Activo' ? 'Inactivar' : 'Activar';
-                toggle.addEventListener('click', event => {
-                    event.stopPropagation();
-                    alternarDelegacionCatalogo(d.dbId);
-                });
-                actions.append(edit, toggle);
-                card.append(actions);
                 grid.appendChild(card);
             });
             if (typeof initSpotlightEffect === 'function') initSpotlightEffect();
@@ -4081,6 +4135,11 @@
             document.querySelectorAll('.delegacion-modular-glass-card').forEach(c => c.classList.remove('active-delegacion'));
             const activeCard = document.getElementById(`card-del-${id}`);
             if (activeCard) activeCard.classList.add('active-delegacion');
+
+            // Actualizar estilo activo en filas de tabla modo lista
+            document.querySelectorAll('.delegacion-table-row').forEach(r => r.classList.remove('table-row-selected'));
+            const activeRow = document.getElementById(`row-del-${id}`);
+            if (activeRow) activeRow.classList.add('table-row-selected');
 
             const panel = document.getElementById('panelDetalleDelegacion');
             if (!panel) return;

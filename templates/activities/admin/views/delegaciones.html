@@ -130,15 +130,28 @@
             </button>
         </div>
 
-        <!-- 5. GRID DE DELEGACIONES -->
+        <!-- 5. VISTAS: TARJETAS Y LISTADO DE DELEGACIONES -->
         <div class="delegacion-grid" id="delegacionesCardsGrid">
             <!-- Las fichas se renderizan con la identidad cromática territorial y métricas -->
         </div>
-        <div class="delegaciones-listado mb-3" id="delegacionesTablaVista" hidden>
-            <div class="delegaciones-table-wrap">
-                <table class="table table-hover align-middle mb-0" aria-label="Delegaciones municipales">
-                    <thead><tr><th>Código</th><th>Delegación</th><th>Comuna</th><th>Estado</th><th>Funcionarios</th><th>Acción</th></tr></thead>
-                    <tbody id="tablaDelegacionesBody"><tr><td colspan="6">Cargando delegaciones…</td></tr></tbody>
+        <div class="delegaciones-listado mb-3" id="delegacionesTablaVista" style="display: none;" hidden>
+            <div class="table-responsive delegaciones-table-wrap">
+                <table class="table table-hover align-middle mb-0 delegacion-clean-table" aria-label="Delegaciones municipales">
+                    <thead>
+                        <tr>
+                            <th style="width: 95px;">Código</th>
+                            <th>Sede Municipal</th>
+                            <th>Sector & Cobertura</th>
+                            <th>Dirección & Contacto</th>
+                            <th>Encargado(a)</th>
+                            <th class="text-center" style="width: 130px;">Dotación</th>
+                            <th class="text-center" style="width: 115px;">Estado</th>
+                            <th class="text-end" style="width: 230px; padding-right: 1.25rem;">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tablaDelegacionesBody">
+                        <tr><td colspan="8" class="text-center py-4 text-muted">Cargando delegaciones…</td></tr>
+                    </tbody>
                 </table>
             </div>
         </div>
