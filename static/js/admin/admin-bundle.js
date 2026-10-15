@@ -3819,20 +3819,35 @@
         }
 
         function seleccionarVistaDelegaciones(vista) {
-            vistaDelegacionesActiva = vista === 'tabla' ? 'tabla' : 'cards';
+            const esCards = (vista === 'cards');
+            vistaDelegacionesActiva = esCards ? 'cards' : 'tabla';
+            window.vistaDelegacionesActiva = vistaDelegacionesActiva;
             const cards = document.getElementById('delegacionesCardsGrid');
             const table = document.getElementById('delegacionesTablaVista');
             const label = document.getElementById('etiquetaVistaDelegaciones');
             const selectorBtn = document.getElementById('selectorVistaDelegaciones');
-            const esCards = vistaDelegacionesActiva === 'cards';
 
             if (cards) {
-                cards.hidden = !esCards;
-                cards.style.setProperty('display', esCards ? 'grid' : 'none', 'important');
+                if (esCards) {
+                    cards.removeAttribute('hidden');
+                    cards.classList.remove('vista-oculta');
+                    cards.style.setProperty('display', 'grid', 'important');
+                } else {
+                    cards.setAttribute('hidden', '');
+                    cards.classList.add('vista-oculta');
+                    cards.style.setProperty('display', 'none', 'important');
+                }
             }
             if (table) {
-                table.hidden = esCards;
-                table.style.setProperty('display', !esCards ? 'block' : 'none', 'important');
+                if (!esCards) {
+                    table.removeAttribute('hidden');
+                    table.classList.remove('vista-oculta');
+                    table.style.setProperty('display', 'block', 'important');
+                } else {
+                    table.setAttribute('hidden', '');
+                    table.classList.add('vista-oculta');
+                    table.style.setProperty('display', 'none', 'important');
+                }
             }
             if (label) {
                 label.textContent = esCards ? 'Tarjeta' : 'Lista';
@@ -3844,11 +3859,13 @@
                 }
             }
             document.querySelectorAll('[data-vista-delegaciones]').forEach(option => {
-                const active = option.dataset.vistaDelegaciones === vistaDelegacionesActiva;
+                const target = option.dataset.vistaDelegaciones;
+                const active = (target === 'cards' && esCards) || ((target === 'tabla' || target === 'lista') && !esCards);
                 option.classList.toggle('active', active);
                 option.setAttribute('aria-pressed', String(active));
             });
         }
+        window.seleccionarVistaDelegaciones = seleccionarVistaDelegaciones;
 
         async function initDelegacionesView() {
             document.getElementById('buscarDelegaciones')?.addEventListener('input', buscarDelegaciones);

@@ -100,12 +100,20 @@
                 <option value="50">50 por página</option>
             </select>
             <div class="dropdown">
-                <button class="btn btn-danger dropdown-toggle rounded-pill" type="button" id="selectorVistaDelegaciones" data-bs-toggle="dropdown" aria-expanded="false">
+                <button class="btn btn-danger dropdown-toggle rounded-pill d-inline-flex align-items-center gap-1 shadow-xs" type="button" id="selectorVistaDelegaciones" data-bs-toggle="dropdown" aria-expanded="false" style="font-weight: 600; font-size: 0.88rem; padding: 0.42rem 1.05rem;">
                     <i class="bi bi-grid-3x3-gap me-1"></i><span id="etiquetaVistaDelegaciones">Tarjeta</span>
                 </button>
-                <ul class="dropdown-menu" aria-labelledby="selectorVistaDelegaciones">
-                    <li><button class="dropdown-item active" type="button" data-vista-delegaciones="cards" aria-pressed="true">Tarjeta</button></li>
-                    <li><button class="dropdown-item" type="button" data-vista-delegaciones="tabla" aria-pressed="false">Lista</button></li>
+                <ul class="dropdown-menu shadow-sm border" aria-labelledby="selectorVistaDelegaciones" style="border-radius: 12px; min-width: 145px; padding: 0.4rem;">
+                    <li>
+                        <button class="dropdown-item active rounded-2 py-2 d-flex align-items-center gap-2 fw-semibold" type="button" data-vista-delegaciones="cards" onclick="seleccionarVistaDelegaciones('cards')" aria-pressed="true">
+                            <i class="bi bi-grid-3x3-gap text-danger"></i> Tarjeta
+                        </button>
+                    </li>
+                    <li>
+                        <button class="dropdown-item rounded-2 py-2 d-flex align-items-center gap-2 fw-semibold" type="button" data-vista-delegaciones="tabla" onclick="seleccionarVistaDelegaciones('tabla')" aria-pressed="false">
+                            <i class="bi bi-list-ul text-primary"></i> Lista
+                        </button>
+                    </li>
                 </ul>
             </div>
             <button type="button" class="btn btn-outline-success rounded-pill" onclick="exportarDelegacionesExcel()">
@@ -169,4 +177,88 @@
         </div>
     </div>
 </section>
+
+<style>
+    /* Forzar visibilidad y ocultamiento sin depender del caché de hojas de estilo externas */
+    #delegacionesCardsGrid.vista-oculta,
+    #delegacionesCardsGrid[hidden] {
+        display: none !important;
+    }
+    #delegacionesTablaVista.vista-oculta,
+    #delegacionesTablaVista[hidden] {
+        display: none !important;
+    }
+    #delegacionesCardsGrid:not(.vista-oculta):not([hidden]) {
+        display: grid !important;
+    }
+    #delegacionesTablaVista:not(.vista-oculta):not([hidden]) {
+        display: block !important;
+    }
+</style>
+
+<script>
+    (function() {
+        function ejecutarSeleccionVista(vista) {
+            var esCards = (vista === 'cards');
+            window.vistaDelegacionesActiva = esCards ? 'cards' : 'tabla';
+
+            var cards = document.getElementById('delegacionesCardsGrid');
+            var table = document.getElementById('delegacionesTablaVista');
+            var label = document.getElementById('etiquetaVistaDelegaciones');
+            var selectorBtn = document.getElementById('selectorVistaDelegaciones');
+
+            if (cards) {
+                if (esCards) {
+                    cards.removeAttribute('hidden');
+                    cards.classList.remove('vista-oculta');
+                    cards.style.setProperty('display', 'grid', 'important');
+                } else {
+                    cards.setAttribute('hidden', '');
+                    cards.classList.add('vista-oculta');
+                    cards.style.setProperty('display', 'none', 'important');
+                }
+            }
+
+            if (table) {
+                if (!esCards) {
+                    table.removeAttribute('hidden');
+                    table.classList.remove('vista-oculta');
+                    table.style.setProperty('display', 'block', 'important');
+                } else {
+                    table.setAttribute('hidden', '');
+                    table.classList.add('vista-oculta');
+                    table.style.setProperty('display', 'none', 'important');
+                }
+            }
+
+            if (label) {
+                label.textContent = esCards ? 'Tarjeta' : 'Lista';
+            }
+
+            if (selectorBtn) {
+                var icon = selectorBtn.querySelector('i');
+                if (icon) {
+                    icon.className = esCards ? 'bi bi-grid-3x3-gap me-1' : 'bi bi-list-ul me-1';
+                }
+            }
+
+            document.querySelectorAll('[data-vista-delegaciones]').forEach(function(opt) {
+                var target = opt.dataset.vistaDelegaciones;
+                var active = (target === 'cards' && esCards) || ((target === 'tabla' || target === 'lista') && !esCards);
+                opt.classList.toggle('active', active);
+                opt.setAttribute('aria-pressed', String(active));
+            });
+
+            // Si cambiamos a lista y la tabla aún no tiene datos renderizados, invocar renderizado
+            var tbody = document.getElementById('tablaDelegacionesBody');
+            if (!esCards && tbody && (!tbody.children.length || tbody.innerText.indexOf('Cargando') !== -1)) {
+                if (typeof renderizarDelegacionesCards === 'function') {
+                    renderizarDelegacionesCards(window.filtroZonaActivo || 'todas');
+                }
+            }
+        }
+
+        window.seleccionarVistaDelegaciones = ejecutarSeleccionVista;
+    })();
+</script>
 
