@@ -2,11 +2,11 @@
 (() => {
     'use strict';
     const definitions = {
-        'management-types': { title: 'tipo de gestión', columns: [['code', 'Código'], ['name', 'Nombre'], ['description', 'Descripción'], ['status', 'Estado']] },
-        items: { title: 'ítem', columns: [['code', 'Código'], ['name', 'Nombre'], ['description', 'Descripción'], ['item_type', 'Tipo'], ['status', 'Estado']] },
-        goals: { title: 'meta', columns: [['code', 'Código'], ['period', 'Período'], ['position', 'Cargo'], ['item', 'Ítem'], ['target_value', 'Objetivo'], ['unit_of_measure', 'Unidad'], ['weight', 'Ponderación (%)'], ['status', 'Estado']] },
-        'attention-types': { title: 'tipo de atención', columns: [['code', 'Código'], ['name', 'Nombre'], ['description', 'Descripción'], ['status', 'Estado']] },
-        subattentions: { title: 'subatención', columns: [['code', 'Código'], ['name', 'Nombre'], ['attention_type', 'Tipo de atención'], ['description', 'Descripción'], ['status', 'Estado']] }
+        'management-types': { title: 'tipo de gestión', icon: 'bi-kanban-fill', columns: [['code', 'Código'], ['name', 'Nombre'], ['description', 'Descripción'], ['status', 'Estado']] },
+        items: { title: 'ítem', icon: 'bi-list-check', columns: [['code', 'Código'], ['name', 'Nombre'], ['description', 'Descripción'], ['item_type', 'Tipo'], ['status', 'Estado']] },
+        goals: { title: 'meta', icon: 'bi-bullseye', columns: [['code', 'Código'], ['period', 'Período'], ['position', 'Cargo'], ['item', 'Ítem'], ['target_value', 'Objetivo'], ['unit_of_measure', 'Unidad'], ['weight', 'Ponderación (%)'], ['status', 'Estado']] },
+        'attention-types': { title: 'tipo de atención', icon: 'bi-tags-fill', columns: [['code', 'Código'], ['name', 'Nombre'], ['description', 'Descripción'], ['status', 'Estado']] },
+        subattentions: { title: 'subatención', icon: 'bi-tag-fill', columns: [['code', 'Código'], ['name', 'Nombre'], ['attention_type', 'Tipo de atención'], ['description', 'Descripción'], ['status', 'Estado']] }
     };
     const panels = [];
     const labels = { code: 'Código', name: 'Nombre', description: 'Descripción', status: 'Estado', item_type: 'Tipo de ítem', period: 'Período de medición', position: 'Cargo', item: 'Ítem', target_value: 'Valor objetivo', unit_of_measure: 'Unidad de medida', weight: 'Ponderación (%)', attention_type: 'Tipo de atención', __all__: 'Registro' };
@@ -17,7 +17,7 @@
         if (text !== undefined) node.textContent = String(text);
         return node;
     }
-    function button(text, action, className = 'btn btn-outline-secondary rounded-pill') {
+    function button(text, action, className = 'btn btn-outline-muni-red rounded-pill px-3 py-1 fw-semibold') {
         const node = element('button', className, text);
         node.type = 'button';
         node.addEventListener('click', action);
@@ -182,9 +182,9 @@
                     tr.append(element('td', 'py-3 px-3', value ?? ''));
                 });
                 const actions = element('td', 'py-3 px-3 text-end text-nowrap');
-                const view = button('Ver', () => viewRecord(panel, record.id), 'btn btn-sm btn-outline-secondary rounded-pill me-2');
+                const view = button('Ver', () => viewRecord(panel, record.id), 'btn btn-sm btn-outline-muni-red rounded-pill me-2');
                 view.setAttribute('aria-label', `Consultar ${record.name || record.code}`);
-                const edit = button('Editar', () => editRecord(panel, record.id), 'btn btn-sm btn-outline-secondary rounded-pill me-2');
+                const edit = button('Editar', () => editRecord(panel, record.id), 'btn btn-sm btn-outline-muni-red rounded-pill me-2');
                 const remove = button('Eliminar', () => deleteRecord(panel, record), 'btn btn-sm btn-outline-danger rounded-pill');
                 edit.setAttribute('aria-label', `Editar ${record.name || record.code}`);
                 remove.setAttribute('aria-label', `Eliminar ${record.name || record.code}`);
@@ -260,14 +260,16 @@
                 const reference = refs[key]?.find(item => Number(item.id) === Number(record[key]));
                 details.append(element('dt', 'small text-muted mt-2 fw-bold', label), element('dd', 'mb-2 text-dark', reference?.name || record[key] || 'Sin información'));
             });
+            const def = definitions[panel.catalog];
+            const iconClass = def?.icon || 'bi-info-circle-fill';
             const viewTitleHtml = `
                 <div class="swal-muni-header-wrap">
-                    <div class="d-flex align-items-center gap-2">
-                        <i class="bi bi-info-circle-fill text-warning fs-5"></i>
-                        <div class="text-start">
-                            <h5 class="modal-title fw-bold m-0 text-white fs-6 text-capitalize">Consulta de ${definitions[panel.catalog].title}</h5>
-                            <small class="text-white-50" style="font-size: 0.75rem;">Detalle del registro en catálogo institucional SGR La Serena</small>
-                        </div>
+                    <div class="swal-muni-icon-box">
+                        <i class="bi ${iconClass}"></i>
+                    </div>
+                    <div class="swal-muni-title-box">
+                        <h4 class="swal-muni-title">Consulta de ${def.title}</h4>
+                        <p class="swal-muni-subtitle">Detalle del registro en catálogo institucional SGR La Serena</p>
                     </div>
                 </div>
             `;
@@ -279,7 +281,7 @@
                     popup: 'swal2-catalog-modal',
                     htmlContainer: 'swal2-catalog-container',
                     title: 'swal2-catalog-title',
-                    confirmButton: 'btn btn-secondary rounded-pill px-4 py-2 fw-semibold',
+                    confirmButton: 'btn btn-outline-muni-red rounded-pill px-4 py-2 fw-semibold',
                     actions: 'swal2-catalog-actions',
                     closeButton: 'swal2-catalog-close'
                 },
@@ -310,17 +312,19 @@
                 : ['code', 'name', ...(panel.catalog === 'subattentions' ? ['attention_type'] : []), 'description', ...(panel.catalog === 'items' ? ['item_type'] : []), 'status'];
             fields.forEach(key => field(form, key, record[key], refs[key] || (key === 'status' ? choices(['Activo', 'Inactivo']) : key === 'item_type' ? choices(['Cuantitativo', 'Porcentual']) : undefined), true));
             let saving = false;
+            const def = definitions[panel.catalog];
             const actionText = id === undefined ? 'Crear' : 'Editar';
-            const catalogLabel = definitions[panel.catalog].title;
+            const catalogLabel = def.title;
             const fullTitle = `${actionText} ${catalogLabel}`;
+            const iconClass = def?.icon || 'bi-tag-fill';
             const headerHtml = `
                 <div class="swal-muni-header-wrap">
-                    <div class="d-flex align-items-center gap-2">
-                        <i class="bi bi-tags-fill text-warning fs-5"></i>
-                        <div class="text-start">
-                            <h5 class="modal-title fw-bold m-0 text-white fs-6 text-capitalize">${fullTitle}</h5>
-                            <small class="text-white-50" style="font-size: 0.75rem;">Catálogo oficial de gestión y atención ciudadana SGR La Serena</small>
-                        </div>
+                    <div class="swal-muni-icon-box">
+                        <i class="bi ${iconClass}"></i>
+                    </div>
+                    <div class="swal-muni-title-box">
+                        <h4 class="swal-muni-title">${fullTitle}</h4>
+                        <p class="swal-muni-subtitle">Catálogo oficial de gestión y atención ciudadana SGR La Serena</p>
                     </div>
                 </div>
             `;
@@ -334,7 +338,7 @@
                     htmlContainer: 'swal2-catalog-container',
                     title: 'swal2-catalog-title',
                     confirmButton: 'btn btn-muni-red rounded-pill px-4 py-2 fw-semibold',
-                    cancelButton: 'btn btn-secondary rounded-pill px-4 py-2 fw-semibold',
+                    cancelButton: 'btn btn-outline-muni-red rounded-pill px-4 py-2 fw-semibold',
                     actions: 'swal2-catalog-actions',
                     closeButton: 'swal2-catalog-close'
                 },
@@ -510,8 +514,8 @@
             toolbar.append(panel.search, panel.status);
             if (panel.attentionType) toolbar.append(panel.attentionType);
             if (panel.position) toolbar.append(panel.position, panel.item);
-            panel.exportButton = button('Exportar a Excel', () => exportPanel(panel), 'btn btn-outline-success rounded-pill');
-            toolbar.append(panel.size, panel.exportButton, button('Recargar', () => { notice(panel, ''); load(panel); }, 'btn btn-outline-secondary rounded-pill'), button(`Crear ${definitions[catalog].title}`, () => editRecord(panel), 'btn btn-primary rounded-pill'));
+            panel.exportButton = button('Exportar a Excel', () => exportPanel(panel), 'btn btn-outline-muni-red rounded-pill px-3 py-1 fw-semibold');
+            toolbar.append(panel.size, panel.exportButton, button('Recargar', () => { notice(panel, ''); load(panel); }, 'btn btn-outline-muni-red rounded-pill px-3 py-1 fw-semibold'), button(`<i class="bi bi-plus-lg me-1"></i>Crear ${definitions[catalog].title}`, () => editRecord(panel), 'btn btn-muni-red rounded-pill px-3 py-1 fw-semibold shadow-xs'));
             panel.message = element('div');
             panel.message.hidden = true;
             panel.message.style.whiteSpace = 'pre-line';
@@ -533,8 +537,8 @@
             const pagination = element('div', 'd-flex align-items-center flex-wrap gap-3 mt-3');
             panel.summary = element('span', 'text-muted small');
             panel.summary.setAttribute('aria-live', 'polite');
-            panel.previous = button('Anterior', () => { panel.page -= 1; load(panel); });
-            panel.next = button('Siguiente', () => { panel.page += 1; load(panel); });
+            panel.previous = button('Anterior', () => { panel.page -= 1; load(panel); }, 'btn btn-sm btn-outline-muni-red rounded-pill px-3 py-1 fw-semibold');
+            panel.next = button('Siguiente', () => { panel.page += 1; load(panel); }, 'btn btn-sm btn-outline-muni-red rounded-pill px-3 py-1 fw-semibold');
             pagination.append(panel.summary, panel.previous, panel.next);
             root.replaceChildren(toolbar, panel.message, wrapper, pagination);
             panels.push(panel);

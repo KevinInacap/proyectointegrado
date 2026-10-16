@@ -2286,9 +2286,11 @@ table,
     box-shadow: 0 20px 45px rgba(0, 0, 0, 0.28) !important;
 }
 
-/* 2. Botones de Guardar / Envío en todos los modales y formularios */
+/* 2. Botones de Guardar / Envío en todos los modales y formularios (Fondo Rojo Institucional) */
 .btn-muni-red,
-.modal-content button[type="submit"]:not(.btn-secondary):not(.btn-light):not(.btn-outline-secondary):not(.btn-danger):not(.btn-close),
+.maintainer-view .btn-primary,
+div[data-catalog] .btn-primary,
+.modal-content button[type="submit"]:not(.btn-secondary):not(.btn-light):not(.btn-outline-secondary):not(.btn-outline-muni-red):not(.btn-danger):not(.btn-close),
 #modalCatalogosOrganizacion :is(#formCatalogoDelegacion,#formCatalogoCargo) button[type="submit"],
 #formVecino button[type="submit"],
 #formUsuarioDB button[type="submit"],
@@ -2302,12 +2304,15 @@ table,
     color: #FFFFFF !important;
     border: 1px solid #A51631 !important;
     background: linear-gradient(100deg, #C41230, #8B1D2C) !important;
-    box-shadow: 0 6px 16px rgba(139, 29, 44, 0.22), inset 0 1px rgba(255, 255, 255, 0.24) !important;
+    box-shadow: 0 4px 14px rgba(139, 29, 44, 0.25), inset 0 1px rgba(255, 255, 255, 0.24) !important;
+    font-weight: 600 !important;
     transition: all 0.2s ease !important;
 }
 
 .btn-muni-red:hover,
-.modal-content button[type="submit"]:not(.btn-secondary):not(.btn-light):not(.btn-outline-secondary):not(.btn-danger):not(.btn-close):hover,
+.maintainer-view .btn-primary:hover,
+div[data-catalog] .btn-primary:hover,
+.modal-content button[type="submit"]:not(.btn-secondary):not(.btn-light):not(.btn-outline-secondary):not(.btn-outline-muni-red):not(.btn-danger):not(.btn-close):hover,
 #modalCatalogosOrganizacion :is(#formCatalogoDelegacion,#formCatalogoCargo) button[type="submit"]:hover,
 #formVecino button[type="submit"]:hover,
 #formUsuarioDB button[type="submit"]:hover,
@@ -2320,8 +2325,43 @@ table,
 .liquid-glass-btn-primary:hover {
     background: linear-gradient(100deg, #D01837, #68121E) !important;
     transform: translateY(-1px) !important;
-    box-shadow: 0 8px 20px rgba(139, 29, 44, 0.32), inset 0 1px rgba(255, 255, 255, 0.3) !important;
+    box-shadow: 0 7px 18px rgba(139, 29, 44, 0.35), inset 0 1px rgba(255, 255, 255, 0.3) !important;
     color: #FFFFFF !important;
+}
+
+/* Botones secundarios y de acción con borde rojo institucional en vez de gris */
+.btn-outline-muni-red,
+.maintainer-view .btn-outline-secondary,
+.liquid-glass-card .btn-outline-secondary,
+div[data-catalog] .btn-outline-secondary,
+.swal2-catalog-modal .btn-secondary,
+.swal2-catalog-modal .swal2-cancel,
+#modalCatalogosOrganizacion .btn-light.border,
+#modalCatalogosOrganizacion .modal-footer .btn-secondary,
+.modal-footer .btn-outline-secondary,
+.modal-footer .btn-secondary {
+    border: 1.5px solid #8B1D2C !important;
+    color: #8B1D2C !important;
+    background-color: transparent !important;
+    font-weight: 600 !important;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+.btn-outline-muni-red:hover,
+.maintainer-view .btn-outline-secondary:hover,
+.liquid-glass-card .btn-outline-secondary:hover,
+div[data-catalog] .btn-outline-secondary:hover,
+.swal2-catalog-modal .btn-secondary:hover,
+.swal2-catalog-modal .swal2-cancel:hover,
+#modalCatalogosOrganizacion .btn-light.border:hover,
+#modalCatalogosOrganizacion .modal-footer .btn-secondary:hover,
+.modal-footer .btn-outline-secondary:hover,
+.modal-footer .btn-secondary:hover {
+    background: linear-gradient(100deg, #8B1D2C, #68121E) !important;
+    color: #FFFFFF !important;
+    border-color: #8B1D2C !important;
+    box-shadow: 0 4px 12px rgba(139, 29, 44, 0.25) !important;
+    transform: translateY(-1px) !important;
 }
 
 @media (max-width:991.98px) {
@@ -2383,21 +2423,68 @@ table,
     background: linear-gradient(110deg, #8B1D2C, #68121E) !important;
     color: #FFFFFF !important;
     margin: 0 !important;
-    padding: 1rem 1.35rem !important;
+    padding: 0.95rem 1.35rem !important;
     width: 100% !important;
+    display: block !important;
     text-align: left !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: flex-start !important;
     border-bottom: 1px solid rgba(255, 255, 255, 0.12) !important;
     box-sizing: border-box !important;
+    font-size: 1rem !important;
+    line-height: normal !important;
 }
 
 .swal-muni-header-wrap {
-    width: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
+    width: 100% !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 0.85rem !important;
+    text-align: left !important;
+    box-sizing: border-box !important;
+    padding-right: 2.2rem !important;
+}
+
+.swal-muni-icon-box {
+    width: 40px !important;
+    height: 40px !important;
+    min-width: 40px !important;
+    border-radius: 10px !important;
+    background: rgba(255, 255, 255, 0.14) !important;
+    border: 1px solid rgba(255, 255, 255, 0.22) !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    color: #FFC107 !important;
+    font-size: 1.25rem !important;
+    flex-shrink: 0 !important;
+}
+
+.swal-muni-title-box {
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: center !important;
+    text-align: left !important;
+    flex-grow: 1 !important;
+    min-width: 0 !important;
+}
+
+.swal-muni-title {
+    color: #FFFFFF !important;
+    font-weight: 700 !important;
+    font-size: 1.15rem !important;
+    line-height: 1.25 !important;
+    margin: 0 !important;
+    text-align: left !important;
+    letter-spacing: -0.2px !important;
+}
+
+.swal-muni-subtitle {
+    color: rgba(255, 255, 255, 0.78) !important;
+    font-size: 0.8rem !important;
+    line-height: 1.2 !important;
+    margin: 3px 0 0 0 !important;
+    font-weight: 400 !important;
+    text-align: left !important;
+    display: block !important;
 }
 
 .swal2-catalog-modal .swal2-close,
@@ -2405,9 +2492,9 @@ table,
     color: #FFFFFF !important;
     top: 14px !important;
     right: 16px !important;
-    font-size: 1.5rem !important;
+    font-size: 1.4rem !important;
     transition: transform 0.15s ease, opacity 0.15s ease !important;
-    opacity: 0.8 !important;
+    opacity: 0.85 !important;
 }
 
 .swal2-catalog-modal .swal2-close:hover,
