@@ -1,18 +1,19 @@
     <!-- MODAL EXPEDIENTE CIUDADANO EN VIDRIO TEMPLADO -->
     <div class="modal fade" id="modalFichaVecino" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered modal-lg">
-            <div class="modal-content citizen-dossier-card border-0">
-                <div class="modal-header border-0 pb-0">
+            <div class="modal-content citizen-dossier-card border-0 rounded-4 overflow-hidden shadow-lg">
+                <div class="modal-header text-white border-0 px-4 py-3" style="background: linear-gradient(110deg,#8b1d2c,#68121e);">
                     <div class="d-flex align-items-center gap-2">
-                        <span class="badge bg-danger-subtle text-danger fw-bold px-2 py-1" style="font-size:0.75rem;">
-                            <i class="bi bi-file-earmark-person-fill me-1"></i> Expediente Único Ciudadano
-                        </span>
-                        <span class="badge bg-light text-secondary border" style="font-size:0.72rem;">SGR La Serena</span>
+                        <i class="bi bi-file-earmark-person-fill text-warning fs-5"></i>
+                        <div>
+                            <h5 class="modal-title fw-bold m-0 text-white fs-6">Expediente Único Ciudadano</h5>
+                            <small class="text-white-50" style="font-size: 0.75rem;">SGR La Serena • Ficha social e historial comunal</small>
+                        </div>
                     </div>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
-                <div class="modal-body p-4 pt-2">
-                    <div class="ficha-header-box mb-3 rounded-4 shadow-sm" style="background: linear-gradient(135deg, #1B365D 0%, #0F2038 100%);">
+                <div class="modal-body p-4 pt-3">
+                    <div class="ficha-header-box mb-3 rounded-4 shadow-sm" style="background: linear-gradient(135deg, #8b1d2c 0%, #68121e 100%);">
                         <div class="d-flex align-items-center gap-3">
                             <div class="ficha-avatar" style="background: rgba(255,255,255,0.15); border: 2px solid rgba(255,255,255,0.3); width:54px; height:54px; border-radius:16px; display:flex; align-items:center; justify-content:center; font-size:1.5rem; color:#FFF;">
                                 <i class="bi bi-person-badge-fill"></i>
@@ -85,11 +86,16 @@
     <!-- MODAL IMPORTAR EXCEL -->
     <div class="modal fade" id="modalImportarExcel" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered modal-lg">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title fw-bold"><i class="bi bi-file-earmark-excel text-success me-2"></i>
-                        Importación de Vecinos</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
+                <div class="modal-header text-white border-0 px-4 py-3" style="background: linear-gradient(110deg,#8b1d2c,#68121e);">
+                    <div class="d-flex align-items-center gap-2">
+                        <i class="bi bi-file-earmark-excel-fill text-warning fs-5"></i>
+                        <div>
+                            <h5 class="modal-title fw-bold m-0 text-white fs-6">Importación de Vecinos</h5>
+                            <small class="text-white-50" style="font-size: 0.75rem;">Carga masiva de registros vecinales desde formato XLSX o CSV</small>
+                        </div>
+                    </div>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
                     <div id="importWizardContent1" class="text-center p-4 border rounded bg-light"
@@ -114,10 +120,16 @@
     <!-- MODAL NUEVO VECINO -->
     <div class="modal fade" id="modalVecino" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title fw-bold" id="modalVecinoTitle">Registrar Vecino</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
+                <div class="modal-header text-white border-0 px-4 py-3" style="background: linear-gradient(110deg,#8b1d2c,#68121e);">
+                    <div class="d-flex align-items-center gap-2">
+                        <i class="bi bi-person-fill text-warning fs-5"></i>
+                        <div>
+                            <h5 class="modal-title fw-bold m-0 text-white fs-6" id="modalVecinoTitle">Registrar Vecino</h5>
+                            <small class="text-white-50" style="font-size: 0.75rem;">Registro y actualización de datos de vecinos en el padrón</small>
+                        </div>
+                    </div>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
                     <form id="formVecino" novalidate onsubmit="guardarVecino(event)">
@@ -151,10 +163,12 @@
                                 </select>
                             </div>
                         </div>
-                        <div class="d-flex justify-content-end gap-2">
-                            <button type="button" class="btn btn-light btn-sm rounded-pill px-3"
+                        <div class="d-flex justify-content-end gap-2 mt-3 pt-2 border-top">
+                            <button type="button" class="btn btn-outline-secondary btn-sm rounded-pill px-3"
                                 data-bs-dismiss="modal">Cancelar</button>
-                            <button type="submit" class="btn btn-muni-red px-3">Guardar</button>
+                            <button type="submit" class="btn btn-muni-red rounded-pill px-4 py-1 btn-sm fw-bold">
+                                <i class="bi bi-cloud-arrow-up-fill me-1"></i> Guardar Vecino
+                            </button>
                         </div>
                     </form>
                 </div>
@@ -166,12 +180,10 @@
     <div class="modal fade" id="modalUsuario" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered modal-xl">
             <div class="modal-content shadow-lg border-0" style="border-radius: 16px; overflow: hidden;">
-                <div class="modal-header text-white py-2 px-4"
-                    style="background: linear-gradient(135deg, var(--muni-navy) 0%, #102447 100%); border-top: 4px solid var(--muni-red);">
+                <div class="modal-header text-white py-3 px-4 border-0"
+                    style="background: linear-gradient(110deg, #8b1d2c, #68121e);">
                     <div class="d-flex align-items-center gap-2">
-                        <div style="background: rgba(196,18,48,0.25); border: 1px solid rgba(196,18,48,0.4); width: 34px; height: 34px; border-radius: 9px; display: flex; align-items: center; justify-content: center;">
-                            <i class="bi bi-person-fill-gear text-white fs-6"></i>
-                        </div>
+                        <i class="bi bi-person-fill-gear text-warning fs-5"></i>
                         <div>
                             <h5 class="modal-title fw-bold m-0 text-white fs-6" id="modalUsuarioTitle" style="color: #FFFFFF !important;">Registrar Nuevo Funcionario</h5>
                             <small class="text-white-50" style="font-size: 0.75rem;">Configuración de credenciales y roles institucionales SGR La Serena</small>
@@ -308,12 +320,10 @@
     <div class="modal fade" id="modalNuevaAtencion" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered modal-lg">
             <div class="modal-content shadow-lg border-0" style="border-radius: 16px; overflow: hidden;">
-                <div class="modal-header text-white py-2 px-3"
-                    style="background: linear-gradient(135deg, var(--muni-navy) 0%, #102447 100%); border-top: 4px solid var(--muni-red);">
+                <div class="modal-header text-white py-3 px-4 border-0"
+                    style="background: linear-gradient(110deg, #8b1d2c, #68121e);">
                     <div class="d-flex align-items-center gap-2">
-                        <div style="background: rgba(196,18,48,0.25); border: 1px solid rgba(196,18,48,0.4); width: 34px; height: 34px; border-radius: 9px; display: flex; align-items: center; justify-content: center;">
-                            <i class="bi bi-headset text-white fs-6"></i>
-                        </div>
+                        <i class="bi bi-headset text-warning fs-5"></i>
                         <div>
                             <h5 class="modal-title fw-bold m-0 text-white fs-6" id="modalAtencionTitle">Registrar Nueva Atención Ciudadana</h5>
                             <small class="text-white-50" style="font-size: 0.75rem;">Ingreso de prestación vecinal y evidencia conforme a RN-012</small>
@@ -379,7 +389,7 @@
 
                         <div class="d-flex justify-content-end gap-2 mt-3 pt-2 border-top">
                             <button type="button" class="btn btn-outline-secondary rounded-pill px-3 py-1 btn-sm" data-bs-dismiss="modal">Cancelar</button>
-                            <button type="submit" class="btn btn-primary rounded-pill px-4 py-1 btn-sm fw-bold shadow-xs" id="btnGuardarAtencionDB">
+                            <button type="submit" class="btn btn-muni-red rounded-pill px-4 py-1 btn-sm fw-bold shadow-xs" id="btnGuardarAtencionDB">
                                 <i class="bi bi-check-lg me-1"></i> Guardar Atención
                             </button>
                         </div>
@@ -393,12 +403,10 @@
     <div class="modal fade" id="modalExpedienteAtencion" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered modal-lg">
             <div class="modal-content shadow-lg border-0" style="border-radius: 16px; overflow: hidden;">
-                <div class="modal-header text-white py-2 px-3"
-                    style="background: linear-gradient(135deg, var(--muni-navy) 0%, #102447 100%); border-top: 4px solid var(--muni-red);">
+                <div class="modal-header text-white py-3 px-4 border-0"
+                    style="background: linear-gradient(110deg, #8b1d2c, #68121e);">
                     <div class="d-flex align-items-center gap-2">
-                        <div style="background: rgba(255,255,255,0.15); width: 34px; height: 34px; border-radius: 9px; display: flex; align-items: center; justify-content: center;">
-                            <i class="bi bi-file-earmark-person-fill text-white fs-6"></i>
-                        </div>
+                        <i class="bi bi-file-earmark-person-fill text-warning fs-5"></i>
                         <div>
                             <h5 class="modal-title fw-bold m-0 text-white fs-6" id="lblExpedienteCodigo">Expediente de Atención</h5>
                             <small class="text-white-50" style="font-size: 0.75rem;">Detalle técnico, evidencia fotográfica y trazabilidad comunal</small>
@@ -457,8 +465,8 @@
     <div class="modal fade" id="modalEliminarUsuario" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content shadow border-0" style="border-radius: 14px; overflow: hidden;">
-                <div class="modal-header bg-danger text-white py-3">
-                    <h5 class="modal-title fw-bold fs-6"><i class="bi bi-exclamation-triangle-fill me-2"></i> Confirmar
+                <div class="modal-header text-white py-3 px-4 border-0" style="background: linear-gradient(110deg,#8b1d2c,#68121e);">
+                    <h5 class="modal-title fw-bold fs-6 text-white m-0"><i class="bi bi-exclamation-triangle-fill text-warning me-2"></i> Confirmar
                         Eliminación de Usuario</h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
@@ -494,9 +502,9 @@
     <div class="modal fade" id="modalPasswordUsuario" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content shadow border-0" style="border-radius: 14px; overflow: hidden;">
-                <div class="modal-header text-white"
-                    style="background: linear-gradient(135deg, var(--muni-navy) 0%, #102447 100%); border-top: 3px solid #F59E0B;">
-                    <h5 class="modal-title fw-bold fs-6 text-white" style="color: #FFFFFF !important;"><i
+                <div class="modal-header text-white py-3 px-4 border-0"
+                    style="background: linear-gradient(110deg,#8b1d2c,#68121e);">
+                    <h5 class="modal-title fw-bold fs-6 text-white m-0" style="color: #FFFFFF !important;"><i
                             class="bi bi-key-fill text-warning me-2"></i> Restablecer Contraseña de Acceso</h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
@@ -520,7 +528,7 @@
                 <div class="modal-footer bg-light py-2">
                     <button type="button" class="btn btn-outline-secondary btn-sm rounded-pill px-3"
                         data-bs-dismiss="modal">Cancelar</button>
-                    <button type="button" class="btn btn-primary btn-sm rounded-pill px-4 fw-bold"
+                    <button type="button" class="btn btn-muni-red btn-sm rounded-pill px-4 fw-bold"
                         onclick="guardarPasswordDB()">
                         <i class="bi bi-check2-circle me-1"></i> Actualizar Contraseña
                     </button>
@@ -533,12 +541,12 @@
     <div class="modal fade" id="modalAuditoria" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered modal-xl modal-auditoria-dialog">
             <div class="modal-content shadow-lg border-0" style="border-radius: 16px; overflow: hidden;">
-                <div class="modal-header text-white py-3 px-4"
-                    style="background: linear-gradient(135deg, #1B365D 0%, #102447 100%); border-top: 4px solid #C41230;">
+                <div class="modal-header text-white py-3 px-4 border-0"
+                    style="background: linear-gradient(110deg,#8b1d2c,#68121e);">
                     <div>
                         <div class="d-flex align-items-center gap-2 mb-1">
                             <span class="badge"
-                                style="background: rgba(196, 18, 48, 0.25); color: #FFD2D8; font-weight: 700; font-size: 0.72rem; letter-spacing: 0.5px;">
+                                style="background: rgba(255, 255, 255, 0.2); color: #FFFFFF; font-weight: 700; font-size: 0.72rem; letter-spacing: 0.5px;">
                                 <i class="bi bi-shield-check me-1"></i> TRAZABILIDAD MUNICIPAL
                             </span>
                             <span class="badge bg-white text-dark fw-bold" style="font-size: 0.72rem;">SGR v1.0</span>
@@ -634,12 +642,12 @@
             <div class="modal-content shadow-lg border-0"
                 style="border-radius: 20px; overflow: hidden; background: #FFFFFF;">
                 <!-- Header Institucional -->
-                <div class="modal-header text-white py-3 px-4"
-                    style="background: linear-gradient(135deg, #1B365D 0%, #0F172A 100%); border-top: 4px solid #C41230;">
+                <div class="modal-header text-white py-3 px-4 border-0"
+                    style="background: linear-gradient(110deg,#8b1d2c,#68121e);">
                     <div>
                         <div class="d-flex align-items-center gap-2 mb-1">
                             <span class="badge"
-                                style="background: rgba(196, 18, 48, 0.3); color: #FFD2D8; font-weight: 700; font-size: 0.72rem; letter-spacing: 0.5px;">
+                                style="background: rgba(255, 255, 255, 0.2); color: #FFFFFF; font-weight: 700; font-size: 0.72rem; letter-spacing: 0.5px;">
                                 <i class="bi bi-shield-fill-check me-1"></i> CREDENCIAL INSTITUCIONAL
                             </span>
                             <span class="badge bg-white text-dark fw-bold" style="font-size: 0.72rem;">SGR v1.0</span>
@@ -849,7 +857,7 @@
                     <div class="d-flex gap-2">
                         <button type="button" class="btn btn-secondary btn-sm rounded-pill px-4"
                             data-bs-dismiss="modal">Cerrar</button>
-                        <button type="button" class="btn btn-primary btn-sm rounded-pill px-4 fw-semibold"
+                        <button type="button" class="btn btn-muni-red btn-sm rounded-pill px-4 fw-semibold"
                             id="btnGuardarFotoPerfil" onclick="guardarFotoPerfil()">
                             <i class="bi bi-check-lg me-1"></i> Guardar Nueva Foto
                         </button>
@@ -868,12 +876,12 @@
         <div class="modal-dialog modal-dialog-centered modal-xl">
             <div class="modal-content shadow-lg border-0"
                 style="border-radius: 20px; overflow: hidden; background: rgba(255, 255, 255, 0.96); backdrop-filter: blur(20px);">
-                <div class="modal-header text-white py-3 px-4"
-                    style="background: linear-gradient(135deg, var(--muni-navy) 0%, #0F172A 100%); border-bottom: 3px solid var(--muni-red);">
+                <div class="modal-header text-white py-3 px-4 border-0"
+                    style="background: linear-gradient(110deg,#8b1d2c,#68121e);">
                     <div>
                         <h5 class="modal-title fw-bold m-0 text-white" id="modalRolTitle"
                             style="color: #FFFFFF !important;">
-                            <i class="bi bi-sliders me-2"></i> Configuración de Rol
+                            <i class="bi bi-sliders text-warning me-2"></i> Configuración de Rol
                         </h5>
                         <p class="text-white-50 m-0" style="font-size: 0.82rem;">Asignación de permisos y facultades
                             para funcionarios municipales</p>
@@ -984,10 +992,10 @@
     <div class="modal fade" id="modalNuevaFuncion" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content shadow-lg border-0" style="border-radius: 18px; overflow: hidden;">
-                <div class="modal-header text-white py-3 px-4"
-                    style="background: linear-gradient(135deg, var(--muni-navy) 0%, #0F172A 100%); border-bottom: 3px solid var(--muni-red);">
+                <div class="modal-header text-white py-3 px-4 border-0"
+                    style="background: linear-gradient(110deg,#8b1d2c,#68121e);">
                     <h5 class="modal-title fw-bold m-0 text-white" style="color: #FFFFFF !important;">
-                        <i class="bi bi-plus-circle me-2"></i> Registrar Nueva Función
+                        <i class="bi bi-plus-circle text-warning me-2"></i> Registrar Nueva Función
                     </h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
                         aria-label="Cerrar"></button>
@@ -1045,13 +1053,10 @@
     <div class="modal fade" id="modalMatrizMyAdmin" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered modal-fullscreen-lg-down modal-xl">
             <div class="modal-content shadow-lg border-0" style="border-radius: 20px; overflow: hidden;">
-                <div class="modal-header text-white py-3 px-4"
-                    style="background: linear-gradient(135deg, var(--muni-navy) 0%, #0F172A 100%); border-bottom: 3px solid var(--muni-red);">
+                <div class="modal-header text-white py-3 px-4 border-0"
+                    style="background: linear-gradient(110deg,#8b1d2c,#68121e);">
                     <div class="d-flex align-items-center gap-3">
-                        <div
-                            style="background: rgba(255, 255, 255, 0.12); width: 44px; height: 44px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.4rem;">
-                            <i class="bi bi-grid-3x3-gap text-white"></i>
-                        </div>
+                        <i class="bi bi-grid-3x3-gap text-warning fs-3"></i>
                         <div>
                             <h5 class="modal-title fw-bold m-0 text-white" style="color: #FFFFFF !important;">
                                 Matriz de Permisos
@@ -1101,7 +1106,7 @@
     <div class="modal fade" id="modalEliminarRol" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content shadow border-0" style="border-radius: 16px; overflow: hidden;">
-                <div class="modal-header bg-danger text-white py-3 px-4">
+                <div class="modal-header text-white py-3 px-4 border-0" style="background: linear-gradient(110deg,#8b1d2c,#68121e);">
                     <h5 class="modal-title fw-bold fs-6 text-white m-0" style="color: #FFFFFF !important;">
                         <i class="bi bi-exclamation-triangle-fill me-2 text-warning"></i> Dar de baja rol
                     </h5>
@@ -1137,12 +1142,12 @@
     <div class="modal fade" id="modalVerPermisosRol" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered modal-lg">
             <div class="modal-content shadow-lg border-0" style="border-radius: 18px; overflow: hidden;">
-                <div class="modal-header text-white py-3 px-4"
-                    style="background: linear-gradient(135deg, var(--muni-navy) 0%, #0F172A 100%); border-bottom: 3px solid var(--muni-red);">
+                <div class="modal-header text-white py-3 px-4 border-0"
+                    style="background: linear-gradient(110deg,#8b1d2c,#68121e);">
                     <div>
                         <h5 class="modal-title fw-bold m-0 text-white" id="modalVerPermisosTitle"
                             style="color: #FFFFFF !important;">
-                            <i class="bi bi-person-check me-2"></i> Ficha de Permisos del Rol
+                            <i class="bi bi-person-check text-warning me-2"></i> Ficha de Permisos del Rol
                         </h5>
                         <p class="text-white-50 m-0" id="modalVerPermisosSubtitle" style="font-size: 0.82rem;">Detalle
                             de facultades autorizadas</p>
@@ -1186,7 +1191,7 @@
     <div class="modal fade" id="modalCatalogosOrganizacion" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-xl modal-dialog-centered modal-fullscreen-lg-down">
             <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
-                <div class="modal-header text-white border-0 px-4 py-3" style="background: linear-gradient(110deg,#172d50,#203f6d);">
+                <div class="modal-header text-white border-0 px-4 py-3" style="background: linear-gradient(110deg,#8b1d2c,#68121e);">
                     <div>
                         <h5 class="modal-title fw-bold mb-0 text-white" id="tituloCatalogoOrganizacion" style="color:#fff!important"><i class="bi bi-buildings-fill me-2 text-warning"></i>Delegaciones municipales</h5>
                         <small class="text-white-50" id="subtituloCatalogoOrganizacion">Administración territorial conectada a la base de datos.</small>

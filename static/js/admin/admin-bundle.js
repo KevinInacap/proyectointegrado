@@ -5067,7 +5067,7 @@
                 if (elId) elId.value = '';
                 if (elNom) { elNom.value = ''; elNom.disabled = false; }
                 if (elDesc) elDesc.value = '';
-                if (elTitle) elTitle.innerHTML = `<i class="bi bi-person-plus text-primary me-2"></i> Nuevo Rol`;
+                if (elTitle) elTitle.innerHTML = `<i class="bi bi-person-plus-fill text-warning me-2"></i> Nuevo Rol`;
                 // Por defecto plantilla operador para roles nuevos
                 renderPermisosMatrix([
                     'atenciones.view', 'atenciones.create', 'atenciones.edit',
@@ -5082,7 +5082,7 @@
                     elNom.disabled = rol.is_system && (rol.name === 'Administrador' || rol.name === 'Operador' || rol.name === 'Consultor');
                 }
                 if (elDesc) elDesc.value = rol.description || '';
-                if (elTitle) elTitle.innerHTML = `<i class="bi bi-pencil me-2"></i> Editar Rol: ${rol.name}`;
+                if (elTitle) elTitle.innerHTML = `<i class="bi bi-pencil-square text-warning me-2"></i> Editar Rol: ${rol.name}`;
                 renderPermisosMatrix(rol.permissions || []);
             }
 

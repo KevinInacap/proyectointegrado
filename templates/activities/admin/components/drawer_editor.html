@@ -4,17 +4,17 @@
 <div class="admin-slide-drawer-overlay" id="adminSlideDrawerOverlay" onclick="cerrarAdminDrawer()"></div>
 
 <aside class="admin-slide-drawer" id="adminSlideDrawer" aria-hidden="true">
-    <div class="drawer-header">
+    <div class="drawer-header text-white" style="background: linear-gradient(110deg,#8b1d2c,#68121e); border-bottom: 1px solid rgba(255,255,255,0.1);">
         <div class="drawer-title-box">
-            <div class="drawer-icon-wrap" id="drawerIconWrap">
+            <div class="drawer-icon-wrap" id="drawerIconWrap" style="background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.25); color: #ffc107;">
                 <i class="bi bi-pencil-square" id="drawerHeaderIcon"></i>
             </div>
             <div>
-                <h3 class="drawer-title" id="drawerHeaderTitle">Ficha de Edición</h3>
-                <p class="drawer-subtitle" id="drawerHeaderSubtitle">Actualización de datos institucionales</p>
+                <h3 class="drawer-title text-white fw-bold mb-0 fs-6" id="drawerHeaderTitle">Ficha de Edición</h3>
+                <p class="drawer-subtitle text-white-50 mb-0" style="font-size: 0.75rem;" id="drawerHeaderSubtitle">Actualización de datos institucionales</p>
             </div>
         </div>
-        <button type="button" class="btn-close" onclick="cerrarAdminDrawer()" aria-label="Cerrar panel"></button>
+        <button type="button" class="btn-close btn-close-white" onclick="cerrarAdminDrawer()" aria-label="Cerrar panel"></button>
     </div>
 
     <div class="drawer-body" id="drawerBodyContent">
@@ -29,7 +29,7 @@
         <button type="button" class="btn btn-outline-secondary rounded-pill px-3 py-1 fw-semibold small" onclick="cerrarAdminDrawer()">
             Cancelar
         </button>
-        <button type="button" class="btn btn-primary rounded-pill px-4 py-1 fw-semibold small" id="btnDrawerGuardar" onclick="ejecutarGuardadoDrawer()">
+        <button type="button" class="btn btn-muni-red rounded-pill px-4 py-1 fw-semibold small" id="btnDrawerGuardar" onclick="ejecutarGuardadoDrawer()">
             <i class="bi bi-check-lg me-1"></i> Guardar Cambios
         </button>
     </div>
