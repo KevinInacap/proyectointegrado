@@ -5732,10 +5732,12 @@
                                 ${statusName}
                             </span>
                         </td>
-                        <td class="py-2.5 px-2 text-center atencion-row-actions">
-                            <button class="btn btn-sm btn-outline-secondary" onclick="verExpedienteAtencion(${Number(a.id)})" title="Ver detalle">Ver</button>
-                            <button class="btn btn-sm btn-outline-primary" onclick="editarAtencion(${Number(a.id)})" title="Editar registro">Editar</button>
-                            <button class="btn btn-sm btn-outline-danger" onclick="eliminarAtencion(${Number(a.id)})" title="Dar de baja">Baja</button>
+                        <td class="py-2.5 px-1 text-center text-nowrap atencion-row-actions">
+                            <div class="d-inline-flex align-items-center justify-content-center gap-1 flex-nowrap">
+                                <button class="btn btn-sm catalog-action-btn btn-action-ver" onclick="verExpedienteAtencion(${Number(a.id)})" title="Ver detalle">Ver</button>
+                                <button class="btn btn-sm catalog-action-btn btn-action-editar" onclick="editarAtencion(${Number(a.id)})" title="Editar registro">Editar</button>
+                                <button class="btn btn-sm catalog-action-btn btn-action-baja" onclick="eliminarAtencion(${Number(a.id)})" title="Dar de baja">Baja</button>
+                            </div>
                         </td>
                     </tr>
                 `;

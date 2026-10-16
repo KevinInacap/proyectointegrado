@@ -6,31 +6,31 @@
             title: 'tipo de gestión',
             icon: 'bi-kanban-fill',
             columns: [['code', 'Código'], ['name', 'Nombre'], ['description', 'Descripción'], ['status', 'Estado']],
-            colWidths: ['16%', '28%', '32%', '10%', '14%']
+            colWidths: ['15%', '27%', '30%', '10%', '18%']
         },
         items: {
             title: 'ítem',
             icon: 'bi-list-check',
             columns: [['code', 'Código'], ['name', 'Nombre'], ['description', 'Descripción'], ['item_type', 'Tipo'], ['status', 'Estado']],
-            colWidths: ['14%', '24%', '28%', '11%', '9%', '14%']
+            colWidths: ['12%', '22%', '26%', '11%', '9%', '20%']
         },
         goals: {
             title: 'meta',
             icon: 'bi-bullseye',
             columns: [['code', 'Código'], ['period', 'Período'], ['position', 'Cargo'], ['item', 'Ítem'], ['target_value', 'Objetivo'], ['unit_of_measure', 'Unidad'], ['weight', 'Pond.'], ['status', 'Estado']],
-            colWidths: ['11%', '12%', '14%', '15%', '10%', '10%', '7%', '9%', '12%']
+            colWidths: ['10%', '10%', '12%', '14%', '9%', '9%', '7%', '9%', '20%']
         },
         'attention-types': {
             title: 'tipo de atención',
             icon: 'bi-tags-fill',
             columns: [['code', 'Código'], ['name', 'Nombre'], ['description', 'Descripción'], ['status', 'Estado']],
-            colWidths: ['16%', '28%', '32%', '10%', '14%']
+            colWidths: ['15%', '27%', '30%', '10%', '18%']
         },
         subattentions: {
             title: 'subatención',
             icon: 'bi-tag-fill',
             columns: [['code', 'Código'], ['name', 'Nombre'], ['attention_type', 'Tipo de atención'], ['description', 'Descripción'], ['status', 'Estado']],
-            colWidths: ['14%', '22%', '20%', '22%', '10%', '12%']
+            colWidths: ['13%', '21%', '18%', '20%', '10%', '18%']
         }
     };
     const panels = [];
@@ -232,14 +232,14 @@
                     tr.append(td);
                 });
                 const actions = element('td', 'py-2.5 px-2 text-center text-nowrap');
-                const actionsWrap = element('div', 'd-inline-flex align-items-center gap-1 justify-content-center');
-                const view = button('Ver', () => viewRecord(panel, record.id), 'btn btn-sm btn-outline-secondary catalog-action-btn');
+                const actionsWrap = element('div', 'd-inline-flex align-items-center gap-1 justify-content-center flex-nowrap');
+                const view = button('Ver', () => viewRecord(panel, record.id), 'btn btn-sm catalog-action-btn btn-action-ver');
                 view.setAttribute('aria-label', `Consultar ${record.name || record.code}`);
                 view.title = 'Ver detalle';
-                const edit = button('Editar', () => editRecord(panel, record.id), 'btn btn-sm btn-outline-primary catalog-action-btn');
+                const edit = button('Editar', () => editRecord(panel, record.id), 'btn btn-sm catalog-action-btn btn-action-editar');
                 edit.setAttribute('aria-label', `Editar ${record.name || record.code}`);
                 edit.title = 'Editar registro';
-                const remove = button('Baja', () => deleteRecord(panel, record), 'btn btn-sm btn-outline-danger catalog-action-btn');
+                const remove = button('Baja', () => deleteRecord(panel, record), 'btn btn-sm catalog-action-btn btn-action-baja');
                 remove.setAttribute('aria-label', `Eliminar ${record.name || record.code}`);
                 remove.title = 'Dar de baja';
                 actionsWrap.append(view, edit, remove);

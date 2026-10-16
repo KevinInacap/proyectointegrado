@@ -2331,6 +2331,8 @@ div[data-catalog] .btn-primary:hover,
 
 /* Botones secundarios y de acción con borde rojo institucional en vez de gris */
 .btn-outline-muni-red,
+#view-atenciones .btn-outline-secondary,
+.admin-view .btn-outline-secondary,
 .maintainer-view .btn-outline-secondary,
 .liquid-glass-card .btn-outline-secondary,
 div[data-catalog] .btn-outline-secondary,
@@ -2348,6 +2350,8 @@ div[data-catalog] .btn-outline-secondary,
 }
 
 .btn-outline-muni-red:hover,
+#view-atenciones .btn-outline-secondary:hover,
+.admin-view .btn-outline-secondary:hover,
 .maintainer-view .btn-outline-secondary:hover,
 .liquid-glass-card .btn-outline-secondary:hover,
 div[data-catalog] .btn-outline-secondary:hover,
@@ -2430,47 +2434,89 @@ div[data-catalog] .btn-outline-secondary:hover,
     vertical-align: middle !important;
 }
 
-/* Botones de acción en filas de tablas de catálogo (Ver, Editar, Baja) */
-.catalog-action-btn {
+/* Acciones en tablas (Atenciones y Catálogos): Horizontales, nunca apiladas */
+.atencion-row-actions {
+    white-space: nowrap !important;
+}
+
+.atencion-row-actions .d-inline-flex,
+.catalog-fixed-table td .d-inline-flex {
+    display: inline-flex !important;
+    flex-direction: row !important;
+    flex-wrap: nowrap !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 4px !important;
+}
+
+/* Botones de acción en tablas (Ver, Editar, Baja) con identidad institucional roja (sin azul ni gris) */
+.catalog-action-btn,
+.atencion-row-actions .btn {
     border-radius: 6px !important;
     font-size: 0.75rem !important;
-    padding: 3px 8px !important;
+    padding: 3px 9px !important;
     font-weight: 600 !important;
-    line-height: 1.2 !important;
+    line-height: 1.25 !important;
+    white-space: nowrap !important;
     transition: all 0.15s ease !important;
+    display: inline-block !important;
 }
 
-.catalog-action-btn.btn-outline-secondary {
-    border-color: #CBD5E1 !important;
-    color: #334155 !important;
-    background: transparent !important;
+/* Botón Ver: borde rojo institucional elegante */
+.catalog-action-btn.btn-action-ver,
+.catalog-action-btn.btn-outline-secondary,
+.atencion-row-actions .btn-outline-secondary,
+.atencion-row-actions .btn-action-ver {
+    border: 1.5px solid #8B1D2C !important;
+    color: #8B1D2C !important;
+    background-color: transparent !important;
 }
-.catalog-action-btn.btn-outline-secondary:hover {
-    background: #475569 !important;
+.catalog-action-btn.btn-action-ver:hover,
+.catalog-action-btn.btn-outline-secondary:hover,
+.atencion-row-actions .btn-outline-secondary:hover,
+.atencion-row-actions .btn-action-ver:hover {
+    background: linear-gradient(100deg, #8B1D2C, #68121E) !important;
     color: #FFFFFF !important;
-    border-color: #475569 !important;
+    border-color: #8B1D2C !important;
+    box-shadow: 0 2px 8px rgba(139, 29, 44, 0.25) !important;
 }
 
-.catalog-action-btn.btn-outline-primary {
-    border-color: #3B82F6 !important;
-    color: #2563EB !important;
-    background: transparent !important;
+/* Botón Editar: borde rojo institucional (eliminado el azul anterior) */
+.catalog-action-btn.btn-action-editar,
+.catalog-action-btn.btn-outline-primary,
+.atencion-row-actions .btn-outline-primary,
+.atencion-row-actions .btn-action-editar {
+    border: 1.5px solid #8B1D2C !important;
+    color: #8B1D2C !important;
+    background-color: rgba(139, 29, 44, 0.04) !important;
 }
-.catalog-action-btn.btn-outline-primary:hover {
-    background: #2563EB !important;
+.catalog-action-btn.btn-action-editar:hover,
+.catalog-action-btn.btn-outline-primary:hover,
+.atencion-row-actions .btn-outline-primary:hover,
+.atencion-row-actions .btn-action-editar:hover {
+    background: linear-gradient(100deg, #8B1D2C, #68121E) !important;
     color: #FFFFFF !important;
-    border-color: #2563EB !important;
+    border-color: #8B1D2C !important;
+    box-shadow: 0 2px 8px rgba(139, 29, 44, 0.3) !important;
 }
 
-.catalog-action-btn.btn-outline-danger {
-    border-color: #EF4444 !important;
-    color: #DC2626 !important;
-    background: transparent !important;
+/* Botón Baja: borde rojo institucional de advertencia */
+.catalog-action-btn.btn-action-baja,
+.catalog-action-btn.btn-outline-danger,
+.atencion-row-actions .btn-outline-danger,
+.atencion-row-actions .btn-action-baja {
+    border: 1.5px solid #B91C1C !important;
+    color: #B91C1C !important;
+    background-color: transparent !important;
 }
-.catalog-action-btn.btn-outline-danger:hover {
-    background: #DC2626 !important;
+.catalog-action-btn.btn-action-baja:hover,
+.catalog-action-btn.btn-outline-danger:hover,
+.atencion-row-actions .btn-outline-danger:hover,
+.atencion-row-actions .btn-action-baja:hover {
+    background: #B91C1C !important;
     color: #FFFFFF !important;
-    border-color: #DC2626 !important;
+    border-color: #B91C1C !important;
+    box-shadow: 0 2px 8px rgba(185, 28, 28, 0.3) !important;
 }
 
 /* 3. SweetAlert2: Formularios de Catálogos (Tipos de Atención, Subatenciones, Gestión, Metas, Ítems) */
