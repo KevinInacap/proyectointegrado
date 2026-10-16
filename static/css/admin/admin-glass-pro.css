@@ -2140,7 +2140,7 @@ table,
     text-decoration: underline;
 }
 
-/* Botón Ver Ficha Técnica: Elegante, Moderno y Pro */
+/* Botón Ver Ficha Técnica: Elegante, Moderno y Pro (Rojo Institucional La Serena) */
 .btn-ver-ficha-tecnica {
     display: inline-flex;
     align-items: center;
@@ -2149,22 +2149,22 @@ table,
     padding: 7px 15px;
     font-size: 0.82rem;
     font-weight: 700;
-    color: #1B365D;
-    background: linear-gradient(135deg, rgba(27, 54, 93, 0.08) 0%, rgba(13, 110, 253, 0.12) 100%);
-    border: 1.5px solid rgba(27, 54, 93, 0.22);
-    border-radius: 50px;
+    color: #8B1D2C !important;
+    background: linear-gradient(135deg, rgba(139, 29, 44, 0.08) 0%, rgba(196, 18, 48, 0.12) 100%) !important;
+    border: 1.5px solid rgba(139, 29, 44, 0.28) !important;
+    border-radius: 50px !important;
     cursor: pointer;
     white-space: nowrap;
     text-decoration: none;
-    transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
-    box-shadow: 0 2px 8px rgba(27, 54, 93, 0.06);
+    transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1) !important;
+    box-shadow: 0 2px 8px rgba(139, 29, 44, 0.08) !important;
 }
 .btn-ver-ficha-tecnica:hover {
     color: #FFFFFF !important;
-    background: linear-gradient(135deg, #1B365D 0%, #0D6EFD 100%) !important;
-    border-color: #1B365D !important;
-    box-shadow: 0 6px 18px rgba(13, 110, 253, 0.35) !important;
-    transform: translateY(-1px);
+    background: linear-gradient(110deg, #8B1D2C 0%, #68121E 100%) !important;
+    border-color: #8B1D2C !important;
+    box-shadow: 0 6px 18px rgba(139, 29, 44, 0.35) !important;
+    transform: translateY(-2px);
 }
 .btn-ver-ficha-tecnica i.bi-arrow-right {
     transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
@@ -2180,19 +2180,19 @@ table,
     padding: 5px 13px;
     font-size: 0.79rem;
     font-weight: 700;
-    color: #1B365D;
-    background: rgba(27, 54, 93, 0.07);
-    border: 1px solid rgba(27, 54, 93, 0.22);
-    border-radius: 50px;
+    color: #8B1D2C !important;
+    background: rgba(139, 29, 44, 0.07) !important;
+    border: 1px solid rgba(139, 29, 44, 0.28) !important;
+    border-radius: 50px !important;
     cursor: pointer;
     white-space: nowrap;
-    transition: all 0.2s ease;
+    transition: all 0.2s ease !important;
 }
 .btn-ver-ficha-tecnica-table:hover {
     color: #FFFFFF !important;
-    background: #1B365D !important;
-    border-color: #1B365D !important;
-    box-shadow: 0 4px 12px rgba(27, 54, 93, 0.3) !important;
+    background: linear-gradient(110deg, #8B1D2C 0%, #68121E 100%) !important;
+    border-color: #8B1D2C !important;
+    box-shadow: 0 4px 12px rgba(139, 29, 44, 0.3) !important;
     transform: translateY(-1px);
 }
 
@@ -2286,11 +2286,44 @@ table,
     box-shadow: 0 20px 45px rgba(0, 0, 0, 0.28) !important;
 }
 
-/* 2. Botones de Guardar / Envío en todos los modales y formularios (Fondo Rojo Institucional) */
+/* ==========================================================================
+   2. SISTEMA UNIVERSAL DE BOTONES ROJOS INSTITUCIONALES CON MICROANIMACIONES
+   Todos los botones del portal unificados bajo la paleta vino tinto oficial
+   ========================================================================== */
+
+/* 2.0 Microanimaciones Oficiales */
+@keyframes muniButtonShimmer {
+    0% { transform: translateX(-150%) skewX(-20deg); }
+    50%, 100% { transform: translateX(250%) skewX(-20deg); }
+}
+
+@keyframes muniPulseRedGlow {
+    0% { box-shadow: 0 4px 14px rgba(139, 29, 44, 0.28), 0 0 0 0 rgba(196, 18, 48, 0.45); }
+    70% { box-shadow: 0 6px 20px rgba(139, 29, 44, 0.45), 0 0 0 9px rgba(196, 18, 48, 0); }
+    100% { box-shadow: 0 4px 14px rgba(139, 29, 44, 0.28), 0 0 0 0 rgba(196, 18, 48, 0); }
+}
+
+/* 2.1 TODOS LOS BOTONES PRIMARIOS SÓLIDOS (Rojo Institucional + Shimmer) */
+.btn-primary,
+button.btn-primary,
+a.btn-primary,
+.btn-success,
+button.btn-success,
+a.btn-success,
 .btn-muni-red,
+.liquid-glass-btn-primary,
+.btn-submit-muni,
+.btn-exportar-pdf-oficial,
+#selectorVistaDelegaciones,
+.fab-main-button,
+.batch-btn-danger,
+button[type="submit"]:not(.btn-close):not(.btn-light),
+.modal-footer .btn-primary,
+.swal2-confirm.liquid-glass-btn-primary,
+.swal2-confirm.btn-muni-red,
+.swal2-actions button.swal2-confirm,
 .maintainer-view .btn-primary,
 div[data-catalog] .btn-primary,
-.modal-content button[type="submit"]:not(.btn-secondary):not(.btn-light):not(.btn-outline-secondary):not(.btn-outline-muni-red):not(.btn-danger):not(.btn-close),
 #modalCatalogosOrganizacion :is(#formCatalogoDelegacion,#formCatalogoCargo) button[type="submit"],
 #formVecino button[type="submit"],
 #formUsuarioDB button[type="submit"],
@@ -2299,20 +2332,69 @@ div[data-catalog] .btn-primary,
 #formNuevaFuncion button[type="submit"],
 #modalPasswordUsuario button[onclick*="guardarPasswordDB"],
 #btnGuardarFotoPerfil,
-#btnDrawerGuardar,
-.liquid-glass-btn-primary {
+#btnDrawerGuardar {
     color: #FFFFFF !important;
-    border: 1px solid #A51631 !important;
-    background: linear-gradient(100deg, #C41230, #8B1D2C) !important;
-    box-shadow: 0 4px 14px rgba(139, 29, 44, 0.25), inset 0 1px rgba(255, 255, 255, 0.24) !important;
+    border: 1px solid rgba(255, 255, 255, 0.22) !important;
+    background: linear-gradient(110deg, #8B1D2C 0%, #68121E 100%) !important;
+    box-shadow: 0 4px 14px rgba(139, 29, 44, 0.30), inset 0 1px 0 rgba(255, 255, 255, 0.25) !important;
     font-weight: 600 !important;
-    transition: all 0.2s ease !important;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    position: relative !important;
+    overflow: hidden !important;
+    text-decoration: none !important;
 }
 
+/* Destello Shimmer de Lujo en Botones Primarios */
+.liquid-glass-btn-primary::after,
+.btn-muni-red::after,
+.btn-primary::after,
+button[type="submit"]:not(.btn-close):not(.btn-light)::after {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: linear-gradient(60deg, transparent 30%, rgba(255, 255, 255, 0.22) 50%, transparent 70%);
+    transform: rotate(25deg) translateY(-100%);
+    transition: transform 0.75s ease;
+    pointer-events: none;
+}
+
+.liquid-glass-btn-primary:hover::after,
+.btn-muni-red:hover::after,
+.btn-primary:hover::after,
+button[type="submit"]:not(.btn-close):not(.btn-light):hover::after {
+    transform: rotate(25deg) translateY(100%);
+}
+
+/* Microanimación de Pulso en Botones Principales de Creación */
+.liquid-glass-btn-primary,
+.btn-muni-red:not(.btn-sm) {
+    animation: muniPulseRedGlow 3.2s infinite ease-in-out !important;
+}
+
+/* Hover en Botones Primarios */
+.btn-primary:hover,
+button.btn-primary:hover,
+a.btn-primary:hover,
+.btn-success:hover,
+button.btn-success:hover,
+a.btn-success:hover,
 .btn-muni-red:hover,
+.liquid-glass-btn-primary:hover,
+.btn-submit-muni:hover,
+.btn-exportar-pdf-oficial:hover,
+#selectorVistaDelegaciones:hover,
+.fab-main-button:hover,
+.batch-btn-danger:hover,
+button[type="submit"]:not(.btn-close):not(.btn-light):hover,
+.modal-footer .btn-primary:hover,
+.swal2-confirm.liquid-glass-btn-primary:hover,
+.swal2-confirm.btn-muni-red:hover,
+.swal2-actions button.swal2-confirm:hover,
 .maintainer-view .btn-primary:hover,
 div[data-catalog] .btn-primary:hover,
-.modal-content button[type="submit"]:not(.btn-secondary):not(.btn-light):not(.btn-outline-secondary):not(.btn-outline-muni-red):not(.btn-danger):not(.btn-close):hover,
 #modalCatalogosOrganizacion :is(#formCatalogoDelegacion,#formCatalogoCargo) button[type="submit"]:hover,
 #formVecino button[type="submit"]:hover,
 #formUsuarioDB button[type="submit"]:hover,
@@ -2321,51 +2403,206 @@ div[data-catalog] .btn-primary:hover,
 #formNuevaFuncion button[type="submit"]:hover,
 #modalPasswordUsuario button[onclick*="guardarPasswordDB"]:hover,
 #btnGuardarFotoPerfil:hover,
-#btnDrawerGuardar:hover,
-.liquid-glass-btn-primary:hover {
-    background: linear-gradient(100deg, #D01837, #68121E) !important;
-    transform: translateY(-1px) !important;
-    box-shadow: 0 7px 18px rgba(139, 29, 44, 0.35), inset 0 1px rgba(255, 255, 255, 0.3) !important;
+#btnDrawerGuardar:hover {
+    background: linear-gradient(100deg, #A81E32 0%, #741321 100%) !important;
+    transform: translateY(-2px) !important;
+    box-shadow: 0 8px 24px rgba(139, 29, 44, 0.44), 0 0 12px rgba(196, 18, 48, 0.3) !important;
     color: #FFFFFF !important;
+    border-color: rgba(255, 255, 255, 0.35) !important;
 }
 
-/* Botones secundarios y de acción con borde rojo institucional en vez de gris */
+/* Active / Click en Botones Primarios */
+.btn-primary:active,
+.btn-muni-red:active,
+.liquid-glass-btn-primary:active,
+button[type="submit"]:active {
+    transform: translateY(0) scale(0.98) !important;
+    box-shadow: 0 2px 8px rgba(139, 29, 44, 0.4) !important;
+}
+
+/* 2.2 TODOS LOS BOTONES SECUNDARIOS / OUTLINE / ACCIONES (Borde Rojo Institucional + Relleno Suave) */
+.btn-outline-primary,
+button.btn-outline-primary,
+a.btn-outline-primary,
+.btn-outline-secondary,
+button.btn-outline-secondary,
+a.btn-outline-secondary,
+.btn-outline-success,
+button.btn-outline-success,
+a.btn-outline-success,
+.btn-outline-info,
+button.btn-outline-info,
+a.btn-outline-info,
 .btn-outline-muni-red,
-#view-atenciones .btn-outline-secondary,
-.admin-view .btn-outline-secondary,
+button.btn-outline-muni-red,
+a.btn-outline-muni-red,
+.btn-secondary,
+button.btn-secondary,
+.btn-toolbar-excel,
+.batch-btn:not(.batch-btn-danger),
+.catalog-action-btn,
+.atencion-row-actions .btn,
+.modal-footer .btn-secondary,
+.modal-footer .btn-outline-secondary,
+.modal-footer .btn-outline-muni-red,
+.btn-view-sheet,
+#tablaAtenciones .btn,
+.swal2-cancel,
+.swal2-actions button.swal2-cancel,
 .maintainer-view .btn-outline-secondary,
 .liquid-glass-card .btn-outline-secondary,
 div[data-catalog] .btn-outline-secondary,
-.swal2-catalog-modal .btn-secondary,
-.swal2-catalog-modal .swal2-cancel,
 #modalCatalogosOrganizacion .btn-light.border,
 #modalCatalogosOrganizacion .modal-footer .btn-secondary,
-.modal-footer .btn-outline-secondary,
-.modal-footer .btn-secondary {
+#view-atenciones .btn-outline-secondary,
+.admin-view .btn-outline-secondary {
     border: 1.5px solid #8B1D2C !important;
     color: #8B1D2C !important;
-    background-color: transparent !important;
+    background-color: rgba(139, 29, 44, 0.03) !important;
     font-weight: 600 !important;
-    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    text-decoration: none !important;
 }
 
+/* Hover en Botones Secundarios: Transición Suave a Fondo Vino Tinto */
+.btn-outline-primary:hover,
+button.btn-outline-primary:hover,
+a.btn-outline-primary:hover,
+.btn-outline-secondary:hover,
+button.btn-outline-secondary:hover,
+a.btn-outline-secondary:hover,
+.btn-outline-success:hover,
+button.btn-outline-success:hover,
+a.btn-outline-success:hover,
+.btn-outline-info:hover,
+button.btn-outline-info:hover,
+a.btn-outline-info:hover,
 .btn-outline-muni-red:hover,
-#view-atenciones .btn-outline-secondary:hover,
-.admin-view .btn-outline-secondary:hover,
+button.btn-outline-muni-red:hover,
+a.btn-outline-muni-red:hover,
+.btn-secondary:hover,
+button.btn-secondary:hover,
+.btn-toolbar-excel:hover,
+.batch-btn:not(.batch-btn-danger):hover,
+.catalog-action-btn:hover,
+.atencion-row-actions .btn:hover,
+.modal-footer .btn-secondary:hover,
+.modal-footer .btn-outline-secondary:hover,
+.modal-footer .btn-outline-muni-red:hover,
+.btn-view-sheet:hover,
+#tablaAtenciones .btn:hover,
+.swal2-cancel:hover,
+.swal2-actions button.swal2-cancel:hover,
 .maintainer-view .btn-outline-secondary:hover,
 .liquid-glass-card .btn-outline-secondary:hover,
 div[data-catalog] .btn-outline-secondary:hover,
-.swal2-catalog-modal .btn-secondary:hover,
-.swal2-catalog-modal .swal2-cancel:hover,
 #modalCatalogosOrganizacion .btn-light.border:hover,
 #modalCatalogosOrganizacion .modal-footer .btn-secondary:hover,
-.modal-footer .btn-outline-secondary:hover,
-.modal-footer .btn-secondary:hover {
-    background: linear-gradient(100deg, #8B1D2C, #68121E) !important;
+#view-atenciones .btn-outline-secondary:hover,
+.admin-view .btn-outline-secondary:hover {
+    background: linear-gradient(100deg, #8B1D2C 0%, #68121E 100%) !important;
     color: #FFFFFF !important;
     border-color: #8B1D2C !important;
-    box-shadow: 0 4px 12px rgba(139, 29, 44, 0.25) !important;
-    transform: translateY(-1px) !important;
+    box-shadow: 0 5px 16px rgba(139, 29, 44, 0.32) !important;
+    transform: translateY(-2px) !important;
+}
+
+.btn-outline-primary:hover i,
+.btn-outline-secondary:hover i,
+.btn-outline-muni-red:hover i,
+.btn-toolbar-excel:hover i,
+.btn-view-sheet:hover i,
+.catalog-action-btn:hover i {
+    color: #FFFFFF !important;
+}
+
+/* Active / Click en Botones Secundarios */
+.btn-outline-primary:active,
+.btn-outline-secondary:active,
+.btn-outline-muni-red:active,
+.btn-toolbar-excel:active,
+.catalog-action-btn:active {
+    transform: translateY(0) scale(0.97) !important;
+}
+
+/* 2.3 BOTONES DE BAJA / ELIMINACIÓN */
+.btn-danger,
+button.btn-danger,
+.btn-outline-danger,
+button.btn-outline-danger,
+.catalog-action-btn.btn-action-baja,
+.atencion-row-actions .btn-action-baja,
+.atencion-row-actions .btn-outline-danger {
+    border: 1.5px solid #B91C1C !important;
+    color: #B91C1C !important;
+    background-color: transparent !important;
+    font-weight: 600 !important;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+.btn-danger:hover,
+button.btn-danger:hover,
+.btn-outline-danger:hover,
+button.btn-outline-danger:hover,
+.catalog-action-btn.btn-action-baja:hover,
+.atencion-row-actions .btn-action-baja:hover,
+.atencion-row-actions .btn-outline-danger:hover {
+    background: linear-gradient(100deg, #B91C1C 0%, #8B1D2C 100%) !important;
+    color: #FFFFFF !important;
+    border-color: #B91C1C !important;
+    box-shadow: 0 5px 16px rgba(185, 28, 28, 0.35) !important;
+    transform: translateY(-2px) !important;
+}
+
+/* 2.4 BOTONES DE PESTAÑAS, CÁPSULAS Y FILTROS */
+.pill-capsule-btn {
+    border: none !important;
+    background: transparent !important;
+    color: var(--surface-text-muted) !important;
+    padding: 0.35rem 0.85rem !important;
+    border-radius: 50px !important;
+    font-size: 0.80rem !important;
+    font-weight: 600 !important;
+    cursor: pointer !important;
+    transition: all 0.2s ease !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 5px !important;
+}
+
+.pill-capsule-btn:hover {
+    color: #8B1D2C !important;
+    background: rgba(139, 29, 44, 0.08) !important;
+}
+
+.pill-capsule-btn.active,
+.filter-btn-pill.active,
+.delegacion-filter-pill.active,
+.serena-sede-pill.active {
+    background: linear-gradient(110deg, #8B1D2C 0%, #68121E 100%) !important;
+    color: #FFFFFF !important;
+    border-color: #8B1D2C !important;
+    box-shadow: 0 4px 14px rgba(139, 29, 44, 0.30) !important;
+}
+
+/* 2.5 BOTONES DE PAGINACIÓN */
+.pagination .page-item.active .page-link,
+.btn-group[aria-label*="Páginas"] .btn.active {
+    background: linear-gradient(110deg, #8B1D2C 0%, #68121E 100%) !important;
+    border-color: #8B1D2C !important;
+    color: #FFFFFF !important;
+}
+
+.pagination .page-link {
+    color: #8B1D2C !important;
+    border-color: #E2E8F0 !important;
+    transition: all 0.2s ease !important;
+}
+
+.pagination .page-link:hover {
+    background: rgba(139, 29, 44, 0.08) !important;
+    border-color: #8B1D2C !important;
+    color: #8B1D2C !important;
 }
 
 @media (max-width:991.98px) {

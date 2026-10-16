@@ -367,9 +367,10 @@
         }
 
         .filter-btn-pill.active, .filter-btn-pill:hover {
-            background: var(--muni-navy);
-            border-color: var(--muni-navy);
+            background: linear-gradient(110deg, #8B1D2C, #68121E);
+            border-color: #8B1D2C;
             color: #FFFFFF;
+            box-shadow: 0 4px 12px rgba(139, 29, 44, 0.28);
         }
 
         .table-management {
@@ -434,23 +435,24 @@
             display: inline-flex;
             align-items: center;
             gap: 6px;
-            border: 1px solid #CBD5E1;
-            background: #FFFFFF;
-            color: #334155;
+            border: 1.5px solid #8B1D2C;
+            background: rgba(139, 29, 44, 0.03);
+            color: #8B1D2C;
             border-radius: 20px;
             padding: 5px 14px;
             font-size: 0.78rem;
             font-weight: 600;
-            transition: all 0.2s ease;
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
             cursor: pointer;
             text-decoration: none;
         }
 
         .btn-view-sheet:hover {
-            background: #0F172A;
-            border-color: #0F172A;
+            background: linear-gradient(100deg, #8B1D2C, #68121E);
+            border-color: #8B1D2C;
             color: #FFFFFF;
-            transform: translateY(-1px);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(139, 29, 44, 0.3);
         }
 
         /* 4. ALERTA Y GRÁFICO (COLUMNA DERECHA) */

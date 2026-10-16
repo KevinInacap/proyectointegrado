@@ -1629,9 +1629,9 @@
         }
 
         .btn-toolbar-excel {
-            background: #FFFFFF;
-            border: 1px solid var(--muni-border);
-            color: var(--muni-text-main);
+            background: rgba(139, 29, 44, 0.03);
+            border: 1.5px solid #8B1D2C;
+            color: #8B1D2C;
             padding: 0.4rem 0.75rem;
             border-radius: 7px;
             font-weight: 600;
@@ -1640,13 +1640,14 @@
             align-items: center;
             gap: 5px;
             cursor: pointer;
-            transition: all 0.15s ease;
+            transition: all 0.2s ease;
         }
 
         .btn-toolbar-excel:hover {
-            background: #F8FAFC;
-            border-color: var(--muni-blue-action);
-            color: var(--muni-blue-action);
+            background: linear-gradient(100deg, #8B1D2C 0%, #68121E 100%);
+            border-color: #8B1D2C;
+            color: #FFFFFF;
+            transform: translateY(-1px);
         }
 
         .btn-muni-red {
@@ -1810,13 +1811,18 @@
         }
 
         .btn-action-view {
-            background: #EFF6FF;
-            color: var(--muni-blue-action);
+            background: rgba(139, 29, 44, 0.08);
+            color: var(--muni-red);
+            border: 1px solid rgba(139, 29, 44, 0.2);
+            transition: all 0.25s ease;
         }
 
         .btn-action-view:hover {
-            background: var(--muni-blue-action);
+            background: linear-gradient(110deg, #8B1D2C, #68121E);
             color: #FFFFFF;
+            border-color: #8B1D2C;
+            transform: scale(1.08);
+            box-shadow: 0 4px 12px rgba(139, 29, 44, 0.35);
         }
 
         .btn-action-edit {
@@ -1871,9 +1877,10 @@
         }
 
         .page-pill.active {
-            background: var(--muni-blue-action);
+            background: linear-gradient(110deg, #8B1D2C, #68121E);
             color: #FFFFFF;
-            border-color: var(--muni-blue-action);
+            border-color: #8B1D2C;
+            box-shadow: 0 3px 10px rgba(139, 29, 44, 0.3);
         }
 
         /* Toolbar Unificada de Usuarios (Ordenada y en 1 fila) */
@@ -2469,7 +2476,7 @@
         }
 
         .liquid-glass-btn-primary {
-            background: linear-gradient(135deg, var(--muni-blue-action) 0%, #1D4ED8 100%);
+            background: linear-gradient(110deg, #8B1D2C 0%, #68121E 100%);
             color: #FFFFFF !important;
             border: none;
             border-radius: 12px;
@@ -2479,16 +2486,17 @@
             display: inline-flex;
             align-items: center;
             gap: 8px;
-            box-shadow: 0 4px 14px rgba(13, 110, 253, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.35);
+            box-shadow: 0 4px 14px rgba(139, 29, 44, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.35);
             transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
             cursor: pointer;
             text-decoration: none;
         }
 
         .liquid-glass-btn-primary:hover {
-            background: linear-gradient(135deg, #0b5ed7 0%, #1e40af 100%);
-            box-shadow: 0 4px 14px rgba(13, 110, 253, 0.35);
+            background: linear-gradient(110deg, #C41230 0%, #8B1D2C 100%);
+            box-shadow: 0 6px 18px rgba(139, 29, 44, 0.4);
             color: #FFFFFF;
+            transform: translateY(-2px);
         }
 
         .liquid-glass-btn-red {
@@ -2895,8 +2903,8 @@
 
         .btn-theme-toggle:hover {
             transform: scale(1.06);
-            border-color: var(--muni-blue-action);
-            color: var(--muni-blue-action);
+            border-color: var(--muni-red);
+            color: var(--muni-red);
         }
 
         [data-theme="dark"],
@@ -3641,27 +3649,27 @@
         }
 
         [data-theme="dark"] .btn-ver-ficha-tecnica {
-            color: #93C5FD;
-            background: linear-gradient(135deg, rgba(30, 58, 138, 0.35) 0%, rgba(59, 130, 246, 0.25) 100%);
-            border-color: rgba(96, 165, 250, 0.35);
+            color: #FCA5A5;
+            background: linear-gradient(135deg, rgba(139, 29, 44, 0.35) 0%, rgba(196, 18, 48, 0.25) 100%);
+            border-color: rgba(239, 68, 68, 0.35);
         }
 
         [data-theme="dark"] .btn-ver-ficha-tecnica:hover {
             color: #FFFFFF !important;
-            background: linear-gradient(135deg, #1D4ED8 0%, #2563EB 100%) !important;
-            border-color: #3B82F6 !important;
+            background: linear-gradient(110deg, #8B1D2C 0%, #68121E 100%) !important;
+            border-color: #C41230 !important;
         }
 
         [data-theme="dark"] .btn-ver-ficha-tecnica-table {
-            color: #93C5FD;
-            background: rgba(30, 58, 138, 0.3);
-            border-color: rgba(96, 165, 250, 0.35);
+            color: #FCA5A5;
+            background: rgba(139, 29, 44, 0.3);
+            border-color: rgba(239, 68, 68, 0.35);
         }
 
         [data-theme="dark"] .btn-ver-ficha-tecnica-table:hover {
             color: #FFFFFF !important;
-            background: #2563EB !important;
-            border-color: #3B82F6 !important;
+            background: #8B1D2C !important;
+            border-color: #C41230 !important;
         }
 
         /* Drawer de Cristal para Expediente de Sede */

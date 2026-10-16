@@ -418,7 +418,7 @@
                         <div class="empty-state-icon"><i class="bi bi-people"></i></div>
                         <div class="empty-state-title">No se encontraron vecinos</div>
                         <div class="empty-state-desc">No hay registros que coincidan con la búsqueda o los filtros aplicados.</div>
-                        <button class="btn btn-sm btn-outline-primary rounded-pill px-3" onclick="limpiarFiltrosVecinos()">Restablecer Filtros</button>
+                        <button class="btn btn-sm btn-outline-muni-red rounded-pill px-3" onclick="limpiarFiltrosVecinos()">Restablecer Filtros</button>
                     </div>
                 </td></tr>`;
                 document.getElementById('lblRegistrosInfo').textContent = '0 registros';
@@ -2342,7 +2342,7 @@
                         <div class="empty-state-icon"><i class="bi bi-person-x"></i></div>
                         <div class="empty-state-title">No se encontraron funcionarios</div>
                         <div class="empty-state-desc">No hay registros coincidentes con los filtros aplicados en esta vista.</div>
-                        <button class="btn btn-sm btn-outline-primary rounded-pill px-3" onclick="limpiarFiltrosUsuarios()">Restablecer Filtros</button>
+                        <button class="btn btn-sm btn-outline-muni-red rounded-pill px-3" onclick="limpiarFiltrosUsuarios()">Restablecer Filtros</button>
                     </div>
                 </td></tr>`;
                 const lblInfo = document.getElementById('lblRegistrosInfoUsuarios');
@@ -2444,7 +2444,7 @@
                     <td class="text-center" style="vertical-align: middle;">${statusBadge}</td>
                     <td class="text-end" style="vertical-align: middle; padding-right: 1rem;">
                         <div class="d-flex align-items-center justify-content-end gap-1">
-                            <button class="btn btn-sm btn-outline-primary rounded-pill px-3 py-1 fw-bold shadow-xs d-flex align-items-center gap-1" onclick="seleccionarUsuarioDetalle('${u.id}')" title="Ver ficha técnica del funcionario" style="font-size: 0.78rem;">
+                            <button class="btn btn-sm btn-outline-muni-red rounded-pill px-3 py-1 fw-bold shadow-xs d-flex align-items-center gap-1" onclick="seleccionarUsuarioDetalle('${u.id}')" title="Ver ficha técnica del funcionario" style="font-size: 0.78rem;">
                                 <i class="bi bi-person-vcard"></i> Ficha
                             </button>
                             <div class="dropdown d-inline-block">
@@ -2453,8 +2453,8 @@
                                 </button>
                                 <ul class="dropdown-menu dropdown-menu-end shadow-lg border p-2" style="min-width: 210px; font-size: 0.84rem; background: #FFFFFF !important; z-index: 1080;">
                                     <li>
-                                        <a class="dropdown-item py-2 fw-semibold text-primary rounded-2 d-flex align-items-center gap-2" href="javascript:void(0)" onclick="seleccionarUsuarioDetalle('${u.id}')">
-                                            <i class="bi bi-person-lines-fill text-primary"></i> Ver Ficha Completa
+                                        <a class="dropdown-item py-2 fw-semibold text-danger rounded-2 d-flex align-items-center gap-2" href="javascript:void(0)" onclick="seleccionarUsuarioDetalle('${u.id}')">
+                                            <i class="bi bi-person-lines-fill text-danger"></i> Ver Ficha Completa
                                         </a>
                                     </li>
                                     <li>
@@ -2542,7 +2542,7 @@
                 <div class="usuario-detail-glass-card">
                     <!-- Barra de Navegación Rápida -->
                     <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3 pb-2 border-bottom">
-                        <button class="btn btn-sm btn-outline-primary rounded-pill px-3 py-1 fw-bold shadow-xs d-flex align-items-center gap-2"
+                        <button class="btn btn-sm btn-outline-muni-red rounded-pill px-3 py-1 fw-bold shadow-xs d-flex align-items-center gap-2"
                             onclick="cerrarFichaUsuario()">
                             <i class="bi bi-x-lg"></i> Cerrar Ficha del Funcionario
                         </button>
@@ -2614,13 +2614,13 @@
                             </div>
 
                             <div class="d-flex align-items-center gap-2 flex-wrap">
-                                <button class="btn btn-sm btn-outline-primary rounded-pill px-3 py-2 fw-bold shadow-xs" onclick="abrirModalPassword(${u.id})">
+                                <button class="btn btn-sm btn-outline-muni-red rounded-pill px-3 py-2 fw-bold shadow-xs" onclick="abrirModalPassword(${u.id})">
                                     <i class="bi bi-key-fill me-1"></i> Resetear Contraseña
                                 </button>
-                                <button class="btn btn-sm btn-outline-secondary rounded-pill px-3 py-2 fw-bold shadow-xs" onclick="abrirModalUsuario('editar', ${u.id})">
+                                <button class="btn btn-sm btn-outline-muni-red rounded-pill px-3 py-2 fw-bold shadow-xs" onclick="abrirModalUsuario('editar', ${u.id})">
                                     <i class="bi bi-pencil-square me-1"></i> Editar Datos
                                 </button>
-                                <button class="btn btn-sm btn-outline-${isActivo ? 'danger' : 'success'} rounded-pill px-3 py-2 fw-bold shadow-xs" onclick="toggleEstadoUsuario(${u.id})">
+                                <button class="btn btn-sm btn-outline-muni-red rounded-pill px-3 py-2 fw-bold shadow-xs" onclick="toggleEstadoUsuario(${u.id})">
                                     <i class="bi bi-power me-1"></i> ${isActivo ? 'Desactivar Cuenta' : 'Activar Cuenta'}
                                 </button>
                                 <button class="btn-exportar-pdf-oficial" onclick="exportarFichaUsuarioPDF(${u.id})" style="font-size: 0.78rem; padding: 0.40rem 1rem;">
@@ -3321,7 +3321,7 @@
             const borrarBtn = tipo === 'cargo' ? `<button class="btn btn-outline-danger" type="button" onclick="eliminarCargoCatalogo(${item.id})" title="Eliminar cargo"><i class="bi bi-trash3"></i></button>` : `<button class="btn btn-outline-danger" type="button" onclick="eliminarDelegacionCatalogo(${item.id})" title="Eliminar delegación"><i class="bi bi-trash3"></i></button>`;
             return `<div class="col-md-6" style="min-width:0"><article class="bg-white border rounded-4 p-3 shadow-sm h-100 overflow-hidden" style="min-width:0">
                 <div class="d-flex justify-content-between gap-2" style="min-width:0"><div class="flex-grow-1" style="min-width:0"><div class="fw-bold text-dark text-truncate">${escaparHtmlCatalogo(item.name)}</div><div class="small text-muted text-truncate">${tipo === 'delegacion' ? escaparHtmlCatalogo(item.code || '') + ' · ' : ''}${escaparHtmlCatalogo(detalle)}</div></div><span class="badge ${activo ? 'bg-success-subtle text-success' : 'bg-secondary-subtle text-secondary'} align-self-start flex-shrink-0">${item.status}</span></div>
-                <div class="d-flex justify-content-between align-items-center mt-2"><small class="text-muted"><i class="bi bi-people me-1"></i>${item.users_count} usuario(s)</small><div class="btn-group btn-group-sm"><button class="btn btn-outline-primary" type="button" onclick="${editar}" title="Editar"><i class="bi bi-pencil"></i></button><button class="btn btn-outline-${activo ? 'warning' : 'success'}" type="button" onclick="${alternar}" title="${activo ? 'Desactivar' : 'Activar'}"><i class="bi bi-${activo ? 'pause-circle' : 'play-circle'}"></i></button>${borrarBtn}</div></div>
+                <div class="d-flex justify-content-between align-items-center mt-2"><small class="text-muted"><i class="bi bi-people me-1"></i>${item.users_count} usuario(s)</small><div class="btn-group btn-group-sm"><button class="btn btn-outline-muni-red" type="button" onclick="${editar}" title="Editar"><i class="bi bi-pencil"></i></button><button class="btn btn-outline-muni-red" type="button" onclick="${alternar}" title="${activo ? 'Desactivar' : 'Activar'}"><i class="bi bi-${activo ? 'pause-circle' : 'play-circle'}"></i></button>${borrarBtn}</div></div>
             </article></div>`;
         }
 
@@ -3372,7 +3372,7 @@
                 const activo = item.status === 'Activo';
                 return `<div class="col-md-6 col-xl-4"><article class="bg-white border rounded-4 p-3 shadow-sm h-100 overflow-hidden">
                     <div class="d-flex justify-content-between gap-3 align-items-start"><div style="min-width:0"><h5 class="fw-bold mb-1 text-truncate" style="color:var(--muni-navy)">${escaparHtmlCatalogo(item.name)}</h5><p class="small text-muted mb-0">${escaparHtmlCatalogo(item.description || 'Sin descripción registrada')}</p></div><span class="badge ${activo ? 'bg-success-subtle text-success' : 'bg-secondary-subtle text-secondary'}">${item.status}</span></div>
-                    <div class="d-flex justify-content-between align-items-center mt-3 pt-2 border-top"><small class="text-muted"><i class="bi bi-people-fill me-1"></i>${item.users_count} funcionario(s)</small><div class="btn-group btn-group-sm"><button class="btn btn-outline-primary" onclick="editarCargoDesdeVista(${item.id})"><i class="bi bi-pencil me-1"></i>Editar</button><button class="btn btn-outline-${activo ? 'warning' : 'success'}" onclick="alternarCargoCatalogo(${item.id})" title="${activo ? 'Inactivar' : 'Activar'}"><i class="bi bi-${activo ? 'pause-circle' : 'play-circle'}"></i></button><button class="btn btn-outline-danger" onclick="eliminarCargoCatalogo(${item.id})" title="Eliminar cargo"><i class="bi bi-trash3"></i></button></div></div>
+                    <div class="d-flex justify-content-between align-items-center mt-3 pt-2 border-top"><small class="text-muted"><i class="bi bi-people-fill me-1"></i>${item.users_count} funcionario(s)</small><div class="btn-group btn-group-sm"><button class="btn btn-outline-muni-red" onclick="editarCargoDesdeVista(${item.id})"><i class="bi bi-pencil me-1"></i>Editar</button><button class="btn btn-outline-muni-red" onclick="alternarCargoCatalogo(${item.id})" title="${activo ? 'Inactivar' : 'Activar'}"><i class="bi bi-${activo ? 'pause-circle' : 'play-circle'}"></i></button><button class="btn btn-outline-muni-red text-danger" onclick="eliminarCargoCatalogo(${item.id})" title="Eliminar cargo"><i class="bi bi-trash3"></i></button></div></div>
                 </article></div>`;
             }).join('') || '<div class="col-12 text-center text-muted py-4">No hay cargos registrados.</div>';
         }
@@ -4206,7 +4206,7 @@
             panel.innerHTML = `
                 <!-- Barra de Navegación Rápida -->
                 <div class="mb-3 d-flex justify-content-between align-items-center flex-wrap gap-2">
-                    <button class="btn btn-sm btn-outline-primary rounded-pill px-3 py-1 fw-bold shadow-xs d-flex align-items-center gap-2" onclick="document.getElementById('panelDetalleDelegacion').style.display='none'; document.getElementById('view-delegaciones').scrollIntoView({behavior: 'smooth'});">
+                    <button class="btn btn-sm btn-outline-muni-red rounded-pill px-3 py-1 fw-bold shadow-xs d-flex align-items-center gap-2" onclick="document.getElementById('panelDetalleDelegacion').style.display='none'; document.getElementById('view-delegaciones').scrollIntoView({behavior: 'smooth'});">
                         <i class="bi bi-arrow-left"></i> Volver a todas las delegaciones
                     </button>
                     <span class="badge bg-white text-secondary border px-3 py-2 rounded-pill small fw-bold shadow-xs">
@@ -4310,7 +4310,7 @@
                             <h5 class="fw-bold m-0" style="color: var(--muni-navy);">
                                 <i class="bi bi-people-fill text-primary me-2"></i> Dotación Funcionaria Asignada (${data.funcionarios.length} funcionarios)
                             </h5>
-                            <button class="btn btn-sm btn-outline-primary rounded-pill px-3 fw-bold" onclick="switchView('usuarios')">
+                            <button class="btn btn-sm btn-outline-muni-red rounded-pill px-3 fw-bold" onclick="switchView('usuarios')">
                                 <i class="bi bi-gear-fill me-1"></i> Administrar en Usuarios
                             </button>
                         </div>
@@ -4975,7 +4975,7 @@
                                 </div>
                             </div>
                             <span class="badge bg-light text-primary border flex-shrink-0" id="count-module-${mod.module_id}">${modCheckedCount}/${modTotalCount}</span>
-                            <button type="button" class="btn btn-sm btn-outline-primary rounded-pill px-2 flex-shrink-0" onclick="event.preventDefault(); event.stopPropagation(); toggleModuloCompleto('${mod.module_id}', this)">
+                            <button type="button" class="btn btn-sm btn-outline-muni-red rounded-pill px-2 flex-shrink-0" onclick="event.preventDefault(); event.stopPropagation(); toggleModuloCompleto('${mod.module_id}', this)">
                                 ${allModChecked ? 'Desmarcar' : 'Todos'}
                             </button>
                             <i class="bi bi-chevron-down permission-chevron flex-shrink-0"></i>

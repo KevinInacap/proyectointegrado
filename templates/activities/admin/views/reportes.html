@@ -20,18 +20,17 @@
                         </div>
                         <div class="d-flex align-items-center gap-2 flex-wrap">
                             <button
-                                class="btn btn-outline-danger btn-sm fw-bold d-flex align-items-center gap-2 px-3 py-2 rounded-3 shadow-sm"
-                                onclick="generarReportePDFOficial()"
-                                style="border-color: var(--muni-red); color: var(--muni-red);">
+                                class="btn btn-outline-muni-red btn-sm fw-bold d-flex align-items-center gap-2 px-3 py-2 rounded-3 shadow-sm"
+                                onclick="generarReportePDFOficial()">
                                 <i class="bi bi-file-earmark-pdf-fill"></i> Descargar Informe PDF
                             </button>
                             <button
-                                class="btn btn-success btn-sm fw-bold d-flex align-items-center gap-2 px-3 py-2 rounded-3 shadow-sm"
+                                class="btn btn-muni-red btn-sm fw-bold d-flex align-items-center gap-2 px-3 py-2 rounded-3 shadow-sm text-white"
                                 onclick="exportarReportesExcel()">
                                 <i class="bi bi-file-earmark-excel-fill"></i> Exportar a Excel
                             </button>
                             <button
-                                class="btn btn-outline-secondary btn-sm fw-bold d-flex align-items-center gap-1 px-3 py-2 rounded-3 shadow-sm"
+                                class="btn btn-outline-muni-red btn-sm fw-bold d-flex align-items-center gap-1 px-3 py-2 rounded-3 shadow-sm"
                                 onclick="window.print()">
                                 <i class="bi bi-printer"></i> Imprimir
                             </button>
@@ -77,11 +76,10 @@
                                 </select>
                             </div>
                             <div class="col-md-3 d-flex gap-2">
-                                <button class="btn btn-primary btn-sm w-100 fw-bold" onclick="actualizarReportesDatos()"
-                                    style="background: var(--muni-navy); border-color: var(--muni-navy);">
+                                <button class="btn btn-muni-red btn-sm w-100 fw-bold text-white shadow-xs" onclick="actualizarReportesDatos()">
                                     <i class="bi bi-funnel-fill me-1"></i> Filtrar Datos
                                 </button>
-                                <button class="btn btn-outline-secondary btn-sm" onclick="restablecerFiltrosReportes()"
+                                <button class="btn btn-outline-muni-red btn-sm" onclick="restablecerFiltrosReportes()"
                                     title="Restablecer filtros">
                                     <i class="bi bi-arrow-counterclockwise"></i>
                                 </button>
@@ -123,7 +121,7 @@
                                 <i class="bi bi-plug-fill" id="btnToggleLiveIcon"></i> <span id="btnToggleLiveText"
                                     class="d-none d-sm-inline">API pendiente</span>
                             </button>
-                            <button class="btn btn-sm btn-outline-primary fw-semibold px-2" disabled
+                            <button class="btn btn-sm btn-outline-muni-red fw-semibold px-2" disabled
                                 onclick="forzarActualizacionEnVivo()" title="Actualizar datos ahora">
                                 <i class="bi bi-arrow-repeat"></i> <span class="d-none d-sm-inline">Consultar</span>
                             </button>
@@ -330,7 +328,7 @@
                                     <small class="text-muted">Desglose de atenciones, tiempos de respuesta y porcentaje
                                         de cumplimiento</small>
                                 </div>
-                                <button class="btn btn-sm btn-outline-success fw-bold"
+                                <button class="btn btn-sm btn-outline-muni-red fw-bold"
                                     onclick="exportarReportesExcel()">
                                     <i class="bi bi-download me-1"></i> Descargar Datos CSV/Excel
                                 </button>
