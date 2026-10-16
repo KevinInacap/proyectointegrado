@@ -2,23 +2,54 @@
 (() => {
     'use strict';
     const definitions = {
-        'management-types': { title: 'tipo de gestión', columns: [['code', 'Código'], ['name', 'Nombre'], ['description', 'Descripción'], ['status', 'Estado']] },
-        items: { title: 'ítem', columns: [['code', 'Código'], ['name', 'Nombre'], ['description', 'Descripción'], ['item_type', 'Tipo'], ['status', 'Estado']] },
-        goals: { title: 'meta', columns: [['code', 'Código'], ['period', 'Período'], ['position', 'Cargo'], ['item', 'Ítem'], ['target_value', 'Objetivo'], ['unit_of_measure', 'Unidad'], ['weight', 'Ponderación (%)'], ['status', 'Estado']] },
-        'attention-types': { title: 'tipo de atención', columns: [['code', 'Código'], ['name', 'Nombre'], ['description', 'Descripción'], ['status', 'Estado']] },
-        subattentions: { title: 'subatención', columns: [['code', 'Código'], ['name', 'Nombre'], ['attention_type', 'Tipo de atención'], ['description', 'Descripción'], ['status', 'Estado']] }
+        'management-types': {
+            title: 'tipo de gestión',
+            icon: 'bi-kanban-fill',
+            columns: [['code', 'Código'], ['name', 'Nombre'], ['description', 'Descripción'], ['status', 'Estado']],
+            colWidths: ['15%', '27%', '30%', '10%', '18%']
+        },
+        items: {
+            title: 'ítem',
+            icon: 'bi-list-check',
+            columns: [['code', 'Código'], ['name', 'Nombre'], ['description', 'Descripción'], ['item_type', 'Tipo'], ['status', 'Estado']],
+            colWidths: ['12%', '22%', '26%', '11%', '9%', '20%']
+        },
+        goals: {
+            title: 'meta',
+            icon: 'bi-bullseye',
+            columns: [['code', 'Código'], ['period', 'Período'], ['position', 'Cargo'], ['item', 'Ítem'], ['target_value', 'Objetivo'], ['unit_of_measure', 'Unidad'], ['weight', 'Pond.'], ['status', 'Estado']],
+            colWidths: ['10%', '10%', '12%', '14%', '9%', '9%', '7%', '9%', '20%']
+        },
+        'attention-types': {
+            title: 'tipo de atención',
+            icon: 'bi-tags-fill',
+            columns: [['code', 'Código'], ['name', 'Nombre'], ['description', 'Descripción'], ['status', 'Estado']],
+            colWidths: ['15%', '27%', '30%', '10%', '18%']
+        },
+        subattentions: {
+            title: 'subatención',
+            icon: 'bi-tag-fill',
+            columns: [['code', 'Código'], ['name', 'Nombre'], ['attention_type', 'Tipo de atención'], ['description', 'Descripción'], ['status', 'Estado']],
+            colWidths: ['13%', '21%', '18%', '20%', '10%', '18%']
+        }
     };
     const panels = [];
     const labels = { code: 'Código', name: 'Nombre', description: 'Descripción', status: 'Estado', item_type: 'Tipo de ítem', period: 'Período de medición', position: 'Cargo', item: 'Ítem', target_value: 'Valor objetivo', unit_of_measure: 'Unidad de medida', weight: 'Ponderación (%)', attention_type: 'Tipo de atención', __all__: 'Registro' };
 
-    function element(tag, className, text) {
+    function element(tag, className, text, isHtml = false) {
         const node = document.createElement(tag);
         node.className = className || '';
-        if (text !== undefined) node.textContent = String(text);
+        if (text !== undefined) {
+            if (isHtml || (typeof text === 'string' && text.includes('<'))) {
+                node.innerHTML = String(text);
+            } else {
+                node.textContent = String(text);
+            }
+        }
         return node;
     }
-    function button(text, action, className = 'btn btn-outline-secondary rounded-pill') {
-        const node = element('button', className, text);
+    function button(text, action, className = 'btn btn-outline-secondary btn-sm', isHtml = false) {
+        const node = element('button', className, text, isHtml);
         node.type = 'button';
         node.addEventListener('click', action);
         return node;
@@ -177,18 +208,42 @@
             panel.body.replaceChildren();
             data.results.forEach(record => {
                 const tr = element('tr');
+                tr.style.fontSize = '0.84rem';
                 definitions[panel.catalog].columns.forEach(([key]) => {
-                    const value = refs[key] ? (refs[key].find(item => Number(item.id) === Number(record[key]))?.name || `ID ${record[key]}`) : record[key];
-                    tr.append(element('td', 'py-3 px-3', value ?? ''));
+                    const rawValue = record[key];
+                    const value = refs[key] ? (refs[key].find(item => Number(item.id) === Number(rawValue))?.name || `ID ${rawValue}`) : rawValue;
+                    const td = element('td', 'py-2.5 px-2');
+                    if (key === 'code') {
+                        td.innerHTML = `<span class="badge bg-light text-dark border font-monospace px-2 py-1" style="font-size: 0.78rem; letter-spacing: 0.5px; white-space: nowrap;">${record.code}</span>`;
+                    } else if (key === 'status') {
+                        td.className = 'py-2.5 px-2 text-center';
+                        const isActivo = record.status === 'Activo';
+                        td.innerHTML = `<span class="badge rounded-pill fw-bold border ${isActivo ? 'bg-success-subtle text-success border-success-subtle' : 'bg-secondary-subtle text-secondary border-secondary-subtle'}" style="font-size: 0.72rem; padding: 4px 8px;">${record.status}</span>`;
+                    } else if (key === 'name') {
+                        td.innerHTML = `<span class="fw-semibold text-dark d-block text-truncate" title="${value ?? ''}">${value ?? ''}</span>`;
+                    } else if (key === 'description') {
+                        td.innerHTML = `<span class="text-muted d-block text-truncate" style="font-size: 0.78rem;" title="${value || 'Sin descripción'}">${value || '—'}</span>`;
+                    } else if (key === 'target_value' || key === 'weight') {
+                        td.className = 'py-2.5 px-2 text-center';
+                        td.innerHTML = `<span class="font-monospace fw-semibold" style="font-size: 0.80rem;">${value ?? '—'}</span>`;
+                    } else {
+                        td.innerHTML = `<span class="d-block text-truncate" title="${value ?? ''}">${value ?? ''}</span>`;
+                    }
+                    tr.append(td);
                 });
-                const actions = element('td', 'py-3 px-3 text-end text-nowrap');
-                const view = button('Ver', () => viewRecord(panel, record.id), 'btn btn-sm btn-outline-secondary rounded-pill me-2');
+                const actions = element('td', 'py-2.5 px-2 text-center text-nowrap');
+                const actionsWrap = element('div', 'd-inline-flex align-items-center gap-1 justify-content-center flex-nowrap');
+                const view = button('Ver', () => viewRecord(panel, record.id), 'btn btn-sm catalog-action-btn btn-action-ver');
                 view.setAttribute('aria-label', `Consultar ${record.name || record.code}`);
-                const edit = button('Editar', () => editRecord(panel, record.id), 'btn btn-sm btn-outline-secondary rounded-pill me-2');
-                const remove = button('Eliminar', () => deleteRecord(panel, record), 'btn btn-sm btn-outline-danger rounded-pill');
+                view.title = 'Ver detalle';
+                const edit = button('Editar', () => editRecord(panel, record.id), 'btn btn-sm catalog-action-btn btn-action-editar');
                 edit.setAttribute('aria-label', `Editar ${record.name || record.code}`);
+                edit.title = 'Editar registro';
+                const remove = button('Baja', () => deleteRecord(panel, record), 'btn btn-sm catalog-action-btn btn-action-baja');
                 remove.setAttribute('aria-label', `Eliminar ${record.name || record.code}`);
-                actions.append(view, edit, remove);
+                remove.title = 'Dar de baja';
+                actionsWrap.append(view, edit, remove);
+                actions.append(actionsWrap);
                 tr.append(actions);
                 panel.body.append(tr);
             });
@@ -196,7 +251,7 @@
                 cell.textContent = 'No hay registros para esta búsqueda.';
                 panel.body.append(row);
             }
-            panel.summary.textContent = `${data.count} registros · Página ${panel.page} de ${pages}`;
+            panel.summary.textContent = `Mostrando ${data.results.length} de ${data.count} registros · Página ${panel.page} de ${pages}`;
             panel.previous.disabled = panel.page <= 1;
             panel.next.disabled = panel.page >= pages;
         } catch (error) {
@@ -260,14 +315,16 @@
                 const reference = refs[key]?.find(item => Number(item.id) === Number(record[key]));
                 details.append(element('dt', 'small text-muted mt-2 fw-bold', label), element('dd', 'mb-2 text-dark', reference?.name || record[key] || 'Sin información'));
             });
+            const def = definitions[panel.catalog];
+            const iconClass = def?.icon || 'bi-info-circle-fill';
             const viewTitleHtml = `
                 <div class="swal-muni-header-wrap">
-                    <div class="d-flex align-items-center gap-2">
-                        <i class="bi bi-info-circle-fill text-warning fs-5"></i>
-                        <div class="text-start">
-                            <h5 class="modal-title fw-bold m-0 text-white fs-6 text-capitalize">Consulta de ${definitions[panel.catalog].title}</h5>
-                            <small class="text-white-50" style="font-size: 0.75rem;">Detalle del registro en catálogo institucional SGR La Serena</small>
-                        </div>
+                    <div class="swal-muni-icon-box">
+                        <i class="bi ${iconClass}"></i>
+                    </div>
+                    <div class="swal-muni-title-box">
+                        <h4 class="swal-muni-title">Consulta de ${def.title}</h4>
+                        <p class="swal-muni-subtitle">Detalle del registro en catálogo institucional SGR La Serena</p>
                     </div>
                 </div>
             `;
@@ -279,7 +336,7 @@
                     popup: 'swal2-catalog-modal',
                     htmlContainer: 'swal2-catalog-container',
                     title: 'swal2-catalog-title',
-                    confirmButton: 'btn btn-secondary rounded-pill px-4 py-2 fw-semibold',
+                    confirmButton: 'btn btn-outline-muni-red rounded-pill px-4 py-2 fw-semibold',
                     actions: 'swal2-catalog-actions',
                     closeButton: 'swal2-catalog-close'
                 },
@@ -310,17 +367,19 @@
                 : ['code', 'name', ...(panel.catalog === 'subattentions' ? ['attention_type'] : []), 'description', ...(panel.catalog === 'items' ? ['item_type'] : []), 'status'];
             fields.forEach(key => field(form, key, record[key], refs[key] || (key === 'status' ? choices(['Activo', 'Inactivo']) : key === 'item_type' ? choices(['Cuantitativo', 'Porcentual']) : undefined), true));
             let saving = false;
+            const def = definitions[panel.catalog];
             const actionText = id === undefined ? 'Crear' : 'Editar';
-            const catalogLabel = definitions[panel.catalog].title;
+            const catalogLabel = def.title;
             const fullTitle = `${actionText} ${catalogLabel}`;
+            const iconClass = def?.icon || 'bi-tag-fill';
             const headerHtml = `
                 <div class="swal-muni-header-wrap">
-                    <div class="d-flex align-items-center gap-2">
-                        <i class="bi bi-tags-fill text-warning fs-5"></i>
-                        <div class="text-start">
-                            <h5 class="modal-title fw-bold m-0 text-white fs-6 text-capitalize">${fullTitle}</h5>
-                            <small class="text-white-50" style="font-size: 0.75rem;">Catálogo oficial de gestión y atención ciudadana SGR La Serena</small>
-                        </div>
+                    <div class="swal-muni-icon-box">
+                        <i class="bi ${iconClass}"></i>
+                    </div>
+                    <div class="swal-muni-title-box">
+                        <h4 class="swal-muni-title">${fullTitle}</h4>
+                        <p class="swal-muni-subtitle">Catálogo oficial de gestión y atención ciudadana SGR La Serena</p>
                     </div>
                 </div>
             `;
@@ -334,7 +393,7 @@
                     htmlContainer: 'swal2-catalog-container',
                     title: 'swal2-catalog-title',
                     confirmButton: 'btn btn-muni-red rounded-pill px-4 py-2 fw-semibold',
-                    cancelButton: 'btn btn-secondary rounded-pill px-4 py-2 fw-semibold',
+                    cancelButton: 'btn btn-outline-muni-red rounded-pill px-4 py-2 fw-semibold',
                     actions: 'swal2-catalog-actions',
                     closeButton: 'swal2-catalog-close'
                 },
@@ -389,30 +448,75 @@
         try {
             let deleting = false;
             const result = await Swal.fire({
-                titleText: 'Eliminar registro', text: `¿Eliminar ${record.name || record.code}?`, icon: 'warning',
-                showCancelButton: true, confirmButtonText: 'Eliminar', cancelButtonText: 'Cancelar', confirmButtonColor: '#C41230', showLoaderOnConfirm: true,
-                allowOutsideClick: () => !deleting, allowEscapeKey: () => !deleting,
+                title: `
+                    <div class="swal-muni-header-wrap">
+                        <div class="swal-muni-icon-box">
+                            <i class="bi bi-exclamation-triangle-fill text-warning"></i>
+                        </div>
+                        <div class="swal-muni-title-box">
+                            <h4 class="swal-muni-title">Confirmar baja de registro</h4>
+                            <p class="swal-muni-subtitle">Esta acción modificará la disponibilidad en el catálogo</p>
+                        </div>
+                    </div>
+                `,
+                html: `<p class="my-3 text-secondary" style="font-size: 0.95rem;">¿Estás seguro de dar de baja <strong>${record.name || record.code}</strong>?</p>`,
+                showCancelButton: true,
+                confirmButtonText: '<i class="bi bi-trash3-fill me-1"></i> Dar de baja',
+                cancelButtonText: 'Cancelar',
+                customClass: {
+                    popup: 'swal2-catalog-modal',
+                    htmlContainer: 'swal2-catalog-container',
+                    title: 'swal2-catalog-title',
+                    confirmButton: 'btn btn-danger rounded-pill px-4 py-2 fw-semibold',
+                    cancelButton: 'btn btn-outline-secondary rounded-pill px-4 py-2 fw-semibold',
+                    actions: 'swal2-catalog-actions',
+                    closeButton: 'swal2-catalog-close'
+                },
+                buttonsStyling: false,
+                showLoaderOnConfirm: true,
+                allowOutsideClick: () => !deleting,
+                allowEscapeKey: () => !deleting,
                 preConfirm: async () => {
                     if (deleting) return false;
                     deleting = true;
                     Swal.getCancelButton().disabled = true;
-                    try { await request(endpoint(panel.catalog, record.id), 'DELETE'); return true; }
-                    catch (error) {
-                        // SweetAlert validation accepts HTML; insert server messages as text only.
-                        Swal.showValidationMessage('No se pudo eliminar.');
-                        Swal.getValidationMessage().textContent = error.message;
+                    try {
+                        await request(endpoint(panel.catalog, record.id), 'DELETE');
+                        return true;
+                    } catch (error) {
+                        Swal.showValidationMessage('No se pudo dar de baja: ' + error.message);
                         return false;
-                    } finally { deleting = false; Swal.getCancelButton().disabled = false; }
+                    } finally {
+                        deleting = false;
+                        Swal.getCancelButton().disabled = false;
+                    }
                 }
             });
             if (result.isConfirmed) {
-                notice(panel, 'Registro eliminado en el servidor.');
+                notice(panel, 'Registro dado de baja correctamente.');
                 await refreshRelated(panel);
                 Swal.fire({
-                    icon: 'success',
-                    titleText: 'Registro eliminado',
-                    text: 'El registro fue eliminado de la base de datos.',
-                    confirmButtonColor: '#C41230'
+                    title: `
+                        <div class="swal-muni-header-wrap">
+                            <div class="swal-muni-icon-box">
+                                <i class="bi bi-check-circle-fill text-warning"></i>
+                            </div>
+                            <div class="swal-muni-title-box">
+                                <h4 class="swal-muni-title">Registro dado de baja</h4>
+                                <p class="swal-muni-subtitle">Catálogo institucional SGR La Serena</p>
+                            </div>
+                        </div>
+                    `,
+                    html: '<p class="my-3 text-success fw-semibold">El registro fue actualizado en la base de datos.</p>',
+                    confirmButtonText: 'Aceptar',
+                    customClass: {
+                        popup: 'swal2-catalog-modal',
+                        htmlContainer: 'swal2-catalog-container',
+                        title: 'swal2-catalog-title',
+                        confirmButton: 'btn btn-muni-red rounded-pill px-4 py-2 fw-semibold',
+                        actions: 'swal2-catalog-actions'
+                    },
+                    buttonsStyling: false
                 });
             }
         } catch (error) { notice(panel, error.message, true); }
@@ -465,27 +569,39 @@
     }
     function init() {
         document.querySelectorAll('[data-catalog]').forEach(root => {
+            if (root.dataset.catalogReady === 'true') return;
+            root.dataset.catalogReady = 'true';
             const catalog = root.dataset.catalog;
             if (!definitions[catalog]) return;
             const panel = { root, catalog, page: 1, revision: 0, editing: false };
-            const toolbar = element('div', 'd-flex align-items-center flex-wrap gap-2 my-3');
-            panel.search = element('input', 'form-control rounded-pill w-auto');
+
+            const toolbar = element('div', 'd-flex justify-content-between align-items-center flex-wrap gap-2 mb-3');
+            const filterGroup = element('div', 'd-flex align-items-center flex-wrap gap-2 flex-grow-1');
+            const actionGroup = element('div', 'd-flex align-items-center gap-2');
+
+            panel.search = element('input', 'form-control rounded-pill');
+            panel.search.style.minWidth = '240px';
+            panel.search.style.maxWidth = '340px';
             panel.search.type = 'search';
-            panel.search.placeholder = 'Buscar por código, nombre o descripción';
+            panel.search.placeholder = 'Buscar por código o nombre...';
             panel.search.maxLength = 150;
-            panel.search.setAttribute('aria-label', `Buscar ${definitions[catalog].title} por código, nombre o descripción`);
+            panel.search.setAttribute('aria-label', `Buscar ${definitions[catalog].title}`);
+
             panel.status = element('select', 'form-select rounded-pill w-auto');
             panel.status.setAttribute('aria-label', 'Filtrar por estado');
             [['', 'Todos los estados'], ['Activo', 'Activo'], ['Inactivo', 'Inactivo']].forEach(([value, label]) => panel.status.add(new Option(label, value)));
+
             panel.size = element('select', 'form-select rounded-pill w-auto');
             panel.size.setAttribute('aria-label', 'Registros por página');
             [10, 20, 30, 40, 50].forEach(size => panel.size.append(new Option(`${size} por página`, size)));
+
             const filterChanged = () => { panel.page = 1; notice(panel, ''); load(panel); };
             if (catalog === 'subattentions') {
                 panel.attentionType = element('select', 'form-select rounded-pill w-auto');
                 panel.attentionType.setAttribute('aria-label', 'Filtrar por tipo de atención');
                 panel.attentionType.append(new Option('Todos los tipos', ''));
                 panel.attentionType.addEventListener('change', filterChanged);
+                filterGroup.append(panel.attentionType);
             }
             if (catalog === 'goals') {
                 panel.position = element('select', 'form-select rounded-pill w-auto');
@@ -496,10 +612,11 @@
                 panel.item.append(new Option('Todos los ítems', ''));
                 panel.position.addEventListener('change', filterChanged);
                 panel.item.addEventListener('change', filterChanged);
+                filterGroup.append(panel.position, panel.item);
             }
+
             let timer;
             panel.search.addEventListener('input', () => {
-                // Immediately invalidate older responses during debounce.
                 panel.revision += 1;
                 panel.previous.disabled = panel.next.disabled = true;
                 clearTimeout(timer);
@@ -507,35 +624,71 @@
             });
             panel.size.addEventListener('change', filterChanged);
             panel.status.addEventListener('change', filterChanged);
-            toolbar.append(panel.search, panel.status);
-            if (panel.attentionType) toolbar.append(panel.attentionType);
-            if (panel.position) toolbar.append(panel.position, panel.item);
-            panel.exportButton = button('Exportar a Excel', () => exportPanel(panel), 'btn btn-outline-success rounded-pill');
-            toolbar.append(panel.size, panel.exportButton, button('Recargar', () => { notice(panel, ''); load(panel); }, 'btn btn-outline-secondary rounded-pill'), button(`Crear ${definitions[catalog].title}`, () => editRecord(panel), 'btn btn-primary rounded-pill'));
+
+            filterGroup.prepend(panel.search, panel.status);
+            filterGroup.append(panel.size);
+
+            panel.exportButton = button('<i class="bi bi-file-earmark-excel me-1 text-success"></i> Exportar a Excel', () => exportPanel(panel), 'btn btn-outline-secondary rounded-pill px-3 py-1 fw-bold small');
+            const reloadBtn = button('<i class="bi bi-arrow-clockwise me-1"></i> Recargar', () => { notice(panel, ''); load(panel); }, 'btn btn-outline-secondary rounded-pill px-3 py-1 fw-bold small');
+            const createBtn = button('<i class="bi bi-plus-lg me-1"></i> Crear ' + definitions[catalog].title, () => editRecord(panel), 'liquid-glass-btn-primary');
+
+            actionGroup.append(panel.exportButton, reloadBtn, createBtn);
+            toolbar.append(filterGroup, actionGroup);
+
             panel.message = element('div');
             panel.message.hidden = true;
             panel.message.style.whiteSpace = 'pre-line';
             panel.message.setAttribute('role', 'status');
-            const wrapper = element('div', 'table-responsive rounded-4 border bg-white shadow-sm');
-            const table = element('table', 'table align-middle m-0');
+
+            const wrapper = element('div', 'table-responsive rounded-4 border bg-white shadow-sm mb-3');
+            wrapper.style.overflowX = 'auto';
+            const table = element('table', 'table align-middle m-0 catalog-fixed-table');
             table.setAttribute('aria-label', `Catálogo de ${definitions[catalog].title}`);
-            const head = element('thead', 'table-light');
+            table.style.tableLayout = 'fixed';
+            table.style.width = '100%';
+            table.style.borderCollapse = 'collapse';
+
+            const colgroup = element('colgroup');
+            const colWidths = definitions[catalog].colWidths || [];
+            colWidths.forEach(width => {
+                const col = element('col');
+                col.style.width = width;
+                colgroup.append(col);
+            });
+            table.append(colgroup);
+
+            const head = element('thead');
+            head.style.background = 'rgba(241, 245, 249, 0.95)';
+            head.style.borderBottom = '2px solid #CBD5E1';
             const heading = element('tr');
+            heading.style.fontSize = '0.76rem';
+            heading.style.fontWeight = '800';
+            heading.style.color = '#1E293B';
+            heading.style.textTransform = 'uppercase';
+            heading.style.letterSpacing = '0.03em';
+
             [...definitions[catalog].columns.map(([, label]) => label), 'Acciones'].forEach(label => {
-                const th = element('th', 'py-3 px-3', label);
+                const isCenter = ['Estado', 'Acciones', 'Pond.'].includes(label);
+                const th = element('th', `py-2.5 px-2 ${isCenter ? 'text-center' : ''}`, label);
                 th.scope = 'col';
                 heading.append(th);
             });
             head.append(heading);
+
             panel.body = element('tbody');
             table.append(head, panel.body);
             wrapper.append(table);
-            const pagination = element('div', 'd-flex align-items-center flex-wrap gap-3 mt-3');
+
+            const pagination = element('div', 'd-flex justify-content-between align-items-center flex-wrap gap-2 mt-3 pt-2 border-top');
             panel.summary = element('span', 'text-muted small');
             panel.summary.setAttribute('aria-live', 'polite');
-            panel.previous = button('Anterior', () => { panel.page -= 1; load(panel); });
-            panel.next = button('Siguiente', () => { panel.page += 1; load(panel); });
-            pagination.append(panel.summary, panel.previous, panel.next);
+            const pageGroup = element('div', 'btn-group');
+            pageGroup.setAttribute('aria-label', 'Páginas');
+            panel.previous = button('Anterior', () => { panel.page -= 1; load(panel); }, 'btn btn-outline-secondary btn-sm');
+            panel.next = button('Siguiente', () => { panel.page += 1; load(panel); }, 'btn btn-outline-secondary btn-sm');
+            pageGroup.append(panel.previous, panel.next);
+            pagination.append(panel.summary, pageGroup);
+
             root.replaceChildren(toolbar, panel.message, wrapper, pagination);
             panels.push(panel);
             load(panel);
