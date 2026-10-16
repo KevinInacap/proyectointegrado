@@ -23,7 +23,7 @@
                                 <small class="text-white-50">RUT: <span id="fichaRut" class="text-white fw-bold">12.345.678-9</span> • <span id="fichaTerritorio">Centro</span></small>
                             </div>
                         </div>
-                        <button class="btn btn-light btn-sm rounded-pill px-3 fw-bold text-primary shadow-sm"
+                        <button class="btn btn-light btn-sm rounded-pill px-3 fw-bold text-danger shadow-sm"
                             onclick="exportarFichaIndividualPDF()">
                             <i class="bi bi-file-earmark-pdf-fill text-danger me-1"></i> Exportar Expediente PDF
                         </button>
@@ -109,7 +109,7 @@
                         <div class="alert alert-info py-2 small">Archivo leído: <strong
                                 id="lblNombreArchivoCargado"></strong> (<span id="lblTotalFilasCargadas"></span>
                             registros)</div>
-                        <button class="btn btn-success w-100 fw-bold rounded-pill" id="btnConfirmarImportacion"
+                        <button class="btn btn-muni-red w-100 fw-bold rounded-pill text-white" id="btnConfirmarImportacion"
                             onclick="ejecutarImportacionFinal()">Importar Registros</button>
                     </div>
                 </div>
@@ -452,7 +452,7 @@
 
                     <div class="d-flex justify-content-end gap-2 mt-3 pt-2 border-top">
                         <button type="button" class="btn btn-light rounded-pill px-3 py-1 btn-sm" data-bs-dismiss="modal">Cerrar</button>
-                        <button type="button" class="btn btn-outline-primary rounded-pill px-3 py-1 btn-sm fw-bold" onclick="window.print()">
+                        <button type="button" class="btn btn-outline-muni-red rounded-pill px-3 py-1 btn-sm fw-bold" onclick="window.print()">
                             <i class="bi bi-printer me-1"></i> Imprimir Expediente
                         </button>
                     </div>
@@ -583,13 +583,13 @@
                             </select>
                         </div>
                         <div class="d-flex align-items-center gap-2">
-                            <button class="btn btn-outline-secondary btn-sm rounded-pill px-3 fw-semibold"
+                            <button class="btn btn-outline-muni-red btn-sm rounded-pill px-3 fw-semibold"
                                 onclick="cargarLogsAuditoriaDB(true)">
                                 <i class="bi bi-arrow-clockwise me-1"></i> Actualizar Log
                             </button>
-                            <button class="btn btn-outline-success btn-sm rounded-pill px-3 fw-semibold"
+                            <button class="btn btn-outline-muni-red btn-sm rounded-pill px-3 fw-semibold"
                                 onclick="exportarExcelAuditoria()">
-                                <i class="bi bi-file-earmark-excel-fill text-success me-1"></i> Exportar Log
+                                <i class="bi bi-file-earmark-excel-fill text-danger me-1"></i> Exportar Log
                             </button>
                         </div>
                     </div>
@@ -624,10 +624,10 @@
                     class="modal-footer bg-white py-2 px-4 border-top d-flex justify-content-between align-items-center">
                     <span class="small text-muted" id="lblTotalAuditLogs">0 eventos registrados</span>
                     <div class="d-flex align-items-center gap-2">
-                        <button type="button" class="btn btn-outline-primary btn-sm" id="btnPaginaAnteriorAuditoria" onclick="cambiarPaginaAuditoria(-1)" aria-label="Página anterior"><i class="bi bi-chevron-left"></i></button>
+                        <button type="button" class="btn btn-outline-muni-red btn-sm" id="btnPaginaAnteriorAuditoria" onclick="cambiarPaginaAuditoria(-1)" aria-label="Página anterior"><i class="bi bi-chevron-left"></i></button>
                         <span class="small text-muted" id="lblPaginaAuditoria">Página 1 de 1</span>
-                        <button type="button" class="btn btn-outline-primary btn-sm" id="btnPaginaSiguienteAuditoria" onclick="cambiarPaginaAuditoria(1)" aria-label="Página siguiente"><i class="bi bi-chevron-right"></i></button>
-                        <button type="button" class="btn btn-secondary btn-sm rounded-pill px-4" data-bs-dismiss="modal">Cerrar</button>
+                        <button type="button" class="btn btn-outline-muni-red btn-sm" id="btnPaginaSiguienteAuditoria" onclick="cambiarPaginaAuditoria(1)" aria-label="Página siguiente"><i class="bi bi-chevron-right"></i></button>
+                        <button type="button" class="btn btn-outline-muni-red btn-sm rounded-pill px-4" data-bs-dismiss="modal">Cerrar</button>
                     </div>
                 </div>
             </div>
@@ -673,7 +673,7 @@
                                     alt="Foto de Perfil" class="shadow-sm"
                                     style="width: 104px; height: 104px; border-radius: 50%; object-fit: cover; border: 4px solid #F1F5F9; background: #E2E8F0;">
                                 <button type="button"
-                                    class="btn btn-sm btn-primary rounded-circle position-absolute bottom-0 end-0 shadow"
+                                    class="btn btn-sm btn-muni-red rounded-circle position-absolute bottom-0 end-0 shadow text-white"
                                     style="width: 34px; height: 34px; padding: 0; display: flex; align-items: center; justify-content: center; border: 2px solid #FFFFFF;"
                                     onclick="document.getElementById('inputFotoPerfil').click()"
                                     title="Seleccionar foto desde tu equipo">
@@ -690,11 +690,11 @@
                                     MB). Se actualizará en todo el portal al guardar.</p>
                                 <div class="d-flex flex-wrap gap-2 justify-content-center justify-content-sm-start">
                                     <button type="button"
-                                        class="btn btn-outline-primary btn-sm rounded-pill px-3 fw-semibold"
+                                        class="btn btn-outline-muni-red btn-sm rounded-pill px-3 fw-semibold"
                                         onclick="document.getElementById('inputFotoPerfil').click()">
                                         <i class="bi bi-upload me-1"></i> Subir Nueva Foto
                                     </button>
-                                    <button type="button" class="btn btn-outline-secondary btn-sm rounded-pill px-3"
+                                    <button type="button" class="btn btn-outline-muni-red btn-sm rounded-pill px-3"
                                         onclick="restablecerFotoPerfil()">
                                         <i class="bi bi-arrow-counterclockwise me-1"></i> Restablecer por Defecto
                                     </button>
@@ -927,27 +927,27 @@
                                 </div>
                                 <div class="d-flex align-items-center flex-wrap gap-1">
                                     <button type="button"
-                                        class="btn btn-sm btn-outline-dark fw-semibold rounded-pill px-3"
+                                        class="btn btn-sm btn-outline-muni-red fw-semibold rounded-pill px-3"
                                         onclick="aplicarPlantillaPermisos('admin')">
                                         Acceso Total
                                     </button>
                                     <button type="button"
-                                        class="btn btn-sm btn-outline-primary fw-semibold rounded-pill px-3"
+                                        class="btn btn-sm btn-outline-muni-red fw-semibold rounded-pill px-3"
                                         onclick="aplicarPlantillaPermisos('operador')">
                                         Operador
                                     </button>
                                     <button type="button"
-                                        class="btn btn-sm btn-outline-secondary fw-semibold rounded-pill px-3"
+                                        class="btn btn-sm btn-outline-muni-red fw-semibold rounded-pill px-3"
                                         onclick="aplicarPlantillaPermisos('consultor')">
                                         Solo Lectura
                                     </button>
                                     <button type="button"
-                                        class="btn btn-sm btn-outline-secondary fw-semibold rounded-pill px-2"
+                                        class="btn btn-sm btn-outline-muni-red fw-semibold rounded-pill px-2"
                                         onclick="invertirSeleccionPermisos()" title="Invertir selección">
                                         Invertir
                                     </button>
                                     <button type="button"
-                                        class="btn btn-sm btn-outline-secondary fw-semibold rounded-pill px-2"
+                                        class="btn btn-sm btn-outline-muni-red fw-semibold rounded-pill px-2"
                                         onclick="desmarcarTodosPermisos()" title="Desmarcar todos">
                                         Limpiar
                                     </button>
