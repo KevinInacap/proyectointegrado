@@ -220,7 +220,8 @@ def dashboard_consulta_view(request):
 
 
 def dashboard_asistente_view(request):
-    return _position_dashboard(request, 'Asistente Social')
+    from social.views import dashboard_asistente_view as social_dashboard
+    return social_dashboard(request)
 
 
 def dashboard_auditor_view(request):

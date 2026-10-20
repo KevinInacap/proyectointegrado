@@ -1,0 +1,939 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Asistente Social · Ilustre Municipalidad de La Serena</title>
+
+    <!-- Google Fonts: Plus Jakarta Sans & Montserrat -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+
+    <!-- SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <!-- SheetJS para Exportación a Excel/CSV -->
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+
+    <!-- Estilos Profesionales del Dashboard Asistente Social -->
+    <link rel="stylesheet" href="{% static 'css/dashboard_asistente.css' %}">
+</head>
+<body>
+
+<div class="asistente-wrapper">
+
+    <!-- =================================================================
+         SIDEBAR INSTITUCIONAL DE NAVEGACIÓN
+         ================================================================= -->
+    <aside class="asistente-sidebar" aria-label="Navegación Asistencia Social">
+        <div>
+            <!-- Escudo / Logotipo Oficial de La Serena -->
+            <a href="{% url 'activities:dashboard_asistente' %}" class="asistente-brand">
+                <div class="asistente-brand-logo">
+                    <i class="bi bi-shield-check"></i>
+                </div>
+                <div>
+                    <div class="asistente-brand-title">La Serena</div>
+                    <div class="asistente-brand-subtitle">Asistencia Social · DIDECO</div>
+                </div>
+            </a>
+
+            <!-- Ficha del Usuario Activo -->
+            <div class="asistente-user-card" id="userCardProfile">
+                <div class="asistente-avatar">
+                    {{ first_name|slice:":1"|default:"A" }}
+                </div>
+                <div>
+                    <div class="asistente-user-name">{{ user_name|default:"Asistente Social" }}</div>
+                    <div class="asistente-user-role"><i class="bi bi-patch-check-fill"></i> Asistente Social</div>
+                    <div class="asistente-user-delegation">
+                        <i class="bi bi-geo-alt-fill"></i>
+                        <span>{{ current_delegation }}</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Menú de Navegación del Cargo -->
+            <nav>
+                <ul class="asistente-nav-list">
+                    <li>
+                        <a class="asistente-nav-link active" onclick="switchSection('casos')" id="nav-casos">
+                            <span class="asistente-nav-icon"><i class="bi bi-people-fill"></i></span>
+                            <span>Casos Sociales Únicos</span>
+                            <span class="asistente-badge badge-carmesi">{{ total_cases }}</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a class="asistente-nav-link" onclick="switchSection('etapas')" id="nav-etapas">
+                            <span class="asistente-nav-icon"><i class="bi bi-diagram-3-fill"></i></span>
+                            <span>Flujo 3 Etapas (RN-012)</span>
+                            <span class="asistente-badge badge-sky">{{ stage2_cases }}</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a class="asistente-nav-link" onclick="switchSection('terreno')" id="nav-terreno">
+                            <span class="asistente-nav-icon"><i class="bi bi-pin-map-fill"></i></span>
+                            <span>Visitas a Terreno</span>
+                            <span class="asistente-badge badge-amber">{{ visitas_terreno|length }}</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a class="asistente-nav-link" onclick="switchSection('subsidios')" id="nav-subsidios">
+                            <span class="asistente-nav-icon"><i class="bi bi-gift-fill"></i></span>
+                            <span>Catálogo de Ayudas</span>
+                            <span class="asistente-badge badge-emerald">{{ subsidios_entregados|length }}</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a class="asistente-nav-link" onclick="switchSection('metas')" id="nav-metas">
+                            <span class="asistente-nav-icon"><i class="bi bi-speedometer2"></i></span>
+                            <span>Metas y Semáforo SGR</span>
+                            <span class="asistente-badge badge-sky">{{ avance_pct }}%</span>
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+
+        <!-- Pie del Sidebar: Cerrar Sesión y Ayuda -->
+        <div style="border-top: 1px solid rgba(255,255,255,0.15); padding-top: 1rem;">
+            <a href="{% url 'core:logout' %}" class="asistente-nav-link" style="color: #fca5a5;">
+                <span class="asistente-nav-icon"><i class="bi bi-box-arrow-left"></i></span>
+                <span>Cerrar Sesión</span>
+            </a>
+            <div style="font-size: 0.68rem; color: rgba(255,255,255,0.5); text-align: center; margin-top: 0.5rem;">
+                Sistema SGR Municipal · Versión 2026
+            </div>
+        </div>
+    </aside>
+
+    <!-- =================================================================
+         CONTENIDO PRINCIPAL DEL DASHBOARD
+         ================================================================= -->
+    <main class="asistente-main">
+
+        <!-- Encabezado Superior -->
+        <header class="asistente-header">
+            <div>
+                <h1 class="asistente-header-title">
+                    <i class="bi bi-heart-pulse-fill" style="color: #f43f5e;"></i>
+                    Panel de Gestión Social Territorial
+                </h1>
+                <p class="asistente-header-subtitle">
+                    Delegación: <strong>{{ current_delegation }}</strong> · Período: <strong>{{ period_name }}</strong>
+                </p>
+            </div>
+            <div class="asistente-actions">
+                <button class="btn-asistente btn-glass" onclick="exportarCasosExcel()">
+                    <i class="bi bi-file-earmark-spreadsheet-fill" style="color: #34d399;"></i> Exportar Excel
+                </button>
+                <button class="btn-asistente btn-primary-action" onclick="abrirModalNuevoCaso()">
+                    <i class="bi bi-plus-circle-fill"></i> + Nuevo Caso Social
+                </button>
+            </div>
+        </header>
+
+        <!-- BANNER DE SEMÁFORO INSTITUCIONAL (RN-007, RN-008) -->
+        <section class="semaforo-banner">
+            <div class="semaforo-indicator">
+                <div class="semaforo-dot {{ semaforo_color }}"></div>
+                <div>
+                    <div class="semaforo-text-title">
+                        Semáforo SGR: <span style="text-decoration: underline;">{{ semaforo_texto }}</span>
+                    </div>
+                    <div class="semaforo-text-desc">
+                        Meta acumulada esperada al día: <strong>{{ meta_esperada_pct }}%</strong> · Cumplimiento de gestiones: <strong>{{ avance_pct }}%</strong>
+                    </div>
+                </div>
+            </div>
+            <div class="semaforo-progress-box">
+                <div style="display: flex; justify-content: space-between; font-size: 0.74rem; font-weight: 700;">
+                    <span>Avance Social Trimestral</span>
+                    <span>{{ gestiones_count }} / {{ target_value }} Atenciones ({{ avance_pct }}%)</span>
+                </div>
+                <div class="progress-bar-bg">
+                    <div class="progress-bar-fill {{ semaforo_color }}" style="width: {{ avance_pct|floatformat:0 }}%;"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- KPIS PRINCIPALES DE GESTIÓN SOCIAL -->
+        <section class="kpi-grid">
+            <div class="kpi-card kpi-blue">
+                <div class="kpi-top">
+                    <span class="kpi-label">Casos Totales</span>
+                    <i class="bi bi-folder-fill kpi-icon" style="color: #60a5fa;"></i>
+                </div>
+                <div class="kpi-value" id="kpiTotal">{{ total_cases }}</div>
+                <div class="kpi-caption">
+                    <i class="bi bi-person-check"></i> Fichas únicas activas
+                </div>
+            </div>
+
+            <div class="kpi-card kpi-purple">
+                <div class="kpi-top">
+                    <span class="kpi-label">Etapa 1: Ingreso</span>
+                    <i class="bi bi-1-circle-fill kpi-icon" style="color: #c084fc;"></i>
+                </div>
+                <div class="kpi-value" id="kpiStage1">{{ stage1_cases }}</div>
+                <div class="kpi-caption">
+                    <i class="bi bi-hourglass-split"></i> Antecedentes recepcionados
+                </div>
+            </div>
+
+            <div class="kpi-card kpi-amber">
+                <div class="kpi-top">
+                    <span class="kpi-label">Etapa 2: Terreno</span>
+                    <i class="bi bi-2-circle-fill kpi-icon" style="color: #fbbf24;"></i>
+                </div>
+                <div class="kpi-value" id="kpiStage2">{{ stage2_cases }}</div>
+                <div class="kpi-caption">
+                    <i class="bi bi-camera-fill"></i> Con evidencia fotográfica
+                </div>
+            </div>
+
+            <div class="kpi-card kpi-emerald">
+                <div class="kpi-top">
+                    <span class="kpi-label">Etapa 3: Resuelto</span>
+                    <i class="bi bi-3-circle-fill kpi-icon" style="color: #34d399;"></i>
+                </div>
+                <div class="kpi-value" id="kpiStage3">{{ stage3_cases }}</div>
+                <div class="kpi-caption">
+                    <i class="bi bi-check-circle-fill"></i> Subsidio o cierre social
+                </div>
+            </div>
+        </section>
+
+        <!-- =================================================================
+             SECCIÓN 1: TABLA PRINCIPAL DE CASOS SOCIALES (RF-015, RN-012)
+             ================================================================= -->
+        <div id="section-casos">
+            <!-- Barra de Filtros y Búsqueda Dinámica -->
+            <div class="filter-bar">
+                <div class="filter-tabs">
+                    <button class="filter-tab active" onclick="filtrarPorEtapa('todas', this)">Todos los Casos</button>
+                    <button class="filter-tab" onclick="filtrarPorEtapa('1', this)">Etapa 1 (Ingreso)</button>
+                    <button class="filter-tab" onclick="filtrarPorEtapa('2', this)">Etapa 2 (Terreno)</button>
+                    <button class="filter-tab" onclick="filtrarPorEtapa('3', this)">Etapa 3 (Resuelto)</button>
+                </div>
+                <div class="search-input-wrap">
+                    <i class="bi bi-search"></i>
+                    <input type="text" id="inputBusquedaCasos" class="search-input" placeholder="Buscar por RUT, Nombre o Sede..." onkeyup="buscarCasosEnVivo()">
+                </div>
+            </div>
+
+            <!-- Tabla de Casos -->
+            <div class="table-glass-container">
+                <table class="table-glass" id="tablaCasosSociales">
+                    <thead>
+                        <tr>
+                            <th style="width: 140px;">RUT Vecino</th>
+                            <th>Persona Usuaria / Beneficiario</th>
+                            <th>Delegación</th>
+                            <th>Fecha Ingreso</th>
+                            <th style="width: 170px;">Flujo RN-012</th>
+                            <th style="text-align: right; width: 150px;">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tbodyCasos">
+                        {% for c in cases %}
+                        <tr data-stage="{{ c.current_stage }}" data-rut="{{ c.user_rut }}" data-nombre="{{ c.user_name }}" data-delegacion="{{ c.delegation }}">
+                            <td>
+                                <strong style="font-family: monospace; letter-spacing: 0.5px;">{{ c.user_rut }}</strong>
+                            </td>
+                            <td>
+                                <div style="font-weight: 700;">{{ c.user_name }}</div>
+                                <div style="font-size: 0.72rem; color: rgba(255,255,255,0.65);">
+                                    <i class="bi bi-telephone-fill"></i> {{ c.contact_phone|default:"Sin teléfono" }}
+                                </div>
+                            </td>
+                            <td>
+                                <span class="asistente-badge badge-sky" style="font-size: 0.75rem;">
+                                    {{ c.delegation|default:"Central" }}
+                                </span>
+                            </td>
+                            <td>{{ c.entry_date }}</td>
+                            <td>
+                                <span class="stage-stepper stage-{{ c.current_stage }}">
+                                    <span class="stepper-dots">
+                                        <span class="stepper-dot {% if c.current_stage >= 1 %}active{% endif %}"></span>
+                                        <span class="stepper-dot {% if c.current_stage >= 2 %}active{% endif %}"></span>
+                                        <span class="stepper-dot {% if c.current_stage >= 3 %}active{% endif %}"></span>
+                                    </span>
+                                    {{ c.status_label }}
+                                </span>
+                            </td>
+                            <td style="text-align: right;">
+                                <button class="action-icon-btn" title="Ver Expediente Social Completo" onclick="verExpedienteCaso({{ c.id }})">
+                                    <i class="bi bi-eye-fill"></i>
+                                </button>
+                                {% if c.can_advance %}
+                                <button class="action-icon-btn btn-advance" title="Avanzar a Etapa {{ c.next_stage }} (RN-012)" onclick="abrirModalAvanzarEtapa({{ c.id }}, {{ c.next_stage }}, '{{ c.user_name|escapejs }}')">
+                                    <i class="bi bi-arrow-right-circle-fill"></i>
+                                </button>
+                                {% endif %}
+                                <button class="action-icon-btn btn-report" title="Emitir Informe Social Oficial" onclick="emitirInformeSocial({{ c.id }})">
+                                    <i class="bi bi-printer-fill"></i>
+                                </button>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr id="filaVacia">
+                            <td colspan="6" style="text-align: center; padding: 2.5rem; color: rgba(255,255,255,0.6);">
+                                <i class="bi bi-inbox" style="font-size: 2rem; display: block; margin-bottom: 0.5rem;"></i>
+                                No hay casos sociales registrados para los filtros seleccionados.
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- =================================================================
+             SECCIÓN 2: VISITAS EN TERRENO Y LEVANTAMIENTOS TÉCNICOS
+             ================================================================= -->
+        <div id="section-terreno" style="display: none;">
+            <div class="semaforo-banner" style="background: rgba(2, 132, 199, 0.15);">
+                <div class="semaforo-indicator">
+                    <i class="bi bi-geo-alt-fill" style="font-size: 1.8rem; color: #38bdf8;"></i>
+                    <div>
+                        <div class="semaforo-text-title">Visitas Domiciliarias a Terreno (Etapa 2 - RN-012)</div>
+                        <div class="semaforo-text-desc">
+                            Levantamientos socio-habitacionales con respaldo obligatorio de código fotográfico EVI-XXXX.
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="table-glass-container">
+                <table class="table-glass">
+                    <thead>
+                        <tr>
+                            <th>Fecha Visita</th>
+                            <th>Beneficiario</th>
+                            <th>Delegación / Territorio</th>
+                            <th>Tipo de Gestión</th>
+                            <th>Informe de Terreno / Evidencia</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for v in visitas_terreno %}
+                        <tr>
+                            <td>{{ v.management_date|date:"d/m/Y" }}</td>
+                            <td><strong>{{ v.case.user_name }}</strong> ({{ v.case.user_rut }})</td>
+                            <td>{{ v.case.delegation.name }}</td>
+                            <td><span class="asistente-badge badge-amber">{{ v.management_type }}</span></td>
+                            <td style="font-size: 0.82rem; color: rgba(255,255,255,0.85);">
+                                {{ v.result }}
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="5" style="text-align: center; padding: 2rem;">No hay visitas registradas aún.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- =================================================================
+             SECCIÓN 3: CATÁLOGO DE SUBSIDIOS Y AYUDAS ENTREGADAS
+             ================================================================= -->
+        <div id="section-subsidios" style="display: none;">
+            <div class="semaforo-banner" style="background: rgba(5, 150, 105, 0.15);">
+                <div class="semaforo-indicator">
+                    <i class="bi bi-gift-fill" style="font-size: 1.8rem; color: #34d399;"></i>
+                    <div>
+                        <div class="semaforo-text-title">Catálogo Municipal de Prestaciones y Subsidios Sociales</div>
+                        <div class="semaforo-text-desc">
+                            Ayudas asistenciales de emergencia y beneficios asignados en Etapa 3.
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="table-glass-container">
+                <table class="table-glass">
+                    <thead>
+                        <tr>
+                            <th>Fecha Entrega</th>
+                            <th>Beneficiario</th>
+                            <th>Sede Territorial</th>
+                            <th>Prestación Otorgada</th>
+                            <th>Dictamen de Cierre</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for s in subsidios_entregados %}
+                        <tr>
+                            <td>{{ s.management_date|date:"d/m/Y" }}</td>
+                            <td><strong>{{ s.case.user_name }}</strong> ({{ s.case.user_rut }})</td>
+                            <td>{{ s.case.delegation.name }}</td>
+                            <td>
+                                <span class="asistente-badge badge-emerald">
+                                    {{ s.catalog.service|default:"Ayuda Social Directa" }}
+                                </span>
+                            </td>
+                            <td style="font-size: 0.82rem; color: rgba(255,255,255,0.85);">
+                                {{ s.result }}
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="5" style="text-align: center; padding: 2rem;">No hay subsidios de etapa 3 registrados en el período.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </main>
+</div>
+
+<!-- =================================================================
+     MODAL: NUEVO CASO SOCIAL (FICHA ÚNICA CON VALIDACIÓN RUT M11)
+     ================================================================= -->
+<div class="asistente-modal-backdrop" id="modalNuevoCaso">
+    <div class="asistente-modal">
+        <div class="modal-head">
+            <h3><i class="bi bi-person-plus-fill" style="color: #f43f5e;"></i> Registrar Nuevo Caso Social (Ficha Única)</h3>
+            <button class="modal-close-btn" onclick="cerrarModal('modalNuevoCaso')">&times;</button>
+        </div>
+        <div class="modal-body">
+            <form id="formNuevoCaso" onsubmit="guardarNuevoCaso(event)">
+                <div class="form-group">
+                    <label for="nuevoCasoRut">RUT de la Persona Usuaria (con Guión y DV) *</label>
+                    <input type="text" id="nuevoCasoRut" class="form-control-asistente" placeholder="Ej: 18.420.915-K" required onblur="validarRutInput(this)">
+                    <small id="rutValidationHint" style="font-size: 0.72rem; color: rgba(255,255,255,0.6);">Se validará el algoritmo chileno Módulo 11.</small>
+                </div>
+
+                <div class="form-group">
+                    <label for="nuevoCasoNombre">Nombre Completo del Vecino / Beneficiario *</label>
+                    <input type="text" id="nuevoCasoNombre" class="form-control-asistente" placeholder="Nombres y Apellidos" required oninput="limpiarNumerosInput(this)">
+                </div>
+
+                <div class="form-group">
+                    <label for="nuevoCasoTelefono">Teléfono de Contacto</label>
+                    <input type="text" id="nuevoCasoTelefono" class="form-control-asistente" placeholder="+56 9 1234 5678">
+                </div>
+
+                <div class="form-group">
+                    <label for="nuevoCasoDelegacion">Delegación Territorial Municipal *</label>
+                    <select id="nuevoCasoDelegacion" class="form-control-asistente" required>
+                        {% for d in delegations %}
+                        <option value="{{ d.id }}">{{ d.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="nuevoCasoFecha">Fecha de Ingreso</label>
+                    <input type="date" id="nuevoCasoFecha" class="form-control-asistente" value="{{ today }}">
+                </div>
+
+                <div class="form-group">
+                    <label for="nuevoCasoProblema">Evaluación Preliminar y Demanda Social (Etapa 1) *</label>
+                    <textarea id="nuevoCasoProblema" class="form-control-asistente" rows="3" placeholder="Describe la vulnerabilidad, requerimiento o situación socioeconómica declarada..." required></textarea>
+                </div>
+
+                <div class="modal-foot">
+                    <button type="button" class="btn-asistente btn-glass" onclick="cerrarModal('modalNuevoCaso')">Cancelar</button>
+                    <button type="submit" class="btn-asistente btn-primary-action">Guardar Ficha Social</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- =================================================================
+     MODAL: AVANZAR ETAPA SECUENCIAL (RN-012)
+     ================================================================= -->
+<div class="asistente-modal-backdrop" id="modalAvanzarEtapa">
+    <div class="asistente-modal">
+        <div class="modal-head">
+            <h3 id="modalAvanzarTitulo"><i class="bi bi-arrow-right-circle-fill" style="color: #10b981;"></i> Avanzar Etapa del Caso</h3>
+            <button class="modal-close-btn" onclick="cerrarModal('modalAvanzarEtapa')">&times;</button>
+        </div>
+        <div class="modal-body">
+            <form id="formAvanzarEtapa" onsubmit="ejecutarAvanzarEtapa(event)">
+                <input type="hidden" id="avanzarCasoId">
+                <input type="hidden" id="avanzarTargetStage">
+
+                <div class="form-group">
+                    <label>Beneficiario</label>
+                    <div id="avanzarNombreVecino" style="font-weight: 700; font-size: 1rem; color: #67e8f9;"></div>
+                </div>
+
+                <div class="form-group">
+                    <label for="avanzarTipoGestion">Tipo de Gestión / Atención *</label>
+                    <input type="text" id="avanzarTipoGestion" class="form-control-asistente" required>
+                </div>
+
+                <!-- Campo específico si es Etapa 2 (Fotografía / Código de Evidencia obligatorio según RN-012) -->
+                <div class="form-group" id="grupoEvidenciaEtapa2" style="display: none;">
+                    <label for="avanzarEvidenciaCodigo">Código de Evidencia Fotográfica (EVI-XXXX) *</label>
+                    <input type="text" id="avanzarEvidenciaCodigo" class="form-control-asistente" placeholder="EVI-2026-XXXX">
+                    <small style="color: #fbbf24; font-size: 0.72rem;">* La Etapa 2 exige respaldo fotográfico en terreno según RN-012.</small>
+                </div>
+
+                <!-- Campo específico si es Etapa 3 (Prestación / Subsidio de Cierre) -->
+                <div class="form-group" id="grupoPrestacionEtapa3" style="display: none;">
+                    <label for="avanzarCatalogo">Servicio / Subsidio Asignado</label>
+                    <select id="avanzarCatalogo" class="form-control-asistente">
+                        <option value="">Selecciona prestación municipal...</option>
+                        {% for cat in catalogs %}
+                        <option value="{{ cat.id }}">{{ cat.service }} ({{ cat.attention_type }})</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="avanzarFecha">Fecha de la Gestión</label>
+                    <input type="date" id="avanzarFecha" class="form-control-asistente" value="{{ today }}">
+                </div>
+
+                <div class="form-group">
+                    <label for="avanzarResultado">Dictamen / Informe Técnico del Asistente Social *</label>
+                    <textarea id="avanzarResultado" class="form-control-asistente" rows="4" placeholder="Escribe el resultado técnico de la visita o la resolución social..." required></textarea>
+                </div>
+
+                <div class="modal-foot">
+                    <button type="button" class="btn-asistente btn-glass" onclick="cerrarModal('modalAvanzarEtapa')">Cancelar</button>
+                    <button type="submit" class="btn-asistente btn-primary-action">Confirmar y Avanzar Etapa</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- =================================================================
+     MODAL: EXPEDIENTE SOCIAL Y TRAZABILIDAD (ETAPAS 1, 2, 3)
+     ================================================================= -->
+<div class="asistente-modal-backdrop" id="modalExpediente">
+    <div class="asistente-modal" style="max-width: 720px;">
+        <div class="modal-head">
+            <h3><i class="bi bi-folder2-open" style="color: #38bdf8;"></i> Expediente Social Único</h3>
+            <button class="modal-close-btn" onclick="cerrarModal('modalExpediente')">&times;</button>
+        </div>
+        <div class="modal-body" id="expedienteContent">
+            <!-- Cargado dinámicamente vía AJAX -->
+        </div>
+        <div class="modal-foot">
+            <button class="btn-asistente btn-glass" onclick="cerrarModal('modalExpediente')">Cerrar</button>
+        </div>
+    </div>
+</div>
+
+<!-- =================================================================
+     MODAL: INFORME SOCIAL OFICIAL IMPRIMIBLE (DIDECO LA SERENA)
+     ================================================================= -->
+<div class="asistente-modal-backdrop" id="modalInformeOficial">
+    <div class="asistente-modal" style="max-width: 800px; background: #ffffff; color: #1e293b;">
+        <div class="modal-head" style="background: #f8fafc; border-bottom: 2px solid #b80003;">
+            <h3 style="color: #b80003;"><i class="bi bi-file-earmark-medical-fill"></i> Informe Social Oficial DIDECO</h3>
+            <div>
+                <button class="btn-asistente btn-primary-action" onclick="imprimirInformeSocial()" style="padding: 0.35rem 0.8rem; font-size: 0.78rem;">
+                    <i class="bi bi-printer"></i> Imprimir Ficha
+                </button>
+                <button class="modal-close-btn" onclick="cerrarModal('modalInformeOficial')" style="color: #334155;">&times;</button>
+            </div>
+        </div>
+        <div class="modal-body" id="informePrintContent" style="padding: 2rem;">
+            <!-- Renderizado de Ficha Oficial -->
+        </div>
+    </div>
+</div>
+
+<!-- =================================================================
+     SCRIPTS: LÓGICA FRONTEND, VALIDACIONES Y CONEXIÓN CON BACKEND
+     ================================================================= -->
+<script>
+// Obtener CSRF Token de cookies de Django
+function getCsrfToken() {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, 10) === ('csrftoken=')) {
+                cookieValue = decodeURIComponent(cookie.substring(10));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+// Navegación entre secciones
+function switchSection(sec) {
+    document.getElementById('section-casos').style.display = sec === 'casos' || sec === 'etapas' ? 'block' : 'none';
+    document.getElementById('section-terreno').style.display = sec === 'terreno' ? 'block' : 'none';
+    document.getElementById('section-subsidios').style.display = sec === 'subsidios' ? 'block' : 'none';
+
+    document.querySelectorAll('.asistente-nav-link').forEach(l => l.classList.remove('active'));
+    if (sec === 'casos') document.getElementById('nav-casos').classList.add('active');
+    if (sec === 'etapas') document.getElementById('nav-etapas').classList.add('active');
+    if (sec === 'terreno') document.getElementById('nav-terreno').classList.add('active');
+    if (sec === 'subsidios') document.getElementById('nav-subsidios').classList.add('active');
+    if (sec === 'metas') {
+        Swal.fire({
+            title: 'Metas SGR Comunal',
+            html: `
+                <div style="text-align: left; font-size: 0.9rem;">
+                    <p><strong>Cargo:</strong> Asistente Social</p>
+                    <p><strong>Meta Período (T3):</strong> 50 atenciones con informe técnico</p>
+                    <p><strong>Avance Actual:</strong> {{ gestiones_count }} gestiones aprobadas</p>
+                    <p><strong>Ponderador del Cargo:</strong> 35% del semáforo delegacional</p>
+                    <p><strong>Semáforo:</strong> {{ semaforo_texto }}</p>
+                </div>
+            `,
+            icon: 'info',
+            confirmButtonColor: '#b80003'
+        });
+    }
+}
+
+// Filtro rápido por Etapa
+function filtrarPorEtapa(etapa, btn) {
+    document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
+    btn.classList.add('active');
+
+    const filas = document.querySelectorAll('#tbodyCasos tr:not(#filaVacia)');
+    filas.forEach(f => {
+        const st = f.getAttribute('data-stage');
+        if (etapa === 'todas' || st === etapa) {
+            f.style.display = '';
+        } else {
+            f.style.display = 'none';
+        }
+    });
+}
+
+// Búsqueda en vivo
+function buscarCasosEnVivo() {
+    const q = document.getElementById('inputBusquedaCasos').value.toLowerCase().trim();
+    const filas = document.querySelectorAll('#tbodyCasos tr:not(#filaVacia)');
+    filas.forEach(f => {
+        const rut = (f.getAttribute('data-rut') || '').toLowerCase();
+        const nombre = (f.getAttribute('data-nombre') || '').toLowerCase();
+        const del = (f.getAttribute('data-delegacion') || '').toLowerCase();
+        if (rut.includes(q) || nombre.includes(q) || del.includes(q)) {
+            f.style.display = '';
+        } else {
+            f.style.display = 'none';
+        }
+    });
+}
+
+// Limpiar números en campos de nombres (Seguridad y Consistencia)
+function limpiarNumerosInput(input) {
+    input.value = input.value.replace(/[0-9]/g, '');
+}
+
+// Validación chilena Módulo 11 en vivo
+function validarRutInput(input) {
+    let valor = input.value.replace(/[^0-9kK]/g, '').toUpperCase();
+    if (valor.length < 2) return;
+
+    let cuerpo = valor.slice(0, -1);
+    let dv = valor.slice(-1);
+
+    // Formatear automáticamente
+    let cuerpoFmt = '';
+    while (cuerpo.length > 3) {
+        cuerpoFmt = '.' + cuerpo.slice(-3) + cuerpoFmt;
+        cuerpo = cuerpo.slice(0, -3);
+    }
+    cuerpoFmt = cuerpo + cuerpoFmt;
+    input.value = cuerpoFmt + '-' + dv;
+
+    // Validar Módulo 11
+    let sum = 0, mult = 2;
+    let numStr = valor.slice(0, -1);
+    for (let i = numStr.length - 1; i >= 0; i--) {
+        sum += parseInt(numStr[i]) * mult;
+        mult = mult === 7 ? 2 : mult + 1;
+    }
+    let res = 11 - (sum % 11);
+    let expected = res === 11 ? '0' : (res === 10 ? 'K' : res.toString());
+
+    const hint = document.getElementById('rutValidationHint');
+    if (dv !== expected) {
+        hint.innerHTML = '<span style="color: #ef4444;"><i class="bi bi-x-circle"></i> RUT inválido según el algoritmo Módulo 11.</span>';
+    } else {
+        hint.innerHTML = '<span style="color: #10b981;"><i class="bi bi-check-circle"></i> RUT válido de acuerdo a registro civil.</span>';
+    }
+}
+
+// Control de modales
+function abrirModalNuevoCaso() {
+    document.getElementById('modalNuevoCaso').classList.add('open');
+}
+function cerrarModal(id) {
+    document.getElementById(id).classList.remove('open');
+}
+
+// Guardar Nuevo Caso Social
+async function guardarNuevoCaso(e) {
+    e.preventDefault();
+    const rut = document.getElementById('nuevoCasoRut').value.trim();
+    const nombre = document.getElementById('nuevoCasoNombre').value.trim();
+    const telefono = document.getElementById('nuevoCasoTelefono').value.trim();
+    const delegation_id = document.getElementById('nuevoCasoDelegacion').value;
+    const entry_date = document.getElementById('nuevoCasoFecha').value;
+    const initial_problem = document.getElementById('nuevoCasoProblema').value.trim();
+
+    try {
+        const res = await fetch('/social/api/casos/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCsrfToken()
+            },
+            body: JSON.stringify({
+                user_rut: rut,
+                user_name: nombre,
+                contact_phone: telefono,
+                delegation_id: delegation_id,
+                entry_date: entry_date,
+                initial_problem: initial_problem
+            })
+        });
+        const data = await res.json();
+        if (data.success) {
+            Swal.fire({
+                title: '¡Ficha Creada!',
+                text: data.message,
+                icon: 'success',
+                confirmButtonColor: '#b80003'
+            }).then(() => {
+                location.reload();
+            });
+        } else {
+            Swal.fire({ title: 'Error', text: data.message, icon: 'error', confirmButtonColor: '#b80003' });
+        }
+    } catch (err) {
+        Swal.fire({ title: 'Error de Red', text: 'No se pudo conectar con el servidor.', icon: 'error' });
+    }
+}
+
+// Modal Avanzar Etapa
+function abrirModalAvanzarEtapa(casoId, targetStage, nombre) {
+    document.getElementById('avanzarCasoId').value = casoId;
+    document.getElementById('avanzarTargetStage').value = targetStage;
+    document.getElementById('avanzarNombreVecino').textContent = nombre;
+
+    const modalTitle = document.getElementById('modalAvanzarTitulo');
+    const tipoGestion = document.getElementById('avanzarTipoGestion');
+    const grpEvidencia = document.getElementById('grupoEvidenciaEtapa2');
+    const grpPrestacion = document.getElementById('grupoPrestacionEtapa3');
+
+    if (targetStage === 2) {
+        modalTitle.innerHTML = '<i class="bi bi-camera-fill" style="color: #fbbf24;"></i> Registrar Etapa 2: Visita en Terreno (RN-012)';
+        tipoGestion.value = 'Visita domiciliaria y levantamiento socio-habitacional';
+        grpEvidencia.style.display = 'block';
+        grpPrestacion.style.display = 'none';
+    } else if (targetStage === 3) {
+        modalTitle.innerHTML = '<i class="bi bi-award-fill" style="color: #34d399;"></i> Registrar Etapa 3: Resolución y Cierre Social (RN-012)';
+        tipoGestion.value = 'Dictamen técnico y entrega de subsidio asistencial';
+        grpEvidencia.style.display = 'none';
+        grpPrestacion.style.display = 'block';
+    }
+
+    document.getElementById('modalAvanzarEtapa').classList.add('open');
+}
+
+// Ejecutar avance de etapa
+async function ejecutarAvanzarEtapa(e) {
+    e.preventDefault();
+    const casoId = document.getElementById('avanzarCasoId').value;
+    const targetStage = document.getElementById('avanzarTargetStage').value;
+    const tipo = document.getElementById('avanzarTipoGestion').value.trim();
+    const fecha = document.getElementById('avanzarFecha').value;
+    const resultado = document.getElementById('avanzarResultado').value.trim();
+    const evidencia = document.getElementById('avanzarEvidenciaCodigo').value.trim();
+    const catalog_id = document.getElementById('avanzarCatalogo').value;
+
+    try {
+        const res = await fetch(`/social/api/casos/${casoId}/avanzar-etapa/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCsrfToken()
+            },
+            body: JSON.stringify({
+                stage: targetStage,
+                management_type: tipo,
+                management_date: fecha,
+                result: resultado,
+                evidence_code: evidencia,
+                catalog_id: catalog_id
+            })
+        });
+        const data = await res.json();
+        if (data.success) {
+            Swal.fire({
+                title: '¡Etapa Actualizada!',
+                text: data.message,
+                icon: 'success',
+                confirmButtonColor: '#b80003'
+            }).then(() => {
+                location.reload();
+            });
+        } else {
+            Swal.fire({ title: 'Normativa RN-012', text: data.message, icon: 'warning', confirmButtonColor: '#b80003' });
+        }
+    } catch (err) {
+        Swal.fire({ title: 'Error de Red', text: 'No se pudo comunicar con el servidor.', icon: 'error' });
+    }
+}
+
+// Ver Expediente Completo
+async function verExpedienteCaso(casoId) {
+    try {
+        const res = await fetch(`/social/api/casos/${casoId}/`);
+        const data = await res.json();
+        if (data.success) {
+            const c = data.case;
+            let stagesHtml = '';
+            c.stages.forEach(s => {
+                stagesHtml += `
+                    <div style="background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.15); border-radius: 12px; padding: 1rem; margin-bottom: 0.75rem;">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 0.4rem;">
+                            <span class="stage-stepper stage-${s.stage}">Etapa ${s.stage}</span>
+                            <span style="font-size: 0.78rem; color: rgba(255,255,255,0.7);">${s.management_date}</span>
+                        </div>
+                        <div style="font-weight: 700; font-size: 0.9rem; margin-bottom: 0.3rem;">${s.management_type}</div>
+                        <div style="font-size: 0.84rem; color: rgba(255,255,255,0.85);">${s.result}</div>
+                    </div>
+                `;
+            });
+
+            document.getElementById('expedienteContent').innerHTML = `
+                <div style="margin-bottom: 1.25rem; border-bottom: 1px solid rgba(255,255,255,0.15); padding-bottom: 1rem;">
+                    <div style="font-size: 1.25rem; font-weight: 800; color: #fff;">${c.user_name}</div>
+                    <div style="font-size: 0.86rem; color: #67e8f9;">RUT: ${c.user_rut} · Tel: ${c.contact_phone || 'N/A'} · Delegación: ${c.delegation}</div>
+                    <div style="font-size: 0.78rem; color: rgba(255,255,255,0.6); margin-top: 4px;">Ingresado el: ${c.entry_date}</div>
+                </div>
+                <div style="font-size: 0.95rem; font-weight: 700; margin-bottom: 0.75rem; color: #f43f5e;">
+                    <i class="bi bi-clock-history"></i> Historial Normativo en 3 Etapas (RN-012)
+                </div>
+                ${stagesHtml || '<p style="color: rgba(255,255,255,0.6);">No hay etapas registradas.</p>'}
+            `;
+            document.getElementById('modalExpediente').classList.add('open');
+        }
+    } catch (err) {
+        Swal.fire({ title: 'Error', text: 'No se pudo cargar el expediente.', icon: 'error' });
+    }
+}
+
+// Emitir Informe Social Oficial (DIDECO)
+async function emitirInformeSocial(casoId) {
+    try {
+        const res = await fetch(`/social/api/casos/${casoId}/informe/`);
+        const data = await res.json();
+        if (data.success) {
+            const rep = data.report;
+            let gestionesHtml = '';
+            rep.gestiones.forEach(g => {
+                gestionesHtml += `
+                    <tr>
+                        <td style="padding: 6px; border: 1px solid #cbd5e1;">Etapa ${g.etapa}</td>
+                        <td style="padding: 6px; border: 1px solid #cbd5e1;">${g.fecha}</td>
+                        <td style="padding: 6px; border: 1px solid #cbd5e1;">${g.tipo}</td>
+                        <td style="padding: 6px; border: 1px solid #cbd5e1;">${g.dictamen}</td>
+                    </tr>
+                `;
+            });
+
+            document.getElementById('informePrintContent').innerHTML = `
+                <div class="printable-report">
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 2px solid #b80003; padding-bottom: 1rem; margin-bottom: 1.5rem;">
+                        <div>
+                            <h2 style="margin: 0; font-size: 1.3rem;">${rep.municipalidad}</h2>
+                            <div style="font-size: 0.84rem; color: #64748b; font-weight: 600;">${rep.departamento}</div>
+                            <div style="font-size: 0.8rem; color: #b80003; font-weight: 700;">${rep.delegation}</div>
+                        </div>
+                        <div style="text-align: right; font-size: 0.8rem;">
+                            <div><strong>FOLIO:</strong> ${rep.folio}</div>
+                            <div><strong>Fecha:</strong> ${rep.fecha_emision}</div>
+                        </div>
+                    </div>
+
+                    <h3 style="text-align: center; color: #0f172a; margin-bottom: 1.5rem; text-transform: uppercase; font-size: 1.15rem; letter-spacing: 0.5px;">
+                        INFORME SOCIAL Y DICTAMEN TÉCNICO
+                    </h3>
+
+                    <div class="report-section-title">1. Identificación del Sujeto de Atención</div>
+                    <div class="report-grid">
+                        <div><strong>Nombre Completo:</strong> ${rep.vecino.nombre}</div>
+                        <div><strong>RUT:</strong> ${rep.vecino.rut}</div>
+                        <div><strong>Teléfono:</strong> ${rep.vecino.telefono || 'Sin información'}</div>
+                        <div><strong>Fecha Ingreso Caso:</strong> ${rep.vecino.fecha_ingreso}</div>
+                    </div>
+
+                    <div class="report-section-title">2. Antecedentes y Trazabilidad de Gestiones (RN-012)</div>
+                    <table style="width: 100%; border-collapse: collapse; font-size: 0.82rem; margin-bottom: 1rem;">
+                        <thead style="background: #f1f5f9;">
+                            <tr>
+                                <th style="padding: 6px; border: 1px solid #cbd5e1; text-align: left;">Etapa</th>
+                                <th style="padding: 6px; border: 1px solid #cbd5e1; text-align: left;">Fecha</th>
+                                <th style="padding: 6px; border: 1px solid #cbd5e1; text-align: left;">Acción Realizada</th>
+                                <th style="padding: 6px; border: 1px solid #cbd5e1; text-align: left;">Dictamen</th>
+                            </tr>
+                        </thead>
+                        <tbody>${gestionesHtml}</tbody>
+                    </table>
+
+                    <div class="report-section-title">3. Conclusión Diagnóstica y Sugerencia Profesional</div>
+                    <div class="report-box">${rep.conclusion_diagnostica}</div>
+
+                    <div class="report-signature">
+                        <div>
+                            <div class="signature-line">Firma del Solicitante</div>
+                            <div>RUT: ${rep.vecino.rut}</div>
+                        </div>
+                        <div>
+                            <div class="signature-line">${rep.profesional.nombre}</div>
+                            <div>${rep.profesional.cargo}</div>
+                            <div style="font-size: 0.74rem; color: #64748b;">${rep.profesional.registro_profesional}</div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            document.getElementById('modalInformeOficial').classList.add('open');
+        }
+    } catch (err) {
+        Swal.fire({ title: 'Error', text: 'No se pudo generar el informe social.', icon: 'error' });
+    }
+}
+
+function imprimirInformeSocial() {
+    window.print();
+}
+
+// Exportación a Excel vía SheetJS
+function exportarCasosExcel() {
+    const tabla = document.getElementById('tablaCasosSociales');
+    const wb = XLSX.utils.table_to_book(tabla, { sheet: "Casos_Sociales_LaSerena" });
+    XLSX.writeFile(wb, `Casos_Sociales_LaSerena_${new Date().toISOString().slice(0,10)}.xlsx`);
+    Swal.fire({
+        title: '¡Archivo Generado!',
+        text: 'Se descargó la nómina de casos sociales en formato Excel.',
+        icon: 'success',
+        timer: 2000,
+        showConfirmButton: false
+    });
+}
+</script>
+
+</body>
+</html>
