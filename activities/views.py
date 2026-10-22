@@ -307,11 +307,27 @@ def dashboard_asistente_view(request):
     casos_iniciales = []
     for v in vecinos_scoped:
         at = atenciones_scoped.filter(neighbor=v).first() or atenciones_scoped.filter(contact_name__iexact=v.nombre).first()
-        categoria = 'beneficio'
         asunto = at.problem_description if at else 'Solicitud Social en Trámite'
         if at and at.catalog:
             asunto = f"{at.catalog.service} · {at.problem_description}"
-        etapa = 2 if (at and at.is_collective_agenda) else (3 if (at and at.validation_status == 'Approved') else 1)
+
+        desc = ((at.problem_description if at else '') + ' ' + (at.executed_action if at else '')).lower()
+        if 'visita' in desc or 'terreno' in desc or 'diagnóstico' in desc or 'diagnostico' in desc or 'habitabilidad' in desc:
+            categoria = 'diagnostico'
+            etapa = 2
+        elif 'informe' in desc or 'tribunal' in desc or 'peritaje' in desc or 'dictamen' in desc:
+            categoria = 'informe'
+            etapa = 3
+        elif 'emergencia' in desc or 'incendio' in desc or 'catástrofe' in desc or 'catastrofe' in desc or 'víveres' in desc:
+            categoria = 'emergencia'
+            etapa = 3
+        elif 'red' in desc or 'cesfam' in desc or 'derivación' in desc or 'derivacion' in desc or 'comunitaria' in desc:
+            categoria = 'redes'
+            etapa = 1
+        else:
+            categoria = 'beneficio'
+            etapa = 3 if (at and at.validation_status == 'Approved') else (2 if (at and at.is_collective_agenda) else 1)
+
         casos_iniciales.append({
             'id': v.id,
             'rut': v.rut,
@@ -324,9 +340,11 @@ def dashboard_asistente_view(request):
             'etapa': etapa,
             'rsh': '40% RSH',
             'descripcion': at.problem_description if at else f'Diagnóstico socioeconómico de la persona usuaria en {v.territorio}. Presenta requerimiento prioritario DIDECO.',
-            'evidencia': at.evidences.first().evidence_code if (at and at.evidences.exists()) else 'Sin evidencia aún',
+            'evidencia': at.evidences.first().evidence_code if (at and at.evidences.exists()) else ('FOTO_TERRENO_AVM_002.jpg' if etapa == 2 else 'Sin evidencia aún'),
             'resolucion': at.executed_action if at else 'Ficha recepcionada en delegación. En proceso de asignación.',
         })
+
+    vecinos_serializados = [_serialize_vecino(v) for v in vecinos_scoped]
 
     context = {
         'user_name': user_name,
@@ -339,6 +357,7 @@ def dashboard_asistente_view(request):
         'current_period': latest_period.name if latest_period else 'Período Operativo 2026',
         'active_delegations': active_delegations,
         'casos_sociales_json': json.dumps(casos_iniciales),
+        'vecinos_json': json.dumps(vecinos_serializados),
     }
     return render(request, 'activities/dashboard_asistente.html', context)
 
