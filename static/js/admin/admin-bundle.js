@@ -336,7 +336,26 @@
             }
         }
 
-        function switchView(viewName) {
+        const adminReportViews = new Set(['general', '1vs1', 'multi']);
+
+        function adminRouteUrl(viewName, reportView = 'general') {
+            const base = document.body.dataset.adminBase;
+            if (viewName === 'dashboard') return base;
+            return base + viewName + '/' + (viewName === 'reportes' ? reportView + '/' : '');
+        }
+
+        function currentAdminRoute() {
+            const base = document.body.dataset.adminBase;
+            const parts = window.location.pathname.startsWith(base)
+                ? window.location.pathname.slice(base.length).split('/').filter(Boolean)
+                : [];
+            return { viewName: parts[0] || 'dashboard', reportView: parts[1] || 'general' };
+        }
+
+        function switchView(viewName, updateUrl = true, reportView = 'general') {
+            const targetView = document.getElementById('view-' + viewName);
+            if (!targetView || !targetView.classList.contains('maintainer-view')) return;
+            if (viewName === 'reportes' && !adminReportViews.has(reportView)) return;
             if (viewName !== 'usuarios' && typeof selectedTableRows !== 'undefined') {
                 selectedTableRows.clear();
                 actualizarBarraUsuariosLote();
@@ -344,8 +363,7 @@
             document.querySelectorAll('.maintainer-view').forEach(v => v.classList.remove('active'));
             document.querySelectorAll('.nav-item-btn, .submenu-item-btn').forEach(btn => btn.classList.remove('active'));
 
-            const targetView = document.getElementById('view-' + viewName);
-            if (targetView) targetView.classList.add('active');
+            targetView.classList.add('active');
 
             if (viewName === 'dashboard') {
                 document.getElementById('nav-btn-dashboard').classList.add('active');
@@ -363,6 +381,10 @@
                 document.getElementById('sidebar').classList.remove('mobile-open');
                 document.getElementById('sidebarOverlay').classList.remove('active');
             }
+            if (updateUrl) {
+                const url = adminRouteUrl(viewName, reportView);
+                if (window.location.pathname !== url) window.history.pushState(null, '', url);
+            }
 
             if (viewName === 'dashboard') {
                 if (chartInstance) chartInstance.resize();
@@ -373,6 +395,7 @@
             }
             if (viewName === 'reportes') {
                 initReportesCharts();
+                cambiarSubvistaReporte(reportView, false);
                 setTimeout(() => {
                     if (typeof initSpotlightEffect === 'function') initSpotlightEffect();
                     // Los indicadores se cargan desde la API del módulo, no desde cifras de demostración.
@@ -386,6 +409,15 @@
             if (viewName === 'solicitudes-sociales' && typeof window.loadSocialReviewRequests === 'function') window.loadSocialReviewRequests();
             if (viewName === 'atenciones') cargarAtencionesDB();
         }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const route = currentAdminRoute();
+            switchView(route.viewName, false, route.reportView);
+        });
+        window.addEventListener('popstate', () => {
+            const route = currentAdminRoute();
+            switchView(route.viewName, false, route.reportView);
+        });
 
         async function cargarVecinosDesdeDB(mostrarAviso = false) {
             try {
@@ -1821,8 +1853,13 @@
             }
         }
 
-        function cambiarSubvistaReporte(subvista) {
+        function cambiarSubvistaReporte(subvista, updateUrl = true) {
+            if (!adminReportViews.has(subvista)) return;
             subvistaReportesActiva = subvista;
+            if (updateUrl) {
+                const url = adminRouteUrl('reportes', subvista);
+                if (window.location.pathname !== url) window.history.pushState(null, '', url);
+            }
 
             // Actualizar botones de pestañas
             const btnGen = document.getElementById('tabReporteGeneral');

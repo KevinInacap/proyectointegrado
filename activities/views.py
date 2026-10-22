@@ -10,7 +10,7 @@ from django.db.models import Q
 from django.utils import timezone
 from django.utils.text import slugify
 from django.urls import reverse
-from django.http import JsonResponse
+from django.http import Http404, JsonResponse
 from .models import Activity, Evidence, Validation, Vecino
 from organization.models import Delegation, UserProfile
 from core.models import AuditLog
@@ -491,10 +491,20 @@ def dashboard_cargo_view(request):
     return _position_dashboard(request)
 
 
-def dashboard_admin_view(request):
+ADMIN_DASHBOARD_SECTIONS = {
+    'dashboard', 'delegaciones', 'cargos', 'usuarios', 'roles', 'metas',
+    'tipo-atencion', 'sub-atencion', 'atenciones', 'tipo-gestion',
+    'vecinos', 'solicitudes-sociales', 'reportes',
+}
+ADMIN_REPORT_VIEWS = {'general', '1vs1', 'multi'}
+
+
+def dashboard_admin_view(request, section='dashboard', report_view='general'):
     access_denied = _position_required(request, ['Administrador General', 'SuperAdministrador', 'Super Administrador'])
     if access_denied:
         return access_denied
+    if section not in ADMIN_DASHBOARD_SECTIONS or report_view not in ADMIN_REPORT_VIEWS or (report_view != 'general' and section != 'reportes'):
+        raise Http404('Vista de administración no encontrada.')
     profile = _actor(request)
     if not _is_admin(request):
         return _position_dashboard(request, profile.position.name if profile and profile.position else 'Administrador General')

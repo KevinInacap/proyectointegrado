@@ -285,6 +285,32 @@ class DashboardAccessTests(TestCase):
         self.assertContains(response, 'id="mapaDelegacionesReal"')
         self.assertEqual(Activity.objects.count(), before)
 
+    def test_admin_sections_and_report_tabs_have_reloadable_urls(self):
+        self.set_position('Administrador General')
+        role, _ = Role.objects.get_or_create(name='Administrador')
+        self.profile.roles.add(role)
+        for section in ('delegaciones', 'cargos', 'usuarios', 'roles', 'metas',
+                        'tipo-atencion', 'sub-atencion', 'atenciones', 'tipo-gestion',
+                        'vecinos', 'solicitudes-sociales', 'reportes'):
+            with self.subTest(section=section):
+                url = reverse('activities:dashboard_admin_section', args=[section])
+                self.assertEqual(self.client.get(url).status_code, 200)
+        for tab in ('general', '1vs1', 'multi'):
+            with self.subTest(tab=tab):
+                url = reverse('activities:dashboard_admin_report', args=[tab])
+                self.assertEqual(self.client.get(url).status_code, 200)
+        base = reverse('activities:dashboard_admin')
+        self.assertContains(self.client.get(base), f'data-admin-base="{base}"')
+        self.assertEqual(self.client.get('/activities/dashboard/admin/desconocido/').status_code, 404)
+        self.assertEqual(self.client.get('/activities/dashboard/admin/reportes/desconocido/').status_code, 404)
+
+    def test_admin_section_requires_admin_position(self):
+        self.set_position('Delegado Municipal')
+        role, _ = Role.objects.get_or_create(name='Administrador')
+        self.profile.roles.add(role)
+        url = reverse('activities:dashboard_admin_section', args=['usuarios'])
+        self.assertNotEqual(self.client.get(url).status_code, 200)
+
     def test_position_selects_dashboard_independently_of_role(self):
         for position_name, role_name, route in (
             ('Coordinador del Sistema', 'Verificador Técnico', 'dashboard_coordinador'),
