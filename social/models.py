@@ -33,6 +33,38 @@ class SocialCase(BaseModel):
                 'entry_date': 'La fecha de ingreso del caso no puede ser una fecha futura.'
             })
 
+    @property
+    def current_stage(self):
+        last = self.managements.filter(deleted_at__isnull=True).order_by('-stage').first()
+        return last.stage if last else 1
+
+    @property
+    def latest_management(self):
+        return self.managements.filter(deleted_at__isnull=True).order_by('-stage').first()
+
+    @property
+    def can_advance(self):
+        return self.current_stage < 3
+
+    @property
+    def next_stage(self):
+        return min(self.current_stage + 1, 3)
+
+    @property
+    def status_label(self):
+        stage = self.current_stage
+        if stage == 1:
+            return "Etapa 1: Ingreso y Evaluación"
+        elif stage == 2:
+            return "Etapa 2: Visita en Terreno"
+        elif stage == 3:
+            return "Etapa 3: Resolución y Entrega"
+        return "Ingresado"
+
+    @property
+    def is_resolved(self):
+        return self.current_stage == 3
+
     def __str__(self):
         return f"{self.user_name} ({self.user_rut})"
 
@@ -76,3 +108,4 @@ class SocialManagement(BaseModel):
 
     def __str__(self):
         return f"{self.case.user_name} - Etapa {self.stage}"
+

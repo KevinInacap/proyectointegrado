@@ -12,6 +12,7 @@ urlpatterns = [
     path('api/', include('organization.urls')),
     path('api/catalogs/', include('metrics.urls')),
     path('api/agenda/', include(('agenda.urls', 'agenda'), namespace='agenda')),
+    path('social/', include('social.urls')),
 ]
 
 if settings.DEBUG:
