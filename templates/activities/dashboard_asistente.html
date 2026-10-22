@@ -1,0 +1,1874 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel de Gestión Social Territorial · DIDECO — Ilustre Municipalidad de La Serena</title>
+
+    <!-- Google Fonts: Montserrat (Títulos Oficiales), Plus Jakarta Sans (Lectura) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- Bootstrap 5.3 & Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+
+    <!-- Librerías Profesionales: SheetJS XLSX, jsPDF, SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <!-- Hojas de Estilo Oficiales: Base Admin + Liquid Glass Pro -->
+    <link rel="stylesheet" href="{% static 'css/admin/admin-bundle.css' %}?v=20261015L">
+    <link rel="stylesheet" href="{% static 'css/admin/admin-glass-pro.css' %}?v=20261015L">
+
+    <style>
+        :root {
+            --muni-red: #C41230;
+            --muni-red-hover: #A00E26;
+            --muni-red-subtle: rgba(196, 18, 48, 0.08);
+            --muni-red-border: rgba(196, 18, 48, 0.22);
+            --muni-navy: #1B365D;
+            --muni-navy-dark: #0F172A;
+            --muni-navy-slate: #1E293B;
+            --surface-bg: #F4F8FC;
+        }
+
+        /* 1. Layout Base Limpio e Institucional */
+        body {
+            background-color: var(--surface-bg) !important;
+            color: var(--muni-navy-slate) !important;
+            font-family: 'Plus Jakarta Sans', sans-serif !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            overflow-x: hidden !important;
+        }
+
+        /* 2. Semáforo SGR con Luz Radiante Pulsante */
+        .semaforo-banner-card {
+            background: linear-gradient(135deg, rgba(254, 242, 242, 0.96) 0%, rgba(255, 255, 255, 0.95) 100%);
+            border: 1.5px solid rgba(239, 68, 68, 0.35);
+            border-left: 6px solid var(--muni-red);
+            border-radius: 16px;
+            padding: 1.1rem 1.4rem;
+            box-shadow: 0 10px 25px -5px rgba(196, 18, 48, 0.12);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .beacon-pulse {
+            width: 14px;
+            height: 14px;
+            background-color: #EF4444;
+            border-radius: 50%;
+            position: relative;
+            display: inline-block;
+            box-shadow: 0 0 12px #EF4444;
+        }
+
+        .beacon-pulse::after {
+            content: '';
+            position: absolute;
+            top: -5px;
+            left: -5px;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: rgba(239, 68, 68, 0.45);
+            animation: radarPulse 1.8s infinite cubic-bezier(0.25, 1, 0.5, 1);
+        }
+
+        @keyframes radarPulse {
+            0% { transform: scale(0.6); opacity: 1; }
+            100% { transform: scale(2.2); opacity: 0; }
+        }
+
+        /* 3. Indicador Flujo RN-012 (3 Etapas Secuenciales) */
+        .rn-step-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 10px;
+            border-radius: 50px;
+            font-size: 0.76rem;
+            font-weight: 700;
+            letter-spacing: 0.02em;
+        }
+        .rn-step-1 { background: rgba(59, 130, 246, 0.12); color: #1D4ED8; border: 1px solid rgba(59, 130, 246, 0.3); }
+        .rn-step-2 { background: rgba(245, 158, 11, 0.14); color: #B45309; border: 1px solid rgba(245, 158, 11, 0.35); }
+        .rn-step-3 { background: rgba(16, 185, 129, 0.14); color: #047857; border: 1px solid rgba(16, 185, 129, 0.35); }
+
+        .pipeline-dots {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .pipeline-dot {
+            width: 9px;
+            height: 9px;
+            border-radius: 50%;
+            background: #CBD5E1;
+            transition: all 0.25s ease;
+        }
+        .pipeline-dot.active-1 { background: #2563EB; box-shadow: 0 0 6px rgba(37, 99, 235, 0.6); }
+        .pipeline-dot.active-2 { background: #D97706; box-shadow: 0 0 6px rgba(217, 119, 6, 0.6); }
+        .pipeline-dot.active-3 { background: #059669; box-shadow: 0 0 6px rgba(5, 150, 105, 0.6); }
+
+        /* 4. Tarjetas Resumen Liquid Glass */
+        .social-kpi-card {
+            background: #FFFFFF;
+            border-radius: 16px;
+            padding: 1.25rem 1.4rem;
+            border: 1px solid rgba(226, 235, 246, 0.95);
+            box-shadow: 0 12px 30px -8px rgba(27, 54, 93, 0.06);
+            transition: transform 0.22s ease, box-shadow 0.22s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        .social-kpi-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 16px 36px -8px rgba(196, 18, 48, 0.12);
+        }
+        .social-kpi-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 100%;
+            background: var(--muni-red);
+            opacity: 0.85;
+        }
+
+        /* 5. Píldoras de Filtro de Funciones Sociales */
+        .func-tab-btn {
+            background: #FFFFFF;
+            color: #334155;
+            font-size: 0.82rem;
+            font-weight: 700;
+            border: 1.5px solid #E2E8F0;
+            padding: 0.45rem 1rem;
+            border-radius: 50px;
+            transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            cursor: pointer;
+            text-decoration: none;
+        }
+        .func-tab-btn:hover {
+            background: rgba(196, 18, 48, 0.05);
+            border-color: var(--muni-red);
+            color: var(--muni-red);
+        }
+        .func-tab-btn.active {
+            background: linear-gradient(135deg, #C41230 0%, #A00E26 100%) !important;
+            color: #FFFFFF !important;
+            border-color: var(--muni-red) !important;
+            box-shadow: 0 4px 14px rgba(196, 18, 48, 0.35);
+        }
+
+        /* 6. Botones de Acción de Tabla */
+        .btn-action-round {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.85rem;
+            border: none;
+            transition: all 0.18s ease;
+            cursor: pointer;
+        }
+        .btn-action-view { background: rgba(27, 54, 93, 0.08); color: var(--muni-navy); }
+        .btn-action-view:hover { background: var(--muni-navy); color: #FFFFFF; }
+        .btn-action-advance { background: rgba(196, 18, 48, 0.1); color: var(--muni-red); }
+        .btn-action-advance:hover { background: var(--muni-red); color: #FFFFFF; }
+        .btn-action-report { background: rgba(16, 185, 129, 0.12); color: #047857; }
+        .btn-action-report:hover { background: #047857; color: #FFFFFF; }
+
+        /* Categorías Funcionales */
+        .cat-pill {
+            padding: 3px 9px;
+            border-radius: 50px;
+            font-size: 0.72rem;
+            font-weight: 700;
+            display: inline-block;
+        }
+        .cat-diagnostico { background: #F3E8FF; color: #7E22CE; border: 1px solid #E9D5FF; }
+        .cat-beneficio { background: #ECFDF5; color: #047857; border: 1px solid #A7F3D0; }
+        .cat-informe { background: #EFF6FF; color: #1D4ED8; border: 1px solid #BFDBFE; }
+        .cat-emergencia { background: #FEF2F2; color: #B91C1C; border: 1px solid #FECACA; font-weight: 800; }
+        .cat-redes { background: #FFFBEB; color: #B45309; border: 1px solid #FDE68A; }
+
+        /* Microanimación de botones rojos */
+        .liquid-glass-btn-primary {
+            background: linear-gradient(135deg, #C41230 0%, #9E0E26 100%) !important;
+            color: #FFFFFF !important;
+            border: none !important;
+            border-radius: 50px !important;
+            font-weight: 700 !important;
+            padding: 0.55rem 1.3rem !important;
+            font-size: 0.88rem !important;
+            box-shadow: 0 4px 14px rgba(196, 18, 48, 0.35) !important;
+            transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1) !important;
+            display: inline-flex !important;
+            align-items: center !important;
+            gap: 7px !important;
+            text-decoration: none !important;
+        }
+        .liquid-glass-btn-primary:hover {
+            transform: translateY(-2px) scale(1.02) !important;
+            box-shadow: 0 8px 20px rgba(196, 18, 48, 0.45) !important;
+            color: #FFFFFF !important;
+        }
+        .liquid-glass-btn-secondary {
+            background: #FFFFFF !important;
+            color: var(--muni-red) !important;
+            border: 1.5px solid var(--muni-red) !important;
+            border-radius: 50px !important;
+            font-weight: 700 !important;
+            padding: 0.52rem 1.15rem !important;
+            font-size: 0.86rem !important;
+            transition: all 0.2s ease !important;
+            display: inline-flex !important;
+            align-items: center !important;
+            gap: 6px !important;
+            text-decoration: none !important;
+        }
+        .liquid-glass-btn-secondary:hover {
+            background: rgba(196, 18, 48, 0.06) !important;
+            color: var(--muni-red-hover) !important;
+        }
+    </style>
+</head>
+
+<body>
+    {% csrf_token %}
+
+    <!-- =================================================================
+         1. MENÚ LATERAL OFICIAL LA SERENA (ASISTENCIA SOCIAL DIDECO)
+         ================================================================= -->
+    <aside class="sidebar" id="sidebar">
+        <!-- Logo Oficial La Serena con Escudo -->
+        <div class="sidebar-brand-box">
+            <button class="sidebar-collapse-btn" onclick="toggleSidebar()" title="Colapsar menú lateral" aria-label="Menú">
+                <i class="bi bi-list"></i>
+            </button>
+            <a href="{% url 'activities:dashboard_asistente' %}" class="sidebar-brand-link" title="Asistencia Social DIDECO · Ilustre Municipalidad de La Serena">
+                <img src="{% static 'images/horizontal-blanco.svg' %}" alt="Ilustre Municipalidad de La Serena" class="sidebar-official-logo">
+            </a>
+        </div>
+
+        <!-- Tarjeta de Perfil Institucional de Scarlett (Asistente Social) -->
+        <div class="px-3 py-2">
+            <div class="p-2.5 rounded-4 d-flex align-items-center gap-2.5" style="background: rgba(255, 255, 255, 0.08); border: 1px solid rgba(255, 255, 255, 0.12);">
+                <div class="rounded-circle d-flex align-items-center justify-content-center text-white fw-bold shadow-sm"
+                     style="width: 44px; height: 44px; background: linear-gradient(135deg, #C41230 0%, #8B1225 100%); font-size: 1.15rem; flex-shrink: 0; border: 2px solid rgba(255, 255, 255, 0.3);">
+                    {{ first_name|slice:":1"|default:"S"|upper }}
+                </div>
+                <div class="overflow-hidden" style="min-width: 0;">
+                    <div class="text-white fw-bold text-truncate" style="font-size: 0.88rem;">{{ user_name|default:"scarlett williams medalla" }}</div>
+                    <div class="d-flex align-items-center gap-1.5 mt-0.5">
+                        <span class="badge" style="background: rgba(16, 185, 129, 0.2); color: #34D399; font-size: 0.68rem; font-weight: 700; padding: 2px 6px;">
+                            <i class="bi bi-circle-fill me-1" style="font-size: 0.45rem;"></i> ASISTENTE SOCIAL
+                        </span>
+                    </div>
+                    <div class="text-light text-truncate mt-1" style="font-size: 0.72rem; opacity: 0.8;">
+                        <i class="bi bi-geo-alt-fill text-danger me-1"></i> {{ current_delegation|default:"Consolidado Comunal (Todas las Sedes)" }}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Menú de Navegación del Asistente Social (5 Funciones Principales + Flujo RN-012) -->
+        <nav class="sidebar-menu-scrollable px-2 mt-2">
+            <!-- 1. Casos Sociales Únicos -->
+            <button class="nav-item-btn active" id="nav-btn-casos" onclick="filtrarPorPestana('todos', this)">
+                <i class="bi bi-people-fill main-icon"></i>
+                <span>Casos Sociales Únicos</span>
+                <span class="badge rounded-pill ms-auto" id="sideBadgeCasos" style="background: #C41230; color: #fff; font-size: 0.72rem;">0</span>
+            </button>
+
+            <!-- 2. Flujo 3 Etapas (RN - 012) -->
+            <button class="nav-item-btn" id="nav-btn-flujo" onclick="filtrarPorPestana('flujo', this)">
+                <i class="bi bi-diagram-3-fill main-icon"></i>
+                <span>Flujo 3 Etapas (RN-012)</span>
+                <span class="badge rounded-pill ms-auto" id="sideBadgeFlujo" style="background: rgba(255,255,255,0.18); color: #fff; font-size: 0.72rem;">0</span>
+            </button>
+
+            <!-- 3. Evaluación y Visitas a Terreno -->
+            <button class="nav-item-btn" id="nav-btn-terreno" onclick="filtrarPorPestana('diagnostico', this)">
+                <i class="bi bi-camera-fill main-icon"></i>
+                <span>Visitas a Terreno</span>
+                <span class="badge rounded-pill ms-auto" id="sideBadgeTerreno" style="background: rgba(255,255,255,0.18); color: #fff; font-size: 0.72rem;">0</span>
+            </button>
+
+            <!-- 4. Gestión de Beneficios & Subsidios -->
+            <button class="nav-item-btn" id="nav-btn-beneficios" onclick="filtrarPorPestana('beneficio', this)">
+                <i class="bi bi-gift-fill main-icon"></i>
+                <span>Catálogo de Ayudas</span>
+                <span class="badge rounded-pill ms-auto" id="sideBadgeBeneficios" style="background: rgba(255,255,255,0.18); color: #fff; font-size: 0.72rem;">0</span>
+            </button>
+
+            <!-- 5. Informes Sociales Formales -->
+            <button class="nav-item-btn" id="nav-btn-informes" onclick="filtrarPorPestana('informe', this)">
+                <i class="bi bi-file-earmark-text-fill main-icon"></i>
+                <span>Informes Sociales</span>
+                <span class="badge rounded-pill ms-auto" id="sideBadgeInformes" style="background: rgba(255,255,255,0.18); color: #fff; font-size: 0.72rem;">0</span>
+            </button>
+
+            <!-- 6. Atención de Emergencias & Catástrofes -->
+            <button class="nav-item-btn" id="nav-btn-emergencias" onclick="filtrarPorPestana('emergencia', this)">
+                <i class="bi bi-lightning-charge-fill main-icon text-danger"></i>
+                <span>Emergencias y Crisis</span>
+                <span class="badge rounded-pill ms-auto" id="sideBadgeEmergencias" style="background: #C41230; color: #fff; font-size: 0.72rem;">0</span>
+            </button>
+
+            <!-- 7. Articulación de Redes Comunitarias -->
+            <button class="nav-item-btn" id="nav-btn-redes" onclick="filtrarPorPestana('redes', this)">
+                <i class="bi bi-diagram-2-fill main-icon"></i>
+                <span>Articulación de Redes</span>
+                <span class="badge rounded-pill ms-auto" id="sideBadgeRedes" style="background: rgba(255,255,255,0.18); color: #fff; font-size: 0.72rem;">0</span>
+            </button>
+
+            <!-- 8. Metas y Semáforo SGR -->
+            <button class="nav-item-btn" id="nav-btn-metas" onclick="abrirModalSGRInfo()">
+                <i class="bi bi-speedometer2 main-icon"></i>
+                <span>Metas y Semáforo SGR</span>
+                <span class="badge rounded-pill ms-auto bg-danger" id="sideBadgeSgrPct" style="font-size: 0.70rem;">0,0%</span>
+            </button>
+        </nav>
+
+        <!-- Fotografía Institucional Faro Monumental La Serena -->
+        <div class="sidebar-faro-footer">
+            <div class="sidebar-faro-image-wrap">
+                <img src="{% static 'img/delegacion_costa.jpg' %}"
+                    data-fallback="{% static 'img/faro_real_sunset.jpg' %}"
+                    onerror="this.onerror=null; if(this.dataset.fallback) this.src=this.dataset.fallback;"
+                    alt="Faro Monumental junto a la costa de La Serena" class="sidebar-faro-bg-img">
+                <div class="sidebar-faro-fade-layer"></div>
+            </div>
+            <div class="sidebar-faro-caption">
+                <div class="sidebar-faro-title">La Serena</div>
+                <div class="sidebar-faro-lema">Siempre cerca de ti</div>
+            </div>
+        </div>
+    </aside>
+
+    <!-- =================================================================
+         2. CONTENEDOR PRINCIPAL
+         ================================================================= -->
+    <div class="main-wrapper">
+        <!-- Barra de Navegación Superior (Top Bar Institucional con Línea Roja) -->
+        <header class="top-header" style="border-top: 3.5px solid var(--muni-red);">
+            <div class="header-left d-flex align-items-center gap-3">
+                <button class="btn-hamburger" onclick="toggleSidebar()" title="Alternar menú lateral" aria-label="Menú">
+                    <i class="bi bi-list"></i>
+                </button>
+                <div class="header-title-wrapper">
+                    <span class="header-sys-name fw-bold" style="color: var(--muni-navy); font-family: 'Montserrat', sans-serif;">DIDECO · Sistema Municipal</span>
+                    <span class="header-sys-divider text-muted">|</span>
+                    <span class="header-sub-name text-secondary fw-semibold">Gestión de Asistencia Social y Casos Comunitarios</span>
+                </div>
+            </div>
+
+            <div class="header-right d-flex align-items-center gap-3">
+                <!-- Botón de Notificaciones -->
+                <button class="btn-notification" type="button" onclick="mostrarNotificacionesSociales()" title="Notificaciones de Casos y Urgencias">
+                    <i class="bi bi-bell"></i>
+                    <span class="badge-count" id="badgeNotifCount">3</span>
+                </button>
+
+                <!-- Perfil y Cierre de Sesión -->
+                <div class="dropdown">
+                    <button class="user-dropdown-btn d-flex align-items-center gap-2 border-0 bg-transparent" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        <span class="user-avatar-img d-inline-flex align-items-center justify-content-center text-white fw-bold"
+                              style="width: 36px; height: 36px; border-radius: 50%; background: var(--muni-red);">
+                            {{ first_name|slice:":1"|default:"S"|upper }}
+                        </span>
+                        <span class="user-identity text-start d-none d-sm-block">
+                            <span class="user-info-text fw-bold d-block" style="color: var(--muni-navy); font-size: 0.85rem;">{{ user_name|default:"scarlett williams medalla" }}</span>
+                            <span class="user-context-text text-muted" style="font-size: 0.72rem;">Asistente Social · {{ current_delegation|default:"Consolidado Comunal" }}</span>
+                        </span>
+                        <i class="bi bi-chevron-down text-muted" style="font-size: 0.75rem;"></i>
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end shadow-sm border-0 rounded-4 mt-2" style="min-width: 220px;">
+                        <li><span class="dropdown-header text-uppercase small fw-bold text-danger">Municipalidad La Serena</span></li>
+                        <li><a class="dropdown-item py-2 fw-semibold" href="javascript:void(0)" onclick="abrirModalPerfilAsistente()"><i class="bi bi-person-badge-fill me-2 text-danger"></i> Mi Perfil Funcionario</a></li>
+                        <li><a class="dropdown-item py-2 fw-semibold" href="javascript:void(0)" onclick="abrirModalSGRInfo()"><i class="bi bi-speedometer me-2 text-danger"></i> Metas SGR y Normativa RN-012</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item py-2 fw-bold text-danger" href="{% url 'core:logout' %}"><i class="bi bi-box-arrow-right me-2"></i> Cerrar Sesión</a></li>
+                    </ul>
+                </div>
+            </div>
+        </header>
+
+        <!-- Cuerpo del Panel de Gestión Social -->
+        <main class="content-body p-4">
+
+            <!-- 1. ENCABEZADO OFICIAL DE LA VISTA -->
+            <div class="d-flex justify-content-between align-items-start flex-wrap gap-3 mb-4">
+                <div>
+                    <div class="d-flex align-items-center gap-2 mb-1.5 flex-wrap">
+                        <span class="badge" style="background: rgba(196, 18, 48, 0.1); color: var(--muni-red); font-weight: 800; font-size: 0.76rem; letter-spacing: 0.04em;">
+                            <i class="bi bi-heart-pulse-fill me-1"></i> DIDECO · DIRECCIÓN DE DESARROLLO COMUNITARIO
+                        </span>
+                        <span class="badge" style="background: rgba(27, 54, 93, 0.08); color: var(--muni-navy); font-weight: 700; font-size: 0.76rem;">
+                            <i class="bi bi-shield-check me-1"></i> MODELO PROTOCOLAR RN-012
+                        </span>
+                    </div>
+                    <h1 class="fw-bold m-0" style="font-family: 'Montserrat', sans-serif; color: var(--muni-navy); font-size: 1.7rem; letter-spacing: -0.01em;">
+                        <i class="bi bi-heart-pulse-fill text-danger me-2"></i>Panel de Gestión Social Territorial
+                    </h1>
+                    <p class="text-secondary m-0 mt-1" style="font-size: 0.88rem;">
+                        Delegación: <strong class="text-dark">{{ current_delegation|default:"Consolidado Comunal (Todas las Sedes)" }}</strong> · Período: <strong>{{ current_period|default:"Período Operativo 2026" }}</strong> · Diagnósticos, visitas, beneficios e informes oficiales
+                    </p>
+                </div>
+
+                <!-- Botonera de Acciones Inmediatas (100% Rojas e Institucionales) -->
+                <div class="d-flex align-items-center gap-2 flex-wrap">
+                    <button class="btn btn-outline-secondary rounded-pill px-3 py-1.5 fw-bold" onclick="exportarCasosExcel()" style="font-size: 0.86rem; border-color: #CBD5E1;">
+                        <i class="bi bi-file-earmark-excel-fill text-success me-1"></i> Exportar Excel
+                    </button>
+                    <button class="liquid-glass-btn-secondary" onclick="abrirModalEmergencia()">
+                        <i class="bi bi-lightning-charge-fill"></i> + Atención Emergencia
+                    </button>
+                    <button class="liquid-glass-btn-primary" onclick="abrirModalNuevoCaso()">
+                        <i class="bi bi-plus-circle-fill"></i> + Nuevo Caso Social
+                    </button>
+                </div>
+            </div>
+
+            <!-- 2. SEMÁFORO SGR & AVANCE SOCIAL TRIMESTRAL (RESTAURADO CON IDENTIDAD ROJA INSTITUCIONAL) -->
+            <div class="semaforo-banner-card mb-4">
+                <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+                    <div class="d-flex align-items-center gap-3">
+                        <span class="beacon-pulse" id="sgrBeaconDot"></span>
+                        <div>
+                            <div class="d-flex align-items-center gap-2">
+                                <span class="fw-bold" style="color: var(--muni-navy); font-size: 1rem;">
+                                    Semáforo SGR: <span id="sgrStatusLabel" class="text-danger fw-extrabold">Rojo (Rezago Operativo)</span>
+                                </span>
+                                <span class="badge bg-danger-subtle text-danger border border-danger-subtle" style="font-size: 0.70rem; font-weight: 800;">CRÍTICO</span>
+                            </div>
+                            <div class="text-muted small mt-0.5">
+                                Meta acumulada esperada al día: <strong class="text-dark">62,2%</strong> · Cumplimiento de gestiones: <strong class="text-danger" id="sgrCumplimientoVal">0,0%</strong>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="text-end" style="min-width: 280px;">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <span class="text-muted small fw-bold">Avance Social Trimestral:</span>
+                            <span class="fw-bold small" style="color: var(--muni-navy);">
+                                <span id="lblAvanceCount">0</span> / 40 Atenciones (<span id="lblAvancePct">0,0%</span>)
+                            </span>
+                        </div>
+                        <div class="progress rounded-pill" style="height: 9px; background: #E2E8F0;">
+                            <div class="progress-bar progress-bar-striped progress-bar-animated" id="sgrProgressBar" role="progressbar"
+                                 style="width: 0%; background: linear-gradient(90deg, #EF4444 0%, #C41230 100%);" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 3. CUATRO TARJETAS DE INDICADORES (CASOS TOTALES Y 3 ETAPAS RN-012) -->
+            <div class="row g-3 mb-4">
+                <!-- CASOS TOTALES -->
+                <div class="col-sm-6 col-xl-3">
+                    <div class="social-kpi-card" onclick="filtrarPorEtapa('todas')" role="button" tabindex="0" title="Ver todos los casos sociales">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <span class="text-uppercase fw-bold text-muted" style="font-size: 0.75rem; letter-spacing: 0.05em;">CASOS TOTALES</span>
+                            <div class="rounded-circle d-flex align-items-center justify-content-center" style="width: 38px; height: 38px; background: rgba(27, 54, 93, 0.08); color: var(--muni-navy);">
+                                <i class="bi bi-folder2-open fs-5"></i>
+                            </div>
+                        </div>
+                        <div class="fw-bold" id="cardKpiTotal" style="font-size: 2.1rem; color: var(--muni-navy); line-height: 1.1;">0</div>
+                        <div class="text-muted small mt-1">
+                            <i class="bi bi-person-vcard text-danger me-1"></i> Fichas únicas activas
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ETAPA 1: INGRESO -->
+                <div class="col-sm-6 col-xl-3">
+                    <div class="social-kpi-card" onclick="filtrarPorEtapa(1)" role="button" tabindex="0" title="Filtrar Etapa 1: Ingreso">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <span class="text-uppercase fw-bold text-muted" style="font-size: 0.75rem; letter-spacing: 0.05em;">ETAPA 1: INGRESO</span>
+                            <div class="rounded-circle d-flex align-items-center justify-content-center" style="width: 38px; height: 38px; background: rgba(59, 130, 246, 0.12); color: #2563EB;">
+                                <i class="bi bi-1-circle-fill fs-5"></i>
+                            </div>
+                        </div>
+                        <div class="fw-bold text-primary" id="cardKpiEtapa1" style="font-size: 2.1rem; line-height: 1.1;">0</div>
+                        <div class="text-muted small mt-1">
+                            <i class="bi bi-clipboard2-check text-primary me-1"></i> Antecedentes recepcionados
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ETAPA 2: TERRENO -->
+                <div class="col-sm-6 col-xl-3">
+                    <div class="social-kpi-card" onclick="filtrarPorEtapa(2)" role="button" tabindex="0" title="Filtrar Etapa 2: Terreno">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <span class="text-uppercase fw-bold text-muted" style="font-size: 0.75rem; letter-spacing: 0.05em;">ETAPA 2: TERRENO</span>
+                            <div class="rounded-circle d-flex align-items-center justify-content-center" style="width: 38px; height: 38px; background: rgba(245, 158, 11, 0.14); color: #D97706;">
+                                <i class="bi bi-2-circle-fill fs-5"></i>
+                            </div>
+                        </div>
+                        <div class="fw-bold" id="cardKpiEtapa2" style="font-size: 2.1rem; color: #D97706; line-height: 1.1;">0</div>
+                        <div class="text-muted small mt-1">
+                            <i class="bi bi-camera-fill text-warning me-1"></i> Con evidencia fotográfica
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ETAPA 3: RESUELTO -->
+                <div class="col-sm-6 col-xl-3">
+                    <div class="social-kpi-card" onclick="filtrarPorEtapa(3)" role="button" tabindex="0" title="Filtrar Etapa 3: Resuelto">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <span class="text-uppercase fw-bold text-muted" style="font-size: 0.75rem; letter-spacing: 0.05em;">ETAPA 3: RESUELTO</span>
+                            <div class="rounded-circle d-flex align-items-center justify-content-center" style="width: 38px; height: 38px; background: rgba(16, 185, 129, 0.14); color: #059669;">
+                                <i class="bi bi-3-circle-fill fs-5"></i>
+                            </div>
+                        </div>
+                        <div class="fw-bold text-success" id="cardKpiEtapa3" style="font-size: 2.1rem; line-height: 1.1;">0</div>
+                        <div class="text-muted small mt-1">
+                            <i class="bi bi-check2-circle text-success me-1"></i> Subsidio o cierre social
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 4. BARRA DE FUNCIONES SOCIALES DE LA ASISTENTE SOCIAL (5 FUNCIONES DE DIDECO) -->
+            <div class="p-3 bg-white rounded-4 border shadow-sm mb-4">
+                <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-2.5">
+                    <div class="fw-bold text-dark small">
+                        <i class="bi bi-briefcase-fill text-danger me-1.5"></i> Áreas de Atención Social Municipal:
+                    </div>
+                    <div class="d-flex align-items-center gap-2">
+                        <button class="btn btn-sm btn-outline-danger rounded-pill px-2.5 py-0.5 fw-semibold" onclick="abrirModalInformeSocial()" style="font-size: 0.78rem;">
+                            <i class="bi bi-file-earmark-plus-fill me-1"></i> Emitir Informe Social
+                        </button>
+                        <button class="btn btn-sm btn-outline-primary rounded-pill px-2.5 py-0.5 fw-semibold" onclick="abrirModalVisitaTerreno()" style="font-size: 0.78rem;">
+                            <i class="bi bi-geo-alt-fill me-1"></i> Agendar Visita en Terreno
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Tabs de Navegación por Funciones -->
+                <div class="d-flex align-items-center gap-2 flex-wrap" id="funcTabsContainer">
+                    <button class="func-tab-btn active" data-tab="todos" onclick="filtrarPorPestana('todos', this)">
+                        <i class="bi bi-grid-fill"></i> Todos los Casos
+                    </button>
+                    <button class="func-tab-btn" data-tab="diagnostico" onclick="filtrarPorPestana('diagnostico', this)">
+                        <i class="bi bi-search"></i> 1. Evaluación y Diagnóstico (Terreno)
+                    </button>
+                    <button class="func-tab-btn" data-tab="beneficio" onclick="filtrarPorPestana('beneficio', this)">
+                        <i class="bi bi-gift-fill"></i> 2. Gestión de Beneficios (Subsidios/Becas)
+                    </button>
+                    <button class="func-tab-btn" data-tab="informe" onclick="filtrarPorPestana('informe', this)">
+                        <i class="bi bi-file-text-fill"></i> 3. Informes Sociales (Tribunal/Salud)
+                    </button>
+                    <button class="func-tab-btn" data-tab="emergencia" onclick="filtrarPorPestana('emergencia', this)">
+                        <i class="bi bi-lightning-fill text-danger"></i> 4. Atención de Emergencias (Catástrofes)
+                    </button>
+                    <button class="func-tab-btn" data-tab="redes" onclick="filtrarPorPestana('redes', this)">
+                        <i class="bi bi-diagram-2-fill"></i> 5. Articulación de Redes
+                    </button>
+                </div>
+            </div>
+
+            <!-- 5. FILTROS Y BÚSQUEDA INTERACTIVA -->
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2.5 mb-3">
+                <div class="d-flex align-items-center gap-2 flex-grow-1 flex-wrap">
+                    <!-- Buscador en Vivo por RUT, Nombre o Sede -->
+                    <div class="position-relative" style="min-width: 300px; flex-grow: 1;">
+                        <i class="bi bi-search position-absolute top-50 start-0 translate-middle-y ms-3 text-muted"></i>
+                        <input type="text" class="form-control rounded-pill ps-5" placeholder="Buscar por RUT, Nombre de usuario o Delegación..." id="txtBusquedaCaso" onkeyup="aplicarFiltrosTabla()">
+                    </div>
+
+                    <!-- Filtro por Delegación Territorial -->
+                    <select class="form-select rounded-pill w-auto" id="selFiltroDelegacion" onchange="aplicarFiltrosTabla()" style="font-size: 0.85rem;">
+                        <option value="">Todas las Delegaciones</option>
+                        <option value="Centro Histórico">Centro Histórico</option>
+                        <option value="Las Compañías">Las Compañías</option>
+                        <option value="La Pampa">La Pampa</option>
+                        <option value="La Antena">La Antena - La Florida</option>
+                        <option value="Avenida del Mar">Avenida del Mar</option>
+                        <option value="Sector Rural">Sector Rural</option>
+                    </select>
+
+                    <!-- Filtro por Etapa RN-012 -->
+                    <select class="form-select rounded-pill w-auto" id="selFiltroEtapa" onchange="aplicarFiltrosTabla()" style="font-size: 0.85rem;">
+                        <option value="">Todas las Etapas (1 a 3)</option>
+                        <option value="1">Etapa 1: Ingreso & Antecedentes</option>
+                        <option value="2">Etapa 2: Terreno & Levantamiento</option>
+                        <option value="3">Etapa 3: Resuelto & Beneficio</option>
+                    </select>
+                </div>
+
+                <div class="text-muted small">
+                    Mostrando <strong id="lblCasosMostrados" class="text-danger">0</strong> de <span id="lblCasosTotales">0</span> casos registrados
+                </div>
+            </div>
+
+            <!-- 6. TABLA DE CASOS SOCIALES TERRITORIALES (RN-012) -->
+            <div class="rounded-4 border bg-white shadow-sm mb-4 table-container-noscroll" style="overflow-x: hidden; width: 100%;">
+                <table class="table align-middle m-0" id="tablaCasosSociales" style="table-layout: fixed; width: 100%; border-collapse: collapse;">
+                    <colgroup>
+                        <col style="width: 13%;">
+                        <col style="width: 23%;">
+                        <col style="width: 15%;">
+                        <col style="width: 11%;">
+                        <col style="width: 16%;">
+                        <col style="width: 10%;">
+                        <col style="width: 12%;">
+                    </colgroup>
+                    <thead style="background: rgba(241, 245, 249, 0.95); border-bottom: 2px solid #CBD5E1;">
+                        <tr style="font-size: 0.76rem; font-weight: 800; color: #1E293B; text-transform: uppercase; letter-spacing: 0.03em;">
+                            <th class="py-3 px-3">RUT VECINO</th>
+                            <th class="py-3 px-2">PERSONA USUARIA / BENEFICIARIO</th>
+                            <th class="py-3 px-2">DELEGACIÓN</th>
+                            <th class="py-3 px-2 text-center">FECHA INGRESO</th>
+                            <th class="py-3 px-2">ASUNTO / FUNCIÓN</th>
+                            <th class="py-3 px-1 text-center">FLUJO RN-012</th>
+                            <th class="py-3 px-2 text-center">ACCIONES</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tablaCasosSocialesBody" style="font-size: 0.86rem;">
+                        <!-- Inyectado dinámicamente con JavaScript -->
+                    </tbody>
+                </table>
+
+                <!-- Estado Vacío -->
+                <div id="emptyStateCasos" class="p-5 text-center text-muted" style="display: none;">
+                    <i class="bi bi-inbox-fill d-block fs-1 mb-2 text-secondary opacity-50"></i>
+                    <h6 class="fw-bold text-dark">No hay casos sociales registrados para los filtros seleccionados</h6>
+                    <p class="small text-muted mb-3">Puedes registrar un nuevo caso social o restablecer los filtros de búsqueda.</p>
+                    <button class="liquid-glass-btn-primary" onclick="abrirModalNuevoCaso()">
+                        <i class="bi bi-plus-circle-fill"></i> Registrar Primer Caso Social
+                    </button>
+                </div>
+            </div>
+
+        </main>
+
+        <!-- Pie de Página Institucional -->
+        <footer class="p-3 text-center text-muted border-top bg-white small" style="border-top: 1px solid #E2E8F0;">
+            Ilustre Municipalidad de La Serena · Dirección de Desarrollo Comunitario (DIDECO) · Sistema de Gestión de Resultados (SGR 2026)
+        </footer>
+    </div>
+
+    <!-- =================================================================
+         3. MODALES OPERACIONALES (SWEETALERT2 & MODALES INTERACTIVOS)
+         ================================================================= -->
+
+    <!-- Modal 1: + Nuevo Caso Social -->
+    <div class="modal fade" id="modalNuevoCaso" tabindex="-1" aria-labelledby="modalNuevoCasoLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content rounded-4 border-0 shadow-lg">
+                <div class="modal-header text-white" style="background: linear-gradient(135deg, #C41230 0%, #9E0E26 100%);">
+                    <div>
+                        <h5 class="modal-title fw-bold" id="modalNuevoCasoLabel">
+                            <i class="bi bi-person-plus-fill me-2"></i>Registrar Nuevo Caso Social · DIDECO
+                        </h5>
+                        <p class="small m-0 text-white-50">Ficha Única Territorial según Normativa Municipal RN-012</p>
+                    </div>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <form id="formNuevoCaso" onsubmit="guardarNuevoCaso(event)">
+                        <div class="row g-3">
+                            <!-- RUT con Formateo Automático y Validación Mod 11 -->
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold small text-dark" for="casoRut">RUT de la Persona Usuaria <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control rounded-3" id="casoRut" placeholder="12.345.678-9" required oninput="formatearRutChileno(this)">
+                                <small class="text-muted" style="font-size: 0.72rem;">Validación estricta chilena Módulo 11</small>
+                            </div>
+
+                            <!-- Nombre Completo (Solo letras) -->
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold small text-dark" for="casoNombre">Nombre Completo Beneficiario <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control rounded-3" id="casoNombre" placeholder="Ej: Marcela Contreras Vega" required oninput="this.value = this.value.replace(/[0-9]/g, '')">
+                            </div>
+
+                            <!-- Teléfono de Contacto -->
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold small text-dark" for="casoTelefono">Teléfono de Contacto <span class="text-danger">*</span></label>
+                                <input type="tel" class="form-control rounded-3" id="casoTelefono" placeholder="+56 9 8765 4321" required>
+                            </div>
+
+                            <!-- Delegación Municipal -->
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold small text-dark" for="casoDelegacion">Sede / Delegación Territorial <span class="text-danger">*</span></label>
+                                <select class="form-select rounded-3" id="casoDelegacion" required>
+                                    <option value="Las Compañías" selected>Las Compañías</option>
+                                    <option value="Centro Histórico">Centro Histórico</option>
+                                    <option value="La Pampa">La Pampa</option>
+                                    <option value="La Antena">La Antena - La Florida</option>
+                                    <option value="Avenida del Mar">Avenida del Mar</option>
+                                    <option value="Sector Rural">Sector Rural</option>
+                                </select>
+                            </div>
+
+                            <!-- Área / Función Principal DIDECO -->
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold small text-dark" for="casoCategoria">Función Social / Área <span class="text-danger">*</span></label>
+                                <select class="form-select rounded-3" id="casoCategoria" required>
+                                    <option value="beneficio" selected>Gestión de Beneficios y Subsidios</option>
+                                    <option value="diagnostico">Evaluación y Diagnóstico (Visita Terreno)</option>
+                                    <option value="informe">Informe Social Formal (Tribunal / CESFAM)</option>
+                                    <option value="emergencia">Atención de Emergencia / Catástrofe</option>
+                                    <option value="redes">Articulación de Redes Comunitarias</option>
+                                </select>
+                            </div>
+
+                            <!-- Tramo RSH (Registro Social de Hogares) -->
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold small text-dark" for="casoRsh">Tramo RSH (Vulnerabilidad) <span class="text-danger">*</span></label>
+                                <select class="form-select rounded-3" id="casoRsh" required>
+                                    <option value="40% RSH" selected>Tramo 0% - 40% (Mayor Vulnerabilidad)</option>
+                                    <option value="50% RSH">Tramo 41% - 50%</option>
+                                    <option value="60% RSH">Tramo 51% - 60%</option>
+                                    <option value="70% RSH">Tramo 61% - 70%</option>
+                                    <option value="Sin RSH">En trámite / Sin Registro RSH</option>
+                                </select>
+                            </div>
+
+                            <!-- Asunto o Subsidio Solicitado -->
+                            <div class="col-12">
+                                <label class="form-label fw-bold small text-dark" for="casoAsunto">Asunto / Beneficio Específico <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control rounded-3" id="casoAsunto" placeholder="Ej: Subsidio de Agua Potable (SAP), Ayuda médica para fármacos, etc." required>
+                            </div>
+
+                            <!-- Diagnóstico o Descripción de la Situación de Vulnerabilidad -->
+                            <div class="col-12">
+                                <label class="form-label fw-bold small text-dark" for="casoDescripcion">Diagnóstico Socioeconómico Inicial <span class="text-danger">*</span></label>
+                                <textarea class="form-control rounded-3" id="casoDescripcion" rows="3" placeholder="Detalle la situación sociofamiliar, ingresos, condiciones de habitabilidad y requerimientos prioritarios..." required></textarea>
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-end gap-2 mt-4 pt-3 border-top">
+                            <button type="button" class="btn btn-outline-secondary rounded-pill px-4 fw-bold" data-bs-dismiss="modal">Cancelar</button>
+                            <button type="submit" class="liquid-glass-btn-primary">
+                                <i class="bi bi-check-circle-fill"></i> Guardar Caso Social
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal 2: Agendar Visita a Terreno & Levantamiento (Etapa 2) -->
+    <div class="modal fade" id="modalVisitaTerreno" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content rounded-4 border-0 shadow-lg">
+                <div class="modal-header text-white" style="background: linear-gradient(135deg, #1B365D 0%, #0F172A 100%);">
+                    <div>
+                        <h5 class="modal-title fw-bold">
+                            <i class="bi bi-camera-fill text-warning me-2"></i>Etapa 2: Visita en Terreno y Levantamiento Fotográfico
+                        </h5>
+                        <p class="small m-0 text-white-50">Verificación de condiciones de vida domiciliarias (Normativa RN-012)</p>
+                    </div>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <form id="formVisitaTerreno" onsubmit="guardarVisitaTerreno(event)">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold small text-dark" for="visitaCasoSelect">Seleccionar Caso Social <span class="text-danger">*</span></label>
+                                <select class="form-select rounded-3" id="visitaCasoSelect" required>
+                                    <!-- Inyectado dinámicamente -->
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold small text-dark" for="visitaFecha">Fecha de la Visita Domiciliaria <span class="text-danger">*</span></label>
+                                <input type="date" class="form-control rounded-3" id="visitaFecha" required>
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label fw-bold small text-dark" for="visitaCondiciones">Condiciones de Habitabilidad y Diagnóstico <span class="text-danger">*</span></label>
+                                <textarea class="form-control rounded-3" id="visitaCondiciones" rows="3" placeholder="Indicar estado del inmueble, hacinamiento, red de apoyo familiar, personas con dependencia o discapacidad..." required></textarea>
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label fw-bold small text-dark">Evidencia Fotográfica Obligatoria (RN-012) <span class="text-danger">*</span></label>
+                                <div class="p-3 border border-2 border-dashed rounded-4 text-center bg-light" id="dropAreaEvidencia">
+                                    <i class="bi bi-cloud-arrow-up-fill fs-2 text-danger"></i>
+                                    <div class="fw-bold text-dark mt-1">Adjuntar fotografía de la visita en terreno</div>
+                                    <div class="text-muted small">JPG, PNG o WEBP (Máx. 5MB)</div>
+                                    <input type="file" id="fotoVisitaInput" class="form-control mt-2" accept="image/*" onchange="previewFotoVisita(this)">
+                                    <div id="fotoPreviewContainer" class="mt-2 text-center" style="display: none;">
+                                        <img id="fotoPreviewImg" src="" alt="Vista previa" class="rounded-3 shadow-sm" style="max-height: 120px; object-fit: cover;">
+                                        <div class="small text-success fw-bold mt-1"><i class="bi bi-check-circle-fill"></i> Fotografía verificada lista para adjuntar</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="d-flex justify-content-end gap-2 mt-4 pt-3 border-top">
+                            <button type="button" class="btn btn-outline-secondary rounded-pill px-4 fw-bold" data-bs-dismiss="modal">Cancelar</button>
+                            <button type="submit" class="liquid-glass-btn-primary">
+                                <i class="bi bi-check-circle-fill"></i> Guardar Visita y Avanzar a Etapa 2
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal 3: Atención Inmediata de Emergencias y Catástrofes -->
+    <div class="modal fade" id="modalEmergencia" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content rounded-4 border-0 shadow-lg">
+                <div class="modal-header text-white" style="background: linear-gradient(135deg, #B91C1C 0%, #7F1D1D 100%);">
+                    <div>
+                        <h5 class="modal-title fw-bold">
+                            <i class="bi bi-lightning-charge-fill text-warning me-2"></i>Atención Social de Emergencias y Catástrofes
+                        </h5>
+                        <p class="small m-0 text-white-50">Despacho urgente de ayuda material municipal (Incendios, Lluvias, Crisis)</p>
+                    </div>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <form id="formEmergencia" onsubmit="guardarEmergencia(event)">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold small text-dark" for="emerRut">RUT Persona Damnificada / Afectada <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control rounded-3" id="emerRut" placeholder="11.222.333-4" required oninput="formatearRutChileno(this)">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold small text-dark" for="emerNombre">Nombre Completo <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control rounded-3" id="emerNombre" placeholder="Ej: Juan Pérez Morales" required oninput="this.value = this.value.replace(/[0-9]/g, '')">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold small text-dark" for="emerTipo">Tipo de Siniestro o Emergencia <span class="text-danger">*</span></label>
+                                <select class="form-select rounded-3" id="emerTipo" required>
+                                    <option value="Incendio Estructural" selected>Incendio Estructural / Pérdida Total</option>
+                                    <option value="Anegamiento / Temporal">Anegamiento / Temporal de Lluvias</option>
+                                    <option value="Desprendimiento de Techumbre">Desprendimiento de Techumbre</option>
+                                    <option value="Situación de Calle / Frío">Situación de Calle / Frío Extremo</option>
+                                    <option value="Colapso de Servicios Básicos">Colapso de Servicios Básicos</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold small text-dark" for="emerDelegacion">Delegación del Siniestro <span class="text-danger">*</span></label>
+                                <select class="form-select rounded-3" id="emerDelegacion" required>
+                                    <option value="Las Compañías">Las Compañías</option>
+                                    <option value="La Antena" selected>La Antena - La Florida</option>
+                                    <option value="Centro Histórico">Centro Histórico</option>
+                                    <option value="La Pampa">La Pampa</option>
+                                    <option value="Sector Rural">Sector Rural</option>
+                                    <option value="Avenida del Mar">Avenida del Mar</option>
+                                </select>
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label fw-bold small text-dark" for="emerAyuda">Ayuda Material Despachada <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control rounded-3" id="emerAyuda" placeholder="Ej: 2 Cajas de alimentos, 8 Planchas de zinc, 4 Frazadas y colchón 1.5 plazas" required>
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label fw-bold small text-dark" for="emerObservaciones">Evaluación en Terreno y Acción Ejecutada <span class="text-danger">*</span></label>
+                                <textarea class="form-control rounded-3" id="emerObservaciones" rows="3" placeholder="Describa el estado de los integrantes del hogar, daños y coordinación con Bomberos/Salud/DIDECO..." required></textarea>
+                            </div>
+                        </div>
+                        <div class="d-flex justify-content-end gap-2 mt-4 pt-3 border-top">
+                            <button type="button" class="btn btn-outline-secondary rounded-pill px-4 fw-bold" data-bs-dismiss="modal">Cancelar</button>
+                            <button type="submit" class="liquid-glass-btn-primary" style="background: linear-gradient(135deg, #B91C1C 0%, #7F1D1D 100%) !important;">
+                                <i class="bi bi-shield-fill-check"></i> Despachar y Registrar Emergencia
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal 4: Emitir Informe Social Oficial (Tribunal / CESFAM / SERVIU) -->
+    <div class="modal fade" id="modalInformeSocial" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content rounded-4 border-0 shadow-lg">
+                <div class="modal-header text-white" style="background: linear-gradient(135deg, #1D4ED8 0%, #1E3A8A 100%);">
+                    <div>
+                        <h5 class="modal-title fw-bold">
+                            <i class="bi bi-file-earmark-text-fill me-2"></i>Emitir Informe Social Oficial · DIDECO
+                        </h5>
+                        <p class="small m-0 text-white-50">Documento formal con respaldo legal para instituciones públicas</p>
+                    </div>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <form id="formInformeSocial" onsubmit="emitirInformeSocial(event)">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold small text-dark" for="informeCasoSelect">Caso Social / Vecino <span class="text-danger">*</span></label>
+                                <select class="form-select rounded-3" id="informeCasoSelect" required>
+                                    <!-- Dinámico -->
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold small text-dark" for="informeDestinatario">Entidad Solicitante / Destinatario <span class="text-danger">*</span></label>
+                                <select class="form-select rounded-3" id="informeDestinatario" required>
+                                    <option value="Tribunal de Familia de La Serena" selected>Tribunal de Familia de La Serena</option>
+                                    <option value="Centro de Salud Familiar (CESFAM)">Centro de Salud Familiar (CESFAM)</option>
+                                    <option value="SERVIU Región de Coquimbo">SERVIU Región de Coquimbo (Subsidio Habitacional)</option>
+                                    <option value="Fiscalía Local de La Serena">Fiscalía Local de La Serena</option>
+                                    <option value="Dirección DIDECO Municipal">Dirección DIDECO Municipal</option>
+                                </select>
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label fw-bold small text-dark" for="informeDictamen">Conclusión y Dictamen Profesional de la Asistente Social <span class="text-danger">*</span></label>
+                                <textarea class="form-control rounded-3" id="informeDictamen" rows="4" placeholder="Se sugiere otorgar apoyo preferente por acreditarse condición de extrema vulnerabilidad económica y red de apoyo precaria..." required></textarea>
+                            </div>
+                        </div>
+                        <div class="d-flex justify-content-end gap-2 mt-4 pt-3 border-top">
+                            <button type="button" class="btn btn-outline-secondary rounded-pill px-4 fw-bold" data-bs-dismiss="modal">Cancelar</button>
+                            <button type="submit" class="liquid-glass-btn-primary" style="background: linear-gradient(135deg, #1D4ED8 0%, #1E3A8A 100%) !important;">
+                                <i class="bi bi-file-earmark-pdf-fill"></i> Generar y Descargar Informe PDF
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal 5: Ver Expediente Completo (RN-012) -->
+    <div class="modal fade" id="modalExpediente" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content rounded-4 border-0 shadow-lg">
+                <div class="modal-header text-white" style="background: linear-gradient(135deg, #C41230 0%, #1B365D 100%);">
+                    <div>
+                        <h5 class="modal-title fw-bold" id="expedienteTitulo">Expediente Caso Social</h5>
+                        <p class="small m-0 text-white-50" id="expedienteSubtitulo">Ficha Única Municipal La Serena</p>
+                    </div>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-4" id="expedienteCuerpo">
+                    <!-- Dinámico con JS -->
+                </div>
+                <div class="modal-footer border-top bg-light">
+                    <button type="button" class="btn btn-secondary rounded-pill px-4" data-bs-dismiss="modal">Cerrar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- =================================================================
+         4. SCRIPT PRINCIPAL: GESTIÓN REACTIVA DE CASOS SOCIALES (JS PRO)
+         ================================================================= -->
+    <script>
+        // Catálogo de Casos Iniciales (Combinando Backend + Datos Realistas de las 5 Funciones de Asistencia Social)
+        let casosSociales = [];
+
+        const casosSemilla = [
+            {
+                id: 1,
+                rut: "14.285.391-4",
+                nombre: "Marcela Contreras Vega",
+                telefono: "+56 9 8451 2290",
+                delegacion: "Las Compañías",
+                fecha_ingreso: "18/10/2026",
+                categoria: "diagnostico",
+                asunto: "Visita en Terreno y RSH 40%",
+                etapa: 2,
+                rsh: "40% RSH",
+                descripcion: "Madre jefa de hogar con dos menores. Se realizó visita a terreno levantando evidencia fotográfica de filtración.",
+                evidencia: "Foto_Visita_LC_082.jpg",
+                resolucion: "Etapa 2 aprobada con respaldo fotográfico."
+            },
+            {
+                id: 2,
+                rut: "9.842.115-K",
+                nombre: "Héctor Valenzuela Rojas",
+                telefono: "+56 9 7120 4433",
+                delegacion: "La Pampa",
+                fecha_ingreso: "16/10/2026",
+                categoria: "beneficio",
+                asunto: "Subsidio de Agua Potable (SAP)",
+                etapa: 3,
+                rsh: "40% RSH",
+                descripcion: "Adulto mayor de 74 años con pensión básica solidaria. Solicitó exención y subsidio SAP de agua.",
+                evidencia: "Ficha_SAP_LP_104.pdf",
+                resolucion: "Beneficio concedido al 100% por decreto municipal."
+            },
+            {
+                id: 3,
+                rut: "18.390.412-2",
+                nombre: "Francisca Godoy Pizarro",
+                telefono: "+56 9 9345 6789",
+                delegacion: "Centro Histórico",
+                fecha_ingreso: "19/10/2026",
+                categoria: "informe",
+                asunto: "Informe Tribunal de Familia",
+                etapa: 2,
+                rsh: "50% RSH",
+                descripcion: "Tribunal de Familia solicita informe socioeconómico por causa de alimentos y cuidado personal.",
+                evidencia: "Oficio_Tribunal_2026_81.pdf",
+                resolucion: "Informe en elaboración tras entrevista domiciliaria."
+            },
+            {
+                id: 4,
+                rut: "16.711.205-8",
+                nombre: "Carlos Araya Espinoza",
+                telefono: "+56 9 6554 1122",
+                delegacion: "La Antena",
+                fecha_ingreso: "20/10/2026",
+                categoria: "emergencia",
+                asunto: "Incendio parcial techumbre",
+                etapa: 3,
+                rsh: "40% RSH",
+                descripcion: "Siniestro habitacional por falla eléctrica. Se despacharon 8 planchas de zinc, clavos y caja de alimentos.",
+                evidencia: "Acta_Entrega_Emergencia_19.pdf",
+                resolucion: "Ayuda material entregada en el lugar con firma de recepción."
+            },
+            {
+                id: 5,
+                rut: "12.589.633-1",
+                nombre: "Elena Miranda Cortés",
+                telefono: "+56 9 5543 9988",
+                delegacion: "Sector Rural",
+                fecha_ingreso: "21/10/2026",
+                categoria: "redes",
+                asunto: "Derivación Urgente CESFAM / Adulto Mayor",
+                etapa: 1,
+                rsh: "40% RSH",
+                descripcion: "Vecina con movilidad reducida requiere visita médica en domicilio y postulación a programa de cuidados.",
+                evidencia: "Sin evidencia aún",
+                resolucion: "Expediente ingresado en Etapa 1. Pendiente visita."
+            },
+            {
+                id: 6,
+                rut: "19.822.450-3",
+                nombre: "Diego Tapia Castillo",
+                telefono: "+56 9 7889 0012",
+                delegacion: "Avenida del Mar",
+                fecha_ingreso: "21/10/2026",
+                categoria: "beneficio",
+                asunto: "Beca de Estudio Municipal",
+                etapa: 1,
+                rsh: "60% RSH",
+                descripcion: "Estudiante universitario de primer año solicita apoyo para arancel y materiales.",
+                evidencia: "Certificado_Matricula_2026.pdf",
+                resolucion: "Antecedentes recepcionados en delegación."
+            }
+        ];
+
+        // Inicialización al cargar la ventana
+        document.addEventListener('DOMContentLoaded', function () {
+            // Cargar desde LocalStorage o semilla
+            const guardados = localStorage.getItem('sgr_casos_sociales_v1');
+            if (guardados) {
+                try {
+                    casosSociales = JSON.parse(guardados);
+                } catch (e) {
+                    casosSociales = [...casosSemilla];
+                }
+            } else {
+                casosSociales = [...casosSemilla];
+                guardarEnStorage();
+            }
+
+            renderizarTablaCasos(casosSociales);
+            actualizarIndicadores();
+            poblarSelectsModales();
+        });
+
+        function guardarEnStorage() {
+            localStorage.setItem('sgr_casos_sociales_v1', JSON.stringify(casosSociales));
+        }
+
+        // Renderizado Dinámico de la Tabla
+        function renderizarTablaCasos(lista) {
+            const tbody = document.getElementById('tablaCasosSocialesBody');
+            const emptyState = document.getElementById('emptyStateCasos');
+            tbody.innerHTML = '';
+
+            if (lista.length === 0) {
+                emptyState.style.display = 'block';
+                document.getElementById('lblCasosMostrados').innerText = '0';
+                return;
+            }
+            emptyState.style.display = 'none';
+            document.getElementById('lblCasosMostrados').innerText = lista.length;
+
+            lista.forEach(caso => {
+                const tr = document.createElement('tr');
+                tr.style.borderBottom = '1px solid #E2E8F0';
+
+                // Categoría badge
+                let catClass = 'cat-beneficio';
+                let catLabel = 'Beneficio';
+                if (caso.categoria === 'diagnostico') { catClass = 'cat-diagnostico'; catLabel = 'Diagnóstico'; }
+                else if (caso.categoria === 'informe') { catClass = 'cat-informe'; catLabel = 'Informe Social'; }
+                else if (caso.categoria === 'emergencia') { catClass = 'cat-emergencia'; catLabel = '🚨 Emergencia'; }
+                else if (caso.categoria === 'redes') { catClass = 'cat-redes'; catLabel = 'Redes'; }
+
+                // Etapa RN-012 Step
+                let stepBadge = '';
+                if (caso.etapa === 1) {
+                    stepBadge = `
+                        <div class="d-flex flex-column align-items-center">
+                            <span class="rn-step-badge rn-step-1">Etapa 1</span>
+                            <div class="pipeline-dots mt-1">
+                                <span class="pipeline-dot active-1"></span>
+                                <span class="pipeline-dot"></span>
+                                <span class="pipeline-dot"></span>
+                            </div>
+                        </div>`;
+                } else if (caso.etapa === 2) {
+                    stepBadge = `
+                        <div class="d-flex flex-column align-items-center">
+                            <span class="rn-step-badge rn-step-2">Etapa 2</span>
+                            <div class="pipeline-dots mt-1">
+                                <span class="pipeline-dot active-1"></span>
+                                <span class="pipeline-dot active-2"></span>
+                                <span class="pipeline-dot"></span>
+                            </div>
+                        </div>`;
+                } else {
+                    stepBadge = `
+                        <div class="d-flex flex-column align-items-center">
+                            <span class="rn-step-badge rn-step-3">Etapa 3</span>
+                            <div class="pipeline-dots mt-1">
+                                <span class="pipeline-dot active-1"></span>
+                                <span class="pipeline-dot active-2"></span>
+                                <span class="pipeline-dot active-3"></span>
+                            </div>
+                        </div>`;
+                }
+
+                tr.innerHTML = `
+                    <td class="py-3 px-3 fw-bold text-dark" style="font-family: monospace; font-size: 0.90rem;">
+                        ${caso.rut}
+                    </td>
+                    <td class="py-3 px-2">
+                        <div class="fw-bold text-dark">${caso.nombre}</div>
+                        <div class="text-muted small d-flex align-items-center gap-1.5 mt-0.5">
+                            <i class="bi bi-telephone text-danger" style="font-size: 0.72rem;"></i> ${caso.telefono}
+                            <span class="badge bg-light text-secondary border ms-1" style="font-size: 0.68rem;">${caso.rsh || '40% RSH'}</span>
+                        </div>
+                    </td>
+                    <td class="py-3 px-2 text-secondary fw-semibold">
+                        <i class="bi bi-geo-alt text-danger me-1"></i> ${caso.delegacion}
+                    </td>
+                    <td class="py-3 px-2 text-center text-muted fw-semibold" style="font-size: 0.82rem;">
+                        ${caso.fecha_ingreso}
+                    </td>
+                    <td class="py-3 px-2">
+                        <span class="cat-pill ${catClass}">${catLabel}</span>
+                        <div class="small fw-semibold text-truncate text-dark mt-1" style="max-width: 170px;" title="${caso.asunto}">
+                            ${caso.asunto}
+                        </div>
+                    </td>
+                    <td class="py-3 px-1 text-center">
+                        ${stepBadge}
+                    </td>
+                    <td class="py-3 px-2 text-center">
+                        <div class="d-inline-flex align-items-center justify-content-center gap-1.5">
+                            <button class="btn-action-round btn-action-view" onclick="verExpedienteCaso(${caso.id})" title="Ver Ficha y Expediente Social">
+                                <i class="bi bi-eye-fill"></i>
+                            </button>
+                            <button class="btn-action-round btn-action-advance" onclick="avanzarEtapaCaso(${caso.id})" title="Avanzar Etapa Flujo RN-012">
+                                <i class="bi bi-arrow-right-circle-fill"></i>
+                            </button>
+                            <button class="btn-action-round btn-action-report" onclick="emitirInformeRapido(${caso.id})" title="Emitir Informe Social PDF">
+                                <i class="bi bi-printer-fill"></i>
+                            </button>
+                            <button class="btn-action-round" style="background: rgba(239, 68, 68, 0.1); color: #DC2626;" onclick="eliminarCaso(${caso.id})" title="Cerrar / Dar de baja">
+                                <i class="bi bi-trash3-fill"></i>
+                            </button>
+                        </div>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        // Actualizar Indicadores & Semáforo SGR
+        function actualizarIndicadores() {
+            const total = casosSociales.length;
+            const etapa1 = casosSociales.filter(c => c.etapa === 1).length;
+            const etapa2 = casosSociales.filter(c => c.etapa === 2).length;
+            const etapa3 = casosSociales.filter(c => c.etapa === 3).length;
+
+            document.getElementById('cardKpiTotal').innerText = total;
+            document.getElementById('cardKpiEtapa1').innerText = etapa1;
+            document.getElementById('cardKpiEtapa2').innerText = etapa2;
+            document.getElementById('cardKpiEtapa3').innerText = etapa3;
+
+            document.getElementById('sideBadgeCasos').innerText = total;
+            document.getElementById('sideBadgeFlujo').innerText = total;
+            document.getElementById('sideBadgeTerreno').innerText = etapa2;
+            document.getElementById('sideBadgeBeneficios').innerText = casosSociales.filter(c => c.categoria === 'beneficio').length;
+            document.getElementById('sideBadgeInformes').innerText = casosSociales.filter(c => c.categoria === 'informe').length;
+            document.getElementById('sideBadgeEmergencias').innerText = casosSociales.filter(c => c.categoria === 'emergencia').length;
+            document.getElementById('sideBadgeRedes').innerText = casosSociales.filter(c => c.categoria === 'redes').length;
+
+            document.getElementById('lblCasosTotales').innerText = total;
+            document.getElementById('lblAvanceCount').innerText = etapa3;
+
+            // Meta Trimestral: 40 atenciones cerradas (Etapa 3)
+            const metaTrimestral = 40;
+            const porcentaje = Math.min(100, Math.round((etapa3 / metaTrimestral) * 100));
+            const pctTexto = porcentaje.toFixed(1).replace('.', ',') + '%';
+
+            document.getElementById('lblAvancePct').innerText = pctTexto;
+            document.getElementById('sgrCumplimientoVal').innerText = pctTexto;
+            document.getElementById('sideBadgeSgrPct').innerText = pctTexto;
+
+            const pBar = document.getElementById('sgrProgressBar');
+            pBar.style.width = porcentaje + '%';
+
+            // Semáforo SGR dinámico
+            const lblStatus = document.getElementById('sgrStatusLabel');
+            const beaconDot = document.getElementById('sgrBeaconDot');
+
+            if (porcentaje >= 80) {
+                lblStatus.className = 'text-success fw-extrabold';
+                lblStatus.innerText = 'Verde (Meta Óptima Cumplida)';
+                beaconDot.style.backgroundColor = '#10B981';
+                beaconDot.style.boxShadow = '0 0 12px #10B981';
+            } else if (porcentaje >= 45) {
+                lblStatus.className = 'text-warning fw-extrabold';
+                lblStatus.innerText = 'Amarillo (En Progreso Normal)';
+                beaconDot.style.backgroundColor = '#F59E0B';
+                beaconDot.style.boxShadow = '0 0 12px #F59E0B';
+            } else {
+                lblStatus.className = 'text-danger fw-extrabold';
+                lblStatus.innerText = 'Rojo (Rezago Operativo)';
+                beaconDot.style.backgroundColor = '#EF4444';
+                beaconDot.style.boxShadow = '0 0 12px #EF4444';
+            }
+        }
+
+        // Filtros Combinados (Búsqueda + Delegación + Etapa + Pestaña Funcional)
+        let tabActiva = 'todos';
+
+        function filtrarPorPestana(tab, btn) {
+            tabActiva = tab;
+            document.querySelectorAll('#funcTabsContainer .func-tab-btn').forEach(b => b.classList.remove('active'));
+            if (btn) btn.classList.add('active');
+
+            // Actualizar botones de navegación lateral si corresponde
+            document.querySelectorAll('.sidebar .nav-item-btn').forEach(b => b.classList.remove('active'));
+            const sideBtn = document.getElementById('nav-btn-' + tab);
+            if (sideBtn) sideBtn.classList.add('active');
+
+            aplicarFiltrosTabla();
+        }
+
+        function filtrarPorEtapa(etapa) {
+            const selEtapa = document.getElementById('selFiltroEtapa');
+            selEtapa.value = etapa === 'todas' ? '' : etapa;
+            aplicarFiltrosTabla();
+        }
+
+        function aplicarFiltrosTabla() {
+            const texto = document.getElementById('txtBusquedaCaso').value.toLowerCase().trim();
+            const delegacion = document.getElementById('selFiltroDelegacion').value;
+            const etapa = document.getElementById('selFiltroEtapa').value;
+
+            const filtrados = casosSociales.filter(caso => {
+                // Filtro Pestaña
+                if (tabActiva !== 'todos') {
+                    if (tabActiva === 'flujo') {
+                        // Flujo muestra todos
+                    } else if (caso.categoria !== tabActiva) {
+                        return false;
+                    }
+                }
+
+                // Filtro Delegación
+                if (delegacion && caso.delegacion !== delegacion) {
+                    return false;
+                }
+
+                // Filtro Etapa
+                if (etapa && caso.etapa.toString() !== etapa) {
+                    return false;
+                }
+
+                // Filtro Texto (RUT, Nombre, Asunto, Delegación)
+                if (texto) {
+                    const matchRut = caso.rut.toLowerCase().includes(texto);
+                    const matchNombre = caso.nombre.toLowerCase().includes(texto);
+                    const matchAsunto = caso.asunto.toLowerCase().includes(texto);
+                    const matchDelegacion = caso.delegacion.toLowerCase().includes(texto);
+                    if (!matchRut && !matchNombre && !matchAsunto && !matchDelegacion) {
+                        return false;
+                    }
+                }
+                return true;
+            });
+
+            renderizarTablaCasos(filtrados);
+        }
+
+        // Modales y Acciones
+        function abrirModalNuevoCaso() {
+            const modal = new bootstrap.Modal(document.getElementById('modalNuevoCaso'));
+            modal.show();
+        }
+
+        function abrirModalVisitaTerreno() {
+            poblarSelectsModales();
+            document.getElementById('visitaFecha').valueAsDate = new Date();
+            const modal = new bootstrap.Modal(document.getElementById('modalVisitaTerreno'));
+            modal.show();
+        }
+
+        function abrirModalEmergencia() {
+            const modal = new bootstrap.Modal(document.getElementById('modalEmergencia'));
+            modal.show();
+        }
+
+        function abrirModalInformeSocial() {
+            poblarSelectsModales();
+            const modal = new bootstrap.Modal(document.getElementById('modalInformeSocial'));
+            modal.show();
+        }
+
+        function poblarSelectsModales() {
+            const selectVisita = document.getElementById('visitaCasoSelect');
+            const selectInforme = document.getElementById('informeCasoSelect');
+
+            if (selectVisita) {
+                selectVisita.innerHTML = '<option value="">-- Selecciona un caso social para visitar --</option>';
+                casosSociales.filter(c => c.etapa < 3).forEach(c => {
+                    selectVisita.innerHTML += `<option value="${c.id}">${c.nombre} (${c.rut}) - ${c.delegacion} [Etapa ${c.etapa}]</option>`;
+                });
+            }
+
+            if (selectInforme) {
+                selectInforme.innerHTML = '<option value="">-- Selecciona un caso para respaldar --</option>';
+                casosSociales.forEach(c => {
+                    selectInforme.innerHTML += `<option value="${c.id}">${c.nombre} (${c.rut}) - ${c.asunto}</option>`;
+                });
+            }
+        }
+
+        // Guardar Nuevo Caso Social
+        function guardarNuevoCaso(e) {
+            e.preventDefault();
+            const rut = document.getElementById('casoRut').value.trim();
+            const nombre = document.getElementById('casoNombre').value.trim();
+            const telefono = document.getElementById('casoTelefono').value.trim();
+            const delegacion = document.getElementById('casoDelegacion').value;
+            const categoria = document.getElementById('casoCategoria').value;
+            const rsh = document.getElementById('casoRsh').value;
+            const asunto = document.getElementById('casoAsunto').value.trim();
+            const descripcion = document.getElementById('casoDescripcion').value.trim();
+
+            if (!validarRutChileno(rut)) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'RUT Inválido',
+                    text: 'El RUT ingresado no cumple con el algoritmo Módulo 11 de Chile. Verifique el número y dígito verificador.',
+                    confirmButtonColor: '#C41230'
+                });
+                return;
+            }
+
+            const nuevo = {
+                id: Date.now(),
+                rut: rut,
+                nombre: nombre,
+                telefono: telefono,
+                delegacion: delegacion,
+                fecha_ingreso: new Date().toLocaleDateString('es-CL'),
+                categoria: categoria,
+                asunto: asunto,
+                etapa: 1,
+                rsh: rsh,
+                descripcion: descripcion,
+                evidencia: 'Sin evidencia aún',
+                resolucion: 'Antecedentes recepcionados en Etapa 1.'
+            };
+
+            casosSociales.unshift(nuevo);
+            guardarEnStorage();
+            renderizarTablaCasos(casosSociales);
+            actualizarIndicadores();
+            poblarSelectsModales();
+
+            bootstrap.Modal.getInstance(document.getElementById('modalNuevoCaso')).hide();
+            document.getElementById('formNuevoCaso').reset();
+
+            Swal.fire({
+                icon: 'success',
+                title: 'Caso Social Ingresado',
+                html: `Se ha creado exitosamente la Ficha Única para <strong>${nombre}</strong> en Etapa 1 (Ingreso).`,
+                confirmButtonColor: '#C41230'
+            });
+        }
+
+        // Guardar Visita a Terreno
+        function guardarVisitaTerreno(e) {
+            e.preventDefault();
+            const casoId = parseInt(document.getElementById('visitaCasoSelect').value);
+            const fecha = document.getElementById('visitaFecha').value;
+            const condiciones = document.getElementById('visitaCondiciones').value.trim();
+
+            const caso = casosSociales.find(c => c.id === casoId);
+            if (!caso) {
+                Swal.fire({ icon: 'warning', title: 'Selecciona un caso', confirmButtonColor: '#C41230' });
+                return;
+            }
+
+            caso.etapa = 2;
+            caso.evidencia = `Visita_${fecha}_${caso.rut.replace(/[^0-9kK]/g, '')}.jpg`;
+            caso.resolucion = `Visita domiciliaria realizada el ${fecha}. Diagnóstico: ${condiciones.substring(0, 80)}...`;
+
+            guardarEnStorage();
+            renderizarTablaCasos(casosSociales);
+            actualizarIndicadores();
+
+            bootstrap.Modal.getInstance(document.getElementById('modalVisitaTerreno')).hide();
+            document.getElementById('formVisitaTerreno').reset();
+            document.getElementById('fotoPreviewContainer').style.display = 'none';
+
+            Swal.fire({
+                icon: 'success',
+                title: 'Visita en Terreno Registrada',
+                html: `El caso de <strong>${caso.nombre}</strong> avanzó a <strong>Etapa 2 (Terreno)</strong> con evidencia fotográfica vinculada.`,
+                confirmButtonColor: '#C41230'
+            });
+        }
+
+        // Guardar Emergencia
+        function guardarEmergencia(e) {
+            e.preventDefault();
+            const rut = document.getElementById('emerRut').value.trim();
+            const nombre = document.getElementById('emerNombre').value.trim();
+            const tipo = document.getElementById('emerTipo').value;
+            const delegacion = document.getElementById('emerDelegacion').value;
+            const ayuda = document.getElementById('emerAyuda').value.trim();
+            const obs = document.getElementById('emerObservaciones').value.trim();
+
+            const nuevo = {
+                id: Date.now(),
+                rut: rut,
+                nombre: nombre,
+                telefono: "En albergue / Teléfono vecinal",
+                delegacion: delegacion,
+                fecha_ingreso: new Date().toLocaleDateString('es-CL'),
+                categoria: "emergencia",
+                asunto: `🚨 ${tipo} - ${ayuda}`,
+                etapa: 3,
+                rsh: "40% RSH (Emergencia)",
+                descripcion: `Emergencia atendida de urgencia por DIDECO: ${obs}`,
+                evidencia: "Acta_Despacho_Emergencia_Inmediata.pdf",
+                resolucion: `Ayuda material (${ayuda}) entregada inmediatamente. Caso resuelto en Etapa 3.`
+            };
+
+            casosSociales.unshift(nuevo);
+            guardarEnStorage();
+            renderizarTablaCasos(casosSociales);
+            actualizarIndicadores();
+            poblarSelectsModales();
+
+            bootstrap.Modal.getInstance(document.getElementById('modalEmergencia')).hide();
+            document.getElementById('formEmergencia').reset();
+
+            Swal.fire({
+                icon: 'success',
+                title: 'Atención de Emergencia Despachada',
+                html: `Se registró la entrega de ayuda urgente para <strong>${nombre}</strong> en <strong>${delegacion}</strong>.`,
+                confirmButtonColor: '#C41230'
+            });
+        }
+
+        // Emitir Informe Social PDF
+        function emitirInformeSocial(e) {
+            if (e) e.preventDefault();
+            const casoId = parseInt(document.getElementById('informeCasoSelect').value);
+            const destinatario = document.getElementById('informeDestinatario').value;
+            const dictamen = document.getElementById('informeDictamen').value.trim();
+
+            const caso = casosSociales.find(c => c.id === casoId);
+            if (!caso) {
+                Swal.fire({ icon: 'warning', title: 'Selecciona un caso', confirmButtonColor: '#C41230' });
+                return;
+            }
+
+            generarPdfInforme(caso, destinatario, dictamen);
+            bootstrap.Modal.getInstance(document.getElementById('modalInformeSocial')).hide();
+        }
+
+        function emitirInformeRapido(id) {
+            const caso = casosSociales.find(c => c.id === id);
+            if (!caso) return;
+            document.getElementById('informeCasoSelect').value = caso.id;
+            document.getElementById('informeDictamen').value = `Tras realizar diagnóstico socioeconómico a ${caso.nombre} (RUT ${caso.rut}), se acredita situación de vulnerabilidad social en ${caso.delegacion}. Se sugiere respaldar favorablemente la solicitud de ${caso.asunto}.`;
+            const modal = new bootstrap.Modal(document.getElementById('modalInformeSocial'));
+            modal.show();
+        }
+
+        // Generador de PDF con jsPDF
+        function generarPdfInforme(caso, destinatario, dictamen) {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+
+            // Membrete Municipal
+            doc.setFillColor(196, 18, 48); // Rojo Institucional
+            doc.rect(0, 0, 210, 16, 'F');
+            doc.setTextColor(255, 255, 255);
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(11);
+            doc.text('ILUSTRE MUNICIPALIDAD DE LA SERENA · DIRECCIÓN DE DESARROLLO COMUNITARIO (DIDECO)', 15, 11);
+
+            doc.setTextColor(27, 54, 93); // Muni Navy
+            doc.setFontSize(16);
+            doc.setFont('helvetica', 'bold');
+            doc.text('INFORME SOCIAL SOCIOECONÓMICO INSTITUCIONAL', 15, 32);
+
+            doc.setFontSize(9);
+            doc.setTextColor(100, 116, 139);
+            doc.text(`CÓDIGO EXPEDIENTE: RN-012-${caso.id} | FECHA DE EMISIÓN: ${new Date().toLocaleDateString('es-CL')}`, 15, 38);
+
+            // Tabla de Antecedentes de la Persona Usuaria
+            doc.autoTable({
+                startY: 44,
+                head: [['PARÁMETRO', 'INFORMACIÓN DE LA PERSONA USUARIA']],
+                body: [
+                    ['Nombre del Beneficiario(a)', caso.nombre],
+                    ['RUT', caso.rut],
+                    ['Teléfono de Contacto', caso.telefono],
+                    ['Delegación / Territorio', caso.delegacion],
+                    ['Registro Social de Hogares (RSH)', caso.rsh || '40% RSH'],
+                    ['Fecha de Ingreso de la Ficha', caso.fecha_ingreso],
+                    ['Entidad Solicitante / Destino', destinatario],
+                    ['Requerimiento / Asunto', caso.asunto]
+                ],
+                theme: 'striped',
+                headStyles: { fillColor: [27, 54, 93], textColor: [255, 255, 255], fontStyle: 'bold' },
+                styles: { fontSize: 9 }
+            });
+
+            // Diagnóstico y Conclusión Profesional
+            const finalY = doc.lastAutoTable.finalY + 10;
+            doc.setFontSize(12);
+            doc.setTextColor(196, 18, 48);
+            doc.setFont('helvetica', 'bold');
+            doc.text('I. DIAGNÓSTICO SOCIAL Y CONDICIÓN SOCIOFAMILIAR', 15, finalY);
+
+            doc.setFontSize(10);
+            doc.setTextColor(30, 41, 59);
+            doc.setFont('helvetica', 'normal');
+            doc.text(doc.splitTextToSize(caso.descripcion, 180), 15, finalY + 7);
+
+            const dictamenY = finalY + 30;
+            doc.setFontSize(12);
+            doc.setTextColor(196, 18, 48);
+            doc.setFont('helvetica', 'bold');
+            doc.text('II. CONCLUSIÓN Y DICTAMEN DE LA ASISTENTE SOCIAL', 15, dictamenY);
+
+            doc.setFontSize(10);
+            doc.setTextColor(30, 41, 59);
+            doc.setFont('helvetica', 'normal');
+            doc.text(doc.splitTextToSize(dictamen, 180), 15, dictamenY + 7);
+
+            // Firma de Asistente Social
+            const firmaY = dictamenY + 45;
+            doc.setDrawColor(203, 213, 225);
+            doc.line(65, firmaY + 25, 145, firmaY + 25);
+            doc.setFontSize(9);
+            doc.setFont('helvetica', 'bold');
+            doc.setTextColor(27, 54, 93);
+            doc.text('scarlett williams medalla', 105, firmaY + 30, { align: 'center' });
+            doc.setFont('helvetica', 'normal');
+            doc.setTextColor(100, 116, 139);
+            doc.text('Asistente Social / Trabajadora Social DIDECO', 105, firmaY + 35, { align: 'center' });
+            doc.text('Ilustre Municipalidad de La Serena', 105, firmaY + 40, { align: 'center' });
+
+            doc.save(`Informe_Social_${caso.rut.replace(/[^0-9kK]/g, '')}_LaSerena.pdf`);
+
+            Swal.fire({
+                icon: 'success',
+                title: 'Informe Social Generado',
+                text: 'El documento formal PDF ha sido descargado exitosamente con membrete municipal y timbre de Asistencia Social.',
+                confirmButtonColor: '#C41230'
+            });
+        }
+
+        // Avanzar Etapa del Flujo RN-012
+        function avanzarEtapaCaso(id) {
+            const caso = casosSociales.find(c => c.id === id);
+            if (!caso) return;
+
+            if (caso.etapa === 1) {
+                Swal.fire({
+                    title: '¿Avanzar a Etapa 2: Terreno?',
+                    html: `El caso de <strong>${caso.nombre}</strong> pasará a visita en terreno con levantamiento de evidencia fotográfica obligatoria.`,
+                    icon: 'question',
+                    showCancelButton: true,
+                    confirmButtonText: 'Sí, agendar terreno',
+                    confirmButtonColor: '#D97706',
+                    cancelButtonText: 'Cancelar'
+                }).then(res => {
+                    if (res.isConfirmed) {
+                        caso.etapa = 2;
+                        caso.resolucion = 'Visita domiciliaria en terreno agendada con éxito.';
+                        guardarEnStorage();
+                        renderizarTablaCasos(casosSociales);
+                        actualizarIndicadores();
+                        Swal.fire({ icon: 'success', title: 'Avanzado a Etapa 2', text: 'Caso en levantamiento de terreno.', confirmButtonColor: '#C41230' });
+                    }
+                });
+            } else if (caso.etapa === 2) {
+                Swal.fire({
+                    title: '¿Avanzar a Etapa 3: Resuelto?',
+                    html: `Indique la prestación concedida para cerrar el caso social de <strong>${caso.nombre}</strong>:`,
+                    input: 'text',
+                    inputValue: 'Subsidio o beneficio municipal otorgado con acta de entrega.',
+                    showCancelButton: true,
+                    confirmButtonText: 'Confirmar Resolución',
+                    confirmButtonColor: '#059669',
+                    cancelButtonText: 'Cancelar'
+                }).then(res => {
+                    if (res.isConfirmed && res.value) {
+                        caso.etapa = 3;
+                        caso.resolucion = res.value;
+                        guardarEnStorage();
+                        renderizarTablaCasos(casosSociales);
+                        actualizarIndicadores();
+                        Swal.fire({ icon: 'success', title: 'Caso Resuelto en Etapa 3', text: 'Aporta directamente al cumplimiento del Semáforo SGR.', confirmButtonColor: '#C41230' });
+                    }
+                });
+            } else {
+                Swal.fire({
+                    icon: 'info',
+                    title: 'Caso Social ya Resuelto',
+                    text: 'Este caso ya completó las 3 etapas protocolarias de la normativa comunal RN-012.',
+                    confirmButtonColor: '#C41230'
+                });
+            }
+        }
+
+        // Ver Ficha y Expediente Social
+        function verExpedienteCaso(id) {
+            const caso = casosSociales.find(c => c.id === id);
+            if (!caso) return;
+
+            document.getElementById('expedienteTitulo').innerText = `Expediente: ${caso.nombre}`;
+            document.getElementById('expedienteSubtitulo').innerText = `RUT: ${caso.rut} · Delegación: ${caso.delegacion}`;
+
+            const cuerpo = document.getElementById('expedienteCuerpo');
+            cuerpo.innerHTML = `
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <div class="p-3 bg-light rounded-4">
+                            <span class="text-muted small fw-bold">DATOS DEL BENEFICIARIO</span>
+                            <div class="fw-bold fs-6 text-dark mt-1">${caso.nombre}</div>
+                            <div class="small text-secondary mt-1"><i class="bi bi-card-heading text-danger"></i> RUT: <strong>${caso.rut}</strong></div>
+                            <div class="small text-secondary mt-1"><i class="bi bi-telephone text-danger"></i> Teléfono: <strong>${caso.telefono}</strong></div>
+                            <div class="small text-secondary mt-1"><i class="bi bi-geo-alt text-danger"></i> Delegación: <strong>${caso.delegacion}</strong></div>
+                            <div class="small text-secondary mt-1"><i class="bi bi-shield-check text-danger"></i> RSH: <strong>${caso.rsh || '40% RSH'}</strong></div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="p-3 bg-light rounded-4">
+                            <span class="text-muted small fw-bold">ESTADO DEL FLUJO RN-012</span>
+                            <div class="mt-2">
+                                <span class="badge ${caso.etapa === 1 ? 'bg-primary' : caso.etapa === 2 ? 'bg-warning text-dark' : 'bg-success'} fs-6">
+                                    Etapa ${caso.etapa}: ${caso.etapa === 1 ? 'Ingreso & Antecedentes' : caso.etapa === 2 ? 'Terreno & Evidencia' : 'Resuelto / Subsidio'}
+                                </span>
+                            </div>
+                            <div class="small text-secondary mt-2"><strong>Fecha de Ingreso:</strong> ${caso.fecha_ingreso}</div>
+                            <div class="small text-secondary mt-1"><strong>Evidencia Vinculada:</strong> ${caso.evidencia}</div>
+                            <div class="small text-secondary mt-1"><strong>Asunto:</strong> ${caso.asunto}</div>
+                        </div>
+                    </div>
+                    <div class="col-12">
+                        <div class="p-3 bg-light rounded-4">
+                            <span class="text-muted small fw-bold">DIAGNÓSTICO SOCIOECONÓMICO</span>
+                            <p class="text-dark small mt-1 mb-0">${caso.descripcion}</p>
+                        </div>
+                    </div>
+                    <div class="col-12">
+                        <div class="p-3 bg-light rounded-4">
+                            <span class="text-muted small fw-bold">RESOLUCIÓN Y CIERRE SOCIAL</span>
+                            <p class="text-success fw-semibold small mt-1 mb-0">${caso.resolucion}</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            const modal = new bootstrap.Modal(document.getElementById('modalExpediente'));
+            modal.show();
+        }
+
+        // Eliminar o Dar de baja caso
+        function eliminarCaso(id) {
+            const caso = casosSociales.find(c => c.id === id);
+            if (!caso) return;
+
+            Swal.fire({
+                title: '¿Dar de baja este caso social?',
+                text: `El caso de ${caso.nombre} será archivado en la bitácora de auditoría.`,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#C41230',
+                cancelButtonColor: '#64748B',
+                confirmButtonText: 'Sí, dar de baja',
+                cancelButtonText: 'Cancelar'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    casosSociales = casosSociales.filter(c => c.id !== id);
+                    guardarEnStorage();
+                    renderizarTablaCasos(casosSociales);
+                    actualizarIndicadores();
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Caso Archivado',
+                        text: 'El caso ha sido cerrado y registrado en la auditoría municipal.',
+                        confirmButtonColor: '#C41230'
+                    });
+                }
+            });
+        }
+
+        // Exportar a Excel con SheetJS
+        function exportarCasosExcel() {
+            const datosExportar = casosSociales.map(c => ({
+                'RUT': c.rut,
+                'Persona Usuaria': c.nombre,
+                'Teléfono': c.telefono,
+                'Delegación': c.delegacion,
+                'Fecha Ingreso': c.fecha_ingreso,
+                'Área Social': c.categoria,
+                'Asunto': c.asunto,
+                'Etapa RN-012': `Etapa ${c.etapa}`,
+                'Vulnerabilidad RSH': c.rsh,
+                'Evidencia': c.evidencia,
+                'Resolución': c.resolucion
+            }));
+
+            const ws = XLSX.utils.json_to_sheet(datosExportar);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "Casos_Sociales_DIDECO");
+            XLSX.writeFile(wb, `Casos_Sociales_LaSerena_${new Date().toISOString().slice(0, 10)}.xlsx`);
+
+            Swal.fire({
+                icon: 'success',
+                title: 'Planilla Excel Generada',
+                text: 'La bitácora oficial de casos sociales ha sido descargada exitosamente.',
+                confirmButtonColor: '#C41230'
+            });
+        }
+
+        // Validaciones Oficiales Chilenas (Módulo 11)
+        function formatearRutChileno(input) {
+            let valor = input.value.replace(/[^0-9kK]/g, '').toUpperCase();
+            if (valor.length > 9) valor = valor.slice(0, 9);
+            if (valor.length > 1) {
+                const cuerpo = valor.slice(0, -1);
+                const dv = valor.slice(-1);
+                let formateado = '';
+                for (let i = cuerpo.length - 1, j = 0; i >= 0; i--, j++) {
+                    if (j > 0 && j % 3 === 0) formateado = '.' + formateado;
+                    formateado = cuerpo[i] + formateado;
+                }
+                input.value = formateado + '-' + dv;
+            } else {
+                input.value = valor;
+            }
+        }
+
+        function validarRutChileno(rutCompleto) {
+            const limpio = rutCompleto.replace(/[^0-9kK]/g, '').toUpperCase();
+            if (limpio.length < 8) return false;
+            const cuerpo = limpio.slice(0, -1);
+            const dv = limpio.slice(-1);
+
+            let suma = 0;
+            let multiplo = 2;
+            for (let i = cuerpo.length - 1; i >= 0; i--) {
+                suma += multiplo * parseInt(cuerpo[i], 10);
+                multiplo = multiplo < 7 ? multiplo + 1 : 2;
+            }
+            const resto = 11 - (suma % 11);
+            let dvEsperado = '';
+            if (resto === 11) dvEsperado = '0';
+            else if (resto === 10) dvEsperado = 'K';
+            else dvEsperado = resto.toString();
+
+            return dv === dvEsperado;
+        }
+
+        function previewFotoVisita(input) {
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    document.getElementById('fotoPreviewImg').src = e.target.result;
+                    document.getElementById('fotoPreviewContainer').style.display = 'block';
+                }
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+
+        function toggleSidebar() {
+            document.getElementById('sidebar').classList.toggle('active');
+        }
+
+        function abrirModalPerfilAsistente() {
+            Swal.fire({
+                title: 'Perfil Institucional DIDECO',
+                html: `
+                    <div class="text-start p-2">
+                        <div class="mb-2"><strong>Funcionario:</strong> {{ user_name|default:"scarlett williams medalla" }}</div>
+                        <div class="mb-2"><strong>Cargo Institucional:</strong> Asistente Social / Trabajadora Social</div>
+                        <div class="mb-2"><strong>Dirección:</strong> DIDECO (Dirección de Desarrollo Comunitario)</div>
+                        <div class="mb-2"><strong>Delegación Asignada:</strong> {{ current_delegation|default:"Consolidado Comunal" }}</div>
+                        <div class="mb-2"><strong>Sistema:</strong> Sistema de Gestión de Resultados (SGR)</div>
+                        <div><strong>Normativa de Atención:</strong> Flujo Secuencial 3 Etapas (RN-012)</div>
+                    </div>
+                `,
+                confirmButtonColor: '#C41230'
+            });
+        }
+
+        function abrirModalSGRInfo() {
+            Swal.fire({
+                title: 'Modelo SGR y Normativa RN-012',
+                html: `
+                    <div class="text-start p-2" style="font-size: 0.90rem;">
+                        <p><strong>Normativa Comunal RN-012:</strong> Todo caso social permite hasta 3 gestiones consecutivas sin duplicar ficha:</p>
+                        <ul>
+                            <li><strong>Etapa 1:</strong> Ingreso y recepción de antecedentes socioeconómicos.</li>
+                            <li><strong>Etapa 2:</strong> Visita a terreno y levantamiento técnico con fotografía obligatoria.</li>
+                            <li><strong>Etapa 3:</strong> Resolución, entrega de subsidio o cierre social.</li>
+                        </ul>
+                        <p class="mt-2"><strong>Meta Trimestral:</strong> 40 atenciones completadas por asistente social. El semáforo pasa a <span class="text-success fw-bold">Verde</span> al superar el 80% de cumplimiento.</p>
+                    </div>
+                `,
+                confirmButtonColor: '#C41230'
+            });
+        }
+
+        function mostrarNotificacionesSociales() {
+            Swal.fire({
+                title: 'Alertas de Casos Sociales',
+                html: `
+                    <div class="text-start p-2" style="font-size: 0.88rem;">
+                        <div class="p-2 border-bottom"><i class="bi bi-exclamation-circle-fill text-danger me-2"></i><strong>Atención de Emergencia:</strong> Incendio en La Antena requiere seguimiento de entrega.</div>
+                        <div class="p-2 border-bottom"><i class="bi bi-clock-history text-warning me-2"></i><strong>Visita Pendiente:</strong> Visita domiciliaria pendiente en Las Compañías (RSH 40%).</div>
+                        <div class="p-2"><i class="bi bi-file-earmark-text text-primary me-2"></i><strong>Solicitud Tribunal:</strong> Oficio urgente del Tribunal de Familia por informe social.</div>
+                    </div>
+                `,
+                confirmButtonColor: '#C41230'
+            });
+        }
+    </script>
+
+    <!-- Bootstrap Bundle JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+
+</html>

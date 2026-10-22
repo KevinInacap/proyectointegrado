@@ -1,5 +1,4 @@
 import json
-
 from django.contrib.auth import get_user_model
 from django.test import TestCase
 from django.urls import reverse
@@ -296,6 +295,22 @@ class DashboardAccessTests(TestCase):
         self.assertContains(response, 'Tu rol no tiene accesos habilitados')
         self.assertNotContains(response, 'Gestión de Usuarios y Personal')
         self.assertNotContains(response, 'Registrar atención')
+
+    def test_asistente_social_operational_dashboard(self):
+        self.set_position('Asistente Social')
+        self.profile.roles.clear()
+        role = Role.objects.create(name='Asistente Social', permissions_data=['lectura', 'edicion'])
+        self.profile.roles.add(role)
+        response = self.client.get(reverse('activities:dashboard_asistente'))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Panel de Gestión Social Territorial')
+        self.assertContains(response, 'Semáforo SGR')
+        self.assertContains(response, 'RN-012')
+        self.assertContains(response, 'Evaluación y Diagnóstico')
+        self.assertContains(response, 'Gestión de Beneficios')
+        self.assertContains(response, 'Informes Sociales')
+        self.assertContains(response, 'Atención de Emergencias')
+        self.assertContains(response, 'Articulación de Redes')
 
 
 class RolePermissionToggleApiTests(TestCase):
