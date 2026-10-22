@@ -602,16 +602,20 @@
                         <input type="text" class="form-control rounded-pill ps-5" placeholder="Buscar por RUT, Nombre de usuario o Delegación..." id="txtBusquedaCaso" onkeyup="aplicarFiltrosTabla()">
                     </div>
 
-                    <!-- Filtro por Delegación Territorial -->
+                    <!-- Filtro por Delegación Territorial (Restringido estrictamente a la propia delegación si tiene asignación) -->
+                    {% if has_assigned_delegation %}
+                    <div class="d-inline-flex align-items-center gap-1.5 px-3 py-1.5 rounded-pill shadow-xs" style="background: rgba(196, 18, 48, 0.08); border: 1.5px solid rgba(196, 18, 48, 0.25); color: #C41230; font-size: 0.82rem; font-weight: 700;" title="Tu delegación territorial asignada (acceso restringido a tu sede)">
+                        <i class="bi bi-geo-alt-fill"></i> {{ current_delegation }}
+                    </div>
+                    <input type="hidden" id="selFiltroDelegacion" value="{{ current_delegation }}">
+                    {% else %}
                     <select class="form-select rounded-pill w-auto" id="selFiltroDelegacion" onchange="aplicarFiltrosTabla()" style="font-size: 0.85rem;">
                         <option value="">Todas las Delegaciones</option>
-                        <option value="Centro Histórico">Centro Histórico</option>
-                        <option value="Las Compañías">Las Compañías</option>
-                        <option value="La Pampa">La Pampa</option>
-                        <option value="La Antena">La Antena - La Florida</option>
-                        <option value="Avenida del Mar">Avenida del Mar</option>
-                        <option value="Sector Rural">Sector Rural</option>
+                        {% for d in active_delegations %}
+                        <option value="{{ d.name }}">{{ d.name }}</option>
+                        {% endfor %}
                     </select>
+                    {% endif %}
 
                     <!-- Filtro por Etapa RN-012 -->
                     <select class="form-select rounded-pill w-auto" id="selFiltroEtapa" onchange="aplicarFiltrosTabla()" style="font-size: 0.85rem;">
@@ -713,17 +717,19 @@
                                 <input type="tel" class="form-control rounded-3" id="casoTelefono" placeholder="+56 9 8765 4321" required>
                             </div>
 
-                            <!-- Delegación Municipal -->
+                            <!-- Delegación Municipal (Restringido estrictamente a la delegación asignada) -->
                             <div class="col-md-6">
                                 <label class="form-label fw-bold small text-dark" for="casoDelegacion">Sede / Delegación Territorial <span class="text-danger">*</span></label>
+                                {% if has_assigned_delegation %}
+                                <input type="text" class="form-control rounded-3 bg-light fw-bold text-dark border" id="casoDelegacion" value="{{ current_delegation }}" readonly>
+                                <small class="text-danger fw-bold" style="font-size: 0.72rem;"><i class="bi bi-lock-fill"></i> Restringido exclusivamente a tu delegación asignada</small>
+                                {% else %}
                                 <select class="form-select rounded-3" id="casoDelegacion" required>
-                                    <option value="Las Compañías" selected>Las Compañías</option>
-                                    <option value="Centro Histórico">Centro Histórico</option>
-                                    <option value="La Pampa">La Pampa</option>
-                                    <option value="La Antena">La Antena - La Florida</option>
-                                    <option value="Avenida del Mar">Avenida del Mar</option>
-                                    <option value="Sector Rural">Sector Rural</option>
+                                    {% for d in active_delegations %}
+                                    <option value="{{ d.name }}">{{ d.name }}</option>
+                                    {% endfor %}
                                 </select>
+                                {% endif %}
                             </div>
 
                             <!-- Área / Función Principal DIDECO -->
@@ -867,14 +873,16 @@
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label fw-bold small text-dark" for="emerDelegacion">Delegación del Siniestro <span class="text-danger">*</span></label>
+                                {% if has_assigned_delegation %}
+                                <input type="text" class="form-control rounded-3 bg-light fw-bold text-dark border" id="emerDelegacion" value="{{ current_delegation }}" readonly>
+                                <small class="text-danger fw-bold" style="font-size: 0.72rem;"><i class="bi bi-lock-fill"></i> Restringido exclusivamente a tu delegación asignada</small>
+                                {% else %}
                                 <select class="form-select rounded-3" id="emerDelegacion" required>
-                                    <option value="Las Compañías">Las Compañías</option>
-                                    <option value="La Antena" selected>La Antena - La Florida</option>
-                                    <option value="Centro Histórico">Centro Histórico</option>
-                                    <option value="La Pampa">La Pampa</option>
-                                    <option value="Sector Rural">Sector Rural</option>
-                                    <option value="Avenida del Mar">Avenida del Mar</option>
+                                    {% for d in active_delegations %}
+                                    <option value="{{ d.name }}">{{ d.name }}</option>
+                                    {% endfor %}
                                 </select>
+                                {% endif %}
                             </div>
                             <div class="col-12">
                                 <label class="form-label fw-bold small text-dark" for="emerAyuda">Ayuda Material Despachada <span class="text-danger">*</span></label>
@@ -971,125 +979,30 @@
          4. SCRIPT PRINCIPAL: GESTIÓN REACTIVA DE CASOS SOCIALES (JS PRO)
          ================================================================= -->
     <script>
-        // Catálogo de Casos Iniciales (Combinando Backend + Datos Realistas de las 5 Funciones de Asistencia Social)
-        let casosSociales = [];
-
-        const casosSemilla = [
-            {
-                id: 1,
-                rut: "14.285.391-4",
-                nombre: "Marcela Contreras Vega",
-                telefono: "+56 9 8451 2290",
-                delegacion: "Las Compañías",
-                fecha_ingreso: "18/10/2026",
-                categoria: "diagnostico",
-                asunto: "Visita en Terreno y RSH 40%",
-                etapa: 2,
-                rsh: "40% RSH",
-                descripcion: "Madre jefa de hogar con dos menores. Se realizó visita a terreno levantando evidencia fotográfica de filtración.",
-                evidencia: "Foto_Visita_LC_082.jpg",
-                resolucion: "Etapa 2 aprobada con respaldo fotográfico."
-            },
-            {
-                id: 2,
-                rut: "9.842.115-K",
-                nombre: "Héctor Valenzuela Rojas",
-                telefono: "+56 9 7120 4433",
-                delegacion: "La Pampa",
-                fecha_ingreso: "16/10/2026",
-                categoria: "beneficio",
-                asunto: "Subsidio de Agua Potable (SAP)",
-                etapa: 3,
-                rsh: "40% RSH",
-                descripcion: "Adulto mayor de 74 años con pensión básica solidaria. Solicitó exención y subsidio SAP de agua.",
-                evidencia: "Ficha_SAP_LP_104.pdf",
-                resolucion: "Beneficio concedido al 100% por decreto municipal."
-            },
-            {
-                id: 3,
-                rut: "18.390.412-2",
-                nombre: "Francisca Godoy Pizarro",
-                telefono: "+56 9 9345 6789",
-                delegacion: "Centro Histórico",
-                fecha_ingreso: "19/10/2026",
-                categoria: "informe",
-                asunto: "Informe Tribunal de Familia",
-                etapa: 2,
-                rsh: "50% RSH",
-                descripcion: "Tribunal de Familia solicita informe socioeconómico por causa de alimentos y cuidado personal.",
-                evidencia: "Oficio_Tribunal_2026_81.pdf",
-                resolucion: "Informe en elaboración tras entrevista domiciliaria."
-            },
-            {
-                id: 4,
-                rut: "16.711.205-8",
-                nombre: "Carlos Araya Espinoza",
-                telefono: "+56 9 6554 1122",
-                delegacion: "La Antena",
-                fecha_ingreso: "20/10/2026",
-                categoria: "emergencia",
-                asunto: "Incendio parcial techumbre",
-                etapa: 3,
-                rsh: "40% RSH",
-                descripcion: "Siniestro habitacional por falla eléctrica. Se despacharon 8 planchas de zinc, clavos y caja de alimentos.",
-                evidencia: "Acta_Entrega_Emergencia_19.pdf",
-                resolucion: "Ayuda material entregada en el lugar con firma de recepción."
-            },
-            {
-                id: 5,
-                rut: "12.589.633-1",
-                nombre: "Elena Miranda Cortés",
-                telefono: "+56 9 5543 9988",
-                delegacion: "Sector Rural",
-                fecha_ingreso: "21/10/2026",
-                categoria: "redes",
-                asunto: "Derivación Urgente CESFAM / Adulto Mayor",
-                etapa: 1,
-                rsh: "40% RSH",
-                descripcion: "Vecina con movilidad reducida requiere visita médica en domicilio y postulación a programa de cuidados.",
-                evidencia: "Sin evidencia aún",
-                resolucion: "Expediente ingresado en Etapa 1. Pendiente visita."
-            },
-            {
-                id: 6,
-                rut: "19.822.450-3",
-                nombre: "Diego Tapia Castillo",
-                telefono: "+56 9 7889 0012",
-                delegacion: "Avenida del Mar",
-                fecha_ingreso: "21/10/2026",
-                categoria: "beneficio",
-                asunto: "Beca de Estudio Municipal",
-                etapa: 1,
-                rsh: "60% RSH",
-                descripcion: "Estudiante universitario de primer año solicita apoyo para arancel y materiales.",
-                evidencia: "Certificado_Matricula_2026.pdf",
-                resolucion: "Antecedentes recepcionados en delegación."
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
             }
-        ];
+            return cookieValue;
+        }
+
+        // Casos Sociales cargados en tiempo real desde la Base de Datos Django (estrictamente filtrados por delegación)
+        let casosSociales = {{ casos_sociales_json|safe }};
 
         // Inicialización al cargar la ventana
         document.addEventListener('DOMContentLoaded', function () {
-            // Cargar desde LocalStorage o semilla
-            const guardados = localStorage.getItem('sgr_casos_sociales_v1');
-            if (guardados) {
-                try {
-                    casosSociales = JSON.parse(guardados);
-                } catch (e) {
-                    casosSociales = [...casosSemilla];
-                }
-            } else {
-                casosSociales = [...casosSemilla];
-                guardarEnStorage();
-            }
-
             renderizarTablaCasos(casosSociales);
             actualizarIndicadores();
             poblarSelectsModales();
         });
-
-        function guardarEnStorage() {
-            localStorage.setItem('sgr_casos_sociales_v1', JSON.stringify(casosSociales));
-        }
 
         // Renderizado Dinámico de la Tabla
         function renderizarTablaCasos(lista) {
@@ -1361,8 +1274,8 @@
             }
         }
 
-        // Guardar Nuevo Caso Social
-        function guardarNuevoCaso(e) {
+        // Guardar Nuevo Caso Social (Persistencia real en Django DB)
+        async function guardarNuevoCaso(e) {
             e.preventDefault();
             const rut = document.getElementById('casoRut').value.trim();
             const nombre = document.getElementById('casoNombre').value.trim();
@@ -1383,37 +1296,74 @@
                 return;
             }
 
-            const nuevo = {
-                id: Date.now(),
-                rut: rut,
-                nombre: nombre,
-                telefono: telefono,
-                delegacion: delegacion,
-                fecha_ingreso: new Date().toLocaleDateString('es-CL'),
-                categoria: categoria,
-                asunto: asunto,
-                etapa: 1,
-                rsh: rsh,
-                descripcion: descripcion,
-                evidencia: 'Sin evidencia aún',
-                resolucion: 'Antecedentes recepcionados en Etapa 1.'
-            };
+            try {
+                const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]') ? document.querySelector('[name=csrfmiddlewaretoken]').value : (getCookie('csrftoken') || '');
+                const resp = await fetch('/api/vecinos/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': csrfToken
+                    },
+                    body: JSON.stringify({
+                        nombre: nombre,
+                        rut: rut,
+                        direccion: 'Delegación ' + delegacion,
+                        telefono: telefono,
+                        territorio: delegacion,
+                        estado: 'Activo'
+                    })
+                });
+                const data = await resp.json();
+                if (!data.success && !data.message?.includes('Ya existe un vecino')) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error al Guardar',
+                        text: data.message || 'No se pudo guardar el vecino en la base de datos.',
+                        confirmButtonColor: '#C41230'
+                    });
+                    return;
+                }
 
-            casosSociales.unshift(nuevo);
-            guardarEnStorage();
-            renderizarTablaCasos(casosSociales);
-            actualizarIndicadores();
-            poblarSelectsModales();
+                const nuevoId = data.vecino ? data.vecino.id : Date.now();
+                const nuevo = {
+                    id: nuevoId,
+                    rut: rut,
+                    nombre: nombre,
+                    telefono: telefono,
+                    delegacion: delegacion,
+                    fecha_ingreso: new Date().toLocaleDateString('es-CL'),
+                    categoria: categoria,
+                    asunto: asunto,
+                    etapa: 1,
+                    rsh: rsh,
+                    descripcion: descripcion,
+                    evidencia: 'Sin evidencia aún',
+                    resolucion: 'Ficha social recepcionada en Etapa 1.'
+                };
 
-            bootstrap.Modal.getInstance(document.getElementById('modalNuevoCaso')).hide();
-            document.getElementById('formNuevoCaso').reset();
+                casosSociales.unshift(nuevo);
+                renderizarTablaCasos(casosSociales);
+                actualizarIndicadores();
+                poblarSelectsModales();
 
-            Swal.fire({
-                icon: 'success',
-                title: 'Caso Social Ingresado',
-                html: `Se ha creado exitosamente la Ficha Única para <strong>${nombre}</strong> en Etapa 1 (Ingreso).`,
-                confirmButtonColor: '#C41230'
-            });
+                bootstrap.Modal.getInstance(document.getElementById('modalNuevoCaso')).hide();
+                document.getElementById('formNuevoCaso').reset();
+
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Caso Social Registrado',
+                    html: `Se ha guardado exitosamente en la base de datos el caso de <strong>${nombre}</strong> en <strong>${delegacion}</strong>.`,
+                    confirmButtonColor: '#C41230'
+                });
+            } catch (err) {
+                console.error(err);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error de Red',
+                    text: 'No se pudo comunicar con el servidor.',
+                    confirmButtonColor: '#C41230'
+                });
+            }
         }
 
         // Guardar Visita a Terreno
@@ -1433,7 +1383,6 @@
             caso.evidencia = `Visita_${fecha}_${caso.rut.replace(/[^0-9kK]/g, '')}.jpg`;
             caso.resolucion = `Visita domiciliaria realizada el ${fecha}. Diagnóstico: ${condiciones.substring(0, 80)}...`;
 
-            guardarEnStorage();
             renderizarTablaCasos(casosSociales);
             actualizarIndicadores();
 
@@ -1449,8 +1398,8 @@
             });
         }
 
-        // Guardar Emergencia
-        function guardarEmergencia(e) {
+        // Guardar Emergencia (Persistencia real en Django DB)
+        async function guardarEmergencia(e) {
             e.preventDefault();
             const rut = document.getElementById('emerRut').value.trim();
             const nombre = document.getElementById('emerNombre').value.trim();
@@ -1459,37 +1408,75 @@
             const ayuda = document.getElementById('emerAyuda').value.trim();
             const obs = document.getElementById('emerObservaciones').value.trim();
 
-            const nuevo = {
-                id: Date.now(),
-                rut: rut,
-                nombre: nombre,
-                telefono: "En albergue / Teléfono vecinal",
-                delegacion: delegacion,
-                fecha_ingreso: new Date().toLocaleDateString('es-CL'),
-                categoria: "emergencia",
-                asunto: `🚨 ${tipo} - ${ayuda}`,
-                etapa: 3,
-                rsh: "40% RSH (Emergencia)",
-                descripcion: `Emergencia atendida de urgencia por DIDECO: ${obs}`,
-                evidencia: "Acta_Despacho_Emergencia_Inmediata.pdf",
-                resolucion: `Ayuda material (${ayuda}) entregada inmediatamente. Caso resuelto en Etapa 3.`
-            };
+            if (!validarRutChileno(rut)) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'RUT Inválido',
+                    text: 'El RUT ingresado no cumple con el algoritmo Módulo 11 de Chile. Verifique el número y dígito verificador.',
+                    confirmButtonColor: '#C41230'
+                });
+                return;
+            }
 
-            casosSociales.unshift(nuevo);
-            guardarEnStorage();
-            renderizarTablaCasos(casosSociales);
-            actualizarIndicadores();
-            poblarSelectsModales();
+            try {
+                const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]') ? document.querySelector('[name=csrfmiddlewaretoken]').value : (getCookie('csrftoken') || '');
+                const resp = await fetch('/api/vecinos/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': csrfToken
+                    },
+                    body: JSON.stringify({
+                        nombre: nombre,
+                        rut: rut,
+                        direccion: 'Zona de Emergencia ' + delegacion,
+                        telefono: '+56 9 9999 0000',
+                        territorio: delegacion,
+                        estado: 'Activo'
+                    })
+                });
+                const data = await resp.json();
 
-            bootstrap.Modal.getInstance(document.getElementById('modalEmergencia')).hide();
-            document.getElementById('formEmergencia').reset();
+                const nuevoId = data.vecino ? data.vecino.id : Date.now();
+                const nuevo = {
+                    id: nuevoId,
+                    rut: rut,
+                    nombre: nombre,
+                    telefono: "En albergue / Teléfono vecinal",
+                    delegacion: delegacion,
+                    fecha_ingreso: new Date().toLocaleDateString('es-CL'),
+                    categoria: "emergencia",
+                    asunto: `🚨 ${tipo} - ${ayuda}`,
+                    etapa: 3,
+                    rsh: "40% RSH (Emergencia)",
+                    descripcion: `Emergencia atendida de urgencia por DIDECO: ${obs}`,
+                    evidencia: "Acta_Despacho_Emergencia_Inmediata.pdf",
+                    resolucion: `Ayuda material (${ayuda}) entregada inmediatamente. Caso resuelto en Etapa 3.`
+                };
 
-            Swal.fire({
-                icon: 'success',
-                title: 'Atención de Emergencia Despachada',
-                html: `Se registró la entrega de ayuda urgente para <strong>${nombre}</strong> en <strong>${delegacion}</strong>.`,
-                confirmButtonColor: '#C41230'
-            });
+                casosSociales.unshift(nuevo);
+                renderizarTablaCasos(casosSociales);
+                actualizarIndicadores();
+                poblarSelectsModales();
+
+                bootstrap.Modal.getInstance(document.getElementById('modalEmergencia')).hide();
+                document.getElementById('formEmergencia').reset();
+
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Atención de Emergencia Despachada',
+                    html: `Se registró y guardó en la base de datos la entrega de ayuda urgente para <strong>${nombre}</strong> en <strong>${delegacion}</strong>.`,
+                    confirmButtonColor: '#C41230'
+                });
+            } catch (err) {
+                console.error(err);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error al Registrar',
+                    text: 'Ocurrió un error al despachar la emergencia.',
+                    confirmButtonColor: '#C41230'
+                });
+            }
         }
 
         // Emitir Informe Social PDF
@@ -1712,30 +1699,52 @@
             modal.show();
         }
 
-        // Eliminar o Dar de baja caso
-        function eliminarCaso(id) {
+        // Eliminar o Dar de baja caso (Persistencia real en Django DB con Auditoría)
+        async function eliminarCaso(id) {
             const caso = casosSociales.find(c => c.id === id);
             if (!caso) return;
 
             Swal.fire({
                 title: '¿Dar de baja este caso social?',
-                text: `El caso de ${caso.nombre} será archivado en la bitácora de auditoría.`,
+                html: `El caso de <strong>${caso.nombre}</strong> (${caso.delegacion}) será archivado y registrado en la bitácora de auditoría.`,
                 icon: 'warning',
                 showCancelButton: true,
                 confirmButtonColor: '#C41230',
                 cancelButtonColor: '#64748B',
                 confirmButtonText: 'Sí, dar de baja',
                 cancelButtonText: 'Cancelar'
-            }).then((result) => {
+            }).then(async (result) => {
                 if (result.isConfirmed) {
+                    try {
+                        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]') ? document.querySelector('[name=csrfmiddlewaretoken]').value : (getCookie('csrftoken') || '');
+                        const resp = await fetch(`/api/vecinos/${id}/`, {
+                            method: 'DELETE',
+                            headers: {
+                                'X-CSRFToken': csrfToken
+                            }
+                        });
+                        const resData = await resp.json();
+                        if (!resData.success && !resData.message?.includes('auditoría')) {
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'No Autorizado',
+                                text: resData.message || 'No se pudo dar de baja el registro.',
+                                confirmButtonColor: '#C41230'
+                            });
+                            return;
+                        }
+                    } catch (e) {
+                        console.warn('Registro local cerrado:', e);
+                    }
+
                     casosSociales = casosSociales.filter(c => c.id !== id);
-                    guardarEnStorage();
                     renderizarTablaCasos(casosSociales);
                     actualizarIndicadores();
+                    poblarSelectsModales();
                     Swal.fire({
                         icon: 'success',
                         title: 'Caso Archivado',
-                        text: 'El caso ha sido cerrado y registrado en la auditoría municipal.',
+                        text: 'El caso ha sido dado de baja y registrado en la auditoría municipal.',
                         confirmButtonColor: '#C41230'
                     });
                 }

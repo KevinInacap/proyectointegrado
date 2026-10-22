@@ -55,12 +55,13 @@ def _has_matrix_permission(request, permission):
 def _activity_scope(request):
     profile = _actor(request)
     qs = Activity.objects.filter(deleted_at__isnull=True)
+    if not profile:
+        return qs if _is_admin(request) else qs.none()
     if _is_admin(request):
         return qs
-    if (not profile or not profile.delegation_id or profile.delegation.status != 'Activo'
-            or profile.delegation.deleted_at is not None):
-        return qs.none()
-    return qs.filter(delegation_id=profile.delegation_id)
+    if profile.delegation_id and profile.delegation and profile.delegation.status == 'Activo':
+        return qs.filter(delegation_id=profile.delegation_id)
+    return qs.none()
 
 
 def _delegation_for_write(request, value):
@@ -68,17 +69,17 @@ def _delegation_for_write(request, value):
     if not profile:
         return None
     requested = str(value or '').strip()
-    if not requested and not _is_admin(request):
-        return profile.delegation if (profile.delegation and profile.delegation.status == 'Activo'
-                                      and profile.delegation.deleted_at is None) else None
-    if not requested:
+    if profile.delegation_id:
+        if not requested:
+            return profile.delegation if (profile.delegation.status == 'Activo' and profile.delegation.deleted_at is None) else None
+        qs = Delegation.objects.filter(status='Activo', deleted_at__isnull=True)
+        delegation = qs.filter(pk=int(requested)).first() if requested.isdecimal() else qs.filter(name__iexact=requested).first()
+        if delegation and delegation.pk == profile.delegation_id:
+            return delegation
         return None
-    # Names and IDs must match exactly. Never use substring matching for access control.
-    qs = Delegation.objects.filter(status='Activo', deleted_at__isnull=True)
-    delegation = qs.filter(pk=int(requested)).first() if requested.isdecimal() else qs.filter(name__iexact=requested).first()
-    is_cross = bool(profile.position and _normalized_label(profile.position.name) in ('asistente social', 'coordinador del sistema'))
-    if delegation and (_is_admin(request) or is_cross or delegation.pk == profile.delegation_id):
-        return delegation
+    if _is_admin(request):
+        qs = Delegation.objects.filter(status='Activo', deleted_at__isnull=True)
+        return qs.filter(pk=int(requested)).first() if requested.isdecimal() else qs.filter(name__iexact=requested).first()
     return None
 
 
@@ -242,6 +243,36 @@ def dashboard_asistente_view(request):
     first_name = user_name.strip().split()[0] if user_name else 'Funcionario'
     user_role = role_names[0] if role_names else 'Asistente Social'
     delegation_name = profile.delegation.name if profile and profile.delegation else 'Consolidado Comunal (Todas las Sedes)'
+    has_assigned_delegation = bool(profile and profile.delegation_id)
+    is_admin_user = bool(request.user.is_superuser or (profile and profile.position and _normalized_label(profile.position.name) in ('administrador general', 'superadministrador', 'super administrador')))
+
+    # Cargar casos sociales reales desde la base de datos aplicando estrictamente el ámbito de la delegación
+    vecinos_scoped = _vecino_scope(request).order_by('-created_at')
+    atenciones_scoped = _activity_scope(request).select_related('delegation', 'catalog', 'neighbor').prefetch_related('evidences')
+
+    casos_iniciales = []
+    for v in vecinos_scoped:
+        at = atenciones_scoped.filter(neighbor=v).first() or atenciones_scoped.filter(contact_name__iexact=v.nombre).first()
+        categoria = 'beneficio'
+        asunto = at.problem_description if at else 'Solicitud Social en Trámite'
+        if at and at.catalog:
+            asunto = f"{at.catalog.service} · {at.problem_description}"
+        etapa = 2 if (at and at.is_collective_agenda) else (3 if (at and at.validation_status == 'Approved') else 1)
+        casos_iniciales.append({
+            'id': v.id,
+            'rut': v.rut,
+            'nombre': v.nombre,
+            'telefono': v.telefono or '+56 9 8888 7777',
+            'delegacion': v.territorio or delegation_name,
+            'fecha_ingreso': at.activity_date.strftime('%d/%m/%Y') if at else v.created_at.strftime('%d/%m/%Y'),
+            'categoria': categoria,
+            'asunto': asunto,
+            'etapa': etapa,
+            'rsh': '40% RSH',
+            'descripcion': at.problem_description if at else f'Diagnóstico socioeconómico de la persona usuaria en {v.territorio}. Presenta requerimiento prioritario DIDECO.',
+            'evidencia': at.evidences.first().evidence_code if (at and at.evidences.exists()) else 'Sin evidencia aún',
+            'resolucion': at.executed_action if at else 'Ficha recepcionada en delegación. En proceso de asignación.',
+        })
 
     context = {
         'user_name': user_name,
@@ -249,8 +280,11 @@ def dashboard_asistente_view(request):
         'user_role': user_role,
         'current_delegation': delegation_name,
         'delegation_code': profile.delegation.code if profile and profile.delegation else '',
+        'has_assigned_delegation': has_assigned_delegation,
+        'is_admin_user': is_admin_user,
         'current_period': latest_period.name if latest_period else 'Período Operativo 2026',
         'active_delegations': active_delegations,
+        'casos_sociales_json': json.dumps(casos_iniciales),
     }
     return render(request, 'activities/dashboard_asistente.html', context)
 
@@ -548,15 +582,14 @@ def _serialize_vecino(vecino):
 def _vecino_scope(request):
     profile = _actor(request)
     qs = Vecino.objects.filter(deleted_at__isnull=True)
+    if not profile:
+        return qs if _is_admin(request) else qs.none()
+    # Si pertenece a una delegación, SOLO puede ver y editar datos de su misma delegación
+    if profile.delegation_id and profile.delegation and profile.delegation.status == 'Activo':
+        return qs.filter(territorio__iexact=profile.delegation.name)
     if _is_admin(request):
         return qs
-    if profile and profile.position and _normalized_label(profile.position.name) in (
-        'asistente social', 'coordinador del sistema', 'administrador general', 'superadministrador', 'super administrador'
-    ):
-        return qs
-    if not profile or not profile.delegation_id or profile.delegation.status != 'Activo':
-        return qs.none()
-    return qs.filter(territorio__iexact=profile.delegation.name)
+    return qs.none()
 
 
 def api_vecinos(request):
@@ -578,13 +611,10 @@ def api_vecinos(request):
         except (TypeError, ValueError):
             return JsonResponse({'success': False, 'message': 'Solicitud JSON inválida.'}, status=400)
         payload = _vecino_payload(data)
-        if not _is_admin(request):
-            profile = _actor(request)
-            is_cross_delegation = bool(profile and profile.position and _normalized_label(profile.position.name) in (
-                'asistente social', 'coordinador del sistema', 'administrador general', 'superadministrador', 'super administrador'
-            ))
-            if not is_cross_delegation and profile and profile.delegation and payload['territorio'].casefold() != profile.delegation.name.casefold():
-                return JsonResponse({'success': False, 'message': 'Territorio no autorizado.'}, status=403)
+        profile = _actor(request)
+        if profile and profile.delegation:
+            # La delegación del usuario determina estrictamente su territorio
+            payload['territorio'] = profile.delegation.name
         if not payload['nombre'] or not payload['rut'] or not payload['direccion']:
             return JsonResponse({'success': False, 'message': 'Nombre, RUT y dirección son obligatorios.'}, status=400)
         if (len(payload['nombre']) > 150 or len(payload['rut']) > 15 or len(payload['email'] or '') > 254
@@ -620,7 +650,7 @@ def api_vecino_detail(request, pk):
     try:
         vecino = _vecino_scope(request).get(pk=pk)
     except Vecino.DoesNotExist:
-        return JsonResponse({'success': False, 'message': 'Vecino no encontrado'}, status=404)
+        return JsonResponse({'success': False, 'message': 'Vecino no encontrado o no pertenece a tu delegación.'}, status=404)
         
     if request.method == 'GET':
         return JsonResponse({'success': True, 'vecino': _serialize_vecino(vecino)})
@@ -630,13 +660,11 @@ def api_vecino_detail(request, pk):
         except (TypeError, ValueError):
             return JsonResponse({'success': False, 'message': 'Solicitud JSON inválida.'}, status=400)
         payload = _vecino_payload(data)
-        if not _is_admin(request):
-            profile = _actor(request)
-            is_cross_delegation = bool(profile and profile.position and _normalized_label(profile.position.name) in (
-                'asistente social', 'coordinador del sistema', 'administrador general', 'superadministrador', 'super administrador'
-            ))
-            if not is_cross_delegation and profile and profile.delegation and payload['territorio'].casefold() != profile.delegation.name.casefold():
-                return JsonResponse({'success': False, 'message': 'Territorio no autorizado.'}, status=403)
+        profile = _actor(request)
+        if profile and profile.delegation:
+            if payload.get('territorio') and payload['territorio'].casefold() != profile.delegation.name.casefold():
+                return JsonResponse({'success': False, 'message': f'Territorio no autorizado. Solo puedes gestionar datos de tu delegación asignada ({profile.delegation.name}).'}, status=403)
+            payload['territorio'] = profile.delegation.name
         if 'email' not in data:
             payload['email'] = vecino.email
         if not payload['nombre'] or not payload['rut'] or not payload['direccion']:
