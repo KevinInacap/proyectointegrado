@@ -260,6 +260,8 @@ def seed_pre_evaluation():
         ("AT-2026-004", "Patricia Andrea Vega", "+56 9 6684 7219", del_objs["Delegación La Antena"], "TIP-003-COM", "SUB-003-ORG", "Entrega de canasta de alimentos de emergencia por incendio parcial.", "Se despacharon víveres y materiales con acta de entrega.", "Approved"),
         ("AT-2026-005", "Jorge Alberto Cisternas", "+56 9 4412 9850", del_objs["Delegación Sector Rural"], "TIP-001-ORI", "SUB-001-INF", "Orientación jurídica para renovación de directiva comunitaria rural.", "Se asesoró en asamblea y se remitieron estatutos.", "Pending"),
         ("AT-2026-006", "María Ignacia Cortés", "+56 9 9120 4855", del_objs["Delegación La Pampa"], "TIP-006-SEG", "SUB-006-LUM", "Reporte de falla en luminarias públicas en Los Corsarios.", "Orden de trabajo emitida a cuadrilla de alumbrado público.", "Approved"),
+        ("AT-2026-007", "Diego Tapia Castillo", "+56 9 7889 0012", del_objs["Delegación Avenida del Mar"], "TIP-002-TER", "SUB-002-CON", "Visita domiciliaria e inspección en terreno de habitabilidad sociofamiliar.", "Levantamiento fotográfico en terreno y verificación de ficha social.", "Pending"),
+        ("AT-2026-008", "Camila Andrea Soto", "+56 9 6654 3210", del_objs["Delegación Avenida del Mar"], "TIP-001-ORI", "SUB-001-INF", "Emisión de informe social oficial para Tribunal de Familia por pensión.", "Informe social pericial emitido formalmente con código INF-2026-AVM-001.", "Approved"),
     ]
     for code, contact, phone, deleg, tip_code, sub_code, prob, act_desc, v_status in atenciones_sample:
         v_obj = Vecino.objects.filter(rut__in=[vd['rut'] for vd in vecinos_seed if vd['nombre'] == contact]).first()
