@@ -504,11 +504,11 @@ def api_casos_sociales(request):
         if user_delegation:
             delegation = user_delegation
         else:
+            if isinstance(delegation_id, bool) or not str(delegation_id or '').isdecimal():
+                return JsonResponse({'success': False, 'message': 'Selecciona una delegación activa para el caso.'}, status=400)
             delegation = Delegation.objects.filter(pk=delegation_id, status='Activo', deleted_at__isnull=True).first()
-            if not delegation:
-                delegation = Delegation.objects.filter(status='Activo', deleted_at__isnull=True).first()
         if not delegation:
-            return JsonResponse({'success': False, 'message': 'No hay una delegación activa para asignar al caso.'}, status=400)
+            return JsonResponse({'success': False, 'message': 'Selecciona una delegación activa para el caso.'}, status=400)
         if len(nombre) > 150 or len(telefono) > 20 or len(initial_problem) > 4000:
             return JsonResponse({'success': False, 'message': 'El nombre admite 150 caracteres, el teléfono 20 y el motivo de ingreso 4000.'}, status=400)
 
@@ -529,11 +529,10 @@ def api_casos_sociales(request):
             )
 
             # Por RN-012, el caso nace con Etapa 1: Ingreso y recepción de antecedentes
-            catalog = ServiceCatalog.objects.filter(status='Activo', deleted_at__isnull=True).first()
             gestion1 = SocialManagement.objects.create(
                 case=caso,
                 stage=1,
-                catalog=catalog,
+                catalog=None,
                 management_type="Ingreso y recepción de antecedentes",
                 management_date=entry_date,
                 result=initial_problem or "Ingreso de solicitud social y evaluación preliminar de vulnerabilidad socioeconómica."
@@ -733,13 +732,8 @@ def api_avanzar_etapa(request, pk):
         if not catalog:
             return JsonResponse({'success': False, 'message': 'El servicio seleccionado ya no está disponible.'}, status=400)
 
-    # Si es etapa 2: Código de Evidencia fotográfica EVI-XXXX obligatoria
+    # Un código solo se registra si corresponde a un respaldo real aportado.
     evidence_code = str(data.get('evidence_code', '')).strip()
-    if next_stage == 2 and not evidence_code:
-        # Generar código institucional si no se especificó
-        import uuid
-        evidence_code = f"EVI-{timezone.now():%Y%m%d}-{uuid.uuid4().hex[:4].upper()}"
-
     if evidence_code:
         resultado = f"[Respaldo: {evidence_code}] {resultado}"
 
@@ -990,8 +984,7 @@ def api_notificaciones_sociales(request):
 
 def api_informe_social(request, pk):
     """
-    Genera los datos oficiales para el Informe Social Municipal
-    con membrete oficial de la Ilustre Municipalidad de La Serena.
+    Prepara un borrador trazable del informe social municipal, sin firma.
     """
     if request.method != 'GET':
         return JsonResponse({'success': False, 'message': 'Método no permitido.'}, status=405)
@@ -1011,12 +1004,12 @@ def api_informe_social(request, pk):
 
     profile = _actor(request)
     worker_name = profile.full_name if profile else "Asistente Social Municipal"
-    worker_rut = profile.rut if profile else "18.420.915-K"
+    worker_rut = profile.rut if profile else ""
 
     managements = list(caso.managements.filter(deleted_at__isnull=True).order_by('stage'))
 
     report_data = {
-        'folio': f"INF-SOC-{caso.id:05d}-2026",
+        'folio': f"INF-SOC-{caso.id:05d}-{timezone.localdate().year}",
         'fecha_emision': timezone.now().strftime('%d de %B de %Y'),
         'municipalidad': "Ilustre Municipalidad de La Serena",
         'departamento': "Dirección de Desarrollo Comunitario (DIDECO) · Asistencia Social",
@@ -1031,7 +1024,7 @@ def api_informe_social(request, pk):
             'nombre': worker_name,
             'rut': worker_rut,
             'cargo': "Asistente Social / Trabajador Social",
-            'registro_profesional': "REG-TS-COL-2024-8891",
+            'registro_profesional': "Registro profesional no informado",
         },
         'etapa_actual': caso.status_label,
         'gestiones': [
@@ -1045,10 +1038,10 @@ def api_informe_social(request, pk):
             for m in managements
         ],
         'conclusion_diagnostica': (
-            f"El grupo familiar encabezado por don/doña {caso.user_name} presenta vulnerabilidad socioeconómica "
-            f"verificada territorialmente en la Delegación {caso.delegation.name if caso.delegation else 'Municipal'}. "
-            "Se sugiere mantener asignación prioritaria de beneficios comunales y seguimiento periódico."
-        )
+            "Borrador generado a partir de las gestiones registradas. "
+            "La evaluación socioeconómica y el dictamen deben ser redactados y validados "
+            "por un profesional responsable antes de emitir un documento oficial."
+        ),
     }
 
     return JsonResponse({'success': True, 'report': report_data})

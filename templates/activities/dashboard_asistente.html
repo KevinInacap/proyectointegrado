@@ -291,7 +291,7 @@
                                     <i class="bi bi-arrow-right-circle-fill"></i>
                                 </button>
                                 {% endif %}
-                                <button class="action-icon-btn btn-report" title="Emitir Informe Social Oficial" onclick="emitirInformeSocial({{ c.id }})">
+                                <button class="action-icon-btn btn-report" title="Preparar borrador de informe social" onclick="emitirInformeSocial({{ c.id }})">
                                     <i class="bi bi-printer-fill"></i>
                                 </button>
                             </td>
@@ -552,7 +552,7 @@
 <div class="asistente-modal-backdrop" id="modalInformeOficial">
     <div class="asistente-modal" style="max-width: 800px; background: #ffffff; color: #1e293b;">
         <div class="modal-head" style="background: #f8fafc; border-bottom: 2px solid #b80003;">
-            <h3 style="color: #b80003;"><i class="bi bi-file-earmark-medical-fill"></i> Informe Social Oficial DIDECO</h3>
+            <h3 style="color: #b80003;"><i class="bi bi-file-earmark-medical-fill"></i> Borrador de Informe Social DIDECO</h3>
             <div>
                 <button class="btn-asistente btn-primary-action" onclick="imprimirInformeSocial()" style="padding: 0.35rem 0.8rem; font-size: 0.78rem;">
                     <i class="bi bi-printer"></i> Imprimir Ficha
@@ -896,13 +896,24 @@ async function solicitarRevisionSocial(casoId) {
     }
 }
 
+function safeForHtml(value) {
+    if (Array.isArray(value)) return value.map(safeForHtml);
+    if (value && typeof value === 'object') {
+        return Object.fromEntries(Object.entries(value).map(([key, item]) => [key, safeForHtml(item)]));
+    }
+    if (typeof value !== 'string') return value;
+    return value.replace(/[&<>"']/g, char => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+    })[char]);
+}
+
 // Ver Expediente Completo
 async function verExpedienteCaso(casoId) {
     try {
         const res = await fetch(`/social/api/casos/${casoId}/`);
         const data = await res.json();
         if (data.success) {
-            const c = data.case;
+            const c = safeForHtml(data.case);
             let stagesHtml = '';
             c.stages.forEach(s => {
                 stagesHtml += `
@@ -935,13 +946,13 @@ async function verExpedienteCaso(casoId) {
     }
 }
 
-// Emitir Informe Social Oficial (DIDECO)
+// Vista preliminar del informe social, sujeta a revisión profesional.
 async function emitirInformeSocial(casoId) {
     try {
         const res = await fetch(`/social/api/casos/${casoId}/informe/`);
         const data = await res.json();
         if (data.success) {
-            const rep = data.report;
+            const rep = safeForHtml(data.report);
             let gestionesHtml = '';
             rep.gestiones.forEach(g => {
                 gestionesHtml += `
@@ -960,7 +971,7 @@ async function emitirInformeSocial(casoId) {
                         <div>
                             <h2 style="margin: 0; font-size: 1.3rem;">${rep.municipalidad}</h2>
                             <div style="font-size: 0.84rem; color: #64748b; font-weight: 600;">${rep.departamento}</div>
-                            <div style="font-size: 0.8rem; color: #b80003; font-weight: 700;">${rep.delegation}</div>
+                            <div style="font-size: 0.8rem; color: #b80003; font-weight: 700;">${rep.delegacion}</div>
                         </div>
                         <div style="text-align: right; font-size: 0.8rem;">
                             <div><strong>FOLIO:</strong> ${rep.folio}</div>
@@ -969,7 +980,7 @@ async function emitirInformeSocial(casoId) {
                     </div>
 
                     <h3 style="text-align: center; color: #0f172a; margin-bottom: 1.5rem; text-transform: uppercase; font-size: 1.15rem; letter-spacing: 0.5px;">
-                        INFORME SOCIAL Y DICTAMEN TÉCNICO
+                        BORRADOR DE INFORME SOCIAL · SIN FIRMA
                     </h3>
 
                     <div class="report-section-title">1. Identificación del Sujeto de Atención</div>

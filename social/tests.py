@@ -7,6 +7,7 @@ from django.urls import reverse
 
 from organization.models import Delegation, Position, Role, UserProfile
 from core.models import AuditLog
+from activities.models import Vecino
 from .models import SocialCase, SocialManagement, SocialNotification, SocialReviewRequest
 
 
@@ -60,6 +61,62 @@ class SocialDashboardPermissionTests(TestCase):
         self.assertContains(response, 'Tu rol no tiene accesos habilitados')
         self.assertNotContains(response, self.own_case.user_name)
 
+    def test_integrated_dashboard_uses_social_cases_not_neighbor_registry(self):
+        Vecino.objects.create(
+            rut='21.571.404-7', nombre='Solo en padrón', direccion='Calle uno',
+            territorio=self.delegation.name,
+        )
+        response = self.client.get(reverse('activities:dashboard_asistente'))
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            [case['id'] for case in response.context['casos_sociales']],
+            [self.own_case.pk],
+        )
+        self.assertNotIn('Solo en padrón', [case['nombre'] for case in response.context['casos_sociales']])
+        self.assertEqual(response.context['vecinos_data'][0]['nombre'], 'Solo en padrón')
+        self.assertContains(response, 'social-cases-data')
+
+    def test_integrated_dashboard_escapes_case_data_and_scopes_metrics(self):
+        self.own_case.user_name = '</script><img src=x onerror=alert(1)>'
+        self.own_case.save(update_fields=['user_name', 'updated_at'])
+        response = self.client.get(reverse('activities:dashboard_asistente'))
+        self.assertEqual(response.status_code, 200)
+        self.assertNotContains(response, '</script><img src=x onerror=alert(1)>')
+        self.assertContains(response, r'\u003C/script\u003E')
+        self.assertEqual(response.context['goal_data']['target'], None)
+        metrics = self.client.get(reverse('activities:dashboard_asistente') + '?metrics=1')
+        self.assertEqual(metrics.status_code, 200)
+        self.assertIsNone(metrics.json()['goal']['target'])
+
+    def test_integrated_dashboard_revoked_read_permission_hides_records(self):
+        self.role.permissions_data = []
+        self.role.permission_definitions.clear()
+        self.role.save(update_fields=['permissions_data', 'updated_at'])
+        response = self.client.get(reverse('activities:dashboard_asistente'))
+        self.assertEqual(response.status_code, 200)
+        self.assertNotContains(response, self.own_case.user_name)
+
+    def test_integrated_dashboard_inactive_delegation_hides_records(self):
+        self.delegation.status = 'Inactivo'
+        self.delegation.save(update_fields=['status', 'updated_at'])
+        response = self.client.get(reverse('activities:dashboard_asistente'))
+        self.assertEqual(response.status_code, 200)
+        self.assertNotContains(response, self.own_case.user_name)
+
+    def test_admin_cannot_create_case_in_an_implicit_or_invalid_delegation(self):
+        payload = {
+            'user_rut': '12.345.678-5', 'user_name': 'Sin sede',
+            'entry_date': '2026-10-01', 'initial_problem': 'Solicitud de prueba.',
+        }
+        endpoint = reverse('social:api_casos')
+        for value in (None, 'otra', self.other_delegation.pk + 100):
+            response = self.admin_client.post(
+                endpoint, data=json.dumps(dict(payload, delegation_id=value)),
+                content_type='application/json',
+            )
+            self.assertEqual(response.status_code, 400)
+        self.assertFalse(SocialCase.objects.filter(user_name='Sin sede').exists())
+
     def test_social_dashboard_api_requires_authentication_and_permission(self):
         api = reverse('social:api_casos')
         self.client.logout()
@@ -100,6 +157,7 @@ class SocialDashboardPermissionTests(TestCase):
 
         self.assertEqual(response.status_code, 201, response.content)
         caso = SocialCase.objects.get(user_name='Vecina Nueva')
+        self.assertIsNone(caso.managements.get(stage=1).catalog_id)
         review = SocialReviewRequest.objects.get(case=caso)
         self.assertEqual(review.status, 'pendiente')
         self.assertEqual(review.request_type, 'revision')
@@ -201,6 +259,15 @@ class SocialDashboardPermissionTests(TestCase):
         review = SocialReviewRequest.objects.get(management=management)
         self.assertEqual(review.status, 'pendiente')
         self.assertTrue(SocialNotification.objects.filter(review_request=review, recipient=self.admin).exists())
+        self.assertNotIn('[Respaldo:', management.result)
+
+    def test_report_does_not_invent_professional_registration_or_diagnosis(self):
+        response = self.client.get(reverse('social:api_informe_social', args=[self.own_case.pk]))
+        self.assertEqual(response.status_code, 200)
+        report = response.json()['report']
+        self.assertEqual(report['profesional']['registro_profesional'], 'Registro profesional no informado')
+        self.assertIn('Borrador', report['conclusion_diagnostica'])
+        self.assertNotIn('verificada territorialmente', report['conclusion_diagnostica'])
 
     def test_assistant_dashboard_territorial_tables_do_not_leak_other_delegations(self):
         own_visit = SocialManagement.objects.create(

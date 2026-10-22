@@ -1,4 +1,5 @@
 import datetime
+import json
 from django.db import transaction
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
@@ -9,6 +10,7 @@ from django.db.models import Q
 from django.utils import timezone
 from django.utils.text import slugify
 from django.urls import reverse
+from django.http import JsonResponse
 from .models import Activity, Evidence, Validation, Vecino
 from organization.models import Delegation, UserProfile
 from core.models import AuditLog
@@ -349,67 +351,114 @@ def dashboard_asistente_integral_view(request):
         return redirect('core:login')
     if not _has_matrix_permission(request, 'lectura'):
         return _position_dashboard(request, 'Asistente Social')
+    if not _is_admin(request) and (
+        not profile.delegation or profile.delegation.status != 'Activo'
+        or profile.delegation.deleted_at is not None
+    ):
+        return _position_dashboard(request, 'Asistente Social')
 
     role_names = list(profile.roles.filter(deleted_at__isnull=True).values_list('name', flat=True))
 
-    from metrics.models import MeasurementPeriod
+    from metrics.models import Goal, MeasurementPeriod
     from organization.models import Delegation
+    from social.models import SocialCase, SocialManagement, SocialReviewRequest
 
     active_delegations = Delegation.objects.filter(status='Activo', deleted_at__isnull=True).order_by('name')
-    latest_period = MeasurementPeriod.objects.filter(status='Activo', deleted_at__isnull=True).order_by('-start_date').first()
+    today = timezone.localdate()
+    latest_period = MeasurementPeriod.objects.filter(
+        status='Abierto', deleted_at__isnull=True, start_date__lte=today, end_date__gte=today,
+    ).order_by('-start_date').first()
 
     user_name = profile.full_name if profile else request.user.get_full_name() or request.user.username
     first_name = user_name.strip().split()[0] if user_name else 'Funcionario'
     user_role = role_names[0] if role_names else 'Asistente Social'
     delegation_name = profile.delegation.name if profile and profile.delegation else 'Consolidado Comunal (Todas las Sedes)'
     has_assigned_delegation = bool(profile and profile.delegation_id)
-    is_admin_user = bool(request.user.is_superuser or (profile and profile.position and _normalized_label(profile.position.name) in ('administrador general', 'superadministrador', 'super administrador')))
+    is_admin_user = _is_admin(request)
 
-    # Cargar casos sociales reales desde la base de datos aplicando estrictamente el ámbito de la delegación
+    # Casos sociales y padrón son entidades distintas: un vecino no es un caso.
     vecinos_scoped = _vecino_scope(request).order_by('-created_at')
-    atenciones_scoped = _activity_scope(request).select_related('delegation', 'catalog', 'neighbor').prefetch_related('evidences')
+    cases = SocialCase.objects.filter(deleted_at__isnull=True).select_related('delegation').prefetch_related('managements')
+    if not is_admin_user:
+        cases = cases.filter(delegation=profile.delegation) if profile.delegation_id else cases.none()
+    cases = cases.order_by('-entry_date', '-pk')[:100]
 
     casos_iniciales = []
-    for v in vecinos_scoped:
-        at = atenciones_scoped.filter(neighbor=v).first() or atenciones_scoped.filter(contact_name__iexact=v.nombre).first()
-        asunto = at.problem_description if at else 'Solicitud Social en Trámite'
-        if at and at.catalog:
-            asunto = f"{at.catalog.service} · {at.problem_description}"
-
-        desc = ((at.problem_description if at else '') + ' ' + (at.executed_action if at else '')).lower()
-        if 'visita' in desc or 'terreno' in desc or 'diagnóstico' in desc or 'diagnostico' in desc or 'habitabilidad' in desc:
-            categoria = 'diagnostico'
-            etapa = 2
-        elif 'informe' in desc or 'tribunal' in desc or 'peritaje' in desc or 'dictamen' in desc:
-            categoria = 'informe'
-            etapa = 3
-        elif 'emergencia' in desc or 'incendio' in desc or 'catástrofe' in desc or 'catastrofe' in desc or 'víveres' in desc:
-            categoria = 'emergencia'
-            etapa = 3
-        elif 'red' in desc or 'cesfam' in desc or 'derivación' in desc or 'derivacion' in desc or 'comunitaria' in desc:
-            categoria = 'redes'
-            etapa = 1
-        else:
-            categoria = 'beneficio'
-            etapa = 3 if (at and at.validation_status == 'Approved') else (2 if (at and at.is_collective_agenda) else 1)
+    for case in cases:
+        managements = sorted(
+            (m for m in case.managements.all() if m.deleted_at is None), key=lambda m: m.stage,
+        )
+        first = managements[0] if managements else None
+        latest = managements[-1] if managements else None
+        description = first.result if first else ''
+        category_text = f'{description} {latest.management_type if latest else ""}'.casefold()
+        categoria = next((code for code, terms in (
+            ('emergencia', ('emergencia', 'incendio', 'catástrofe')),
+            ('redes', ('[redes]', 'derivación', 'derivacion', 'cesfam', 'red comunitaria')),
+            ('informe', ('informe', 'dictamen', 'tribunal')),
+            ('diagnostico', ('visita', 'terreno', 'diagnóstico', 'diagnostico')),
+        ) if any(term in category_text for term in terms)), 'beneficio')
+        evidence = 'Sin respaldo registrado'
+        if latest and latest.result.startswith('[Respaldo: '):
+            evidence = latest.result.split(']', 1)[0].removeprefix('[Respaldo: ')
 
         casos_iniciales.append({
-            'id': v.id,
-            'rut': v.rut,
-            'nombre': v.nombre,
-            'telefono': v.telefono or '+56 9 8888 7777',
-            'delegacion': v.territorio or delegation_name,
-            'fecha_ingreso': at.activity_date.strftime('%d/%m/%Y') if at else v.created_at.strftime('%d/%m/%Y'),
+            'id': case.id,
+            'rut': case.user_rut,
+            'nombre': case.user_name,
+            'telefono': case.contact_phone or 'No informado',
+            'delegacion': case.delegation.name,
+            'fecha_ingreso': case.entry_date.strftime('%d/%m/%Y'),
             'categoria': categoria,
-            'asunto': asunto,
-            'etapa': etapa,
-            'rsh': '40% RSH',
-            'descripcion': at.problem_description if at else f'Diagnóstico socioeconómico de la persona usuaria en {v.territorio}. Presenta requerimiento prioritario DIDECO.',
-            'evidencia': at.evidences.first().evidence_code if (at and at.evidences.exists()) else ('FOTO_TERRENO_AVM_002.jpg' if etapa == 2 else 'Sin evidencia aún'),
-            'resolucion': at.executed_action if at else 'Ficha recepcionada en delegación. En proceso de asignación.',
+            'asunto': description.partition('] ')[2].partition('. ')[0] if description.startswith('[') and '] ' in description else (first.management_type if first else 'Ingreso social'),
+            'etapa': latest.stage if latest else 1,
+            'rsh': 'No registrado',
+            'descripcion': description,
+            'evidencia': evidence,
+            'resolucion': latest.result if latest else 'Sin gestión registrada',
         })
 
     vecinos_serializados = [_serialize_vecino(v) for v in vecinos_scoped]
+    goal = None
+    if latest_period:
+        goal = Goal.objects.filter(
+            period=latest_period, position=profile.position, status='Activo', deleted_at__isnull=True,
+            item__status='Activo', item__deleted_at__isnull=True,
+        ).select_related('item').order_by('item__name').first()
+    completed = SocialManagement.objects.filter(
+        deleted_at__isnull=True, case__deleted_at__isnull=True,
+    )
+    if not is_admin_user:
+        completed = completed.filter(case__delegation=profile.delegation) if profile.delegation_id else completed.none()
+    if latest_period:
+        completed = completed.filter(management_date__gte=latest_period.start_date, management_date__lte=latest_period.end_date)
+    expected_pct = None
+    if latest_period and latest_period.computable_days:
+        elapsed = min(max((today - latest_period.start_date).days + 1, 0), latest_period.computable_days)
+        expected_pct = round(100 * elapsed / latest_period.computable_days, 1)
+    goal_data = {
+        'name': goal.item.name if goal else '',
+        'target': float(goal.target_value) if goal else None,
+        'weight': float(goal.weight) if goal else None,
+        'unit': goal.unit_of_measure if goal else 'gestiones',
+        'completed': completed.count() if goal else 0,
+        'expected_pct': expected_pct,
+    }
+    referrals = SocialReviewRequest.objects.filter(
+        requester=request.user, request_type='revision', reason__startswith='Derivación solicitada a ',
+        deleted_at__isnull=True,
+    ).select_related('case')
+    if not is_admin_user:
+        referrals = referrals.filter(case__delegation=profile.delegation) if profile.delegation_id else referrals.none()
+    referrals_data = [{
+        'id': item.pk,
+        'vecino': item.case.user_name if item.case else item.target_label,
+        'rut': item.case.user_rut if item.case else '',
+        'red': item.reason.partition(':')[0].removeprefix('Derivación solicitada a '),
+        'motivo': item.reason.partition(':')[2].strip(),
+        'fecha': item.created_at.strftime('%d/%m/%Y'),
+        'estado': item.get_status_display(),
+    } for item in referrals[:100]]
 
     context = {
         'user_name': user_name,
@@ -417,13 +466,20 @@ def dashboard_asistente_integral_view(request):
         'user_role': user_role,
         'current_delegation': delegation_name,
         'delegation_code': profile.delegation.code if profile and profile.delegation else '',
+        'delegation_id': profile.delegation_id,
         'has_assigned_delegation': has_assigned_delegation,
         'is_admin_user': is_admin_user,
-        'current_period': latest_period.name if latest_period else 'Período Operativo 2026',
+        'current_period': latest_period.name if latest_period else 'Sin período activo',
         'active_delegations': active_delegations,
-        'casos_sociales_json': json.dumps(casos_iniciales),
-        'vecinos_json': json.dumps(vecinos_serializados),
+        'casos_sociales': casos_iniciales,
+        'vecinos_data': vecinos_serializados,
+        'goal_data': goal_data,
+        'referrals_data': referrals_data,
+        'can_close_social': _has_matrix_permission(request, 'cierre'),
+        'can_edit_social': _has_matrix_permission(request, 'edicion'),
     }
+    if request.GET.get('metrics') == '1':
+        return JsonResponse({'success': True, 'goal': goal_data})
     return render(request, 'activities/dashboard_asistente_integral.html', context)
 
 
@@ -696,8 +752,6 @@ def api_validar_atencion(request, pk):
     label = dict(Validation.DECISION_CHOICES)[decision]
     return JsonResponse({'success': True, 'message': f'Atención {activity.activity_code}: {label.lower()}.', 'decision': decision})
 
-from django.http import JsonResponse
-import json
 import re
 from .models import Vecino
 

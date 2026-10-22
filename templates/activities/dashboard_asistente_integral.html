@@ -358,7 +358,7 @@
                     {{ first_name|slice:":1"|default:"S"|upper }}
                 </div>
                 <div class="overflow-hidden" style="min-width: 0;">
-                    <div class="text-white fw-bold text-truncate" style="font-size: 0.88rem;">{{ user_name|default:"scarlett williams medalla" }}</div>
+                    <div class="text-white fw-bold text-truncate" style="font-size: 0.88rem;">{{ user_name }}</div>
                     <div class="d-flex align-items-center gap-1.5 mt-0.5">
                         <span class="badge" style="background: rgba(16, 185, 129, 0.2); color: #34D399; font-size: 0.68rem; font-weight: 700; padding: 2px 6px;">
                             <i class="bi bi-circle-fill me-1" style="font-size: 0.45rem;"></i> ASISTENTE SOCIAL
@@ -478,7 +478,7 @@
                 <!-- Botón de Notificaciones -->
                 <button class="btn-notification" type="button" onclick="mostrarNotificacionesSociales()" title="Notificaciones de Casos y Urgencias">
                     <i class="bi bi-bell"></i>
-                    <span class="badge-count" id="badgeNotifCount">3</span>
+                    <span class="badge-count" id="badgeNotifCount">0</span>
                 </button>
 
                 <!-- Perfil y Cierre de Sesión -->
@@ -489,7 +489,7 @@
                             {{ first_name|slice:":1"|default:"S"|upper }}
                         </span>
                         <span class="user-identity text-start d-none d-sm-block">
-                            <span class="user-info-text fw-bold d-block" style="color: var(--muni-navy); font-size: 0.85rem;">{{ user_name|default:"scarlett williams medalla" }}</span>
+                            <span class="user-info-text fw-bold d-block" style="color: var(--muni-navy); font-size: 0.85rem;">{{ user_name }}</span>
                             <span class="user-context-text text-muted" style="font-size: 0.72rem;">Asistente Social · {{ current_delegation|default:"Consolidado Comunal" }}</span>
                         </span>
                         <i class="bi bi-chevron-down text-muted" style="font-size: 0.75rem;"></i>
@@ -528,7 +528,7 @@
                             <i class="bi bi-people-fill text-danger me-2"></i>Casos Sociales Únicos · Fichas Territoriales
                         </h1>
                         <p class="text-secondary m-0 mt-1" style="font-size: 0.88rem;">
-                            Delegación: <strong class="text-dark">{{ current_delegation|default:"Consolidado Comunal (Todas las Sedes)" }}</strong> · Período: <strong>{{ current_period|default:"Período Operativo 2026" }}</strong> · Diagnósticos, visitas, beneficios e informes oficiales
+                            Delegación: <strong class="text-dark">{{ current_delegation }}</strong> · Período: <strong>{{ current_period }}</strong> · Casos, gestiones y borradores de informes
                         </p>
                     </div>
 
@@ -554,21 +554,21 @@
                             <div>
                                 <div class="d-flex align-items-center gap-2">
                                     <span class="fw-bold" style="color: var(--muni-navy); font-size: 1rem;">
-                                        Semáforo SGR: <span id="sgrStatusLabel" class="text-danger fw-extrabold">Rojo (Rezago Operativo)</span>
+                                        Semáforo SGR: <span id="sgrStatusLabel" class="text-muted fw-bold">Calculando…</span>
                                     </span>
-                                    <span class="badge bg-danger-subtle text-danger border border-danger-subtle" style="font-size: 0.70rem; font-weight: 800;">CRÍTICO</span>
+                                    <span class="badge bg-light text-secondary border" style="font-size: 0.70rem; font-weight: 800;">META VIGENTE</span>
                                 </div>
                                 <div class="text-muted small mt-0.5">
-                                    Meta acumulada esperada al día: <strong class="text-dark">61,54%</strong> · Cumplimiento de gestiones: <strong class="text-danger" id="sgrCumplimientoVal">0,0%</strong>
+                                    Meta acumulada esperada al día: <strong class="text-dark" id="sgrMetaEsperada">—</strong> · Cumplimiento de gestiones: <strong class="text-danger" id="sgrCumplimientoVal">—</strong>
                                 </div>
                             </div>
                         </div>
 
                         <div class="text-end" style="min-width: 280px;">
                             <div class="d-flex justify-content-between align-items-center mb-1">
-                                <span class="text-muted small fw-bold">Avance Social Trimestral:</span>
+                                <span class="text-muted small fw-bold">Avance de gestiones del período:</span>
                                 <span class="fw-bold small" style="color: var(--muni-navy);">
-                                    <span id="lblAvanceCount">0</span> / 40 Atenciones (<span id="lblAvancePct">0,0%</span>)
+                                    <span id="lblAvanceCount">—</span> / {{ goal_data.target|default_if_none:"Sin meta" }} {{ goal_data.unit }} (<span id="lblAvancePct">—</span>)
                                 </span>
                             </div>
                             <div class="progress rounded-pill" style="height: 9px; background: #E2E8F0;">
@@ -621,7 +621,7 @@
                             </div>
                             <div class="fw-bold" id="cardKpiEtapa2" style="font-size: 2.1rem; color: #D97706; line-height: 1.1;">0</div>
                             <div class="text-muted small mt-1">
-                                <i class="bi bi-camera-fill text-warning me-1"></i> Con evidencia fotográfica
+                                <i class="bi bi-camera-fill text-warning me-1"></i> Gestiones de terreno registradas
                             </div>
                         </div>
                     </div>
@@ -744,7 +744,7 @@
                     <div class="d-flex align-items-center gap-3">
                         <i class="bi bi-info-circle-fill fs-3 text-primary"></i>
                         <div class="small">
-                            <strong>Regla de Negocio RN-012 (Guía de Proyecto SGR):</strong> Cada caso social registra hasta 3 gestiones consecutivas para la misma persona usuaria. Al validar la evidencia fotográfica en Etapa 2 y conceder la resolución en Etapa 3, el caso aporta automáticamente al indicador ponderado individual.
+                            <strong>Flujo RN-012:</strong> Cada caso admite hasta tres etapas consecutivas. El registro de una gestión crea una solicitud de revisión administrativa; este panel aún no almacena fotografías ni acredita prestaciones por sí solo.
                         </div>
                     </div>
                 </div>
@@ -814,7 +814,7 @@
                             <i class="bi bi-camera-fill text-warning me-2"></i>Evaluación y Visitas a Terreno
                         </h1>
                         <p class="text-secondary m-0 mt-1" style="font-size: 0.88rem;">
-                            Inspección domiciliaria técnica, evaluación de habitabilidad y levantamiento de evidencias fotográficas en <strong>{{ current_delegation }}</strong>.
+                            Registro técnico de visitas y condiciones de habitabilidad en <strong>{{ current_delegation }}</strong>. La carga de fotografías queda pendiente.
                         </p>
                     </div>
                     <div>
@@ -886,8 +886,8 @@
                                     <span class="badge bg-success-subtle text-success fw-bold">FONDO VIGENTE</span>
                                 </div>
                                 <h6 class="fw-bold text-dark mb-1">Subsidio Agua Potable (SAP)</h6>
-                                <p class="text-muted small mb-2">Descuento del 50% al 100% sobre los primeros 15 m³ de consumo de agua y alcantarillado según Ley N° 18.778.</p>
-                                <div class="small fw-semibold text-danger mb-3"><i class="bi bi-check2 me-1"></i> RSH hasta 40% vulnerable</div>
+                                <p class="text-muted small mb-2">Revisa los requisitos vigentes y documenta la prestación antes de registrar una resolución.</p>
+                                <div class="small fw-semibold text-danger mb-3"><i class="bi bi-check2 me-1"></i> Sujeto a verificación administrativa</div>
                             </div>
                             <button class="liquid-glass-btn-primary w-100 justify-content-center" onclick="asignarBeneficioDirecto('Subsidio de Agua Potable (SAP)')">
                                 <i class="bi bi-plus-circle-fill"></i> Otorgar a Vecino
@@ -987,7 +987,7 @@
                                 </div>
                                 <h6 class="fw-bold text-dark mb-1">Exención Derechos de Aseo</h6>
                                 <p class="text-muted small mb-2">Condonación total del pago de aseo domiciliario municipal para adultos mayores y familias vulnerables.</p>
-                                <div class="small fw-semibold text-danger mb-3"><i class="bi bi-check2 me-1"></i> RSH hasta 40%</div>
+                                <div class="small fw-semibold text-danger mb-3"><i class="bi bi-check2 me-1"></i> Requisitos por verificar</div>
                             </div>
                             <button class="liquid-glass-btn-primary w-100 justify-content-center" onclick="asignarBeneficioDirecto('Exención de Derechos de Aseo')">
                                 <i class="bi bi-plus-circle-fill"></i> Gestionar Exención
@@ -1058,7 +1058,7 @@
                     </div>
                     <div>
                         <button class="liquid-glass-btn-primary" onclick="abrirModalEmergencia()">
-                            <i class="bi bi-lightning-charge-fill"></i> + Despachar Ayuda Inmediata
+                            <i class="bi bi-lightning-charge-fill"></i> + Registrar Solicitud Urgente
                         </button>
                     </div>
                 </div>
@@ -1069,8 +1069,8 @@
                     <div class="d-flex align-items-center gap-3">
                         <i class="bi bi-exclamation-triangle-fill fs-1 text-warning"></i>
                         <div>
-                            <h5 class="fw-bold m-0">Protocolo Municipal de Emergencia Activo</h5>
-                            <p class="small m-0 text-white-50 mt-0.5">Todo despacho de materiales requiere registro de RUT del jefe de hogar y acta de recepción en terreno.</p>
+                            <h5 class="fw-bold m-0">Registro de solicitudes de emergencia</h5>
+                            <p class="small m-0 text-white-50 mt-0.5">Registrar una solicitud no equivale a confirmar la entrega de materiales. La administración recibe una revisión.</p>
                         </div>
                     </div>
                     <button class="btn btn-light rounded-pill px-3 py-1.5 fw-bold text-danger" onclick="abrirModalEmergencia()">
@@ -1081,7 +1081,7 @@
                 <!-- Historial de Despachos de Emergencia -->
                 <div class="rounded-4 border bg-white shadow-sm overflow-hidden mb-4">
                     <div class="p-3 border-bottom fw-bold text-dark">
-                        <i class="bi bi-clock-history text-danger me-2"></i>Bitácora de Ayudas Despachadas en {{ current_delegation }}
+                        <i class="bi bi-clock-history text-danger me-2"></i>Solicitudes de emergencia registradas en {{ current_delegation }}
                     </div>
                     <table class="table align-middle m-0" style="width: 100%;">
                         <thead style="background: rgba(241, 245, 249, 0.95); border-bottom: 2px solid #CBD5E1;">
@@ -1089,7 +1089,7 @@
                                 <th class="py-3 px-3">N° EVENTO</th>
                                 <th class="py-3 px-2">VECINO / FAMILIA</th>
                                 <th class="py-3 px-2">TIPO DE EMERGENCIA</th>
-                                <th class="py-3 px-2">AYUDA MATERIAL DESPACHADA</th>
+                                <th class="py-3 px-2">DETALLE DE LA SOLICITUD</th>
                                 <th class="py-3 px-2 text-center">FECHA</th>
                                 <th class="py-3 px-2 text-center">ESTADO</th>
                             </tr>
@@ -1210,12 +1210,12 @@
                                 La meta diaria acumulada se calcula dividiendo los días computables transcurridos entre la duración total del período:
                             </p>
                             <div class="p-3 rounded-3 bg-light border mb-3 font-monospace small">
-                                <strong>Meta esperada al día</strong> = (56 días transcurridos / 91 días computables) × 100 = <span class="text-danger fw-bold fs-6">61,54%</span>
+                                <strong>Meta esperada al día</strong> = días transcurridos / días computables del período activo = <span class="text-danger fw-bold fs-6">{{ goal_data.expected_pct|default_if_none:"Sin período activo" }}</span>
                             </div>
                             <div class="d-flex align-items-center gap-3">
-                                <div><span class="badge bg-success px-2 py-1">VERDE</span> <span class="small fw-semibold">Avance ≥ 61,54%</span></div>
-                                <div><span class="badge bg-warning text-dark px-2 py-1">ÁMBAR</span> <span class="small fw-semibold">Avance 36,92% - 61,53%</span></div>
-                                <div><span class="badge bg-danger px-2 py-1">ROJO</span> <span class="small fw-semibold">Avance &lt; 36,92%</span></div>
+                                <div><span class="badge bg-success px-2 py-1">VERDE</span> <span class="small fw-semibold">Alcanza la meta esperada</span></div>
+                                <div><span class="badge bg-warning text-dark px-2 py-1">ÁMBAR</span> <span class="small fw-semibold">Al menos 60% de la meta esperada</span></div>
+                                <div><span class="badge bg-danger px-2 py-1">ROJO</span> <span class="small fw-semibold">Menos de 60% de la meta esperada</span></div>
                             </div>
                         </div>
 
@@ -1223,7 +1223,7 @@
                             <span class="text-uppercase fw-bold text-muted small">ESTADO ACTUAL SEMÁFORO SGR</span>
                             <div class="d-flex align-items-center justify-content-center gap-2 mt-2">
                                 <span class="beacon-pulse" id="sgrBeaconDotPanel"></span>
-                                <h3 class="fw-bold m-0" id="sgrStatusTitlePanel" style="color: #EF4444;">Rojo (Rezago Operativo)</h3>
+                                <h3 class="fw-bold m-0 text-muted" id="sgrStatusTitlePanel">Calculando…</h3>
                             </div>
                             <div class="mt-3">
                                 <div class="small fw-bold text-muted mb-1">Cumplimiento Ponderado: <strong class="text-dark" id="sgrCumplimientoPonderadoTotal">0,0%</strong></div>
@@ -1238,7 +1238,7 @@
                 <!-- Matriz de Ítems Medibles del Cargo Asistente Social (Ponderadores suman 100% - RN-001) -->
                 <div class="rounded-4 border bg-white shadow-sm overflow-hidden mb-4">
                     <div class="p-3 border-bottom fw-bold text-dark">
-                        <i class="bi bi-card-checklist text-danger me-2"></i>Matriz de Funciones y Metas del Asistente Social (Ponderación 100%)
+                        <i class="bi bi-card-checklist text-danger me-2"></i>Meta vigente del cargo Asistente Social
                     </div>
                     <table class="table align-middle m-0" style="width: 100%;">
                         <thead style="background: rgba(241, 245, 249, 0.95); border-bottom: 2px solid #CBD5E1;">
@@ -1375,12 +1375,12 @@
                             <div class="col-md-6">
                                 <label class="form-label fw-bold small text-dark" for="casoDelegacion">Sede / Delegación Territorial <span class="text-danger">*</span></label>
                                 {% if has_assigned_delegation %}
-                                <input type="text" class="form-control rounded-3 bg-light fw-bold text-dark border" id="casoDelegacion" value="{{ current_delegation }}" readonly>
+                                <input type="text" class="form-control rounded-3 bg-light fw-bold text-dark border" id="casoDelegacion" value="{{ current_delegation }}" data-delegation-id="{{ delegation_id }}" readonly>
                                 <small class="text-danger fw-bold" style="font-size: 0.72rem;"><i class="bi bi-lock-fill"></i> Restringido exclusivamente a tu delegación asignada</small>
                                 {% else %}
                                 <select class="form-select rounded-3" id="casoDelegacion" required>
                                     {% for d in active_delegations %}
-                                    <option value="{{ d.name }}">{{ d.name }}</option>
+                                    <option value="{{ d.id }}">{{ d.name }}</option>
                                     {% endfor %}
                                 </select>
                                 {% endif %}
@@ -1397,16 +1397,6 @@
                                 </select>
                             </div>
 
-                            <div class="col-md-6">
-                                <label class="form-label fw-bold small text-dark" for="casoRsh">Tramo RSH (Vulnerabilidad) <span class="text-danger">*</span></label>
-                                <select class="form-select rounded-3" id="casoRsh" required>
-                                    <option value="40% RSH" selected>Tramo 0% - 40% (Mayor Vulnerabilidad)</option>
-                                    <option value="50% RSH">Tramo 41% - 50%</option>
-                                    <option value="60% RSH">Tramo 51% - 60%</option>
-                                    <option value="70% RSH">Tramo 61% - 70%</option>
-                                    <option value="Sin RSH">En trámite / Sin Registro RSH</option>
-                                </select>
-                            </div>
 
                             <div class="col-12">
                                 <label class="form-label fw-bold small text-dark" for="casoAsunto">Asunto / Beneficio Específico <span class="text-danger">*</span></label>
@@ -1438,7 +1428,7 @@
                 <div class="modal-header text-white" style="background: linear-gradient(135deg, #1B365D 0%, #0F172A 100%);">
                     <div>
                         <h5 class="modal-title fw-bold">
-                            <i class="bi bi-camera-fill text-warning me-2"></i>Etapa 2: Visita en Terreno y Levantamiento Fotográfico
+                            <i class="bi bi-camera-fill text-warning me-2"></i>Etapa 2: Registro de Visita en Terreno
                         </h5>
                         <p class="small m-0 text-white-50">Verificación de condiciones de vida domiciliarias (Normativa RN-012)</p>
                     </div>
@@ -1465,19 +1455,14 @@
                             </div>
 
                             <div class="col-12">
-                                <label class="form-label fw-bold small text-dark" for="visitaFoto">Fotografía de Evidencia (RF-012) <span class="text-danger">*</span></label>
-                                <input type="file" class="form-control rounded-3" id="visitaFoto" accept="image/*" onchange="previewFotoVisita(this)">
-                                <small class="text-muted" style="font-size: 0.72rem;">Adjunte fotografía de la fachada o condición de habitabilidad inspeccionada</small>
-                                <div id="fotoPreviewContainer" class="mt-2 text-center p-2 border rounded-3 bg-light" style="display: none;">
-                                    <img id="fotoPreviewImg" src="" alt="Vista previa de evidencia" style="max-height: 180px; border-radius: 8px;">
-                                </div>
+                                <p class="small text-secondary mb-0">Se registrará la gestión y una referencia de respaldo en la base de datos. La carga de fotografías todavía no está disponible en este panel.</p>
                             </div>
                         </div>
 
                         <div class="d-flex justify-content-end gap-2 mt-4 pt-3 border-top">
                             <button type="button" class="btn btn-outline-secondary rounded-pill px-4 fw-bold" data-bs-dismiss="modal">Cancelar</button>
                             <button type="submit" class="liquid-glass-btn-primary" style="background: linear-gradient(135deg, #1B365D 0%, #0F172A 100%) !important;">
-                                <i class="bi bi-camera-fill text-warning"></i> Registrar Visita y Avanzar a Etapa 2
+                                <i class="bi bi-camera-fill text-warning"></i> Registrar gestión de Etapa 2
                             </button>
                         </div>
                     </form>
@@ -1493,9 +1478,9 @@
                 <div class="modal-header text-white" style="background: linear-gradient(135deg, #C41230 0%, #7F1D1D 100%);">
                     <div>
                         <h5 class="modal-title fw-bold">
-                            <i class="bi bi-lightning-charge-fill text-warning me-2"></i>Atención Inmediata de Emergencia o Catástrofe
+                            <i class="bi bi-lightning-charge-fill text-warning me-2"></i>Registro de Solicitud por Emergencia
                         </h5>
-                        <p class="small m-0 text-white-50">Despacho de víveres, techumbre y ayuda urgente DIDECO</p>
+                        <p class="small m-0 text-white-50">La solicitud se envía a revisión; este formulario no confirma un despacho.</p>
                     </div>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
@@ -1521,10 +1506,17 @@
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label fw-bold small text-dark" for="emerDelegacion">Delegación Territorial <span class="text-danger">*</span></label>
-                                <input type="text" class="form-control rounded-3 bg-light fw-bold text-dark" id="emerDelegacion" value="{{ current_delegation }}" readonly>
+                                {% if has_assigned_delegation %}
+                                <input type="text" class="form-control rounded-3 bg-light fw-bold text-dark" id="emerDelegacion" value="{{ current_delegation }}" data-delegation-id="{{ delegation_id }}" readonly>
+                                {% else %}
+                                <select class="form-select rounded-3" id="emerDelegacion" required>
+                                    <option value="">Selecciona una delegación</option>
+                                    {% for d in active_delegations %}<option value="{{ d.id }}">{{ d.name }}</option>{% endfor %}
+                                </select>
+                                {% endif %}
                             </div>
                             <div class="col-12">
-                                <label class="form-label fw-bold small text-dark" for="emerAyuda">Ayuda Despachada <span class="text-danger">*</span></label>
+                                <label class="form-label fw-bold small text-dark" for="emerAyuda">Ayuda solicitada <span class="text-danger">*</span></label>
                                 <input type="text" class="form-control rounded-3" id="emerAyuda" placeholder="Ej: 2 Cajas de víveres, 4 Colchones, 8 Frazadas, 10 Planchas de zinc" required>
                             </div>
                             <div class="col-12">
@@ -1553,7 +1545,7 @@
                         <h5 class="modal-title fw-bold">
                             <i class="bi bi-file-earmark-text-fill me-2"></i>Emitir Informe Social Oficial · DIDECO
                         </h5>
-                        <p class="small m-0 text-white-50">Documento formal con respaldo legal para instituciones públicas</p>
+                        <p class="small m-0 text-white-50">Borrador interno sin firma ni validación institucional</p>
                     </div>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
@@ -1621,7 +1613,7 @@
                 <div class="modal-header text-white" style="background: linear-gradient(135deg, #059669 0%, #047857 100%);">
                     <div>
                         <h5 class="modal-title fw-bold" id="modalBeneficioTitulo">Otorgar Beneficio Municipal</h5>
-                        <p class="small m-0 text-white-50">Asignación directa a beneficiario de {{ current_delegation }}</p>
+                        <p class="small m-0 text-white-50">Registro de una resolución social en {{ current_delegation }}</p>
                     </div>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
@@ -1660,8 +1652,8 @@
             <div class="modal-content rounded-4 border-0 shadow-lg">
                 <div class="modal-header text-white" style="background: linear-gradient(135deg, #B45309 0%, #78350F 100%);">
                     <div>
-                        <h5 class="modal-title fw-bold">Derivar Caso a Red Intersectorial</h5>
-                        <p class="small m-0 text-white-50">Coordinación territorial DIDECO La Serena</p>
+                        <h5 class="modal-title fw-bold">Solicitar Derivación a Red Intersectorial</h5>
+                        <p class="small m-0 text-white-50">La administración revisará la solicitud antes de cualquier remisión externa.</p>
                     </div>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
@@ -1691,7 +1683,7 @@
                         <div class="d-flex justify-content-end gap-2 mt-4 pt-3 border-top">
                             <button type="button" class="btn btn-outline-secondary rounded-pill px-4 fw-bold" data-bs-dismiss="modal">Cancelar</button>
                             <button type="submit" class="liquid-glass-btn-primary" style="background: linear-gradient(135deg, #B45309 0%, #78350F 100%) !important;">
-                                <i class="bi bi-send-fill"></i> Remitir Derivación
+                                <i class="bi bi-send-fill"></i> Solicitar Revisión
                             </button>
                         </div>
                     </form>
@@ -1801,6 +1793,11 @@
     <!-- =================================================================
          4. SCRIPT PRINCIPAL: GESTIÓN REACTIVA DE LOS 9 PANELES (JS PRO)
          ================================================================= -->
+    {{ casos_sociales|json_script:"social-cases-data" }}
+    {{ vecinos_data|json_script:"social-neighbors-data" }}
+    {{ goal_data|json_script:"social-goal-data" }}
+    {{ referrals_data|json_script:"social-referrals-data" }}
+    {{ user_name|json_script:"social-worker-name" }}
     <script>
         function getCookie(name) {
             let cookieValue = null;
@@ -1817,15 +1814,92 @@
             return cookieValue;
         }
 
-        // Casos Sociales y Padrón de Vecinos reales desde Django DB
-        let casosSociales = {{ casos_sociales_json|safe }};
-        let vecinosList = {{ vecinos_json|default:'[]'|safe }};
+        // Django entrega JSON escapado para impedir que nombres ingresados rompan el script.
+        let casosSociales = JSON.parse(document.getElementById('social-cases-data').textContent);
+        let vecinosList = JSON.parse(document.getElementById('social-neighbors-data').textContent);
+        const metaSgr = JSON.parse(document.getElementById('social-goal-data').textContent);
+        const funcionarioNombre = JSON.parse(document.getElementById('social-worker-name').textContent);
+        let derivacionesRedes = JSON.parse(document.getElementById('social-referrals-data').textContent);
+        const puedeCerrarCaso = {{ can_close_social|yesno:"true,false" }};
 
-        // Arreglo para derivaciones de redes
-        let derivacionesRedes = [
-            { id: 1, vecino: "Héctor Valenzuela Rojas", rut: "12.784.561-3", red: "CESFAM Emilio Schaffhauser", motivo: "Control crónico y evaluación domiciliaria de dependencia.", fecha: "18/10/2026", estado: "En Intervención Conjunta" },
-            { id: 2, vecino: "Camila Andrea Soto", rut: "17.452.193-4", red: "Red Local de Apoyos y Cuidados (SNAC)", motivo: "Postulación al programa de acompañamiento a cuidadoras.", fecha: "20/10/2026", estado: "Aceptada" }
-        ];
+        function escapeHtml(value) {
+            return String(value ?? '').replace(/[&<>"']/g, char => ({
+                '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+            })[char]);
+        }
+
+        function registroSeguro(value) {
+            return Object.fromEntries(Object.entries(value).map(([key, field]) =>
+                [key, typeof field === 'string' ? escapeHtml(field) : field]
+            ));
+        }
+
+        function fechaLocalIso() {
+            const now = new Date();
+            return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+        }
+
+        async function apiSocial(url, method = 'GET', payload = null) {
+            const response = await fetch(url, {
+                method,
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken') || document.querySelector('[name=csrfmiddlewaretoken]')?.value || ''
+                },
+                ...(payload === null ? {} : { body: JSON.stringify(payload) })
+            });
+            const data = await response.json().catch(() => ({
+                success: false, message: 'El servidor no devolvió una respuesta válida. Recarga la página e inténtalo de nuevo.'
+            }));
+            if (!response.ok || !data.success) throw new Error(data.message || 'No se pudo completar la operación.');
+            return data;
+        }
+
+        function casoDesdeApi(c) {
+            const first = c.stages?.[0] || {};
+            const latest = c.stages?.at(-1) || {};
+            const source = `${first.result || ''} ${latest.management_type || ''}`.toLowerCase();
+            const categoria = /emergencia|incendio|catástrofe/.test(source) ? 'emergencia'
+                : /\[redes\]|derivación|cesfam|red comunitaria/.test(source) ? 'redes'
+                : /informe|dictamen|tribunal/.test(source) ? 'informe'
+                : /visita|terreno|diagnóstico|diagnostico/.test(source) ? 'diagnostico' : 'beneficio';
+            return {
+                id: c.id, rut: c.user_rut, nombre: c.user_name,
+                telefono: c.contact_phone || 'No informado', delegacion: c.delegation,
+                fecha_ingreso: c.entry_date, categoria,
+                asunto: first.result?.startsWith('[') && first.result.includes('] ')
+                    ? first.result.split('] ', 2)[1].split('. ', 1)[0]
+                    : first.management_type || 'Ingreso social', etapa: c.current_stage,
+                rsh: 'No registrado', descripcion: first.result || '',
+                evidencia: latest.result?.match(/^\[Respaldo: ([^\]]+)\]/)?.[1] || 'Sin respaldo registrado',
+                resolucion: latest.result || 'Sin gestión registrada'
+            };
+        }
+
+        async function recargarCasos() {
+            try {
+                const data = await apiSocial('/social/api/casos/');
+                casosSociales = data.cases.map(casoDesdeApi);
+                const metrics = await apiSocial(window.location.pathname + '?metrics=1');
+                Object.assign(metaSgr, metrics.goal);
+                renderizarTablaCasos(casosSociales);
+                renderizarKanbanFlujo();
+                renderizarVisitasTerreno();
+                renderizarInformesSociales();
+                renderizarEmergencias();
+                renderizarMetasSgr();
+                actualizarIndicadores();
+                poblarSelectsModales();
+                return true;
+            } catch (err) {
+                console.warn('Los datos fueron guardados, pero la vista no pudo actualizarse.', err);
+                return false;
+            }
+        }
+
+        function mensajeGuardado(message, refreshed) {
+            return message + (refreshed ? '' : ' El cambio quedó guardado, pero debes recargar la página para verlo.');
+        }
 
         // Inicialización al cargar la ventana
         document.addEventListener('DOMContentLoaded', function () {
@@ -1916,7 +1990,8 @@
             const lbl = document.getElementById('lblCasosMostrados');
             if (lbl) lbl.innerText = lista.length;
 
-            lista.forEach(caso => {
+            lista.forEach(raw => {
+                const caso = registroSeguro(raw);
                 const tr = document.createElement('tr');
                 tr.style.borderBottom = '1px solid #E2E8F0';
 
@@ -1968,7 +2043,7 @@
                         <div class="fw-bold text-dark">${caso.nombre}</div>
                         <div class="text-muted small d-flex align-items-center gap-1.5 mt-0.5">
                             <i class="bi bi-telephone text-danger" style="font-size: 0.72rem;"></i> ${caso.telefono}
-                            <span class="badge bg-light text-secondary border ms-1" style="font-size: 0.68rem;">${caso.rsh || '40% RSH'}</span>
+                            <span class="badge bg-light text-secondary border ms-1" style="font-size: 0.68rem;">${caso.rsh || 'No registrado'}</span>
                         </div>
                     </td>
                     <td class="py-3 px-2 text-secondary fw-semibold">
@@ -1997,9 +2072,9 @@
                             <button class="btn-action-round btn-action-report" onclick="emitirInformeRapido(${caso.id})" title="Emitir Informe Social PDF">
                                 <i class="bi bi-printer-fill"></i>
                             </button>
-                            <button class="btn-action-round" style="background: rgba(239, 68, 68, 0.1); color: #DC2626;" onclick="eliminarCaso(${caso.id})" title="Dar de baja / Archivar">
+                            ${puedeCerrarCaso ? `<button class="btn-action-round" style="background: rgba(239, 68, 68, 0.1); color: #DC2626;" onclick="eliminarCaso(${caso.id})" title="Dar de baja / Archivar">
                                 <i class="bi bi-trash3-fill"></i>
-                            </button>
+                            </button>` : ''}
                         </div>
                     </td>
                 `;
@@ -2028,12 +2103,13 @@
             document.getElementById('kanbanCountEtapa2').innerText = e2.length + ' casos';
             document.getElementById('kanbanCountEtapa3').innerText = e3.length + ' casos';
 
-            e1.forEach(c => {
+            e1.forEach(raw => {
+                const c = registroSeguro(raw);
                 const card = document.createElement('div');
                 card.className = 'kanban-card';
                 card.innerHTML = `
                     <div class="d-flex justify-content-between align-items-start mb-1">
-                        <span class="badge bg-primary-subtle text-primary fw-bold" style="font-size: 0.68rem;">${c.rsh || '40% RSH'}</span>
+                        <span class="badge bg-primary-subtle text-primary fw-bold" style="font-size: 0.68rem;">${c.rsh || 'No registrado'}</span>
                         <small class="text-muted">${c.fecha_ingreso}</small>
                     </div>
                     <div class="fw-bold text-dark fs-6">${c.nombre}</div>
@@ -2042,19 +2118,20 @@
                     <div class="d-flex justify-content-between align-items-center pt-2 border-top">
                         <span class="small text-muted"><i class="bi bi-geo-alt text-danger"></i> ${c.delegacion}</span>
                         <button class="btn btn-sm btn-outline-primary rounded-pill py-0.5 px-2 fw-bold" style="font-size: 0.75rem;" onclick="avanzarEtapaCaso(${c.id})">
-                            Agendar Terreno <i class="bi bi-arrow-right"></i>
+                            Registrar Etapa 2 <i class="bi bi-arrow-right"></i>
                         </button>
                     </div>
                 `;
                 list1.appendChild(card);
             });
 
-            e2.forEach(c => {
+            e2.forEach(raw => {
+                const c = registroSeguro(raw);
                 const card = document.createElement('div');
                 card.className = 'kanban-card';
                 card.innerHTML = `
                     <div class="d-flex justify-content-between align-items-start mb-1">
-                        <span class="badge bg-warning-subtle text-warning-emphasis fw-bold" style="font-size: 0.68rem;">EVIDENCIA VINCULADA</span>
+                        <span class="badge bg-warning-subtle text-warning-emphasis fw-bold" style="font-size: 0.68rem;">GESTIÓN DE TERRENO</span>
                         <small class="text-muted"><i class="bi bi-camera-fill text-warning"></i> En terreno</small>
                     </div>
                     <div class="fw-bold text-dark fs-6">${c.nombre}</div>
@@ -2065,14 +2142,15 @@
                     <div class="d-flex justify-content-between align-items-center pt-2 mt-2 border-top">
                         <button class="btn btn-sm btn-light rounded-pill py-0.5 px-2 small" onclick="verExpedienteCaso(${c.id})">Ver Ficha</button>
                         <button class="btn btn-sm btn-outline-success rounded-pill py-0.5 px-2 fw-bold" style="font-size: 0.75rem;" onclick="avanzarEtapaCaso(${c.id})">
-                            Resolver Caso <i class="bi bi-check2-circle"></i>
+                            Registrar Etapa 3 <i class="bi bi-check2-circle"></i>
                         </button>
                     </div>
                 `;
                 list2.appendChild(card);
             });
 
-            e3.forEach(c => {
+            e3.forEach(raw => {
+                const c = registroSeguro(raw);
                 const card = document.createElement('div');
                 card.className = 'kanban-card';
                 card.innerHTML = `
@@ -2119,14 +2197,15 @@
                 return;
             }
 
-            visitas.forEach(v => {
+            visitas.forEach(raw => {
+                const v = registroSeguro(raw);
                 const col = document.createElement('div');
                 col.className = 'col-md-6 col-lg-4';
                 col.innerHTML = `
                     <div class="terreno-card">
                         <div class="p-3 text-white" style="background: linear-gradient(135deg, #1B365D 0%, #0F172A 100%);">
                             <div class="d-flex justify-content-between align-items-center">
-                                <span class="badge bg-warning text-dark fw-bold">LEVANTAMIENTO VALIDADO</span>
+                                <span class="badge bg-warning text-dark fw-bold">GESTIÓN REGISTRADA</span>
                                 <small class="text-white-50">${v.fecha_ingreso}</small>
                             </div>
                             <h6 class="fw-bold mt-2 mb-0 text-white">${v.nombre}</h6>
@@ -2159,16 +2238,17 @@
             if (!tbody) return;
             tbody.innerHTML = '';
 
-            casosSociales.forEach((c, idx) => {
+            casosSociales.forEach((raw, idx) => {
+                const c = registroSeguro(raw);
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
-                    <td class="py-3 px-3 fw-bold font-monospace text-primary">INF-2026-AVM-00${c.id}</td>
+                    <td class="py-3 px-3 fw-bold font-monospace text-primary">CASO-${c.id}</td>
                     <td class="py-3 px-2">
                         <div class="fw-bold text-dark">${c.nombre}</div>
                         <small class="text-muted font-monospace">${c.rut}</small>
                     </td>
                     <td class="py-3 px-2">
-                        <span class="badge bg-light text-dark border">Tribunal de Familia / CESFAM</span>
+                        <span class="badge bg-light text-dark border">Borrador disponible</span>
                     </td>
                     <td class="py-3 px-2 text-center text-muted small">${c.fecha_ingreso}</td>
                     <td class="py-3 px-2">
@@ -2205,15 +2285,16 @@
                 return;
             }
 
-            emer.forEach(e => {
+            emer.forEach(raw => {
+                const e = registroSeguro(raw);
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
-                    <td class="py-3 px-3 fw-bold font-monospace text-danger">EMER-2026-${e.id}</td>
+                    <td class="py-3 px-3 fw-bold font-monospace text-danger">CASO-${e.id}</td>
                     <td class="py-3 px-2 fw-bold text-dark">${e.nombre}<br><small class="text-muted font-monospace">${e.rut}</small></td>
                     <td class="py-3 px-2"><span class="badge bg-danger text-white">${e.asunto}</span></td>
                     <td class="py-3 px-2 small fw-semibold text-dark">${e.resolucion}</td>
                     <td class="py-3 px-2 text-center text-muted small">${e.fecha_ingreso}</td>
-                    <td class="py-3 px-2 text-center"><span class="badge bg-success-subtle text-success fw-bold">Entregado en Terreno</span></td>
+                    <td class="py-3 px-2 text-center"><span class="badge bg-warning-subtle text-warning-emphasis fw-bold">Seguimiento requerido</span></td>
                 `;
                 tbody.appendChild(tr);
             });
@@ -2227,7 +2308,8 @@
             if (!tbody) return;
             tbody.innerHTML = '';
 
-            derivacionesRedes.forEach(d => {
+            derivacionesRedes.forEach(raw => {
+                const d = registroSeguro(raw);
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
                     <td class="py-3 px-3">
@@ -2253,61 +2335,30 @@
             if (!tbody) return;
             tbody.innerHTML = '';
 
-            const resueltos = casosSociales.filter(c => c.etapa === 3).length;
-            const diagnosticos = casosSociales.filter(c => c.etapa >= 2).length;
-            const informes = casosSociales.length;
-            const redes = derivacionesRedes.length;
-
-            const items = [
-                { codigo: 'ITM-001-ORI', nombre: 'Evaluaciones y Diagnósticos en Terreno', meta: 15, avance: diagnosticos, ponderador: 30 },
-                { codigo: 'ITM-004-SUB', nombre: 'Gestión de Subsidios y Beneficios Municipales', meta: 15, avance: resueltos, ponderador: 35 },
-                { codigo: 'ITM-005-INF', nombre: 'Informes Sociales Formales Emitidos', meta: 10, avance: informes, ponderador: 20 },
-                { codigo: 'ITM-006-RED', nombre: 'Articulación de Redes y Casos Resueltos', meta: 10, avance: redes, ponderador: 15 }
-            ];
-
-            let puntajePonderadoTotal = 0;
-
-            items.forEach(it => {
-                const cumplimiento = Math.min(150, Math.round((it.avance / it.meta) * 100));
-                const puntajePond = (cumplimiento * it.ponderador) / 100;
-                puntajePonderadoTotal += puntajePond;
-
-                let badge = '<span class="badge bg-danger">Rojo</span>';
-                if (cumplimiento >= 61.54) badge = '<span class="badge bg-success">Verde</span>';
-                else if (cumplimiento >= 36.92) badge = '<span class="badge bg-warning text-dark">Ámbar</span>';
-
-                const tr = document.createElement('tr');
-                tr.innerHTML = `
-                    <td class="py-3 px-3 fw-bold font-monospace text-primary">${it.codigo}</td>
-                    <td class="py-3 px-2 fw-semibold text-dark">${it.nombre}</td>
-                    <td class="py-3 px-2 text-center fw-bold">${it.meta}</td>
-                    <td class="py-3 px-2 text-center text-primary fw-bold">${it.avance}</td>
-                    <td class="py-3 px-2 text-center">${cumplimiento}%</td>
-                    <td class="py-3 px-2 text-center fw-bold">${it.ponderador}%</td>
-                    <td class="py-3 px-2 text-center fw-extrabold text-danger">${puntajePond.toFixed(1)}%</td>
-                    <td class="py-3 px-2 text-center">${badge}</td>
-                `;
-                tbody.appendChild(tr);
-            });
-
-            // Fila de Totales
-            const trTotal = document.createElement('tr');
-            trTotal.className = 'table-light fw-bold';
-            trTotal.innerHTML = `
-                <td colspan="2" class="py-3 px-3 text-uppercase">TOTAL CONSOLIDADO SGR</td>
-                <td class="py-3 text-center">50</td>
-                <td class="py-3 text-center text-primary">${diagnosticos + resueltos + informes + redes}</td>
-                <td class="py-3 text-center">-</td>
-                <td class="py-3 text-center">100%</td>
-                <td class="py-3 text-center text-danger fs-6">${puntajePonderadoTotal.toFixed(1)}%</td>
-                <td class="py-3 text-center"><span class="badge bg-danger">Rojo</span></td>
+            if (!metaSgr.target) {
+                tbody.innerHTML = '<tr><td colspan="8" class="p-4 text-center text-muted">Sin meta activa para este cargo y período. La administración debe configurarla.</td></tr>';
+                document.getElementById('sgrCumplimientoPonderadoTotal').innerText = 'Sin meta';
+                document.getElementById('sgrProgressPanel').style.width = '0%';
+                return;
+            }
+            const cumplimiento = Math.min(100, 100 * metaSgr.completed / metaSgr.target);
+            const esperado = metaSgr.expected_pct;
+            const estado = esperado === null ? 'Sin período' : cumplimiento >= esperado ? 'Verde' : cumplimiento >= esperado * 0.6 ? 'Ámbar' : 'Rojo';
+            const badge = estado === 'Verde' ? 'bg-success' : estado === 'Ámbar' ? 'bg-warning text-dark' : 'bg-danger';
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td class="py-3 px-3 fw-bold font-monospace text-primary">Meta vigente</td>
+                <td class="py-3 px-2 fw-semibold text-dark">${escapeHtml(metaSgr.name)}</td>
+                <td class="py-3 px-2 text-center fw-bold">${metaSgr.target}</td>
+                <td class="py-3 px-2 text-center text-primary fw-bold">${metaSgr.completed}</td>
+                <td class="py-3 px-2 text-center">${cumplimiento.toFixed(1)}%</td>
+                <td class="py-3 px-2 text-center fw-bold">${metaSgr.weight}%</td>
+                <td class="py-3 px-2 text-center fw-extrabold text-danger">${(cumplimiento * metaSgr.weight / 100).toFixed(1)}%</td>
+                <td class="py-3 px-2 text-center"><span class="badge ${badge}">${estado}</span></td>
             `;
-            tbody.appendChild(trTotal);
-
-            const sgrCumplimientoPonderadoTotal = document.getElementById('sgrCumplimientoPonderadoTotal');
-            if (sgrCumplimientoPonderadoTotal) sgrCumplimientoPonderadoTotal.innerText = puntajePonderadoTotal.toFixed(1) + '%';
-            const sgrProgressPanel = document.getElementById('sgrProgressPanel');
-            if (sgrProgressPanel) sgrProgressPanel.style.width = Math.min(100, puntajePonderadoTotal) + '%';
+            tbody.appendChild(tr);
+            document.getElementById('sgrCumplimientoPonderadoTotal').innerText = (cumplimiento * metaSgr.weight / 100).toFixed(1) + '%';
+            document.getElementById('sgrProgressPanel').style.width = Math.min(100, cumplimiento) + '%';
         }
 
         // =============================================================
@@ -2332,13 +2383,14 @@
                 return;
             }
 
-            vecinosList.forEach(v => {
+            vecinosList.forEach(raw => {
+                const v = registroSeguro(raw);
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
                     <td class="py-3 px-3 fw-bold font-monospace text-dark">${v.rut}</td>
                     <td class="py-3 px-2 fw-bold text-dark">${v.nombre}</td>
                     <td class="py-3 px-2 small text-secondary">${v.direccion}</td>
-                    <td class="py-3 px-2 small">${v.telefono || '+56 9 8888 7777'}</td>
+                    <td class="py-3 px-2 small">${v.telefono || 'No informado'}</td>
                     <td class="py-3 px-2 small fw-semibold text-danger"><i class="bi bi-geo-alt-fill"></i> ${v.territorio}</td>
                     <td class="py-3 px-2 text-center">
                         <span class="badge ${v.estado === 'Activo' ? 'bg-success' : 'bg-secondary'}">${v.estado}</span>
@@ -2348,9 +2400,9 @@
                             <button class="btn btn-sm btn-outline-primary rounded-pill px-2.5 py-0.5 fw-bold" style="font-size: 0.78rem;" onclick="abrirModalEditarVecino(${v.id})">
                                 <i class="bi bi-pencil-fill"></i> Editar
                             </button>
-                            <button class="btn btn-sm btn-outline-danger rounded-pill px-2 py-0.5 fw-bold" style="font-size: 0.78rem;" onclick="eliminarVecinoMantenedor(${v.id})">
+                            ${puedeCerrarCaso ? `<button class="btn btn-sm btn-outline-danger rounded-pill px-2 py-0.5 fw-bold" style="font-size: 0.78rem;" onclick="eliminarVecinoMantenedor(${v.id})">
                                 <i class="bi bi-trash3-fill"></i>
-                            </button>
+                            </button>` : ''}
                         </div>
                     </td>
                 `;
@@ -2397,20 +2449,22 @@
             document.getElementById('sideBadgeEmergencias').innerText = casosSociales.filter(c => c.categoria === 'emergencia').length;
             document.getElementById('sideBadgeRedes').innerText = derivacionesRedes.length;
             document.getElementById('sideBadgeVecinos').innerText = vecinosList.length;
+            document.getElementById('badgeNotifCount').innerText = derivacionesRedes.filter(d => /pendiente/i.test(d.estado)).length;
 
             const lblCasosTotales = document.getElementById('lblCasosTotales');
             if (lblCasosTotales) lblCasosTotales.innerText = total;
             const lblAvanceCount = document.getElementById('lblAvanceCount');
-            if (lblAvanceCount) lblAvanceCount.innerText = etapa3;
+            if (lblAvanceCount) lblAvanceCount.innerText = metaSgr.target ? metaSgr.completed : '—';
 
-            const metaTrimestral = 40;
-            const porcentaje = Math.min(100, Math.round((etapa3 / metaTrimestral) * 100));
-            const pctTexto = porcentaje.toFixed(1).replace('.', ',') + '%';
+            const porcentaje = metaSgr.target ? Math.min(100, 100 * metaSgr.completed / metaSgr.target) : 0;
+            const pctTexto = metaSgr.target ? porcentaje.toFixed(1).replace('.', ',') + '%' : 'Sin meta';
 
             const lblAvancePct = document.getElementById('lblAvancePct');
             if (lblAvancePct) lblAvancePct.innerText = pctTexto;
             const sgrCumplimientoVal = document.getElementById('sgrCumplimientoVal');
             if (sgrCumplimientoVal) sgrCumplimientoVal.innerText = pctTexto;
+            const metaEsperada = document.getElementById('sgrMetaEsperada');
+            if (metaEsperada) metaEsperada.innerText = metaSgr.expected_pct === null ? 'Sin período activo' : `${metaSgr.expected_pct}%`;
             const sideBadgeSgrPct = document.getElementById('sideBadgeSgrPct');
             if (sideBadgeSgrPct) sideBadgeSgrPct.innerText = pctTexto;
 
@@ -2420,14 +2474,22 @@
             const lblStatus = document.getElementById('sgrStatusLabel');
             const beaconDot = document.getElementById('sgrBeaconDot');
 
-            if (porcentaje >= 61.54) {
-                if (lblStatus) { lblStatus.className = 'text-success fw-extrabold'; lblStatus.innerText = 'Verde (Meta Óptima Cumplida)'; }
+            const panelStatus = document.getElementById('sgrStatusTitlePanel');
+            if (!metaSgr.target || metaSgr.expected_pct === null) {
+                if (lblStatus) { lblStatus.className = 'text-muted fw-bold'; lblStatus.innerText = 'Sin meta activa'; }
+                if (panelStatus) { panelStatus.className = 'fw-bold m-0 text-muted'; panelStatus.innerText = 'Sin meta activa'; }
+                if (beaconDot) { beaconDot.style.backgroundColor = '#94A3B8'; beaconDot.style.boxShadow = 'none'; }
+            } else if (porcentaje >= metaSgr.expected_pct) {
+                if (lblStatus) { lblStatus.className = 'text-success fw-extrabold'; lblStatus.innerText = 'Verde (meta al día)'; }
+                if (panelStatus) { panelStatus.className = 'fw-bold m-0 text-success'; panelStatus.innerText = 'Verde (meta al día)'; }
                 if (beaconDot) { beaconDot.style.backgroundColor = '#10B981'; beaconDot.style.boxShadow = '0 0 12px #10B981'; }
-            } else if (porcentaje >= 36.92) {
-                if (lblStatus) { lblStatus.className = 'text-warning fw-extrabold'; lblStatus.innerText = 'Ámbar (En Progreso Normal)'; }
+            } else if (porcentaje >= metaSgr.expected_pct * 0.6) {
+                if (lblStatus) { lblStatus.className = 'text-warning fw-extrabold'; lblStatus.innerText = 'Ámbar (bajo la meta)'; }
+                if (panelStatus) { panelStatus.className = 'fw-bold m-0 text-warning'; panelStatus.innerText = 'Ámbar (bajo la meta)'; }
                 if (beaconDot) { beaconDot.style.backgroundColor = '#F59E0B'; beaconDot.style.boxShadow = '0 0 12px #F59E0B'; }
             } else {
-                if (lblStatus) { lblStatus.className = 'text-danger fw-extrabold'; lblStatus.innerText = 'Rojo (Rezago Operativo)'; }
+                if (lblStatus) { lblStatus.className = 'text-danger fw-extrabold'; lblStatus.innerText = 'Rojo (rezago)'; }
+                if (panelStatus) { panelStatus.className = 'fw-bold m-0 text-danger'; panelStatus.innerText = 'Rojo (rezago)'; }
                 if (beaconDot) { beaconDot.style.backgroundColor = '#EF4444'; beaconDot.style.boxShadow = '0 0 12px #EF4444'; }
             }
         }
@@ -2473,29 +2535,29 @@
 
             if (selectVisita) {
                 selectVisita.innerHTML = '<option value="">-- Selecciona un caso social para visitar --</option>';
-                casosSociales.filter(c => c.etapa < 3).forEach(c => {
-                    selectVisita.innerHTML += `<option value="${c.id}">${c.nombre} (${c.rut}) [Etapa ${c.etapa}]</option>`;
+                casosSociales.filter(c => c.etapa === 1).forEach(c => {
+                    selectVisita.add(new Option(`${c.nombre} (${c.rut}) [Etapa ${c.etapa}]`, c.id));
                 });
             }
 
             if (selectInforme) {
                 selectInforme.innerHTML = '<option value="">-- Selecciona un caso para respaldar --</option>';
                 casosSociales.forEach(c => {
-                    selectInforme.innerHTML += `<option value="${c.id}">${c.nombre} (${c.rut}) - ${c.asunto}</option>`;
+                    selectInforme.add(new Option(`${c.nombre} (${c.rut}) - ${c.asunto}`, c.id));
                 });
             }
 
             if (selectBen) {
                 selectBen.innerHTML = '<option value="">-- Selecciona una persona usuaria --</option>';
-                casosSociales.forEach(c => {
-                    selectBen.innerHTML += `<option value="${c.id}">${c.nombre} (${c.rut})</option>`;
+                casosSociales.filter(c => c.etapa === 2).forEach(c => {
+                    selectBen.add(new Option(`${c.nombre} (${c.rut})`, c.id));
                 });
             }
 
             if (selectRed) {
                 selectRed.innerHTML = '<option value="">-- Selecciona una persona usuaria --</option>';
                 casosSociales.forEach(c => {
-                    selectRed.innerHTML += `<option value="${c.id}">${c.nombre} (${c.rut})</option>`;
+                    selectRed.add(new Option(`${c.nombre} (${c.rut})`, c.id));
                 });
             }
         }
@@ -2553,7 +2615,7 @@
             document.getElementById('editVecinoRut').value = v.rut;
             document.getElementById('editVecinoNombre').value = v.nombre;
             document.getElementById('editVecinoDireccion').value = v.direccion;
-            document.getElementById('editVecinoTelefono').value = v.telefono || '+56 9 8888 7777';
+            document.getElementById('editVecinoTelefono').value = v.telefono || '';
             document.getElementById('editVecinoEstado').value = v.estado;
 
             const modal = new bootstrap.Modal(document.getElementById('modalEditarVecino'));
@@ -2568,9 +2630,9 @@
             const rut = document.getElementById('casoRut').value.trim();
             const nombre = document.getElementById('casoNombre').value.trim();
             const telefono = document.getElementById('casoTelefono').value.trim();
-            const delegacion = document.getElementById('casoDelegacion').value;
+            const delegationInput = document.getElementById('casoDelegacion');
+            const delegationId = delegationInput.dataset.delegationId || delegationInput.value;
             const categoria = document.getElementById('casoCategoria').value;
-            const rsh = document.getElementById('casoRsh').value;
             const asunto = document.getElementById('casoAsunto').value.trim();
             const descripcion = document.getElementById('casoDescripcion').value.trim();
 
@@ -2585,57 +2647,15 @@
             }
 
             try {
-                const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]') ? document.querySelector('[name=csrfmiddlewaretoken]').value : (getCookie('csrftoken') || '');
-                const resp = await fetch('/api/vecinos/', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRFToken': csrfToken
-                    },
-                    body: JSON.stringify({
-                        nombre: nombre,
-                        rut: rut,
-                        direccion: 'Delegación ' + delegacion,
-                        telefono: telefono,
-                        territorio: delegacion,
-                        estado: 'Activo'
-                    })
+                const data = await apiSocial('/social/api/casos/', 'POST', {
+                    user_name: nombre,
+                    user_rut: rut,
+                    contact_phone: telefono,
+                    delegation_id: delegationId,
+                    entry_date: fechaLocalIso(),
+                    initial_problem: `[${categoria}] ${asunto}. ${descripcion}`
                 });
-                const data = await resp.json();
-                if (!data.success && !data.message?.includes('Ya existe un vecino')) {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Error al Guardar',
-                        text: data.message || 'No se pudo guardar el vecino en la base de datos.',
-                        confirmButtonColor: '#C41230'
-                    });
-                    return;
-                }
-
-                const nuevoId = data.vecino ? data.vecino.id : Date.now();
-                const nuevo = {
-                    id: nuevoId,
-                    rut: rut,
-                    nombre: nombre,
-                    telefono: telefono,
-                    delegacion: delegacion,
-                    fecha_ingreso: new Date().toLocaleDateString('es-CL'),
-                    categoria: categoria,
-                    asunto: asunto,
-                    etapa: 1,
-                    rsh: rsh,
-                    descripcion: descripcion,
-                    evidencia: 'Sin evidencia aún',
-                    resolucion: 'Ficha social recepcionada en Etapa 1.'
-                };
-
-                casosSociales.unshift(nuevo);
-                if (data.vecino) {
-                    vecinosList.unshift(data.vecino);
-                }
-                renderizarTablaCasos(casosSociales);
-                actualizarIndicadores();
-                poblarSelectsModales();
+                const refreshed = await recargarCasos();
 
                 bootstrap.Modal.getInstance(document.getElementById('modalNuevoCaso')).hide();
                 document.getElementById('formNuevoCaso').reset();
@@ -2643,15 +2663,14 @@
                 Swal.fire({
                     icon: 'success',
                     title: 'Caso Social Registrado',
-                    html: `Se ha guardado exitosamente en la base de datos el caso de <strong>${nombre}</strong> en <strong>${delegacion}</strong>.`,
+                    text: mensajeGuardado(data.message, refreshed),
                     confirmButtonColor: '#C41230'
                 });
             } catch (err) {
-                console.error(err);
                 Swal.fire({
                     icon: 'error',
-                    title: 'Error de Red',
-                    text: 'No se pudo comunicar con el servidor.',
+                    title: 'No se pudo registrar el caso',
+                    text: err.message,
                     confirmButtonColor: '#C41230'
                 });
             }
@@ -2660,7 +2679,7 @@
         // =============================================================
         // GUARDAR VISITA A TERRENO
         // =============================================================
-        function guardarVisitaTerreno(e) {
+        async function guardarVisitaTerreno(e) {
             e.preventDefault();
             const casoId = parseInt(document.getElementById('visitaCasoSelect').value);
             const fecha = document.getElementById('visitaFecha').value;
@@ -2672,26 +2691,20 @@
                 return;
             }
 
-            caso.etapa = 2;
-            caso.evidencia = `Visita_${fecha}_${caso.rut.replace(/[^0-9kK]/g, '')}.jpg`;
-            caso.resolucion = `Visita domiciliaria realizada el ${fecha}. Diagnóstico: ${condiciones.substring(0, 80)}...`;
-
-            renderizarTablaCasos(casosSociales);
-            renderizarKanbanFlujo();
-            renderizarVisitasTerreno();
-            actualizarIndicadores();
-
-            bootstrap.Modal.getInstance(document.getElementById('modalVisitaTerreno')).hide();
-            document.getElementById('formVisitaTerreno').reset();
-            const prev = document.getElementById('fotoPreviewContainer');
-            if (prev) prev.style.display = 'none';
-
-            Swal.fire({
-                icon: 'success',
-                title: 'Visita en Terreno Registrada',
-                html: `El caso de <strong>${caso.nombre}</strong> avanzó a <strong>Etapa 2 (Terreno)</strong> con evidencia fotográfica vinculada.`,
-                confirmButtonColor: '#C41230'
-            });
+            try {
+                const data = await apiSocial(`/social/api/casos/${casoId}/avanzar-etapa/`, 'POST', {
+                    stage: 2,
+                    management_type: 'Visita en terreno',
+                    management_date: fecha,
+                    result: condiciones
+                });
+                const refreshed = await recargarCasos();
+                bootstrap.Modal.getInstance(document.getElementById('modalVisitaTerreno')).hide();
+                document.getElementById('formVisitaTerreno').reset();
+                Swal.fire({ icon: 'success', title: 'Gestión registrada', text: mensajeGuardado(data.message, refreshed), confirmButtonColor: '#C41230' });
+            } catch (err) {
+                Swal.fire({ icon: 'error', title: 'No se registró la visita', text: err.message, confirmButtonColor: '#C41230' });
+            }
         }
 
         // =============================================================
@@ -2702,7 +2715,8 @@
             const rut = document.getElementById('emerRut').value.trim();
             const nombre = document.getElementById('emerNombre').value.trim();
             const tipo = document.getElementById('emerTipo').value;
-            const delegacion = document.getElementById('emerDelegacion').value;
+            const delegationInput = document.getElementById('emerDelegacion');
+            const delegacionId = delegationInput.dataset.delegationId || delegationInput.value;
             const ayuda = document.getElementById('emerAyuda').value.trim();
             const obs = document.getElementById('emerObservaciones').value.trim();
 
@@ -2717,63 +2731,29 @@
             }
 
             try {
-                const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]') ? document.querySelector('[name=csrfmiddlewaretoken]').value : (getCookie('csrftoken') || '');
-                const resp = await fetch('/api/vecinos/', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRFToken': csrfToken
-                    },
-                    body: JSON.stringify({
-                        nombre: nombre,
-                        rut: rut,
-                        direccion: 'Zona de Emergencia ' + delegacion,
-                        telefono: '+56 9 9999 0000',
-                        territorio: delegacion,
-                        estado: 'Activo'
-                    })
+                const data = await apiSocial('/social/api/casos/', 'POST', {
+                    user_name: nombre,
+                    user_rut: rut,
+                    delegation_id: delegacionId,
+                    entry_date: fechaLocalIso(),
+                    initial_problem: `[emergencia] ${tipo}. Ayuda solicitada: ${ayuda}. Observaciones: ${obs}`
                 });
-                const data = await resp.json();
-
-                const nuevoId = data.vecino ? data.vecino.id : Date.now();
-                const nuevo = {
-                    id: nuevoId,
-                    rut: rut,
-                    nombre: nombre,
-                    telefono: "En albergue / Teléfono vecinal",
-                    delegacion: delegacion,
-                    fecha_ingreso: new Date().toLocaleDateString('es-CL'),
-                    categoria: "emergencia",
-                    asunto: `🚨 ${tipo} - ${ayuda}`,
-                    etapa: 3,
-                    rsh: "40% RSH (Emergencia)",
-                    descripcion: `Emergencia atendida de urgencia por DIDECO: ${obs}`,
-                    evidencia: "Acta_Despacho_Emergencia_Inmediata.pdf",
-                    resolucion: `Ayuda material (${ayuda}) entregada inmediatamente. Caso resuelto en Etapa 3.`
-                };
-
-                casosSociales.unshift(nuevo);
-                if (data.vecino) vecinosList.unshift(data.vecino);
-                renderizarTablaCasos(casosSociales);
-                renderizarEmergencias();
-                actualizarIndicadores();
-                poblarSelectsModales();
+                const refreshed = await recargarCasos();
 
                 bootstrap.Modal.getInstance(document.getElementById('modalEmergencia')).hide();
                 document.getElementById('formEmergencia').reset();
 
                 Swal.fire({
                     icon: 'success',
-                    title: 'Atención de Emergencia Despachada',
-                    html: `Se registró y guardó en la base de datos la entrega de ayuda urgente para <strong>${nombre}</strong> en <strong>${delegacion}</strong>.`,
+                    title: 'Solicitud urgente registrada',
+                    text: mensajeGuardado(data.message + ' Aún no se ha confirmado ninguna entrega.', refreshed),
                     confirmButtonColor: '#C41230'
                 });
             } catch (err) {
-                console.error(err);
                 Swal.fire({
                     icon: 'error',
                     title: 'Error al Registrar',
-                    text: 'Ocurrió un error al despachar la emergencia.',
+                    text: err.message,
                     confirmButtonColor: '#C41230'
                 });
             }
@@ -2782,7 +2762,7 @@
         // =============================================================
         // CONCEDER BENEFICIO DIRECTO
         // =============================================================
-        function confirmarAsignacionBeneficio(e) {
+        async function confirmarAsignacionBeneficio(e) {
             e.preventDefault();
             const casoId = parseInt(document.getElementById('benVecinoSelect').value);
             const benNombre = document.getElementById('benTipoHidden').value;
@@ -2794,60 +2774,55 @@
                 return;
             }
 
-            caso.etapa = 3;
-            caso.categoria = 'beneficio';
-            caso.asunto = `${benNombre}`;
-            caso.resolucion = `Beneficio (${benNombre}) concedido por DIDECO. ${obs}`;
-
-            renderizarTablaCasos(casosSociales);
-            renderizarKanbanFlujo();
-            actualizarIndicadores();
-
-            bootstrap.Modal.getInstance(document.getElementById('modalAsignarBeneficio')).hide();
-            document.getElementById('formAsignarBeneficio').reset();
-
-            Swal.fire({
-                icon: 'success',
-                title: 'Subsidio Concedido',
-                html: `Se ha concedido formalmente <strong>${benNombre}</strong> a <strong>${caso.nombre}</strong>. El caso pasa a <strong>Etapa 3 (Resuelto)</strong> y aporta a la medición SGR.`,
-                confirmButtonColor: '#C41230'
-            });
+            try {
+                const data = await apiSocial(`/social/api/casos/${casoId}/avanzar-etapa/`, 'POST', {
+                    stage: 3,
+                    management_type: 'Resolución y prestación social',
+                    management_date: fechaLocalIso(),
+                    benefit: benNombre,
+                    result: obs
+                });
+                const refreshed = await recargarCasos();
+                bootstrap.Modal.getInstance(document.getElementById('modalAsignarBeneficio')).hide();
+                document.getElementById('formAsignarBeneficio').reset();
+                Swal.fire({ icon: 'success', title: 'Gestión registrada', text: mensajeGuardado(data.message, refreshed), confirmButtonColor: '#C41230' });
+            } catch (err) {
+                Swal.fire({ icon: 'error', title: 'No se registró el beneficio', text: err.message, confirmButtonColor: '#C41230' });
+            }
         }
 
         // =============================================================
         // GUARDAR DERIVACIÓN A RED
         // =============================================================
-        function guardarDerivacionRed(e) {
+        async function guardarDerivacionRed(e) {
             e.preventDefault();
             const casoId = parseInt(document.getElementById('redVecinoSelect').value);
             const inst = document.getElementById('redInstitucion').value;
             const mot = document.getElementById('redMotivo').value.trim();
 
             const caso = casosSociales.find(c => c.id === casoId);
-            if (!caso) return;
-
-            derivacionesRedes.unshift({
-                id: Date.now(),
-                vecino: caso.nombre,
-                rut: caso.rut,
-                red: inst,
-                motivo: mot,
-                fecha: new Date().toLocaleDateString('es-CL'),
-                estado: 'Enviada / En Recepción'
-            });
-
-            renderizarArticulacionRedes();
-            actualizarIndicadores();
-
-            bootstrap.Modal.getInstance(document.getElementById('modalDerivacionRedes')).hide();
-            document.getElementById('formDerivacionRed').reset();
-
-            Swal.fire({
-                icon: 'success',
-                title: 'Derivación Enviada',
-                html: `Se remitió formalmente la ficha de <strong>${caso.nombre}</strong> a <strong>${inst}</strong>.`,
-                confirmButtonColor: '#C41230'
-            });
+            if (!caso) {
+                Swal.fire({ icon: 'warning', title: 'Selecciona un caso', confirmButtonColor: '#C41230' });
+                return;
+            }
+            try {
+                const data = await apiSocial(`/social/api/casos/${casoId}/solicitudes/`, 'POST', {
+                    request_type: 'revision',
+                    reason: `Derivación solicitada a ${inst}: ${mot}`
+                });
+                derivacionesRedes.unshift({
+                    id: data.review_request_id, vecino: caso.nombre, rut: caso.rut,
+                    red: inst, motivo: mot, fecha: new Date().toLocaleDateString('es-CL'),
+                    estado: 'Pendiente de revisión'
+                });
+                renderizarArticulacionRedes();
+                actualizarIndicadores();
+                bootstrap.Modal.getInstance(document.getElementById('modalDerivacionRedes')).hide();
+                document.getElementById('formDerivacionRed').reset();
+                Swal.fire({ icon: 'success', title: 'Solicitud enviada a administración', text: data.message + ' La derivación externa aún no ha sido enviada.', confirmButtonColor: '#C41230' });
+            } catch (err) {
+                Swal.fire({ icon: 'error', title: 'No se registró la solicitud', text: err.message, confirmButtonColor: '#C41230' });
+            }
         }
 
         // =============================================================
@@ -2892,26 +2867,9 @@
                 }
 
                 vecinosList.unshift(data.vecino);
-                casosSociales.unshift({
-                    id: data.vecino.id,
-                    rut: data.vecino.rut,
-                    nombre: data.vecino.nombre,
-                    telefono: data.vecino.telefono,
-                    delegacion: data.vecino.territorio,
-                    fecha_ingreso: new Date().toLocaleDateString('es-CL'),
-                    categoria: 'beneficio',
-                    asunto: 'Ingreso Padrón Vecinal Territorial',
-                    etapa: 1,
-                    rsh: '40% RSH',
-                    descripcion: 'Vecino registrado en el padrón oficial de la delegación.',
-                    evidencia: 'Sin evidencia aún',
-                    resolucion: 'Ficha recepcionada en Etapa 1.'
-                });
 
                 renderizarTablaVecinosMantenedor();
-                renderizarTablaCasos(casosSociales);
                 actualizarIndicadores();
-                poblarSelectsModales();
 
                 bootstrap.Modal.getInstance(document.getElementById('modalCrearVecino')).hide();
                 document.getElementById('formCrearVecino').reset();
@@ -2931,6 +2889,11 @@
         async function actualizarVecinoMantenedor(e) {
             e.preventDefault();
             const id = parseInt(document.getElementById('editVecinoId').value);
+            const existing = vecinosList.find(v => v.id === id);
+            if (!existing) {
+                Swal.fire({ icon: 'error', title: 'Registro no encontrado', confirmButtonColor: '#C41230' });
+                return;
+            }
             const nombre = document.getElementById('editVecinoNombre').value.trim();
             const direccion = document.getElementById('editVecinoDireccion').value.trim();
             const telefono = document.getElementById('editVecinoTelefono').value.trim();
@@ -2943,8 +2906,10 @@
                     headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
                     body: JSON.stringify({
                         nombre: nombre,
+                        rut: existing.rut,
                         direccion: direccion,
                         telefono: telefono,
+                        territorio: existing.territorio,
                         estado: estado
                     })
                 });
@@ -2958,14 +2923,7 @@
                 if (idx !== -1) {
                     vecinosList[idx] = data.vecino;
                 }
-                const casoIdx = casosSociales.findIndex(c => c.id === id);
-                if (casoIdx !== -1) {
-                    casosSociales[casoIdx].nombre = nombre;
-                    casosSociales[casoIdx].telefono = telefono;
-                }
-
                 renderizarTablaVecinosMantenedor();
-                renderizarTablaCasos(casosSociales);
                 bootstrap.Modal.getInstance(document.getElementById('modalEditarVecino')).hide();
 
                 Swal.fire({ icon: 'success', title: 'Ficha Actualizada', text: 'Datos guardados correctamente en la base de datos.', confirmButtonColor: '#C41230' });
@@ -2981,7 +2939,7 @@
 
             Swal.fire({
                 title: '¿Dar de baja a este vecino?',
-                html: `El vecino <strong>${v.nombre}</strong> (${v.rut}) será archivado y registrado en la bitácora de auditoría.`,
+                text: `El vecino ${v.nombre} (${v.rut}) será archivado y registrado en la bitácora de auditoría.`,
                 icon: 'warning',
                 showCancelButton: true,
                 confirmButtonColor: '#C41230',
@@ -2992,22 +2950,19 @@
                 if (result.isConfirmed) {
                     try {
                         const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]') ? document.querySelector('[name=csrfmiddlewaretoken]').value : (getCookie('csrftoken') || '');
-                        await fetch(`/api/vecinos/${id}/`, {
+                        const response = await fetch(`/api/vecinos/${id}/`, {
                             method: 'DELETE',
                             headers: { 'X-CSRFToken': csrfToken }
                         });
-                    } catch (e) {
-                        console.warn(e);
+                        const data = await response.json();
+                        if (!response.ok || !data.success) throw new Error(data.message || 'No se pudo archivar el vecino.');
+                        vecinosList = vecinosList.filter(item => item.id !== id);
+                        renderizarTablaVecinosMantenedor();
+                        actualizarIndicadores();
+                        Swal.fire({ icon: 'success', title: 'Vecino dado de baja', text: data.message, confirmButtonColor: '#C41230' });
+                    } catch (err) {
+                        Swal.fire({ icon: 'error', title: 'No se archivó el vecino', text: err.message, confirmButtonColor: '#C41230' });
                     }
-
-                    vecinosList = vecinosList.filter(item => item.id !== id);
-                    casosSociales = casosSociales.filter(c => c.id !== id);
-                    renderizarTablaVecinosMantenedor();
-                    renderizarTablaCasos(casosSociales);
-                    actualizarIndicadores();
-                    poblarSelectsModales();
-
-                    Swal.fire({ icon: 'success', title: 'Vecino Dado de Baja', text: 'El registro fue archivado con éxito.', confirmButtonColor: '#C41230' });
                 }
             });
         }
@@ -3035,7 +2990,7 @@
             const caso = casosSociales.find(c => c.id === id);
             if (!caso) return;
             document.getElementById('informeCasoSelect').value = caso.id;
-            document.getElementById('informeDictamen').value = `Tras realizar diagnóstico socioeconómico a ${caso.nombre} (RUT ${caso.rut}), se acredita situación de vulnerabilidad social en ${caso.delegacion}. Se sugiere respaldar favorablemente la solicitud de ${caso.asunto}.`;
+            document.getElementById('informeDictamen').value = '';
             const modal = new bootstrap.Modal(document.getElementById('modalInformeSocial'));
             modal.show();
         }
@@ -3054,7 +3009,7 @@
             doc.setTextColor(27, 54, 93);
             doc.setFontSize(16);
             doc.setFont('helvetica', 'bold');
-            doc.text('INFORME SOCIAL SOCIOECONÓMICO INSTITUCIONAL', 15, 32);
+            doc.text('BORRADOR DE INFORME SOCIAL · SIN FIRMA', 15, 32);
 
             doc.setFontSize(9);
             doc.setTextColor(100, 116, 139);
@@ -3068,7 +3023,7 @@
                     ['RUT', caso.rut],
                     ['Teléfono de Contacto', caso.telefono],
                     ['Delegación / Territorio', caso.delegacion],
-                    ['Registro Social de Hogares (RSH)', caso.rsh || '40% RSH'],
+                    ['Registro Social de Hogares (RSH)', caso.rsh || 'No registrado'],
                     ['Fecha de Ingreso de la Ficha', caso.fecha_ingreso],
                     ['Entidad Solicitante / Destino', destinatario],
                     ['Requerimiento / Asunto', caso.asunto]
@@ -3106,23 +3061,27 @@
             doc.setFontSize(9);
             doc.setFont('helvetica', 'bold');
             doc.setTextColor(27, 54, 93);
-            doc.text('scarlett williams medalla', 105, firmaY + 30, { align: 'center' });
+            doc.text(funcionarioNombre, 105, firmaY + 30, { align: 'center' });
             doc.setFont('helvetica', 'normal');
             doc.setTextColor(100, 116, 139);
-            doc.text('Asistente Social / Trabajadora Social DIDECO', 105, firmaY + 35, { align: 'center' });
+            doc.text('Borrador sin firma ni validación institucional', 105, firmaY + 35, { align: 'center' });
             doc.text('Ilustre Municipalidad de La Serena', 105, firmaY + 40, { align: 'center' });
 
             doc.save(`Informe_Social_${caso.rut.replace(/[^0-9kK]/g, '')}_LaSerena.pdf`);
 
             Swal.fire({
                 icon: 'success',
-                title: 'Informe Social Generado',
-                text: 'El documento formal PDF ha sido descargado exitosamente con membrete municipal y timbre de Asistencia Social.',
+                title: 'Borrador descargado',
+                text: 'Revisa los datos y gestiona la validación institucional antes de utilizar este documento.',
                 confirmButtonColor: '#C41230'
             });
         }
 
         function exportarReporteSgrPdf() {
+            if (!metaSgr.target) {
+                Swal.fire({ icon: 'info', title: 'Sin meta vigente', text: 'No hay datos de meta configurados para generar este reporte.', confirmButtonColor: '#C41230' });
+                return;
+            }
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF();
 
@@ -3138,82 +3097,63 @@
             doc.text('CUMPLIMIENTO INDIVIDUAL ASISTENTE SOCIAL DIDECO', 15, 30);
             doc.setFontSize(9);
             doc.setTextColor(100, 116, 139);
-            doc.text(`Funcionario: scarlett williams medalla | Sede: {{ current_delegation }} | Fecha: ${new Date().toLocaleDateString('es-CL')}`, 15, 36);
+            doc.text(`Funcionario: ${funcionarioNombre} | Fecha: ${new Date().toLocaleDateString('es-CL')}`, 15, 36);
 
             doc.autoTable({
                 startY: 44,
                 head: [['CÓDIGO', 'FUNCIÓN', 'META', 'AVANCE', '% CUMP.', 'POND.', 'RESULTADO']],
-                body: [
-                    ['ITM-001-ORI', 'Evaluaciones y Diagnósticos en Terreno', '15', '1', '6,7%', '30%', '2,0%'],
-                    ['ITM-004-SUB', 'Gestión de Subsidios y Beneficios', '15', '1', '6,7%', '35%', '2,3%'],
-                    ['ITM-005-INF', 'Informes Sociales Formales Emitidos', '10', '1', '10,0%', '20%', '2,0%'],
-                    ['ITM-006-RED', 'Articulación de Redes Comunitarias', '10', '2', '20,0%', '15%', '3,0%'],
-                    ['TOTAL', 'MATRIZ CONSOLIDADA SGR', '50', '5', '-', '100%', '9,3%']
-                ],
+                body: [[
+                    'Meta vigente', metaSgr.name, String(metaSgr.target), String(metaSgr.completed),
+                    `${(100 * metaSgr.completed / metaSgr.target).toFixed(1)}%`,
+                    `${metaSgr.weight}%`,
+                    `${(100 * metaSgr.completed / metaSgr.target * metaSgr.weight / 100).toFixed(1)}%`
+                ]],
                 theme: 'striped',
                 headStyles: { fillColor: [196, 18, 48], textColor: [255, 255, 255], fontStyle: 'bold' }
             });
 
-            doc.save(`Reporte_SGR_ScarlettWilliams_${new Date().toISOString().slice(0, 10)}.pdf`);
+            doc.save(`Reporte_SGR_${fechaLocalIso()}.pdf`);
         }
 
         // =============================================================
         // AVANZAR ETAPA DEL FLUJO RN-012
         // =============================================================
-        function avanzarEtapaCaso(id) {
+        async function avanzarEtapaCaso(id) {
             const caso = casosSociales.find(c => c.id === id);
             if (!caso) return;
-
-            if (caso.etapa === 1) {
-                Swal.fire({
-                    title: '¿Avanzar a Etapa 2: Terreno?',
-                    html: `El caso de <strong>${caso.nombre}</strong> pasará a visita en terreno con levantamiento de evidencia fotográfica obligatoria.`,
-                    icon: 'question',
-                    showCancelButton: true,
-                    confirmButtonText: 'Sí, agendar terreno',
-                    confirmButtonColor: '#D97706',
-                    cancelButtonText: 'Cancelar'
-                }).then(res => {
-                    if (res.isConfirmed) {
-                        caso.etapa = 2;
-                        caso.resolucion = 'Visita domiciliaria en terreno agendada con éxito.';
-                        caso.evidencia = `Foto_Terreno_${caso.rut.replace(/[^0-9kK]/g, '')}.jpg`;
-                        renderizarTablaCasos(casosSociales);
-                        renderizarKanbanFlujo();
-                        renderizarVisitasTerreno();
-                        actualizarIndicadores();
-                        Swal.fire({ icon: 'success', title: 'Avanzado a Etapa 2', text: 'Caso en levantamiento de terreno.', confirmButtonColor: '#C41230' });
-                    }
-                });
-            } else if (caso.etapa === 2) {
-                Swal.fire({
-                    title: '¿Avanzar a Etapa 3: Resuelto?',
-                    html: `Indique la prestación o subsidio concedido para cerrar el caso social de <strong>${caso.nombre}</strong>:`,
-                    input: 'text',
-                    inputValue: 'Subsidio o beneficio municipal otorgado con acta de entrega.',
-                    showCancelButton: true,
-                    confirmButtonText: 'Confirmar Resolución',
-                    confirmButtonColor: '#059669',
-                    cancelButtonText: 'Cancelar'
-                }).then(res => {
-                    if (res.isConfirmed && res.value) {
-                        caso.etapa = 3;
-                        caso.resolucion = res.value;
-                        renderizarTablaCasos(casosSociales);
-                        renderizarKanbanFlujo();
-                        renderizarVisitasTerreno();
-                        renderizarMetasSgr();
-                        actualizarIndicadores();
-                        Swal.fire({ icon: 'success', title: 'Caso Resuelto en Etapa 3', text: 'Aporta directamente al cumplimiento del Semáforo SGR.', confirmButtonColor: '#C41230' });
-                    }
-                });
-            } else {
+            if (caso.etapa >= 3) {
                 Swal.fire({
                     icon: 'info',
                     title: 'Caso Social ya Resuelto',
                     text: 'Este caso ya completó las 3 etapas protocolarias de la normativa comunal RN-012.',
                     confirmButtonColor: '#C41230'
                 });
+                return;
+            }
+            const etapa = caso.etapa + 1;
+            const response = await Swal.fire({
+                title: `Registrar gestión de Etapa ${etapa}`,
+                text: `Caso: ${caso.nombre}. Describe el resultado real antes de avanzar.`,
+                input: 'textarea',
+                inputPlaceholder: 'Resultado de la gestión realizada…',
+                inputValidator: value => !value?.trim() ? 'El resultado es obligatorio.' : undefined,
+                showCancelButton: true,
+                confirmButtonText: 'Registrar en la base de datos',
+                confirmButtonColor: '#C41230',
+                cancelButtonText: 'Cancelar'
+            });
+            if (!response.isConfirmed) return;
+            try {
+                const data = await apiSocial(`/social/api/casos/${id}/avanzar-etapa/`, 'POST', {
+                    stage: etapa,
+                    management_type: etapa === 2 ? 'Gestión de terreno' : 'Resolución social',
+                    management_date: fechaLocalIso(),
+                    result: response.value.trim()
+                });
+                const refreshed = await recargarCasos();
+                Swal.fire({ icon: 'success', title: `Etapa ${etapa} registrada`, text: mensajeGuardado(data.message, refreshed), confirmButtonColor: '#C41230' });
+            } catch (err) {
+                Swal.fire({ icon: 'error', title: 'No se avanzó la etapa', text: err.message, confirmButtonColor: '#C41230' });
             }
         }
 
@@ -3221,7 +3161,8 @@
         // VER EXPEDIENTE
         // =============================================================
         function verExpedienteCaso(id) {
-            const caso = casosSociales.find(c => c.id === id);
+            const original = casosSociales.find(c => c.id === id);
+            const caso = original && registroSeguro(original);
             if (!caso) return;
 
             document.getElementById('expedienteTitulo').innerText = `Expediente: ${caso.nombre}`;
@@ -3237,7 +3178,7 @@
                             <div class="small text-secondary mt-1"><i class="bi bi-card-heading text-danger"></i> RUT: <strong>${caso.rut}</strong></div>
                             <div class="small text-secondary mt-1"><i class="bi bi-telephone text-danger"></i> Teléfono: <strong>${caso.telefono}</strong></div>
                             <div class="small text-secondary mt-1"><i class="bi bi-geo-alt text-danger"></i> Delegación: <strong>${caso.delegacion}</strong></div>
-                            <div class="small text-secondary mt-1"><i class="bi bi-shield-check text-danger"></i> RSH: <strong>${caso.rsh || '40% RSH'}</strong></div>
+                            <div class="small text-secondary mt-1"><i class="bi bi-shield-check text-danger"></i> RSH: <strong>${caso.rsh || 'No registrado'}</strong></div>
                         </div>
                     </div>
                     <div class="col-md-6">
@@ -3281,7 +3222,7 @@
 
             Swal.fire({
                 title: '¿Dar de baja este caso social?',
-                html: `El caso de <strong>${caso.nombre}</strong> (${caso.delegacion}) será archivado y registrado en la bitácora de auditoría.`,
+                text: `El caso de ${caso.nombre} (${caso.delegacion}) será archivado y registrado en la bitácora de auditoría.`,
                 icon: 'warning',
                 showCancelButton: true,
                 confirmButtonColor: '#C41230',
@@ -3291,21 +3232,12 @@
             }).then(async (result) => {
                 if (result.isConfirmed) {
                     try {
-                        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]') ? document.querySelector('[name=csrfmiddlewaretoken]').value : (getCookie('csrftoken') || '');
-                        await fetch(`/api/vecinos/${id}/`, {
-                            method: 'DELETE',
-                            headers: { 'X-CSRFToken': csrfToken }
-                        });
-                    } catch (e) {
-                        console.warn(e);
+                        const data = await apiSocial(`/social/api/casos/${id}/`, 'DELETE');
+                        const refreshed = await recargarCasos();
+                        Swal.fire({ icon: 'success', title: 'Caso archivado', text: mensajeGuardado(data.message, refreshed), confirmButtonColor: '#C41230' });
+                    } catch (err) {
+                        Swal.fire({ icon: 'error', title: 'No se archivó el caso', text: err.message, confirmButtonColor: '#C41230' });
                     }
-
-                    casosSociales = casosSociales.filter(c => c.id !== id);
-                    renderizarTablaCasos(casosSociales);
-                    renderizarKanbanFlujo();
-                    actualizarIndicadores();
-                    poblarSelectsModales();
-                    Swal.fire({ icon: 'success', title: 'Caso Archivado', text: 'El caso ha sido dado de baja de la vista operativa.', confirmButtonColor: '#C41230' });
                 }
             });
         }
@@ -3390,17 +3322,6 @@
             return dv === dvEsperado;
         }
 
-        function previewFotoVisita(input) {
-            if (input.files && input.files[0]) {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    document.getElementById('fotoPreviewImg').src = e.target.result;
-                    document.getElementById('fotoPreviewContainer').style.display = 'block';
-                }
-                reader.readAsDataURL(input.files[0]);
-            }
-        }
-
         function toggleSidebar() {
             document.getElementById('sidebar').classList.toggle('active');
         }
@@ -3410,7 +3331,7 @@
                 title: 'Perfil Institucional DIDECO',
                 html: `
                     <div class="text-start p-2">
-                        <div class="mb-2"><strong>Funcionario:</strong> {{ user_name|default:"scarlett williams medalla" }}</div>
+                        <div class="mb-2"><strong>Funcionario:</strong> {{ user_name }}</div>
                         <div class="mb-2"><strong>Cargo Institucional:</strong> Asistente Social / Trabajadora Social</div>
                         <div class="mb-2"><strong>Dirección:</strong> DIDECO (Dirección de Desarrollo Comunitario)</div>
                         <div class="mb-2"><strong>Delegación Asignada:</strong> {{ current_delegation|default:"Consolidado Comunal" }}</div>
@@ -3423,15 +3344,10 @@
         }
 
         function mostrarNotificacionesSociales() {
+            const pendientes = derivacionesRedes.filter(d => /pendiente/i.test(d.estado)).length;
             Swal.fire({
-                title: 'Alertas de Casos Sociales',
-                html: `
-                    <div class="text-start p-2" style="font-size: 0.88rem;">
-                        <div class="p-2 border-bottom"><i class="bi bi-exclamation-circle-fill text-danger me-2"></i><strong>Atención de Emergencia:</strong> Incendio en La Antena requiere seguimiento de entrega.</div>
-                        <div class="p-2 border-bottom"><i class="bi bi-clock-history text-warning me-2"></i><strong>Visita Pendiente:</strong> Visita domiciliaria pendiente en Las Compañías (RSH 40%).</div>
-                        <div class="p-2"><i class="bi bi-file-earmark-text text-primary me-2"></i><strong>Solicitud Tribunal:</strong> Oficio urgente del Tribunal de Familia por informe social.</div>
-                    </div>
-                `,
+                title: 'Solicitudes de derivación',
+                text: pendientes ? `Tienes ${pendientes} solicitud(es) pendiente(s) de revisión administrativa.` : 'No tienes solicitudes de derivación pendientes.',
                 confirmButtonColor: '#C41230'
             });
         }
