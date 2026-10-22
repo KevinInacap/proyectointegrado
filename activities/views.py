@@ -76,7 +76,8 @@ def _delegation_for_write(request, value):
     # Names and IDs must match exactly. Never use substring matching for access control.
     qs = Delegation.objects.filter(status='Activo', deleted_at__isnull=True)
     delegation = qs.filter(pk=int(requested)).first() if requested.isdecimal() else qs.filter(name__iexact=requested).first()
-    if delegation and (_is_admin(request) or delegation.pk == profile.delegation_id):
+    is_cross = bool(profile.position and _normalized_label(profile.position.name) in ('asistente social', 'coordinador del sistema'))
+    if delegation and (_is_admin(request) or is_cross or delegation.pk == profile.delegation_id):
         return delegation
     return None
 
@@ -549,6 +550,10 @@ def _vecino_scope(request):
     qs = Vecino.objects.filter(deleted_at__isnull=True)
     if _is_admin(request):
         return qs
+    if profile and profile.position and _normalized_label(profile.position.name) in (
+        'asistente social', 'coordinador del sistema', 'administrador general', 'superadministrador', 'super administrador'
+    ):
+        return qs
     if not profile or not profile.delegation_id or profile.delegation.status != 'Activo':
         return qs.none()
     return qs.filter(territorio__iexact=profile.delegation.name)
@@ -575,7 +580,10 @@ def api_vecinos(request):
         payload = _vecino_payload(data)
         if not _is_admin(request):
             profile = _actor(request)
-            if payload['territorio'].casefold() != profile.delegation.name.casefold():
+            is_cross_delegation = bool(profile and profile.position and _normalized_label(profile.position.name) in (
+                'asistente social', 'coordinador del sistema', 'administrador general', 'superadministrador', 'super administrador'
+            ))
+            if not is_cross_delegation and profile and profile.delegation and payload['territorio'].casefold() != profile.delegation.name.casefold():
                 return JsonResponse({'success': False, 'message': 'Territorio no autorizado.'}, status=403)
         if not payload['nombre'] or not payload['rut'] or not payload['direccion']:
             return JsonResponse({'success': False, 'message': 'Nombre, RUT y dirección son obligatorios.'}, status=400)
@@ -624,7 +632,10 @@ def api_vecino_detail(request, pk):
         payload = _vecino_payload(data)
         if not _is_admin(request):
             profile = _actor(request)
-            if payload['territorio'].casefold() != profile.delegation.name.casefold():
+            is_cross_delegation = bool(profile and profile.position and _normalized_label(profile.position.name) in (
+                'asistente social', 'coordinador del sistema', 'administrador general', 'superadministrador', 'super administrador'
+            ))
+            if not is_cross_delegation and profile and profile.delegation and payload['territorio'].casefold() != profile.delegation.name.casefold():
                 return JsonResponse({'success': False, 'message': 'Territorio no autorizado.'}, status=403)
         if 'email' not in data:
             payload['email'] = vecino.email

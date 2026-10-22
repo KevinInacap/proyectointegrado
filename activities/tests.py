@@ -548,3 +548,39 @@ class VecinoApiValidationTests(TestCase):
         self.assertEqual(Vecino.objects.count(), 1)
         existing.refresh_from_db()
         self.assertEqual(existing.email, 'vecino@example.test')
+
+    def test_asistente_social_has_cross_delegation_vecinos_access(self):
+        del_sur = Delegation.objects.create(name='Delegación Sur Test', scope='Sur')
+        del_norte = Delegation.objects.create(name='Delegación Norte Test', scope='Norte')
+        pos_asistente, _ = Position.objects.get_or_create(name='Asistente Social')
+        user_asistente = get_user_model().objects.create_user(username='asistente-eval', password='password')
+        prof_asistente = UserProfile.objects.create(
+            user=user_asistente, rut='19.822.450-3', full_name='Asistente Social Test',
+            email='asistente@test.com', delegation=del_sur, position=pos_asistente, status='Activo'
+        )
+        role = Role.objects.create(name='Rol Asistente Test', permissions_data=['lectura', 'edicion', 'cierre'])
+        prof_asistente.roles.add(role)
+        self.client.force_login(user_asistente)
+
+        Vecino.objects.create(nombre='Vecino Sur', rut='14.892.314-0', territorio='Delegación Sur Test', direccion='Calle Sur')
+        Vecino.objects.create(nombre='Vecino Norte', rut='16.241.879-2', territorio='Delegación Norte Test', direccion='Calle Norte')
+
+        resp = self.client.get(self.url)
+        self.assertEqual(resp.status_code, 200)
+        nombres = [v['nombre'] for v in resp.json()['vecinos']]
+        self.assertIn('Vecino Sur', nombres)
+        self.assertIn('Vecino Norte', nombres)
+
+        payload = {
+            'nombre': 'Nuevo Vecino Norte',
+            'rut': '18.390.412-4',
+            'email': 'norte@test.com',
+            'direccion': 'Avda Norte 100',
+            'telefono': '+56911223344',
+            'territorio': 'Delegación Norte Test',
+            'estado': 'Activo'
+        }
+        create_resp = self.client.post(self.url, json.dumps(payload), content_type='application/json')
+        self.assertEqual(create_resp.status_code, 200)
+        self.assertTrue(Vecino.objects.filter(rut='18.390.412-4', territorio='Delegación Norte Test').exists())
+
