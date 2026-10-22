@@ -125,8 +125,8 @@ def dashboard_view(request):
 POSITION_DASHBOARD_CONTENT = {
     'Coordinador del Sistema': {
         'subtitle': 'Vista general de coordinación',
-        'description': 'Un punto de partida para revisar el avance comunal y organizar el trabajo del sistema.',
-        'cards': [('Resumen comunal', 'Aquí se mostrará el avance general de las delegaciones.', 'lectura'), ('Metas', 'Aquí se podrán revisar los períodos y metas municipales.', 'edicion'), ('Reportes', 'Aquí estarán los informes de coordinación.', 'lectura')],
+        'description': 'Indicadores de atención y pendientes del territorio asignado, actualizados desde los registros municipales.',
+        'cards': [('Resumen territorial', 'Atenciones, pendientes y aprobaciones del ámbito asignado.', 'lectura'), ('Seguimiento', 'Revisa los registros que requieren continuidad.', 'lectura'), ('Metas', 'Consulta los indicadores configurados para tu cargo.', 'lectura')],
     },
     'Delegado Municipal': {
         'subtitle': 'Panel de tu delegación',
@@ -135,13 +135,13 @@ POSITION_DASHBOARD_CONTENT = {
     },
     'Gestor Territorial': {
         'subtitle': 'Trabajo territorial',
-        'description': 'Un acceso claro a las tareas y registros asociados a tu labor territorial.',
-        'cards': [('Mi trabajo', 'Aquí se mostrarán las tareas asignadas.', 'lectura'), ('Atenciones', 'Aquí se consultarán los registros de atención.', 'edicion'), ('Seguimiento', 'Aquí se revisará el estado de las solicitudes.', 'derivacion')],
+        'description': 'Registra atenciones de terreno y consulta el estado de los registros creados desde tu delegación.',
+        'cards': [('Mis atenciones', 'Registros asociados a tu cuenta y sede.', 'lectura'), ('Nueva atención', 'Captura una atención con tipo y subatención.', 'edicion'), ('Seguimiento', 'Revisa atenciones pendientes de validación.', 'derivacion')],
     },
     'Verificador Técnico': {
         'subtitle': 'Revisión técnica',
-        'description': 'Un espacio para revisar antecedentes y evidencias cuando ese módulo esté habilitado.',
-        'cards': [('Pendientes de revisión', 'Aquí aparecerán los elementos que requieren revisión.', 'lectura'), ('Revisiones realizadas', 'Aquí quedará el historial de revisiones.', 'cierre'), ('Orientación', 'Aquí se explicarán los criterios de verificación.', 'lectura')],
+        'description': 'Revisa atenciones de tu delegación, registra una decisión y deja observaciones trazables.',
+        'cards': [('Pendientes de revisión', 'Atenciones que esperan una decisión técnica.', 'lectura'), ('Revisiones realizadas', 'Historial de decisiones registradas por ti.', 'validar_evidencia'), ('Criterios', 'Aprueba, rechaza o solicita corrección con motivo.', 'validar_evidencia')],
     },
     'Asistente Social': {
         'subtitle': 'Atención social',
@@ -150,13 +150,13 @@ POSITION_DASHBOARD_CONTENT = {
     },
     'Auditor Municipal': {
         'subtitle': 'Revisión y control',
-        'description': 'Un punto de entrada para consultar trazabilidad e informes cuando estén disponibles.',
-        'cards': [('Actividad del sistema', 'Aquí se consultarán los cambios registrados.', 'lectura'), ('Informes', 'Aquí estarán los informes de revisión.', 'lectura'), ('Criterios', 'Aquí se presentarán las pautas de auditoría.', 'lectura')],
+        'description': 'Consulta la bitácora de cambios de tu territorio sin modificar los registros auditados.',
+        'cards': [('Trazabilidad', 'Eventos registrados por los funcionarios del ámbito autorizado.', 'lectura'), ('Actividad del sistema', 'Consulta altas, cambios y decisiones.', 'lectura'), ('Informes', 'Accede a la información permitida en modo lectura.', 'lectura')],
     },
     'Usuario de Consulta': {
         'subtitle': 'Consulta municipal',
-        'description': 'Un panel de lectura claro para la información autorizada a tu perfil.',
-        'cards': [('Información disponible', 'Aquí aparecerán los datos habilitados para consulta.', 'lectura'), ('Indicadores', 'Aquí se mostrarán los indicadores disponibles.', 'lectura'), ('Reportes', 'Aquí se podrán revisar los informes autorizados.', 'lectura')],
+        'description': 'Consulta los registros habilitados para tu delegación. Este perfil no puede crear ni modificar datos.',
+        'cards': [('Atenciones', 'Consulta de atenciones dentro del ámbito asignado.', 'lectura'), ('Indicadores', 'Resumen de registros disponibles.', 'lectura'), ('Reportes', 'Información de lectura autorizada.', 'lectura')],
     },
 }
 
@@ -186,6 +186,61 @@ def _position_dashboard(request, expected_position=None, module_slug=None):
         for title, description, required in details['cards']
         if required in granted or request.user.is_superuser
     ]
+
+    has_read = 'lectura' in granted or request.user.is_superuser
+    has_edit = 'edicion' in granted or request.user.is_superuser
+    can_validate = (
+        _normalized_label(position_name) == _normalized_label('Verificador Técnico')
+        and ('validar_evidencia' in granted or request.user.is_superuser)
+    )
+    scoped_activities = _activity_scope(request).select_related(
+        'delegation', 'attention_type', 'subattention', 'user',
+    ).prefetch_related('evidences', 'validations')
+    if not has_read:
+        scoped_activities = Activity.objects.none()
+    dashboard_activities = scoped_activities
+    dashboard_validations = Validation.objects.none()
+    audit_rows = []
+    work_kpis = []
+    if position_name == 'Gestor Territorial':
+        dashboard_activities = scoped_activities.filter(user=request.user).order_by('-activity_date', '-created_at')[:12]
+        work_kpis = [
+            {'label': 'Mis atenciones', 'value': scoped_activities.filter(user=request.user).count()},
+            {'label': 'Por validar', 'value': scoped_activities.filter(user=request.user, validation_status='Pending').count()},
+            {'label': 'Aprobadas', 'value': scoped_activities.filter(user=request.user, validation_status='Approved').count()},
+        ] if has_read else []
+    elif position_name == 'Verificador Técnico':
+        pending = scoped_activities.filter(validation_status__in=['Pending', 'Requires correction']).order_by('activity_date', 'created_at')
+        dashboard_activities = pending[:30]
+        dashboard_validations = Validation.objects.filter(
+            verifier=request.user, deleted_at__isnull=True,
+        ).select_related('activity', 'activity__delegation').order_by('-created_at')[:10]
+        work_kpis = [
+            {'label': 'Pendientes', 'value': pending.count()},
+            {'label': 'Revisadas por mí', 'value': Validation.objects.filter(verifier=request.user, deleted_at__isnull=True).count()},
+        ] if has_read else []
+    elif position_name == 'Auditor Municipal':
+        logs = AuditLog.objects.filter(deleted_at__isnull=True).select_related('user').order_by('-created_at')
+        if profile.delegation_id and profile.delegation.status == 'Activo' and profile.delegation.deleted_at is None:
+            logs = logs.filter(user__profile__delegation_id=profile.delegation_id)
+        elif not request.user.is_superuser:
+            logs = logs.none()
+        audit_rows = [{
+            'actor': (log.user.get_full_name() or log.user.get_username()) if log.user else 'Sistema',
+            'action': log.get_action_display(),
+            'table': log.affected_table,
+            'record_id': log.affected_record_id,
+            'created_at': timezone.localtime(log.created_at).strftime('%d/%m/%Y %H:%M'),
+        } for log in logs[:30]] if has_read else []
+        work_kpis = [{'label': 'Eventos consultables', 'value': logs.count()}] if has_read else []
+    else:
+        dashboard_activities = scoped_activities.order_by('-activity_date', '-created_at')[:12]
+        work_kpis = [
+            {'label': 'Atenciones', 'value': scoped_activities.count()},
+            {'label': 'Pendientes', 'value': scoped_activities.filter(validation_status__in=['Pending', 'Requires correction']).count()},
+            {'label': 'Aprobadas', 'value': scoped_activities.filter(validation_status='Approved').count()},
+        ] if has_read else []
+
     selected_module = next((card for card in cards if card['slug'] == module_slug), None)
     context = {
         'full_name': profile.full_name or request.user.get_username(),
@@ -197,7 +252,14 @@ def _position_dashboard(request, expected_position=None, module_slug=None):
         'dashboard_subtitle': details['subtitle'],
         'dashboard_description': details['description'],
         'dashboard_cards': cards,
-        'is_placeholder': True,
+        'is_placeholder': False,
+        'has_read_permission': has_read,
+        'can_create_activity': has_edit and position_name == 'Gestor Territorial',
+        'can_validate': can_validate,
+        'dashboard_activities': dashboard_activities,
+        'dashboard_validations': dashboard_validations,
+        'dashboard_audit_rows': audit_rows,
+        'dashboard_work_kpis': work_kpis,
         'selected_module': selected_module,
         'module_forbidden': bool(module_slug and not selected_module),
     }
@@ -274,6 +336,9 @@ def dashboard_consulta_view(request):
 
 
 def dashboard_asistente_view(request):
+    denied = _position_required(request, 'Asistente Social')
+    if denied:
+        return denied
     from social.views import dashboard_asistente_view as social_dashboard
     return social_dashboard(request)
 
@@ -296,6 +361,7 @@ def dashboard_admin_view(request):
     from django.db.models import Count, Q
     from core.models import AuditLog
     from metrics.models import DailyIndicator, Goal, MeasurementPeriod
+    from social.models import SocialReviewRequest, SocialNotification
 
     active_delegations = Delegation.objects.filter(status='Activo', deleted_at__isnull=True)
     attention_qs = Activity.objects.filter(deleted_at__isnull=True)
@@ -358,6 +424,12 @@ def dashboard_admin_view(request):
         'delegations': [],
         'parametrizacion': goal_rows,
         'auditoria_logs': audit_rows,
+        'social_pending_request_count': SocialReviewRequest.objects.filter(
+            status='pendiente', deleted_at__isnull=True,
+        ).count(),
+        'social_unread_notification_count': SocialNotification.objects.filter(
+            recipient=request.user, event_type='request', read_at__isnull=True, deleted_at__isnull=True,
+        ).count(),
     }
     return render(request, 'activities/dashboard_admin.html', context)
 
@@ -456,30 +528,89 @@ def activity_create_view(request):
         except ValidationError as exc:
             return invalid_form('Revisa los datos: ' + ' '.join(exc.messages))
         act.save()
+        AuditLog.objects.create(
+            user=request.user,
+            affected_table='actividad',
+            affected_record_id=str(act.pk),
+            action='CREATE',
+            new_value={
+                'activity_code': act.activity_code,
+                'delegation': delegation.name,
+                'validation_status': act.validation_status,
+            },
+            source_ip=request.META.get('REMOTE_ADDR'),
+        )
     messages.success(request, f"Atención {act.activity_code} registrada correctamente.")
     return redirect('activities:dashboard')
 
 
 def activity_validate_view(request, pk):
-    activity = get_object_or_404(Activity, pk=pk)
+    """Ruta de compatibilidad protegida: todas las decisiones usan la API verificada."""
+    return api_validar_atencion(request, pk)
 
-    if request.method == 'POST':
-        decision = request.POST.get('decision', 'Approved')
-        observations = request.POST.get('observations', '').strip()
 
+def api_validar_atencion(request, pk):
+    """Guarda una decisión de verificación, con independencia del rol de edición y scoping territorial."""
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'message': 'Método POST requerido.'}, status=405)
+    profile = _actor(request)
+    if (not profile or not profile.position or profile.position.name.casefold() != 'verificador técnico'
+            or profile.position.status != 'Activo' or profile.position.deleted_at is not None):
+        return JsonResponse({'success': False, 'message': 'Esta acción está reservada al cargo Verificador Técnico.'}, status=403)
+    if not _has_matrix_permission(request, 'validar_evidencia'):
+        return _permission_denied('validar_evidencia')
+
+    try:
+        data = json.loads(request.body)
+    except (TypeError, ValueError):
+        return JsonResponse({'success': False, 'message': 'Datos JSON inválidos.'}, status=400)
+    if not isinstance(data, dict):
+        return JsonResponse({'success': False, 'message': 'El cuerpo debe ser un objeto JSON.'}, status=400)
+    decision = str(data.get('decision', '')).strip()
+    observations = str(data.get('observations', '')).strip()
+    allowed = {value for value, _ in Validation.DECISION_CHOICES}
+    if decision not in allowed:
+        return JsonResponse({'success': False, 'message': 'Selecciona una decisión de validación válida.'}, status=400)
+    if len(observations) > 2000:
+        return JsonResponse({'success': False, 'message': 'La observación no puede superar 2000 caracteres.'}, status=400)
+    if decision in {'Rejected', 'Requires correction'} and len(observations) < 8:
+        return JsonResponse({'success': False, 'message': 'Explica el motivo de rechazo o corrección (mínimo 8 caracteres).'}, status=400)
+
+    with transaction.atomic():
+        activity = _activity_scope(request).select_for_update().select_related('delegation', 'user').filter(pk=pk).first()
+        if not activity:
+            return JsonResponse({'success': False, 'message': 'Atención no encontrada dentro de tu delegación.'}, status=404)
+        if activity.user_id == request.user.pk:
+            return JsonResponse({'success': False, 'message': 'No puedes validar una atención que registraste tú mismo.'}, status=403)
+        if activity.validation_status not in {'Pending', 'Requires correction'}:
+            return JsonResponse({'success': False, 'message': 'Esta atención ya fue resuelta y no admite otra decisión.'}, status=409)
+
+        previous_status = activity.validation_status
         activity.validation_status = decision
-        activity.save()
-
-        Validation.objects.create(
+        activity.save(update_fields=['validation_status', 'updated_at'])
+        validation = Validation.objects.create(
             activity=activity,
+            verifier=request.user,
             decision=decision,
-            observations=observations or 'Revisión técnica registrada por el verificador.'
+            observations=observations,
+        )
+        AuditLog.objects.create(
+            user=request.user,
+            affected_table='actividad',
+            affected_record_id=str(activity.pk),
+            action='VALIDATE',
+            previous_value={'validation_status': previous_status},
+            new_value={
+                'validation_status': decision,
+                'validation_id': validation.pk,
+                'observations': observations,
+                'delegation': activity.delegation.name if activity.delegation else '',
+            },
+            source_ip=request.META.get('REMOTE_ADDR'),
         )
 
-        decision_label = 'Aprobada' if decision == 'Approved' else ('Rechazada' if decision == 'Rejected' else 'Observada')
-        messages.success(request, f"La actividad {activity.activity_code} ha sido marcada como '{decision_label}'.")
-
-    return redirect('activities:dashboard')
+    label = dict(Validation.DECISION_CHOICES)[decision]
+    return JsonResponse({'success': True, 'message': f'Atención {activity.activity_code}: {label.lower()}.', 'decision': decision})
 
 from django.http import JsonResponse
 import json
@@ -842,6 +973,8 @@ def api_atenciones(request):
         activity_date = datetime.date.fromisoformat(data.get('activity_date', timezone.localdate().isoformat()))
     except (TypeError, ValueError):
         return JsonResponse({'success': False, 'message': 'Fecha de atención o visita inválida.'}, status=400)
+    if activity_date > timezone.localdate():
+        return JsonResponse({'success': False, 'message': 'La fecha de atención no puede ser futura.'}, status=400)
     from django.db import transaction
     from django.db.models import Q
     from uuid import uuid4
@@ -885,6 +1018,18 @@ def api_atenciones(request):
             is_collective_agenda=data.get('is_collective_agenda', False),
             validation_status='Pending', delegation=delegation,
             catalog=catalog, user=request.user, neighbor=neighbor, **typed_fields
+        )
+        AuditLog.objects.create(
+            user=request.user,
+            affected_table='actividad',
+            affected_record_id=str(act.pk),
+            action='CREATE',
+            new_value={
+                'activity_code': act.activity_code,
+                'delegation': delegation.name,
+                'validation_status': act.validation_status,
+            },
+            source_ip=request.META.get('REMOTE_ADDR'),
         )
         if neighbor and neighbor.nombre != contact:
             neighbor.nombre = contact

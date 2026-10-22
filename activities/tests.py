@@ -5,7 +5,8 @@ from django.test import TestCase
 from django.urls import reverse
 
 from organization.models import Delegation, Position, Role, UserProfile
-from .models import Activity, ServiceCatalog, Vecino
+from core.models import AuditLog
+from .models import Activity, ServiceCatalog, Validation, Vecino
 
 
 class AttentionApiSecurityTests(TestCase):
@@ -154,15 +155,18 @@ class DashboardAccessTests(TestCase):
                 self.assertContains(response, 'Panel de tu delegación')
                 self.assertContains(response, 'Atenciones de mi delegación')
                 self.assertContains(response, 'Nueva atención')
+            elif position_name == 'Asistente Social':
+                self.assertContains(response, 'Panel de Gestión Social Territorial')
+                self.assertContains(response, 'Casos Sociales Únicos')
             else:
                 self.assertContains(response, 'Accesos de ' + position_name)
-                self.assertContains(response, 'Disponible más adelante')
+                self.assertContains(response, 'Información conectada al sistema')
             self.assertContains(response, 'Usuario Rol')
             self.assertContains(response, 'Centro de prueba')
             for other in {'dashboard_coordinador', 'dashboard_delegado', 'dashboard_asistente'} - {route}:
                 self.assertNotEqual(self.client.get(reverse('activities:' + other)).status_code, 200)
 
-    def test_cargo_panels_are_presentational_not_operational(self):
+    def test_coordinator_panel_reads_live_data_with_territorial_scope(self):
         for position_name, route in (('Coordinador del Sistema', 'dashboard_coordinador'),):
             self.set_position(position_name)
             self.profile.roles.clear()
@@ -176,6 +180,7 @@ class DashboardAccessTests(TestCase):
             self.assertEqual(response.status_code, 200)
             self.assertNotContains(response, 'name="q"')
             self.assertNotContains(response, '?module=')
+            self.assertContains(response, 'Información conectada al sistema')
 
     def test_delegado_dashboard_filters_only_assigned_delegation_and_obeys_role(self):
         self.set_position('Delegado Municipal')
@@ -262,7 +267,7 @@ class DashboardAccessTests(TestCase):
             self.assertContains(response, 'Centro de prueba')
             self.assertContains(response, 'Faro Monumental de La Serena')
             if any(code in role.permissions_data for code in ('lectura', 'edicion', 'derivacion', 'cierre')):
-                self.assertContains(response, 'Disponible más adelante')
+                self.assertContains(response, 'Acceso según permisos vigentes')
             else:
                 self.assertContains(response, 'Tu rol no tiene accesos habilitados')
             self.assertNotContains(response, 'Panel demostrativo')
@@ -496,7 +501,7 @@ class ActivityCreatePageTests(TestCase):
         data.update(changes)
         return data
 
-    def test_create_form_keeps_catalogs_and_dashboard_stays_presentational(self):
+    def test_create_form_keeps_catalogs_and_dashboard_is_database_connected(self):
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'Registrar una atención')
@@ -505,8 +510,9 @@ class ActivityCreatePageTests(TestCase):
         self.assertNotContains(response, 'name="delegation" value="{}"'.format(self.other_delegation.pk))
         dashboard = self.client.get(reverse('activities:dashboard_gestor'))
         self.assertEqual(dashboard.status_code, 200)
-        self.assertContains(dashboard, 'Trabajo territorial')
-        self.assertContains(dashboard, 'Disponible más adelante')
+        self.assertContains(dashboard, 'Mis atenciones')
+        self.assertContains(dashboard, 'Registrar atención')
+        self.assertNotContains(dashboard, 'Disponible más adelante')
         self.assertNotContains(dashboard, 'id="caseAttentionType"')
 
     def test_valid_form_persists_type_subtype_responsible_and_delegation(self):
@@ -525,6 +531,98 @@ class ActivityCreatePageTests(TestCase):
         unauthorized = self.client.post(self.url, self.payload(delegation=str(self.other_delegation.pk)))
         self.assertEqual(unauthorized.status_code, 403)
         self.assertFalse(Activity.objects.exists())
+
+
+class VerifierWorkflowTests(TestCase):
+    def setUp(self):
+        self.delegation = Delegation.objects.create(name='Sede de Verificación', scope='Sector Norte')
+        self.other_delegation = Delegation.objects.create(name='Sede Restringida', scope='Sector Sur')
+        self.verifier = get_user_model().objects.create_user(username='verificador-prueba', password='Safe!Verifier2026')
+        self.verifier_position, _ = Position.objects.get_or_create(name='Verificador Técnico')
+        self.verifier_profile = UserProfile.objects.create(
+            user=self.verifier, rut='16.111.111-2', full_name='Verificador de Prueba',
+            email='verificador-prueba@example.test', delegation=self.delegation,
+            position=self.verifier_position,
+        )
+        self.role = Role.objects.get(name='Verificador Técnico')
+        self.verifier_profile.roles.add(self.role)
+        self.author = get_user_model().objects.create_user(username='gestor-autor', password='Safe!Author2026')
+        self.author_profile = UserProfile.objects.create(
+            user=self.author, rut='16.222.222-0', full_name='Gestor Autor',
+            email='gestor-autor@example.test', delegation=self.delegation,
+            position=Position.objects.get(name='Gestor Territorial'),
+        )
+        self.client.force_login(self.verifier)
+        self.own_activity = Activity.objects.create(
+            activity_code='ACT-VERIFY-OWN', activity_date='2026-10-20',
+            contact_name='Persona Solicitante', problem_description='Solicitud vecinal de prueba',
+            executed_action='Se registró la recepción del requerimiento.',
+            delegation=self.delegation, user=self.author, validation_status='Pending',
+        )
+        self.other_activity = Activity.objects.create(
+            activity_code='ACT-VERIFY-OTHER', activity_date='2026-10-20',
+            contact_name='Persona de otra sede', problem_description='Registro fuera de jurisdicción',
+            executed_action='No debe aparecer en este panel.',
+            delegation=self.other_delegation, user=self.author, validation_status='Pending',
+        )
+
+    def validate(self, activity, payload):
+        return self.client.post(
+            reverse('activities:api_validar_atencion', args=[activity.pk]),
+            data=json.dumps(payload), content_type='application/json',
+        )
+
+    def test_verifier_dashboard_lists_only_pending_work_in_assigned_delegation(self):
+        response = self.client.get(reverse('activities:dashboard_verificador'))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, self.own_activity.activity_code)
+        self.assertNotContains(response, self.other_activity.activity_code)
+        self.assertContains(response, 'Cola de validación')
+        self.assertContains(response, 'Resolver')
+
+    def test_correction_decision_requires_reason_and_persists_validation_and_audit(self):
+        missing_note = self.validate(self.own_activity, {'decision': 'Requires correction', 'observations': ''})
+        self.assertEqual(missing_note.status_code, 400)
+
+        response = self.validate(self.own_activity, {
+            'decision': 'Requires correction', 'observations': 'Adjuntar respaldo de la visita realizada.',
+        })
+        self.assertEqual(response.status_code, 200, response.content)
+        self.own_activity.refresh_from_db()
+        self.assertEqual(self.own_activity.validation_status, 'Requires correction')
+        validation = Validation.objects.get(activity=self.own_activity)
+        self.assertEqual(validation.verifier_id, self.verifier.pk)
+        self.assertEqual(validation.decision, 'Requires correction')
+        self.assertTrue(AuditLog.objects.filter(
+            affected_table='actividad', affected_record_id=str(self.own_activity.pk), action='VALIDATE',
+        ).exists())
+
+    def test_verifier_cannot_decide_own_or_other_delegation_activity(self):
+        self.own_activity.user = self.verifier
+        self.own_activity.save(update_fields=['user', 'updated_at'])
+        own_denied = self.validate(self.own_activity, {'decision': 'Approved', 'observations': ''})
+        self.assertEqual(own_denied.status_code, 403)
+        outside_denied = self.validate(self.other_activity, {'decision': 'Approved', 'observations': ''})
+        self.assertEqual(outside_denied.status_code, 404)
+
+    def test_decision_is_one_way_after_resolution_and_permission_is_required(self):
+        approved = self.validate(self.own_activity, {'decision': 'Approved', 'observations': 'Antecedentes revisados.'})
+        self.assertEqual(approved.status_code, 200)
+        repeated = self.validate(self.own_activity, {'decision': 'Rejected', 'observations': 'Rechazo por inconsistencia.'})
+        self.assertEqual(repeated.status_code, 409)
+
+        permission = self.role.permission_definitions.get(code='validar_evidencia')
+        self.role.permission_definitions.remove(permission)
+        self.role.permissions_data = [code for code in self.role.permissions_data if code != 'validar_evidencia']
+        self.role.save(update_fields=['permissions_data', 'updated_at'])
+        another_activity = Activity.objects.create(
+            activity_code='ACT-VERIFY-PERMISSION', activity_date='2026-10-21',
+            contact_name='Otra persona', problem_description='Caso de permiso',
+            executed_action='Acción registrada.', delegation=self.delegation,
+            user=self.author, validation_status='Pending',
+        )
+        denied = self.validate(another_activity, {'decision': 'Approved', 'observations': ''})
+        self.assertEqual(denied.status_code, 403)
 
 
 class AttentionSelectionUnitTests(TestCase):

@@ -351,6 +351,8 @@
                 document.getElementById('nav-btn-dashboard').classList.add('active');
             } else if (viewName === 'reportes') {
                 document.getElementById('nav-btn-reportes').classList.add('active');
+            } else if (viewName === 'solicitudes-sociales') {
+                document.getElementById('nav-btn-social-requests')?.classList.add('active');
             } else {
                 document.getElementById('nav-btn-mantenedores').classList.add('active');
                 const subBtn = document.getElementById('sub-' + viewName);
@@ -381,6 +383,7 @@
             if (viewName === 'delegaciones') initDelegacionesView();
             if (viewName === 'cargos') initCargosView();
             if (viewName === 'roles') initRolesView(false);
+            if (viewName === 'solicitudes-sociales' && typeof window.loadSocialReviewRequests === 'function') window.loadSocialReviewRequests();
         }
 
         async function cargarVecinosDesdeDB(mostrarAviso = false) {
@@ -2793,6 +2796,48 @@
             }
         }
 
+        let cargoPrevioEnModalUsuario = '';
+
+        function normalizarNombreRolCargo(value) {
+            return String(value || '').trim().toLocaleLowerCase('es-CL')
+                .normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+        }
+
+        function nombreRolBaseCargo(positionName) {
+            const normalized = normalizarNombreRolCargo(positionName);
+            if (!normalized) return '';
+            return ['administrador general', 'superadministrador', 'super administrador'].includes(normalized)
+                ? 'Administrador'
+                : String(positionName).trim();
+        }
+
+        function buscarCheckboxRol(nombre) {
+            const target = normalizarNombreRolCargo(nombre);
+            const role = rolesCatalog.find(item => normalizarNombreRolCargo(item.name) === target);
+            return role ? document.getElementById(`chkRole_${role.id}`) : null;
+        }
+
+        function sincronizarRolBaseCargo(cargoAnterior, cargoActual) {
+            const anterior = nombreRolBaseCargo(cargoAnterior);
+            const actual = nombreRolBaseCargo(cargoActual);
+            if (anterior && normalizarNombreRolCargo(anterior) !== normalizarNombreRolCargo(actual)) {
+                const previousCheckbox = buscarCheckboxRol(anterior);
+                if (previousCheckbox) {
+                    previousCheckbox.checked = false;
+                    previousCheckbox.disabled = false;
+                    previousCheckbox.title = '';
+                }
+            }
+            if (actual) {
+                const currentCheckbox = buscarCheckboxRol(actual);
+                if (currentCheckbox) {
+                    currentCheckbox.checked = true;
+                    currentCheckbox.disabled = true;
+                    currentCheckbox.title = 'Rol base asignado por el cargo';
+                }
+            }
+        }
+
         function abrirModalUsuario(modo, id = null) {
             const elCont = document.getElementById('rolesCheckboxesContainer');
             elCont.innerHTML = '';
@@ -2826,8 +2871,14 @@
                 opt.textContent = p.name;
                 selPos.appendChild(opt);
             });
+            selPos.onchange = () => {
+                const cargoActual = positionsCatalog.find(p => String(p.id) === selPos.value)?.name || '';
+                sincronizarRolBaseCargo(cargoPrevioEnModalUsuario, cargoActual);
+                cargoPrevioEnModalUsuario = cargoActual;
+            };
 
             if (modo === 'nuevo') {
+                cargoPrevioEnModalUsuario = '';
                 document.getElementById('modalUsuarioTitle').textContent = 'Registrar Nuevo Funcionario';
                 document.getElementById('usuarioEditId').value = '';
                 document.getElementById('usrFullName').value = '';
@@ -2867,6 +2918,10 @@
                         chk.checked = uRoleIds.includes(parseInt(chk.value));
                     });
                 }
+                cargoPrevioEnModalUsuario = positionsCatalog.find(
+                    p => String(p.id) === String(u.position_id || '')
+                )?.name || '';
+                sincronizarRolBaseCargo('', cargoPrevioEnModalUsuario);
             }
 
             if (!bsModalUsuario) {

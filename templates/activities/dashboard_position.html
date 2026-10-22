@@ -7,8 +7,10 @@
     <meta name="theme-color" content="#68121e">
     <title>{{ position_name }} | SGR La Serena</title>
     <link rel="stylesheet" href="{% static 'css/dashboard_position.css' %}">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
 <body>
+    <div hidden id="csrf-container">{% csrf_token %}</div>
     <div class="dashboard-shell">
         <aside class="side-panel" aria-label="Navegación y perfil">
             <a class="brand" href="{% url 'activities:dashboard' %}" aria-label="Inicio del Sistema de Gestión de Resultados">
@@ -68,6 +70,74 @@
                 </div>
             </section>
 
+            {% if not selected_module and not module_forbidden and has_read_permission %}
+            <section class="operational-panel" aria-labelledby="operational-title">
+                <div class="section-heading">
+                    <div>
+                        <p class="eyebrow">Información conectada al sistema</p>
+                        <h2 id="operational-title">
+                            {% if position_name == 'Gestor Territorial' %}Mis atenciones
+                            {% elif position_name == 'Verificador Técnico' %}Cola de validación
+                            {% elif position_name == 'Auditor Municipal' %}Trazabilidad territorial
+                            {% elif position_name == 'Usuario de Consulta' %}Atenciones disponibles
+                            {% else %}Resumen de gestión territorial{% endif %}
+                        </h2>
+                    </div>
+                    {% if can_create_activity %}
+                    <a class="operational-primary-action" href="{% url 'activities:activity_create' %}"><span aria-hidden="true">+</span> Registrar atención</a>
+                    {% endif %}
+                </div>
+
+                {% if dashboard_work_kpis %}
+                <div class="operational-kpis">
+                    {% for item in dashboard_work_kpis %}
+                    <article class="operational-kpi"><span>{{ item.label }}</span><strong>{{ item.value }}</strong></article>
+                    {% endfor %}
+                </div>
+                {% endif %}
+
+                {% if position_name == 'Auditor Municipal' %}
+                    {% if dashboard_audit_rows %}
+                    <div class="operational-table-wrap"><table class="operational-table">
+                        <thead><tr><th>Fecha</th><th>Funcionario</th><th>Acción</th><th>Registro</th></tr></thead>
+                        <tbody>{% for row in dashboard_audit_rows %}<tr><td>{{ row.created_at }}</td><td>{{ row.actor }}</td><td>{{ row.action }}</td><td>{{ row.table }} #{{ row.record_id }}</td></tr>{% endfor %}</tbody>
+                    </table></div>
+                    {% else %}<p class="operational-empty">No hay eventos de auditoría disponibles en tu delegación.</p>{% endif %}
+                {% elif dashboard_activities %}
+                    <div class="operational-table-wrap"><table class="operational-table">
+                        <thead><tr><th>Folio / fecha</th><th>Solicitante y atención</th><th>Delegación</th><th>Estado</th>{% if can_validate %}<th class="align-right">Decisión</th>{% endif %}</tr></thead>
+                        <tbody>
+                            {% for activity in dashboard_activities %}
+                            <tr>
+                                <td><strong>{{ activity.activity_code }}</strong><small>{{ activity.activity_date|date:'d/m/Y' }}</small></td>
+                                <td><strong>{{ activity.contact_name|default:'Sin solicitante' }}</strong><small>{% if activity.attention_type %}{{ activity.attention_type.name }}{% elif activity.catalog %}{{ activity.catalog.service|default:'Atención municipal' }}{% else %}Atención municipal{% endif %} · {{ activity.problem_description|truncatechars:105 }}</small></td>
+                                <td>{{ activity.delegation.name|default:'Sin delegación' }}</td>
+                                <td><span class="operational-status status-{{ activity.validation_status|slugify }}">{{ activity.get_validation_status_display }}</span></td>
+                                {% if can_validate %}<td class="align-right"><button class="operational-review-button" type="button" onclick="resolverValidacion({{ activity.pk }})">Resolver</button></td>{% endif %}
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table></div>
+                {% else %}
+                    <p class="operational-empty">
+                        {% if can_validate %}No hay atenciones pendientes de validación en tu delegación.
+                        {% elif position_name == 'Gestor Territorial' %}Aún no tienes atenciones registradas. Puedes crear la primera con “Registrar atención”.
+                        {% else %}No hay atenciones registradas en el ámbito asignado.{% endif %}
+                    </p>
+                {% endif %}
+
+                {% if can_validate and dashboard_validations %}
+                <details class="verification-history">
+                    <summary>Últimas decisiones que registré <span>{{ dashboard_validations|length }}</span></summary>
+                    <div class="operational-table-wrap"><table class="operational-table">
+                        <thead><tr><th>Fecha</th><th>Atención</th><th>Decisión</th><th>Observación</th></tr></thead>
+                        <tbody>{% for entry in dashboard_validations %}<tr><td>{{ entry.created_at|date:'d/m/Y H:i' }}</td><td>{{ entry.activity.activity_code }}</td><td>{{ entry.get_decision_display }}</td><td>{{ entry.observations|default:'—'|truncatechars:120 }}</td></tr>{% endfor %}</tbody>
+                    </table></div>
+                </details>
+                {% endif %}
+            </section>
+            {% endif %}
+
             {% if selected_module or module_forbidden %}
             <section class="module-panel" aria-labelledby="module-title">
                 <a class="module-back" href="{% url 'activities:dashboard' %}">← Volver a mi inicio</a>
@@ -79,7 +149,7 @@
                 <p class="eyebrow">{{ position_name }} · {{ selected_module.title }}</p>
                 <h2 id="module-title">{{ selected_module.title }}</h2>
                 <p>{{ selected_module.description }}</p>
-                <div class="development-note" role="status"><strong>Funcionalidad en desarrollo</strong><p>Esta sección permite conocer el espacio de trabajo de tu cargo. Las operaciones estarán disponibles en una próxima etapa; aquí todavía no se registran ni modifican datos.</p></div>
+                <div class="development-note" role="status"><strong>Acceso según tus permisos</strong><p>El panel principal concentra las acciones operativas habilitadas y los registros dentro del ámbito territorial de tu perfil.</p></div>
                 {% endif %}
             </section>
             {% else %}
@@ -89,7 +159,7 @@
                         <p class="eyebrow">Tu espacio de trabajo</p>
                         <h2 id="work-title">Accesos de {{ position_name }}</h2>
                     </div>
-                    <p class="section-note">Los módulos se habilitarán por etapas.</p>
+                    <p class="section-note">Las opciones visibles se determinan por el rol y la delegación asignada.</p>
                 </div>
                 <div class="work-grid">
                     {% for card in dashboard_cards %}
@@ -97,7 +167,7 @@
                         <span class="card-number" aria-hidden="true">0{{ forloop.counter }}</span>
                         <h3>{{ card.title }}</h3>
                         <p>{{ card.description }}</p>
-                        <span class="coming-soon">Disponible más adelante</span>
+                        <span class="coming-soon">Acceso según permisos vigentes</span>
                         <a class="module-link" href="{{ card.url }}" aria-label="Abrir {{ card.title }}">Abrir sección <span aria-hidden="true">→</span></a>
                     </article>
                     {% endfor %}
@@ -109,5 +179,45 @@
             <footer class="page-footer">Ilustre Municipalidad de La Serena <span aria-hidden="true">·</span> Gestión social y atención ciudadana</footer>
         </main>
     </div>
+    <script>
+        function getCsrfToken() {
+            const input = document.querySelector('#csrf-container input[name="csrfmiddlewaretoken"]');
+            if (input) return input.value;
+            const entry = document.cookie.split(';').map(item => item.trim()).find(item => item.startsWith('csrftoken='));
+            return entry ? decodeURIComponent(entry.slice('csrftoken='.length)) : '';
+        }
+        async function resolverValidacion(activityId) {
+            const result = await Swal.fire({
+                title: 'Resolver revisión técnica',
+                html: '<label for="decision" class="swal2-label">Decisión</label><select id="decision" class="swal2-select"><option value="Approved">Aprobar</option><option value="Requires correction">Solicitar corrección</option><option value="Rejected">Rechazar</option></select><label for="observations" class="swal2-label">Observaciones</label><textarea id="observations" class="swal2-textarea" maxlength="2000" placeholder="Escribe la observación técnica…"></textarea>',
+                icon: 'question', showCancelButton: true,
+                confirmButtonText: 'Guardar decisión', cancelButtonText: 'Cancelar',
+                confirmButtonColor: '#a30f32',
+                preConfirm: () => {
+                    const decision = Swal.getPopup().querySelector('#decision').value;
+                    const observations = Swal.getPopup().querySelector('#observations').value.trim();
+                    if (decision !== 'Approved' && observations.length < 8) {
+                        Swal.showValidationMessage('Indica una observación de al menos 8 caracteres.');
+                        return false;
+                    }
+                    return { decision, observations };
+                },
+            });
+            if (!result.isConfirmed) return;
+            try {
+                const response = await fetch(`/activities/api/atenciones/${Number(activityId)}/validar/`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCsrfToken() },
+                    body: JSON.stringify(result.value),
+                });
+                const data = await response.json();
+                if (!response.ok || !data.success) throw new Error(data.message || 'No fue posible guardar la decisión.');
+                await Swal.fire({ icon: 'success', title: 'Revisión registrada', text: data.message, confirmButtonColor: '#1b365d' });
+                window.location.reload();
+            } catch (error) {
+                Swal.fire({ icon: 'error', title: 'No se pudo validar', text: error.message, confirmButtonColor: '#a30f32' });
+            }
+        }
+    </script>
 </body>
 </html>

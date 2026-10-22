@@ -44,6 +44,20 @@ def is_administrator_role(role_or_name):
     )
 
 
+def role_name_for_position(position_name):
+    """Resolve el rol base asociado a un cargo institucional.
+
+    El nombre histórico del cargo administrador no coincide con el nombre
+    canónico del rol, por eso ambos se vinculan con ``Administrador``.
+    """
+    normalized = _normalized_name(position_name)
+    if normalized == 'administrador general':
+        return ADMINISTRATOR_ROLE_NAME
+    if normalized in {'superadministrador', 'super administrador'}:
+        return SUPER_ADMINISTRATOR_ROLE_NAME
+    return str(position_name or '').strip()
+
+
 def role_permission_codes(role):
     """Return persisted legacy capabilities plus normalized catalog permissions."""
     codes = {str(code).strip().casefold() for code in (role.permissions_data or []) if str(code).strip()}

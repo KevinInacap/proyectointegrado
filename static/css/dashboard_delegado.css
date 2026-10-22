@@ -3,7 +3,16 @@
 .delegado-shell .nav-link.is-current { background: linear-gradient(105deg,rgba(196,18,48,.82),rgba(139,29,44,.55)); border: 1px solid rgba(255,255,255,.22); box-shadow: inset 0 1px 1px rgba(255,255,255,.3),0 8px 20px rgba(55,7,17,.26); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); }
 .delegado-shell .nav-link { border: 1px solid transparent; }
 .delegado-shell .nav-link:hover { transform: translateX(3px); background: var(--glass); }
-.delegado-shell .sidebar-photo::before { background: linear-gradient(180deg,#4a101b 0%,rgba(74,16,27,.18) 42%,rgba(25,12,23,.85) 100%); }
+.delegado-shell .sidebar-photo::before {
+    background: linear-gradient(180deg,
+        #4a101b 0%,
+        rgba(74,16,27,.92) 12%,
+        rgba(74,16,27,.72) 25%,
+        rgba(74,16,27,.34) 43%,
+        rgba(74,16,27,.08) 61%,
+        rgba(25,12,23,.2) 75%,
+        rgba(25,12,23,.88) 100%);
+}
 .delegado-shell .main-content { width: min(100%,1500px); }
 .delegado-heading { margin-bottom: 24px; }
 .delegado-summary { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 16px; margin: 0 0 20px; }

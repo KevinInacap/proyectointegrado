@@ -386,6 +386,7 @@
 .semaforo-dot.green { background-color: #10b981; color: rgba(16, 185, 129, 0.8); }
 .semaforo-dot.amber { background-color: #f59e0b; color: rgba(245, 158, 11, 0.8); }
 .semaforo-dot.red { background-color: #ef4444; color: rgba(239, 68, 68, 0.8); }
+.semaforo-dot.neutral { background-color: #94a3b8; color: rgba(148, 163, 184, 0.65); }
 
 @keyframes pulse {
     0%, 100% { transform: scale(1); opacity: 1; }
@@ -426,6 +427,7 @@
 .progress-bar-fill.green { background: linear-gradient(90deg, #10b981, #059669); }
 .progress-bar-fill.amber { background: linear-gradient(90deg, #f59e0b, #d97706); }
 .progress-bar-fill.red { background: linear-gradient(90deg, #ef4444, #dc2626); }
+.progress-bar-fill.neutral { background: linear-gradient(90deg, #94a3b8, #64748b); }
 
 /* Main Section Tabs & Filter Bar */
 .filter-bar {

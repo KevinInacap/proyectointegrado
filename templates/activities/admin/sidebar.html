@@ -55,6 +55,12 @@
                 </div>
             </div>
 
+            <button class="nav-item-btn" id="nav-btn-social-requests" onclick="switchView('solicitudes-sociales')">
+                <i class="bi bi-inbox-fill main-icon"></i>
+                <span>Solicitudes sociales</span>
+                {% if social_pending_request_count %}<span class="admin-social-nav-count">{{ social_pending_request_count }}</span>{% endif %}
+            </button>
+
             <!-- 3. Reportes y Estadísticas -->
             <button class="nav-item-btn" id="nav-btn-reportes" onclick="switchView('reportes')">
                 <i class="bi bi-bar-chart-line-fill main-icon"></i>

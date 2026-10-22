@@ -20,10 +20,12 @@ urlpatterns = [
     path('api/vecinos/<int:pk>/', views.api_vecino_detail, name='api_vecino_detail_prefixed'),
     path('api/atenciones/', views.api_atenciones, name='api_atenciones_prefixed'),
     path('api/atenciones/<int:pk>/', views.api_atencion_detail, name='api_atencion_detail_prefixed'),
+    path('api/atenciones/<int:pk>/validar/', views.api_validar_atencion, name='api_validar_atencion_prefixed'),
     path('api/roles/toggle-permiso/', views.api_toggle_rol_permiso, name='api_toggle_rol_permiso_prefixed'),
     path('vecinos/', views.api_vecinos, name='api_vecinos'),
     path('vecinos/<int:pk>/', views.api_vecino_detail, name='api_vecino_detail'),
     path('atenciones/', views.api_atenciones, name='api_atenciones'),
     path('atenciones/<int:pk>/', views.api_atencion_detail, name='api_atencion_detail'),
+    path('atenciones/<int:pk>/validar/', views.api_validar_atencion, name='api_validar_atencion'),
     path('roles/toggle-permiso/', views.api_toggle_rol_permiso, name='api_toggle_rol_permiso'),
 ]

@@ -1,4 +1,5 @@
 from django.db import models
+from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.utils import timezone
 from core.models import BaseModel
@@ -108,4 +109,86 @@ class SocialManagement(BaseModel):
 
     def __str__(self):
         return f"{self.case.user_name} - Etapa {self.stage}"
+
+
+class SocialReviewRequest(BaseModel):
+    """Solicitud trazable de revisión o corrección administrativa de un caso social."""
+    TYPE_CHOICES = [
+        ('revision', 'Revisión'),
+        ('edicion', 'Corrección de datos'),
+    ]
+    STATUS_CHOICES = [
+        ('pendiente', 'Pendiente'),
+        ('aprobada', 'Aprobada'),
+        ('rechazada', 'Rechazada'),
+    ]
+
+    request_type = models.CharField(max_length=20, choices=TYPE_CHOICES)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pendiente')
+    case = models.ForeignKey(
+        SocialCase, on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='review_requests', verbose_name='Caso relacionado',
+    )
+    management = models.ForeignKey(
+        SocialManagement, on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='review_requests', verbose_name='Gestión relacionada',
+    )
+    requester = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='social_review_requests', verbose_name='Funcionario solicitante',
+    )
+    requester_name = models.CharField(max_length=150)
+    requester_position = models.CharField(max_length=100, blank=True, default='')
+    requester_delegation = models.CharField(max_length=100, blank=True, default='')
+    target_label = models.CharField(max_length=180, blank=True, default='')
+    reason = models.TextField(max_length=1200)
+    requested_changes = models.JSONField(default=dict, blank=True)
+    reviewed_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='reviewed_social_requests', verbose_name='Administrador revisor',
+    )
+    resolution_note = models.TextField(max_length=1000, blank=True, default='')
+    resolved_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        verbose_name = 'Solicitud de revisión social'
+        verbose_name_plural = 'Solicitudes de revisión social'
+        ordering = ['status', '-created_at']
+
+    def __str__(self):
+        return f"{self.get_request_type_display()} · {self.target_label or 'Caso social'} · {self.get_status_display()}"
+
+
+class SocialNotification(BaseModel):
+    """Aviso interno persistente para administración y respuesta al solicitante."""
+    EVENT_CHOICES = [
+        ('request', 'Nueva solicitud'),
+        ('result', 'Resultado de solicitud'),
+    ]
+
+    recipient = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE,
+        related_name='social_notifications', verbose_name='Destinatario',
+    )
+    review_request = models.ForeignKey(
+        SocialReviewRequest, on_delete=models.CASCADE,
+        related_name='notifications', verbose_name='Solicitud relacionada',
+    )
+    event_type = models.CharField(max_length=20, choices=EVENT_CHOICES, default='request')
+    message = models.CharField(max_length=500)
+    read_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        verbose_name = 'Notificación social'
+        verbose_name_plural = 'Notificaciones sociales'
+        ordering = ['-created_at']
+        constraints = [
+            models.UniqueConstraint(
+                fields=['recipient', 'review_request', 'event_type'],
+                name='uniq_social_notification_recipient_request_event',
+            ),
+        ]
+
+    def __str__(self):
+        return self.message
 

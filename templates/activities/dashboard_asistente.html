@@ -93,7 +93,7 @@
                         <a class="asistente-nav-link" onclick="switchSection('metas')" id="nav-metas">
                             <span class="asistente-nav-icon"><i class="bi bi-speedometer2"></i></span>
                             <span>Metas y Semáforo SGR</span>
-                            <span class="asistente-badge badge-sky">{{ avance_pct }}%</span>
+                            <span class="asistente-badge badge-sky">{{ avance_label }}</span>
                         </a>
                     </li>
                 </ul>
@@ -147,17 +147,22 @@
                         Semáforo SGR: <span style="text-decoration: underline;">{{ semaforo_texto }}</span>
                     </div>
                     <div class="semaforo-text-desc">
-                        Meta acumulada esperada al día: <strong>{{ meta_esperada_pct }}%</strong> · Cumplimiento de gestiones: <strong>{{ avance_pct }}%</strong>
+                        {% if has_goal %}
+                        Meta esperada al día: <strong>{{ meta_esperada_pct }}</strong> · Avance: <strong>{{ avance_label }}</strong>
+                        {% else %}
+                        No hay una meta activa configurada para este cargo y período. Se muestran los registros reales disponibles.
+                        {% endif %}
                     </div>
                 </div>
             </div>
             <div class="semaforo-progress-box">
                 <div style="display: flex; justify-content: space-between; font-size: 0.74rem; font-weight: 700;">
-                    <span>Avance Social Trimestral</span>
-                    <span>{{ gestiones_count }} / {{ target_value }} Atenciones ({{ avance_pct }}%)</span>
+                    <span>Avance del período</span>
+                    {% if has_goal %}<span>{{ gestiones_count }} / {{ target_value }} {{ goal_unit }} · {{ avance_label }}</span>
+                    {% else %}<span>{{ gestiones_count }} gestiones registradas</span>{% endif %}
                 </div>
                 <div class="progress-bar-bg">
-                    <div class="progress-bar-fill {{ semaforo_color }}" style="width: {{ avance_pct|floatformat:0 }}%;"></div>
+                    <div class="progress-bar-fill {{ semaforo_color }}" style="width: {{ avance_bar_width|floatformat:0 }}%;"></div>
                 </div>
             </div>
         </section>
@@ -237,7 +242,7 @@
                             <th>Delegación</th>
                             <th>Fecha Ingreso</th>
                             <th style="width: 170px;">Flujo RN-012</th>
-                            <th style="text-align: right; width: 150px;">Acciones</th>
+                            <th style="text-align: right; width: 190px;">Acciones</th>
                         </tr>
                     </thead>
                     <tbody id="tbodyCasos">
@@ -271,6 +276,9 @@
                             <td style="text-align: right;">
                                 <button class="action-icon-btn" title="Ver Expediente Social Completo" onclick="verExpedienteCaso({{ c.id }})">
                                     <i class="bi bi-eye-fill"></i>
+                                </button>
+                                <button class="action-icon-btn" title="Solicitar revisión o corrección administrativa" onclick="solicitarRevisionSocial({{ c.id }})">
+                                    <i class="bi bi-send-fill"></i>
                                 </button>
                                 {% if c.can_advance %}
                                 <button class="action-icon-btn btn-advance" title="Avanzar a Etapa {{ c.next_stage }} (RN-012)" onclick="abrirModalAvanzarEtapa({{ c.id }}, {{ c.next_stage }}, '{{ c.user_name|escapejs }}')">
@@ -589,9 +597,11 @@ function switchSection(sec) {
             html: `
                 <div style="text-align: left; font-size: 0.9rem;">
                     <p><strong>Cargo:</strong> Asistente Social</p>
-                    <p><strong>Meta Período (T3):</strong> 50 atenciones con informe técnico</p>
-                    <p><strong>Avance Actual:</strong> {{ gestiones_count }} gestiones aprobadas</p>
-                    <p><strong>Ponderador del Cargo:</strong> 35% del semáforo delegacional</p>
+                    <p><strong>Período:</strong> {{ period_name }}</p>
+                    <p><strong>Indicador:</strong> {{ goal_item_name }}</p>
+                    <p><strong>Meta:</strong> {% if has_goal %}{{ target_value }} {{ goal_unit }}{% else %}No asignada{% endif %}</p>
+                    <p><strong>Avance Actual:</strong> {{ gestiones_count }} gestiones ({{ avance_label }})</p>
+                    <p><strong>Ponderador del Cargo:</strong> {% if has_goal %}{{ goal_weight }}%{% else %}No definido{% endif %}</p>
                     <p><strong>Semáforo:</strong> {{ semaforo_texto }}</p>
                 </div>
             `,
@@ -793,6 +803,90 @@ async function ejecutarAvanzarEtapa(e) {
         }
     } catch (err) {
         Swal.fire({ title: 'Error de Red', text: 'No se pudo comunicar con el servidor.', icon: 'error' });
+    }
+}
+
+async function solicitarRevisionSocial(casoId) {
+    try {
+        const detailResponse = await fetch(`/social/api/casos/${casoId}/`);
+        const detail = await detailResponse.json();
+        if (!detailResponse.ok || !detail.success) throw new Error(detail.message || 'No se pudo cargar el caso.');
+        const caso = detail.case;
+        const result = await Swal.fire({
+            title: 'Enviar solicitud a administración',
+            html: `
+                <div style="text-align:left;">
+                    <label for="socialRequestType" class="form-label fw-bold">Tipo de solicitud</label>
+                    <select id="socialRequestType" class="swal2-select" style="width:100%;margin:0 0 1rem;">
+                        <option value="revision">Solicitar revisión del caso</option>
+                        <option value="edicion">Solicitar corrección de datos</option>
+                    </select>
+                    <label for="socialRequestReason" class="form-label fw-bold">Motivo</label>
+                    <textarea id="socialRequestReason" class="swal2-textarea" maxlength="1200" placeholder="Explica brevemente qué debe revisar administración" style="width:100%;margin:.35rem 0 1rem;"></textarea>
+                    <div id="socialRequestChanges" style="display:none;border-top:1px solid #e2e8f0;padding-top:.9rem;">
+                        <p style="font-size:.82rem;color:#64748b;margin:0 0 .5rem;">Indica los datos correctos. No se cambiarán hasta que administración apruebe la solicitud.</p>
+                        <label class="form-label fw-bold" for="socialProposedName">Nombre</label><input id="socialProposedName" class="swal2-input" maxlength="150" style="width:100%;margin:.25rem 0 .65rem;">
+                        <label class="form-label fw-bold" for="socialProposedRut">RUT</label><input id="socialProposedRut" class="swal2-input" maxlength="12" style="width:100%;margin:.25rem 0 .65rem;">
+                        <label class="form-label fw-bold" for="socialProposedPhone">Teléfono</label><input id="socialProposedPhone" class="swal2-input" maxlength="20" style="width:100%;margin:.25rem 0 .65rem;">
+                        <label class="form-label fw-bold" for="socialProposedDate">Fecha de ingreso</label><input id="socialProposedDate" type="date" class="swal2-input" style="width:100%;margin:.25rem 0 .25rem;">
+                    </div>
+                </div>`,
+            didOpen: () => {
+                const popup = Swal.getPopup();
+                popup.querySelector('#socialProposedName').value = caso.user_name || '';
+                popup.querySelector('#socialProposedRut').value = caso.user_rut || '';
+                popup.querySelector('#socialProposedPhone').value = caso.contact_phone || '';
+                popup.querySelector('#socialProposedDate').value = caso.entry_date_iso || '';
+                popup.querySelector('#socialRequestType').addEventListener('change', event => {
+                    popup.querySelector('#socialRequestChanges').style.display = event.target.value === 'edicion' ? 'block' : 'none';
+                });
+            },
+            showCancelButton: true,
+            confirmButtonText: 'Enviar solicitud',
+            cancelButtonText: 'Cancelar',
+            confirmButtonColor: '#b80003',
+            preConfirm: () => {
+                const popup = Swal.getPopup();
+                const requestType = popup.querySelector('#socialRequestType').value;
+                const reason = popup.querySelector('#socialRequestReason').value.trim();
+                if (reason.length < 8) {
+                    Swal.showValidationMessage('Explica el motivo con al menos 8 caracteres.');
+                    return false;
+                }
+                const payload = { request_type: requestType, reason };
+                if (requestType === 'edicion') {
+                    const proposed = {
+                        user_name: popup.querySelector('#socialProposedName').value.trim(),
+                        user_rut: popup.querySelector('#socialProposedRut').value.trim(),
+                        contact_phone: popup.querySelector('#socialProposedPhone').value.trim(),
+                        entry_date: popup.querySelector('#socialProposedDate').value,
+                    };
+                    const original = {
+                        user_name: caso.user_name,
+                        user_rut: caso.user_rut,
+                        contact_phone: caso.contact_phone || '',
+                        entry_date: caso.entry_date_iso,
+                    };
+                    payload.requested_changes = Object.fromEntries(Object.entries(proposed).filter(([key, value]) => value !== original[key]));
+                    if (!Object.keys(payload.requested_changes).length) {
+                        Swal.showValidationMessage('Modifica al menos un dato para solicitar una corrección.');
+                        return false;
+                    }
+                }
+                return payload;
+            },
+        });
+        if (!result.isConfirmed) return;
+        const response = await fetch(`/social/api/casos/${casoId}/solicitudes/`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCsrfToken() },
+            body: JSON.stringify(result.value),
+        });
+        const data = await response.json();
+        if (!response.ok || !data.success) throw new Error(data.message || 'No se pudo enviar la solicitud.');
+        await Swal.fire({ icon: 'success', title: 'Solicitud enviada', text: data.message, confirmButtonColor: '#1b365d' });
+    } catch (error) {
+        Swal.fire({ icon: 'error', title: 'No se pudo enviar', text: error.message || 'Ocurrió un error de conexión.', confirmButtonColor: '#b80003' });
     }
 }
 

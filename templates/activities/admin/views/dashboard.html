@@ -42,6 +42,16 @@
         </div>
     </div>
 
+    <button type="button" class="admin-social-pending-callout" onclick="switchView('solicitudes-sociales')">
+        <span class="admin-social-pending-icon"><i class="bi bi-inbox-fill"></i></span>
+        <span class="admin-social-pending-copy">
+            <strong>Solicitudes de atención social</strong>
+            <span>Revisa altas y correcciones remitidas por los funcionarios.</span>
+        </span>
+        <span class="admin-social-pending-value">{{ social_pending_request_count }} <small>pendientes</small></span>
+        <i class="bi bi-arrow-right admin-social-pending-arrow" aria-hidden="true"></i>
+    </button>
+
     <!-- 2. TRES INDICADORES CÍVICOS ESENCIALES -->
     <div class="row g-3 mb-4">
         <!-- Delegaciones -->

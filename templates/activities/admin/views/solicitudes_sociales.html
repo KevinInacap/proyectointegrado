@@ -1,0 +1,49 @@
+<section id="view-solicitudes-sociales" class="maintainer-view">
+    <div class="maintainer-card p-4">
+        <div class="d-flex align-items-start justify-content-between flex-wrap gap-3 mb-4 pb-3 border-bottom">
+            <div>
+                <span class="badge rounded-pill px-3 py-2 mb-2" style="background:#fff1f2;color:#a30f32;font-weight:800;">
+                    <i class="bi bi-inboxes-fill me-1"></i> REVISIÓN ADMINISTRATIVA
+                </span>
+                <h1 class="h3 fw-bold mb-1" style="color:var(--muni-navy);">Solicitudes sociales</h1>
+                <p class="text-secondary mb-0">Altas y correcciones enviadas por los equipos territoriales. Las correcciones solo se aplican al aprobarse.</p>
+            </div>
+            <div class="d-flex align-items-center gap-2">
+                <span class="badge rounded-pill px-3 py-2" id="socialRequestPendingBadge" style="background:#fff1f2;color:#a30f32;">Pendientes: —</span>
+                <button class="btn btn-outline-secondary rounded-pill px-3" type="button" onclick="loadSocialReviewRequests()">
+                    <i class="bi bi-arrow-clockwise me-1"></i> Actualizar
+                </button>
+            </div>
+        </div>
+
+        <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
+            <div class="d-flex align-items-center gap-2">
+                <label class="small fw-semibold text-secondary" for="socialRequestStatusFilter">Estado</label>
+                <select id="socialRequestStatusFilter" class="form-select form-select-sm" style="width:170px;" onchange="loadSocialReviewRequests()">
+                    <option value="pendiente">Pendientes</option>
+                    <option value="todas">Todas</option>
+                    <option value="aprobada">Aprobadas</option>
+                    <option value="rechazada">Rechazadas</option>
+                </select>
+            </div>
+            <span class="small text-secondary">Cada decisión queda registrada en auditoría.</span>
+        </div>
+
+        <div class="table-responsive social-review-table-wrap">
+            <table class="table align-middle mb-0 social-review-table">
+                <thead>
+                    <tr>
+                        <th>Solicitud</th>
+                        <th>Funcionario y territorio</th>
+                        <th>Motivo / propuesta</th>
+                        <th>Estado</th>
+                        <th class="text-end">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody id="socialReviewRequestsBody">
+                    <tr><td colspan="5" class="text-center py-5 text-secondary"><span class="spinner-border spinner-border-sm me-2"></span>Cargando solicitudes…</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</section>
