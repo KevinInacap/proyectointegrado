@@ -114,6 +114,31 @@ class AttentionApiSecurityTests(TestCase):
         self.assertEqual(self.client.get(self.url).status_code, 403)
         self.assertEqual(self.post().status_code, 403)
 
+    def test_social_case_attention_is_visible_but_edited_through_social_workflow(self):
+        from social.models import SocialCase
+
+        activity = Activity.objects.create(
+            activity_code='SOC-TEST-1', activity_date='2026-01-01',
+            contact_name='Vecina social', problem_description='Solicitud social',
+            executed_action='Ingreso de ficha', delegation=self.north,
+        )
+        case = SocialCase.objects.create(
+            user_rut='12.345.678-5', user_name='Vecina social',
+            delegation=self.north, entry_date='2026-01-01', activity=activity,
+        )
+        listed = self.client.get(self.url).json()['atenciones']
+        self.assertEqual(listed[0]['social_case_id'], case.pk)
+        detail_url = reverse('activities:api_atencion_detail', args=[activity.pk])
+        self.assertEqual(self.client.get(detail_url).json()['atencion']['social_case_id'], case.pk)
+        edited = self.client.put(detail_url, json.dumps({'contact_name': 'Otro nombre'}), content_type='application/json')
+        self.assertEqual(edited.status_code, 409)
+        self.role.permissions_data = ['lectura', 'edicion', 'cierre']
+        self.role.save(update_fields=['permissions_data', 'updated_at'])
+        self.assertEqual(self.client.delete(detail_url).status_code, 409)
+        activity.refresh_from_db()
+        self.assertEqual(activity.contact_name, 'Vecina social')
+        self.assertIsNone(activity.deleted_at)
+
 
 class DashboardAccessTests(TestCase):
     def setUp(self):
@@ -214,6 +239,45 @@ class DashboardAccessTests(TestCase):
         response = self.client.get(url)
         self.assertContains(response, 'Tu rol no tiene accesos habilitados')
         self.assertNotContains(response, own.activity_code)
+
+    def test_delegado_sees_only_local_cases_and_neighbors_with_read_permission(self):
+        from social.models import SocialCase
+
+        self.set_position('Delegado Municipal')
+        role = Role.objects.create(name='Consulta delegada', permissions_data=['lectura'])
+        self.profile.roles.add(role)
+        other = Delegation.objects.create(name='Otra delegación', scope='Sur')
+        SocialCase.objects.create(
+            user_rut='12.345.678-5', user_name='Caso local',
+            delegation=self.delegation, entry_date='2026-01-02',
+        )
+        SocialCase.objects.create(
+            user_rut='14.222.111-0', user_name='Caso ajeno',
+            delegation=other, entry_date='2026-01-02',
+        )
+        Vecino.objects.create(nombre='Vecino local', rut='12345678-5', territorio=self.delegation.name)
+        Vecino.objects.create(nombre='Vecino ajeno', rut='23456789-6', territorio=other.name)
+        url = reverse('activities:dashboard_delegado')
+
+        response = self.client.get(url)
+        self.assertContains(response, 'Caso local')
+        self.assertContains(response, 'Vecino local')
+        self.assertNotContains(response, 'Caso ajeno')
+        self.assertNotContains(response, 'Vecino ajeno')
+        self.assertEqual(response.context['social_case_count'], 1)
+        self.assertEqual(response.context['neighbor_count'], 1)
+
+        role.permissions_data = []
+        role.save(update_fields=['permissions_data', 'updated_at'])
+        self.assertNotContains(self.client.get(url), 'Caso local')
+        role.permissions_data = ['lectura']
+        role.save(update_fields=['permissions_data', 'updated_at'])
+        self.profile.delegation = None
+        self.profile.save(update_fields=['delegation', 'updated_at'])
+        response = self.client.get(url)
+        self.assertContains(response, 'Tu perfil no tiene una delegación activa asignada')
+        self.assertNotContains(response, 'Caso local')
+        self.assertNotContains(response, 'Vecino local')
 
     def test_delegado_attention_crud_updates_dashboard_and_paginates(self):
         from metrics.models import AttentionType, SubAttention
@@ -646,6 +710,20 @@ class VerifierWorkflowTests(TestCase):
         outside_denied = self.validate(self.other_activity, {'decision': 'Approved', 'observations': ''})
         self.assertEqual(outside_denied.status_code, 404)
 
+    def test_social_case_is_reviewed_by_social_administration(self):
+        from social.models import SocialCase
+
+        SocialCase.objects.create(
+            user_rut='12.345.678-5', user_name='Persona social',
+            delegation=self.delegation, entry_date='2026-10-20', activity=self.own_activity,
+        )
+        response = self.client.get(reverse('activities:dashboard_verificador'))
+        self.assertNotContains(response, self.own_activity.activity_code)
+        denied = self.validate(self.own_activity, {'decision': 'Approved', 'observations': ''})
+        self.assertEqual(denied.status_code, 409)
+        self.own_activity.refresh_from_db()
+        self.assertEqual(self.own_activity.validation_status, 'Pending')
+
     def test_decision_is_one_way_after_resolution_and_permission_is_required(self):
         approved = self.validate(self.own_activity, {'decision': 'Approved', 'observations': 'Antecedentes revisados.'})
         self.assertEqual(approved.status_code, 200)
@@ -715,6 +793,66 @@ class VecinoApiValidationTests(TestCase):
 
     def put(self, vecino, payload):
         return self.client.put(f'{self.url}{vecino.pk}/', json.dumps(payload), content_type='application/json')
+
+    def test_admin_with_assigned_delegation_manages_all_territories(self):
+        north = Delegation.objects.create(name='Delegación Norte', scope='Norte')
+        south = Delegation.objects.create(name='Delegación Sur', scope='Sur')
+        self.profile.delegation = north
+        self.profile.save(update_fields=['delegation', 'updated_at'])
+        Vecino.objects.create(nombre='Vecino Norte', rut='11.111.111-1', territorio=north.name)
+        other = Vecino.objects.create(nombre='Vecino Sur', rut='22.222.222-2', territorio=south.name)
+
+        rows = self.client.get(self.url).json()['vecinos']
+        self.assertEqual({row['nombre'] for row in rows}, {'Vecino Norte', 'Vecino Sur'})
+        created = self.post(dict(self.payload, territorio=south.name))
+        self.assertEqual(created.status_code, 200, created.content)
+        self.assertEqual(Vecino.objects.get(rut='12.345.678-5').territorio, south.name)
+        updated = self.put(other, {
+            'nombre': 'Vecino Sur actualizado', 'rut': other.rut,
+            'direccion': 'Calle Sur 1', 'territorio': south.name,
+        })
+        self.assertEqual(updated.status_code, 200, updated.content)
+        other.refresh_from_db()
+        self.assertEqual(other.territorio, south.name)
+
+        attention = self.client.post(reverse('activities:api_atenciones'), json.dumps({
+            'delegation': south.name, 'contact_name': 'Vecino Sur',
+            'title': 'Consulta local', 'description': 'Orientación entregada',
+        }), content_type='application/json')
+        self.assertEqual(attention.status_code, 201, attention.content)
+        self.assertEqual(Activity.objects.get(pk=attention.json()['id']).delegation, south)
+
+    def test_social_neighbor_identity_is_corrected_from_its_case(self):
+        from social.models import SocialCase
+
+        delegation = Delegation.objects.create(name='Centro', scope='Centro')
+        neighbor = Vecino.objects.create(
+            nombre='Vecina social', rut='12.345.678-5', telefono='123456',
+            direccion='Calle inicial 1', territorio=delegation.name,
+        )
+        activity = Activity.objects.create(
+            activity_code='SOC-NEIGHBOR-1', activity_date='2026-01-01',
+            contact_name=neighbor.nombre, problem_description='Solicitud social',
+            executed_action='Ingreso', delegation=delegation, neighbor=neighbor,
+        )
+        SocialCase.objects.create(
+            user_rut=neighbor.rut, user_name=neighbor.nombre,
+            delegation=delegation, entry_date='2026-01-01', activity=activity,
+        )
+        changed_identity = self.put(neighbor, {
+            'nombre': 'Nombre distinto', 'rut': neighbor.rut, 'telefono': neighbor.telefono,
+            'direccion': neighbor.direccion, 'territorio': delegation.name,
+        })
+        self.assertEqual(changed_identity.status_code, 409)
+        changed_address = self.put(neighbor, {
+            'nombre': neighbor.nombre, 'rut': neighbor.rut, 'telefono': neighbor.telefono,
+            'direccion': 'Calle nueva 2', 'territorio': delegation.name,
+        })
+        self.assertEqual(changed_address.status_code, 200)
+        self.assertEqual(self.client.delete(f'{self.url}{neighbor.pk}/').status_code, 409)
+        neighbor.refresh_from_db()
+        self.assertEqual(neighbor.nombre, 'Vecina social')
+        self.assertIsNone(neighbor.deleted_at)
 
     def test_existing_legacy_invalid_rut_can_be_edited_if_unchanged(self):
         vecino = Vecino.objects.create(nombre='Vecino antiguo', rut='16.241.879-2', direccion='Calle 1')

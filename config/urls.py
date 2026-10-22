@@ -13,6 +13,7 @@ urlpatterns = [
     path('api/catalogs/', include('metrics.urls')),
     path('api/agenda/', include(('agenda.urls', 'agenda'), namespace='agenda')),
     path('social/', include('social.urls')),
+    path('chat/', include('websocket.urls')),
 ]
 
 if settings.DEBUG:

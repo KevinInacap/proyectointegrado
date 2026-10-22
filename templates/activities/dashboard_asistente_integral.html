@@ -1396,6 +1396,20 @@
                                     <option value="redes">Articulación de Redes Comunitarias</option>
                                 </select>
                             </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold small text-dark" for="casoTipoAtencion">Tipo de Atención</label>
+                                <select class="form-select rounded-3" id="casoTipoAtencion" onchange="filtrarSubAtencionesSociales('caso')" {% if attention_types and subattentions %}required{% else %}disabled{% endif %}>
+                                    <option value="">Selecciona un tipo</option>
+                                    {% for tipo in attention_types %}<option value="{{ tipo.id }}">{{ tipo.name }}</option>{% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold small text-dark" for="casoSubAtencion">Sub Atención</label>
+                                <select class="form-select rounded-3" id="casoSubAtencion" {% if attention_types and subattentions %}required{% else %}disabled{% endif %}>
+                                    <option value="">Selecciona una subatención</option>
+                                    {% for sub in subattentions %}<option value="{{ sub.id }}" data-attention-type="{{ sub.attention_type_id }}" hidden disabled>{{ sub.name }}</option>{% endfor %}
+                                </select>
+                            </div>
 
 
                             <div class="col-12">
@@ -1515,6 +1529,20 @@
                                 </select>
                                 {% endif %}
                             </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold small text-dark" for="emerTipoAtencion">Tipo de Atención</label>
+                                <select class="form-select rounded-3" id="emerTipoAtencion" onchange="filtrarSubAtencionesSociales('emer')" {% if attention_types and subattentions %}required{% else %}disabled{% endif %}>
+                                    <option value="">Selecciona un tipo</option>
+                                    {% for tipo in attention_types %}<option value="{{ tipo.id }}">{{ tipo.name }}</option>{% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold small text-dark" for="emerSubAtencion">Sub Atención</label>
+                                <select class="form-select rounded-3" id="emerSubAtencion" {% if attention_types and subattentions %}required{% else %}disabled{% endif %}>
+                                    <option value="">Selecciona una subatención</option>
+                                    {% for sub in subattentions %}<option value="{{ sub.id }}" data-attention-type="{{ sub.attention_type_id }}" hidden disabled>{{ sub.name }}</option>{% endfor %}
+                                </select>
+                            </div>
                             <div class="col-12">
                                 <label class="form-label fw-bold small text-dark" for="emerAyuda">Ayuda solicitada <span class="text-danger">*</span></label>
                                 <input type="text" class="form-control rounded-3" id="emerAyuda" placeholder="Ej: 2 Cajas de víveres, 4 Colchones, 8 Frazadas, 10 Planchas de zinc" required>
@@ -1527,7 +1555,7 @@
                         <div class="d-flex justify-content-end gap-2 mt-4 pt-3 border-top">
                             <button type="button" class="btn btn-outline-secondary rounded-pill px-4 fw-bold" data-bs-dismiss="modal">Cancelar</button>
                             <button type="submit" class="liquid-glass-btn-primary">
-                                <i class="bi bi-lightning-charge-fill"></i> Confirmar Despacho Inmediato
+                                <i class="bi bi-lightning-charge-fill"></i> Registrar Solicitud
                             </button>
                         </div>
                     </form>
@@ -1837,6 +1865,17 @@
         function fechaLocalIso() {
             const now = new Date();
             return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+        }
+
+        function filtrarSubAtencionesSociales(prefix) {
+            const typeId = document.getElementById(`${prefix}TipoAtencion`).value;
+            const sub = document.getElementById(`${prefix}SubAtencion`);
+            sub.value = '';
+            for (const option of sub.querySelectorAll('[data-attention-type]')) {
+                const visible = option.dataset.attentionType === typeId;
+                option.hidden = !visible;
+                option.disabled = !visible;
+            }
         }
 
         async function apiSocial(url, method = 'GET', payload = null) {
@@ -2653,6 +2692,8 @@
                     contact_phone: telefono,
                     delegation_id: delegationId,
                     entry_date: fechaLocalIso(),
+                    attention_type_id: document.getElementById('casoTipoAtencion').value,
+                    subattention_id: document.getElementById('casoSubAtencion').value,
                     initial_problem: `[${categoria}] ${asunto}. ${descripcion}`
                 });
                 const refreshed = await recargarCasos();
@@ -2736,6 +2777,8 @@
                     user_rut: rut,
                     delegation_id: delegacionId,
                     entry_date: fechaLocalIso(),
+                    attention_type_id: document.getElementById('emerTipoAtencion').value,
+                    subattention_id: document.getElementById('emerSubAtencion').value,
                     initial_problem: `[emergencia] ${tipo}. Ayuda solicitada: ${ayuda}. Observaciones: ${obs}`
                 });
                 const refreshed = await recargarCasos();

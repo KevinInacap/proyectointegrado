@@ -73,6 +73,9 @@ def _delegation_for_write(request, value):
     if not profile:
         return None
     requested = str(value or '').strip()
+    if _is_admin(request):
+        qs = Delegation.objects.filter(status='Activo', deleted_at__isnull=True)
+        return qs.filter(pk=int(requested)).first() if requested.isdecimal() else qs.filter(name__iexact=requested).first()
     if profile.delegation_id:
         if not requested:
             return profile.delegation if (profile.delegation.status == 'Activo' and profile.delegation.deleted_at is None) else None
@@ -81,9 +84,6 @@ def _delegation_for_write(request, value):
         if delegation and delegation.pk == profile.delegation_id:
             return delegation
         return None
-    if _is_admin(request):
-        qs = Delegation.objects.filter(status='Activo', deleted_at__isnull=True)
-        return qs.filter(pk=int(requested)).first() if requested.isdecimal() else qs.filter(name__iexact=requested).first()
     return None
 
 
@@ -214,7 +214,11 @@ def _position_dashboard(request, expected_position=None, module_slug=None):
             {'label': 'Aprobadas', 'value': scoped_activities.filter(user=request.user, validation_status='Approved').count()},
         ] if has_read else []
     elif position_name == 'Verificador Técnico':
-        pending = scoped_activities.filter(validation_status__in=['Pending', 'Requires correction']).order_by('activity_date', 'created_at')
+        pending = scoped_activities.filter(
+            validation_status__in=['Pending', 'Requires correction'],
+        ).exclude(
+            social_case__pk__isnull=False, social_case__deleted_at__isnull=True,
+        ).order_by('activity_date', 'created_at')
         dashboard_activities = pending[:30]
         dashboard_validations = Validation.objects.filter(
             verifier=request.user, deleted_at__isnull=True,
@@ -283,7 +287,9 @@ def dashboard_delegado_view(request):
     denied = _position_required(request, 'Delegado Municipal')
     if denied:
         return denied
+    from django.db.models import Max
     from metrics.models import AttentionType, SubAttention
+    from social.models import SocialCase
 
     profile = _actor(request)
     delegation = profile.delegation
@@ -293,10 +299,16 @@ def dashboard_delegado_view(request):
     can_close = _has_matrix_permission(request, 'cierre') and assigned
     activities = Activity.objects.none()
     team = UserProfile.objects.none()
+    social_cases = SocialCase.objects.none()
+    neighbors = Vecino.objects.none()
     if assigned and can_read:
         activities = Activity.objects.filter(
             delegation_id=delegation.pk, deleted_at__isnull=True,
-        ).select_related('attention_type', 'subattention')
+        ).select_related('attention_type', 'subattention', 'social_case')
+        social_cases = SocialCase.objects.filter(
+            delegation_id=delegation.pk, deleted_at__isnull=True,
+        )
+        neighbors = _vecino_scope(request)
         team = UserProfile.objects.filter(
             delegation_id=delegation.pk, status='Activo', deleted_at__isnull=True,
             user__is_active=True,
@@ -328,6 +340,12 @@ def dashboard_delegado_view(request):
         'can_edit': can_edit, 'can_close': can_close,
         'total': total, 'in_followup': in_followup, 'approved': approved,
         'team': team, 'team_count': team.count(), 'page': page,
+        'social_case_count': social_cases.count(),
+        'social_cases': social_cases.annotate(
+            latest_stage=Max('managements__stage', filter=Q(managements__deleted_at__isnull=True)),
+        ).order_by('-entry_date', '-created_at')[:8],
+        'neighbor_count': neighbors.count(),
+        'neighbors': neighbors.order_by('-created_at')[:8],
         'query': query, 'status_filter': status,
         'statuses': Activity.VALIDATION_STATUS_CHOICES,
         'attention_types': AttentionType.objects.filter(status='Activo', deleted_at__isnull=True).order_by('name') if can_edit else [],
@@ -359,7 +377,7 @@ def dashboard_asistente_integral_view(request):
 
     role_names = list(profile.roles.filter(deleted_at__isnull=True).values_list('name', flat=True))
 
-    from metrics.models import Goal, MeasurementPeriod
+    from metrics.models import AttentionType, Goal, MeasurementPeriod, SubAttention
     from organization.models import Delegation
     from social.models import SocialCase, SocialManagement, SocialReviewRequest
 
@@ -373,8 +391,8 @@ def dashboard_asistente_integral_view(request):
     first_name = user_name.strip().split()[0] if user_name else 'Funcionario'
     user_role = role_names[0] if role_names else 'Asistente Social'
     delegation_name = profile.delegation.name if profile and profile.delegation else 'Consolidado Comunal (Todas las Sedes)'
-    has_assigned_delegation = bool(profile and profile.delegation_id)
     is_admin_user = _is_admin(request)
+    has_assigned_delegation = bool(profile.delegation_id and not is_admin_user)
 
     # Casos sociales y padrón son entidades distintas: un vecino no es un caso.
     vecinos_scoped = _vecino_scope(request).order_by('-created_at')
@@ -471,6 +489,11 @@ def dashboard_asistente_integral_view(request):
         'is_admin_user': is_admin_user,
         'current_period': latest_period.name if latest_period else 'Sin período activo',
         'active_delegations': active_delegations,
+        'attention_types': AttentionType.objects.filter(status='Activo', deleted_at__isnull=True).order_by('name'),
+        'subattentions': SubAttention.objects.filter(
+            status='Activo', deleted_at__isnull=True,
+            attention_type__status='Activo', attention_type__deleted_at__isnull=True,
+        ).order_by('name'),
         'casos_sociales': casos_iniciales,
         'vecinos_data': vecinos_serializados,
         'goal_data': goal_data,
@@ -571,7 +594,7 @@ def dashboard_admin_view(request, section='dashboard', report_view='general'):
         'has_live_indicators': bool(weighted_values),
         'has_live_audit': bool(audit_rows),
         'has_period_goals': bool(goal_rows),
-        'delegations': [],
+        'delegations': active_delegations.order_by('name'),
         'parametrizacion': goal_rows,
         'auditoria_logs': audit_rows,
         'social_pending_request_count': SocialReviewRequest.objects.filter(
@@ -730,6 +753,12 @@ def api_validar_atencion(request, pk):
         activity = _activity_scope(request).select_for_update().select_related('delegation', 'user').filter(pk=pk).first()
         if not activity:
             return JsonResponse({'success': False, 'message': 'Atención no encontrada dentro de tu delegación.'}, status=404)
+        from social.models import SocialCase
+        if SocialCase.objects.filter(activity_id=activity.pk, deleted_at__isnull=True).exists():
+            return JsonResponse({
+                'success': False,
+                'message': 'Los casos sociales se revisan mediante la solicitud de revisión social.',
+            }, status=409)
         if activity.user_id == request.user.pk:
             return JsonResponse({'success': False, 'message': 'No puedes validar una atención que registraste tú mismo.'}, status=403)
         if activity.validation_status not in {'Pending', 'Requires correction'}:
@@ -850,13 +879,14 @@ def _serialize_vecino(vecino):
 def _vecino_scope(request):
     profile = _actor(request)
     qs = Vecino.objects.filter(deleted_at__isnull=True)
-    if not profile:
-        return qs if _is_admin(request) else qs.none()
-    # Si pertenece a una delegación, SOLO puede ver y editar datos de su misma delegación
-    if profile.delegation_id and profile.delegation and profile.delegation.status == 'Activo':
-        return qs.filter(territorio__iexact=profile.delegation.name)
     if _is_admin(request):
         return qs
+    if not profile:
+        return qs.none()
+    # Si pertenece a una delegación, SOLO puede ver y editar datos de su misma delegación
+    if (profile.delegation_id and profile.delegation and profile.delegation.status == 'Activo'
+            and profile.delegation.deleted_at is None):
+        return qs.filter(territorio__iexact=profile.delegation.name)
     return qs.none()
 
 
@@ -880,7 +910,7 @@ def api_vecinos(request):
             return JsonResponse({'success': False, 'message': 'Solicitud JSON inválida.'}, status=400)
         payload = _vecino_payload(data)
         profile = _actor(request)
-        if profile and profile.delegation:
+        if profile and profile.delegation and not _is_admin(request):
             # La delegación del usuario determina estrictamente su territorio
             payload['territorio'] = profile.delegation.name
         if not payload['nombre'] or not payload['rut'] or not payload['direccion']:
@@ -922,6 +952,15 @@ def api_vecino_detail(request, pk):
         
     if request.method == 'GET':
         return JsonResponse({'success': True, 'vecino': _serialize_vecino(vecino)})
+    from social.models import SocialCase
+    linked_social_case = SocialCase.objects.filter(
+        activity__neighbor_id=vecino.pk, deleted_at__isnull=True,
+    ).exists()
+    if request.method == 'DELETE' and linked_social_case:
+        return JsonResponse({
+            'success': False,
+            'message': 'Este vecino pertenece a un caso social activo. Da de baja la ficha social antes de eliminarlo.',
+        }, status=409)
     if request.method == 'PUT' or request.method == 'POST':
         try:
             data = json.loads(request.body)
@@ -929,10 +968,23 @@ def api_vecino_detail(request, pk):
             return JsonResponse({'success': False, 'message': 'Solicitud JSON inválida.'}, status=400)
         payload = _vecino_payload(data)
         profile = _actor(request)
-        if profile and profile.delegation:
+        if 'territorio' not in data:
+            payload['territorio'] = vecino.territorio or ''
+        if profile and profile.delegation and not _is_admin(request):
             if payload.get('territorio') and payload['territorio'].casefold() != profile.delegation.name.casefold():
                 return JsonResponse({'success': False, 'message': f'Territorio no autorizado. Solo puedes gestionar datos de tu delegación asignada ({profile.delegation.name}).'}, status=403)
             payload['territorio'] = profile.delegation.name
+        if linked_social_case and any((
+            payload['nombre'] != vecino.nombre,
+            _normalize_vecino_rut(payload['rut']) != _normalize_vecino_rut(vecino.rut),
+            payload['telefono'] != (vecino.telefono or ''),
+            payload['territorio'].casefold() != (vecino.territorio or '').casefold(),
+            payload['estado'] != vecino.estado,
+        )):
+            return JsonResponse({
+                'success': False,
+                'message': 'Nombre, RUT, teléfono, territorio y estado de este vecino se corrigen desde su ficha social.',
+            }, status=409)
         if 'email' not in data:
             payload['email'] = vecino.email
         if not payload['nombre'] or not payload['rut'] or not payload['direccion']:
@@ -1052,8 +1104,11 @@ def _attention_has_typed_fields():
 def _attention_result(a):
     evid = a.evidences.first()
     val = a.validations.first()
+    social_case = getattr(a, 'social_case', None)
+    social_case_id = social_case.pk if social_case and social_case.deleted_at is None else None
     return {
         'id': a.id, 'activity_code': a.activity_code,
+        'social_case_id': social_case_id,
         'neighbor_id': a.neighbor_id,
         'evidence_code': evid.evidence_code if evid else '',
         'contact_name': a.contact_name, 'contact_phone': a.contact_phone,
@@ -1084,7 +1139,7 @@ def api_atenciones(request):
     if not _has_matrix_permission(request, permission):
         return _permission_denied(permission)
     if request.method == 'GET':
-        qs = _activity_scope(request).select_related('delegation', 'catalog', 'attention_type', 'subattention', 'neighbor').prefetch_related('evidences', 'validations')
+        qs = _activity_scope(request).select_related('delegation', 'catalog', 'attention_type', 'subattention', 'neighbor', 'social_case').prefetch_related('evidences', 'validations')
         return JsonResponse({'success': True, 'atenciones': [_attention_result(a) for a in qs.order_by('-activity_date', '-created_at')]})
 
     data = _attention_payload(request)
@@ -1195,11 +1250,16 @@ def api_atencion_detail(request, pk):
     permission = 'lectura' if request.method == 'GET' else ('cierre' if request.method == 'DELETE' else 'edicion')
     if not _has_matrix_permission(request, permission):
         return _permission_denied(permission)
-    a = _activity_scope(request).select_related('delegation', 'catalog', 'attention_type', 'subattention', 'neighbor').filter(pk=pk).first()
+    a = _activity_scope(request).select_related('delegation', 'catalog', 'attention_type', 'subattention', 'neighbor', 'social_case').filter(pk=pk).first()
     if not a:
         return JsonResponse({'success': False, 'message': 'Atención no encontrada.'}, status=404)
     if request.method == 'GET':
         return JsonResponse({'success': True, 'atencion': _attention_result(a)})
+    if getattr(a, 'social_case', None) and a.social_case.deleted_at is None:
+        return JsonResponse({
+            'success': False,
+            'message': 'Esta atención pertenece a un caso social. Corrige o da de baja la ficha social para mantener ambos registros sincronizados.',
+        }, status=409)
     if request.method == 'DELETE':
         previous = _attention_result(a)
         with transaction.atomic():

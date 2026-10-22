@@ -90,6 +90,79 @@ class AdminApiIsolatedTests(SimpleTestCase):
         self.assertEqual(views.api_user_create(request).status_code, 400)
 
 
+class TerritorialAccessTests(TestCase):
+    def setUp(self):
+        User = get_user_model()
+        self.north = Delegation.objects.create(name='Sede Norte RBAC', scope='Norte')
+        self.south = Delegation.objects.create(name='Sede Sur RBAC', scope='Sur')
+        local_reader = Role.objects.create(
+            name='Consulta territorial RBAC',
+            permissions_data=['delegaciones.view', 'usuarios.view', 'roles.create'],
+        )
+        self.assistant = User.objects.create_user(
+            username='assistant-rbac', password='Safe!TestPass2026', is_staff=True,
+        )
+        self.delegate = User.objects.create_user(
+            username='delegate-rbac', password='Safe!TestPass2026',
+        )
+        self.admin = User.objects.create_user(
+            username='admin-rbac', password='Safe!TestPass2026',
+        )
+        for user, rut, position, delegation, base_role in (
+            (self.assistant, '12.345.678-5', 'Asistente Social', self.north, 'Asistente Social'),
+            (self.delegate, '11.111.111-1', 'Delegado Municipal', self.south, 'Delegado Municipal'),
+            (self.admin, '10.000.000-8', 'Administrador General', self.north, 'Administrador'),
+        ):
+            profile = UserProfile.objects.create(
+                user=user, rut=rut, full_name=user.username,
+                email=f'{user.username}@example.test', delegation=delegation,
+                position=Position.objects.get(name=position),
+            )
+            profile.roles.add(Role.objects.get(name=base_role))
+            if user != self.admin:
+                profile.roles.add(local_reader)
+
+    def test_assistant_and_delegate_only_list_their_assigned_delegation(self):
+        for user, expected in ((self.assistant, self.north), (self.delegate, self.south)):
+            self.client.force_login(user)
+            delegations = self.client.get(reverse('organization:api_delegations'))
+            self.assertEqual(delegations.status_code, 200)
+            self.assertEqual(
+                [item['id'] for item in delegations.json()['delegations']], [expected.pk],
+            )
+            users = self.client.get(reverse('organization:api_users_list'))
+            self.assertEqual(users.status_code, 200)
+            self.assertEqual(
+                {item['delegation_id'] for item in users.json()['users']}, {expected.pk},
+            )
+
+    def test_administrator_role_lists_both_delegations_despite_local_assignment(self):
+        self.client.force_login(self.admin)
+        delegations = self.client.get(reverse('organization:api_delegations'))
+        self.assertEqual(delegations.status_code, 200)
+        self.assertTrue(
+            {self.north.pk, self.south.pk}.issubset(
+                {item['id'] for item in delegations.json()['delegations']}
+            )
+        )
+        users = self.client.get(reverse('organization:api_users_list'))
+        self.assertEqual(users.status_code, 200)
+        self.assertEqual(
+            {self.assistant.username, self.delegate.username, self.admin.username},
+            {item['username'] for item in users.json()['users']},
+        )
+
+    def test_staff_flag_and_assistant_cargo_do_not_grant_admin_only_actions(self):
+        self.client.force_login(self.assistant)
+        response = self.client.post(
+            reverse('organization:api_role_create'),
+            data=json.dumps({'name': 'Rol no autorizado', 'permissions': []}),
+            content_type='application/json',
+        )
+        self.assertEqual(response.status_code, 403)
+        self.assertFalse(Role.objects.filter(name='Rol no autorizado').exists())
+
+
 class UserCargoRoleSyncTests(TestCase):
     def setUp(self):
         User = get_user_model()

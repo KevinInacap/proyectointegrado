@@ -5792,12 +5792,14 @@
             const visibleItems = items.slice(start - 1, end);
             tbody.innerHTML = visibleItems.map((a) => {
                 const badgeClass = a.status === 'Approved' ? 'bg-success-subtle text-success border-success-subtle' :
-                                   a.status === 'Requires correction' ? 'bg-danger-subtle text-danger border-danger-subtle' :
+                                   ['Rejected', 'Requires correction'].includes(a.status) ? 'bg-danger-subtle text-danger border-danger-subtle' :
                                    'bg-warning-subtle text-warning-emphasis border-warning-subtle';
                 const statusName = a.status === 'Approved' ? 'Aprobada' :
+                                   a.status === 'Rejected' ? 'Rechazada' :
                                    a.status === 'Requires correction' ? 'Req. Corrección' : 'En Revisión';
                 const stageText = a.stage ? `Etapa ${a.stage} de 3` : 'Etapa 1 de 3';
                 const dateText = a.date || 'Sin fecha';
+                const linkedCase = Boolean(a.social_case_id);
 
                 return `
                     <tr style="border-bottom: 1px solid #E2E8F0;">
@@ -5818,8 +5820,9 @@
                             </span>
                         </td>
                         <td class="py-2.5 px-2 text-truncate">
-                            <span class="fw-semibold text-dark d-block text-truncate" style="font-size: 0.80rem;">${escapeCell(a.service || a.title || 'Atención')}</span>
-                            <span class="d-block text-muted text-truncate" style="font-size: 0.70rem;">${escapeCell(a.description || 'Sin acción registrada')}</span>
+                            <span class="fw-semibold text-dark d-block text-truncate" style="font-size: 0.80rem;">${escapeCell(a.attention_type || a.service || a.title || 'Atención')}</span>
+                            <span class="d-block text-muted text-truncate" style="font-size: 0.70rem;">${escapeCell(a.subattention_type || a.description || 'Sin subatención')}</span>
+                            ${linkedCase ? `<span class="badge bg-info-subtle text-info-emphasis border border-info-subtle mt-1">Caso social #${escapeCell(a.social_case_id)}</span>` : ''}
                         </td>
                         <td class="py-2.5 px-1 text-center text-truncate">
                             <span class="badge rounded-pill bg-primary-subtle text-primary border border-primary-subtle fw-bold" style="font-size: 0.70rem; padding: 3px 6px;">
@@ -5837,8 +5840,9 @@
                         <td class="py-2.5 px-1 text-center text-nowrap atencion-row-actions">
                             <div class="d-inline-flex align-items-center justify-content-center gap-1 flex-nowrap">
                                 <button class="btn btn-sm catalog-action-btn btn-action-ver" onclick="verExpedienteAtencion(${Number(a.id)})" title="Ver detalle">Ver</button>
+                                ${linkedCase ? '<span class="small text-muted" title="Este registro se gestiona como caso social">Gestión social</span>' : `
                                 <button class="btn btn-sm catalog-action-btn btn-action-editar" onclick="editarAtencion(${Number(a.id)})" title="Editar registro">Editar</button>
-                                <button class="btn btn-sm catalog-action-btn btn-action-baja" onclick="eliminarAtencion(${Number(a.id)})" title="Dar de baja">Baja</button>
+                                <button class="btn btn-sm catalog-action-btn btn-action-baja" onclick="eliminarAtencion(${Number(a.id)})" title="Dar de baja">Baja</button>`}
                             </div>
                         </td>
                     </tr>
@@ -5921,6 +5925,10 @@
         }
 
         async function abrirModalNuevaAtencion(editId = null) {
+            if (editId && datasetAtenciones.some(item => Number(item.id) === Number(editId) && item.social_case_id)) {
+                Swal.fire({ icon: 'info', title: 'Caso social vinculado', text: 'Edita esta atención desde la gestión del caso social.' });
+                return;
+            }
             const form = document.getElementById('formAtencionDB');
             if (form) form.reset();
             const editInput = document.getElementById('atencionEditId');
@@ -6049,6 +6057,10 @@
         async function eliminarAtencion(id) {
             const record = datasetAtenciones.find(item => Number(item.id) === Number(id));
             if (!record) return;
+            if (record.social_case_id) {
+                Swal.fire({ icon: 'info', title: 'Caso social vinculado', text: 'Da de baja este registro desde la gestión del caso social.' });
+                return;
+            }
             const result = await Swal.fire({
                 title: 'Dar de baja esta atención',
                 text: `El registro ${record.activity_code || record.id} dejará de aparecer en el listado y conservará su trazabilidad.`,
@@ -6086,15 +6098,16 @@
             const elAcc = document.getElementById('lblExpedienteAccion');
             const elObs = document.getElementById('lblExpedienteObservacion');
 
-            if (elCod) elCod.textContent = `Expediente: ${a.evidence_code || ('EVI-2026-' + a.id)}`;
+            if (elCod) elCod.textContent = `Expediente: ${a.evidence_code || ('EVI-2026-' + a.id)}${a.social_case_id ? ` · Caso social #${a.social_case_id}` : ''}`;
             if (elVec) elVec.textContent = a.contact_name || 'Ciudadano Municipal';
             if (elCont) elCont.textContent = a.contact_phone ? `Contacto: ${a.contact_phone}` : 'Sin teléfono registrado';
             if (elDel) elDel.textContent = a.delegation || 'Delegación La Serena';
             
             if (elBadge) {
                 const badgeClass = a.status === 'Approved' ? 'bg-success text-white' :
-                                   a.status === 'Requires correction' ? 'bg-danger text-white' : 'bg-warning text-dark';
+                                   ['Rejected', 'Requires correction'].includes(a.status) ? 'bg-danger text-white' : 'bg-warning text-dark';
                 const statusName = a.status === 'Approved' ? 'Aprobada' :
+                                   a.status === 'Rejected' ? 'Rechazada' :
                                    a.status === 'Requires correction' ? 'Req. Corrección' : 'En Revisión';
                 elBadge.className = `badge rounded-pill mt-1 ${badgeClass}`;
                 elBadge.textContent = statusName;
@@ -6117,6 +6130,10 @@
 
         async function cambiarEstadoAtencionRapido(newStatus) {
             if (!atencionSeleccionadaId) return;
+            if (datasetAtenciones.some(item => item.id === atencionSeleccionadaId && item.social_case_id)) {
+                Swal.fire({ icon: 'info', title: 'Caso social vinculado', text: 'Revisa esta solicitud desde Solicitudes sociales.' });
+                return;
+            }
 
             try {
                 const resp = await fetch(`/api/atenciones/${atencionSeleccionadaId}/`, {

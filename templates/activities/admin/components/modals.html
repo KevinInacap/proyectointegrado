@@ -148,12 +148,7 @@
                             <div class="col-6">
                                 <label class="form-label small fw-bold">Territorio</label>
                                 <select class="form-select form-select-sm" id="vecinoTerritorio">
-                                    <option value="Delegación Avenida del Mar">Delegación Avenida del Mar</option>
-                                    <option value="Delegación Centro Histórico">Delegación Centro Histórico</option>
-                                    <option value="Delegación Las Compañías">Delegación Las Compañías</option>
-                                    <option value="Delegación La Pampa">Delegación La Pampa</option>
-                                    <option value="Delegación La Antena">Delegación La Antena</option>
-                                    <option value="Delegación Sector Rural">Delegación Sector Rural</option>
+                                    {% for delegation in delegations %}<option value="{{ delegation.name }}">{{ delegation.name }}</option>{% endfor %}
                                 </select>
                             </div>
                             <div class="col-6">

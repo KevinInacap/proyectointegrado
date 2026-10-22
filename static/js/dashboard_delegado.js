@@ -65,19 +65,26 @@
     if (event.relatedTarget?.dataset.action === 'create') resetForm();
   });
 
-  document.querySelectorAll('.delegado-shell .primary-nav a[href^="#"]').forEach(link => {
-    link.addEventListener('click', () => {
-      document.querySelectorAll('.delegado-shell .primary-nav .nav-link').forEach(item => {
-        item.classList.toggle('is-current', item === link);
-        if (item === link) item.setAttribute('aria-current', 'page'); else item.removeAttribute('aria-current');
-      });
+  const navLinks = [...document.querySelectorAll('.delegado-shell .primary-nav .nav-link')];
+  const syncNavigation = () => {
+    const current = navLinks.find(link => link.getAttribute('href') === location.hash) || navLinks[0];
+    navLinks.forEach(link => {
+      link.classList.toggle('is-current', link === current);
+      if (link === current) link.setAttribute('aria-current', 'page');
+      else link.removeAttribute('aria-current');
     });
-  });
+  };
+  window.addEventListener('hashchange', syncNavigation);
+  syncNavigation();
 
   document.querySelector('.delegado-table')?.addEventListener('click', async event => {
     const button = event.target.closest('button[data-action]');
     if (!button) return;
     const id = button.dataset.id;
+    if (button.dataset.action !== 'view' && button.closest('tr')?.dataset.socialCase) {
+      await notify('info', 'Caso social vinculado', 'Esta atención se gestiona desde el caso social.');
+      return;
+    }
     if (button.dataset.action === 'delete') {
       const confirmed = window.Swal
         ? (await Swal.fire({ title: 'Dar de baja la atención', text: `¿Quieres dar de baja ${button.dataset.code}? El registro seguirá en la auditoría.`, icon: 'warning', showCancelButton: true, confirmButtonText: 'Sí, dar de baja', cancelButtonText: 'Cancelar', confirmButtonColor: '#8b1d2c' })).isConfirmed
@@ -94,7 +101,11 @@
       const result = await request(detailUrl(id));
       const attention = result.atencion;
       if (button.dataset.action === 'view') {
-        await notify('info', attention.activity_code, `Solicitante: ${attention.contact_name}\nFecha: ${attention.date}\nEstado: ${attention.validation_status}\nSolicitud: ${attention.problem_description}\nAcción: ${attention.executed_action}`);
+        await notify('info', attention.activity_code, `${attention.social_case_id ? `Caso social #${attention.social_case_id}\n` : ''}Solicitante: ${attention.contact_name}\nFecha: ${attention.date}\nEstado: ${attention.validation_status}\nSolicitud: ${attention.problem_description}\nAcción: ${attention.executed_action}`);
+        return;
+      }
+      if (attention.social_case_id) {
+        await notify('info', 'Caso social vinculado', 'Esta atención se gestiona desde el caso social.');
         return;
       }
       if (!form || !window.bootstrap) return;

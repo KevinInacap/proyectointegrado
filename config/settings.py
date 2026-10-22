@@ -48,6 +48,8 @@ SECURE_HSTS_PRELOAD = SECURE_HSTS_SECONDS > 0
 # Application definition
 
 INSTALLED_APPS = [
+    'daphne',
+    'channels',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -61,6 +63,7 @@ INSTALLED_APPS = [
     'activities',
     'agenda',
     'social',
+    'websocket',
 ]
 
 MIDDLEWARE = [
@@ -94,6 +97,13 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'config.wsgi.application'
+ASGI_APPLICATION = 'config.asgi.application'
+
+CHANNEL_LAYERS = {
+    'default': {
+        'BACKEND': 'channels.layers.InMemoryChannelLayer',
+    }
+}
 
 
 # Database
@@ -182,4 +192,6 @@ EMAIL_BACKEND = (
     if EMAIL_HOST_PASSWORD else
     'django.core.mail.backends.console.EmailBackend'
 )
+
+LOGIN_URL = '/'
 

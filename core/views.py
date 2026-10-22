@@ -123,7 +123,11 @@ def dashboard_route_for_position(position_name):
 def _start_session_for_user(request, user, profile):
     role_name = profile.roles.filter(deleted_at__isnull=True).values_list('name', flat=True).first()
     position_name = profile.position.name if profile.position and profile.position.status == 'Activo' and profile.position.deleted_at is None else None
-    destination = dashboard_route_for_position(position_name)
+    next_url = request.GET.get('next')
+    if next_url and next_url.startswith('/') and not next_url.startswith('//'):
+        destination = next_url
+    else:
+        destination = dashboard_route_for_position(position_name)
     if destination == 'core:login':
         messages.error(request, 'Tu cuenta todavía no tiene un cargo activo con panel asignado. Contacta a administración.')
         return redirect('core:login')

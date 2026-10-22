@@ -34,8 +34,10 @@
             <a class="nav-link is-current" href="#inicio" aria-current="page"><span class="nav-mark" aria-hidden="true">⌂</span>Inicio</a>
             {% if can_read %}
             <a class="nav-link" href="#atenciones"><span class="nav-mark" aria-hidden="true">01</span>Atenciones</a>
-            <a class="nav-link" href="#equipo"><span class="nav-mark" aria-hidden="true">02</span>Equipo</a>
-            <a class="nav-link" href="?estado=followup#atenciones"><span class="nav-mark" aria-hidden="true">03</span>Seguimiento</a>
+            <a class="nav-link" href="#casos-sociales"><span class="nav-mark" aria-hidden="true">02</span>Casos sociales</a>
+            <a class="nav-link" href="#vecinos"><span class="nav-mark" aria-hidden="true">03</span>Vecinos</a>
+            <a class="nav-link" href="#equipo"><span class="nav-mark" aria-hidden="true">04</span>Equipo</a>
+            <a class="nav-link" href="?estado=followup#atenciones"><span class="nav-mark" aria-hidden="true">05</span>Seguimiento</a>
             {% endif %}
         </nav>
         <div class="sidebar-photo" role="img" aria-label="Faro Monumental de La Serena">
@@ -65,7 +67,8 @@
         <section class="delegado-summary" aria-label="Resumen de la delegación">
             <article class="delegado-stat" style="--order:0"><span class="stat-icon" aria-hidden="true">01</span><span>Atenciones registradas</span><strong>{{ total }}</strong><small>En {{ delegation.name }}</small></article>
             <article class="delegado-stat" style="--order:1"><span class="stat-icon" aria-hidden="true">02</span><span>En seguimiento</span><strong>{{ in_followup }}</strong><small>Pendientes o por corregir</small></article>
-            <article class="delegado-stat" style="--order:2"><span class="stat-icon" aria-hidden="true">03</span><span>Equipo activo</span><strong>{{ team_count }}</strong><small>Funcionarios de esta sede</small></article>
+            <article class="delegado-stat" style="--order:2"><span class="stat-icon" aria-hidden="true">03</span><span>Casos sociales</span><strong>{{ social_case_count }}</strong><small>De esta delegación</small></article>
+            <article class="delegado-stat" style="--order:3"><span class="stat-icon" aria-hidden="true">04</span><span>Vecinos</span><strong>{{ neighbor_count }}</strong><small>En el padrón local</small></article>
         </section>
 
         <div class="delegado-context"><span class="context-dot" aria-hidden="true"></span><strong>{{ delegation.name }}</strong><span>Los registros de este panel corresponden solo a tu delegación.</span><span class="context-approved">{{ approved }} aprobada{{ approved|pluralize }}</span></div>
@@ -83,19 +86,35 @@
             </form>
             <div class="delegado-table-wrap">
                 <table class="delegado-table"><thead><tr><th scope="col">Fecha</th><th scope="col">Solicitante</th><th scope="col">Asunto</th><th scope="col">Estado</th><th scope="col">Acciones</th></tr></thead>
-                    <tbody>{% for item in page %}<tr>
+                    <tbody>{% for item in page %}{% with linked_case=item.social_case %}<tr data-social-case="{% if linked_case and not linked_case.deleted_at %}{{ linked_case.pk }}{% endif %}">
                         <td data-label="Fecha">{{ item.activity_date|date:'d/m/Y' }}<small>{{ item.activity_code }}</small></td>
                         <td data-label="Solicitante"><strong>{{ item.contact_name|default:'Sin nombre' }}</strong></td>
-                        <td data-label="Asunto">{{ item.problem_description|truncatechars:82 }}</td>
+                        <td data-label="Asunto">{{ item.problem_description|truncatechars:82 }}{% if linked_case and not linked_case.deleted_at %}<small>Caso social #{{ linked_case.pk }}</small>{% endif %}</td>
                         <td data-label="Estado"><span class="delegado-badge badge-{{ item.validation_status|slugify }}">{{ item.get_validation_status_display }}</span></td>
-                        <td data-label="Acciones" class="action-cell"><button type="button" class="row-action" data-action="view" data-id="{{ item.pk }}">Ver</button>{% if can_edit %}<button type="button" class="row-action" data-action="edit" data-id="{{ item.pk }}">Editar</button>{% endif %}{% if can_close %}<button type="button" class="row-action row-danger" data-action="delete" data-id="{{ item.pk }}" data-code="{{ item.activity_code }}">Dar de baja</button>{% endif %}</td>
-                    </tr>{% empty %}<tr><td colspan="5" class="delegado-empty">No hay atenciones para estos filtros. {% if query or status_filter %}Prueba con otra búsqueda.{% else %}Cuando se registren atenciones en {{ delegation.name }}, aparecerán aquí.{% endif %}</td></tr>{% endfor %}</tbody>
+                        <td data-label="Acciones" class="action-cell"><button type="button" class="row-action" data-action="view" data-id="{{ item.pk }}">Ver</button>{% if linked_case and not linked_case.deleted_at %}<small>Gestión social</small>{% else %}{% if can_edit %}<button type="button" class="row-action" data-action="edit" data-id="{{ item.pk }}">Editar</button>{% endif %}{% if can_close %}<button type="button" class="row-action row-danger" data-action="delete" data-id="{{ item.pk }}" data-code="{{ item.activity_code }}">Dar de baja</button>{% endif %}{% endif %}</td>
+                    </tr>{% endwith %}{% empty %}<tr><td colspan="5" class="delegado-empty">No hay atenciones para estos filtros. {% if query or status_filter %}Prueba con otra búsqueda.{% else %}Cuando se registren atenciones en {{ delegation.name }}, aparecerán aquí.{% endif %}</td></tr>{% endfor %}</tbody>
                 </table>
             </div>
             <div class="delegado-pagination"><span>Mostrando {{ page.start_index }}–{{ page.end_index }} de {{ page.paginator.count }} · Página {{ page.number }} de {{ page.paginator.num_pages }}</span><div>{% if page.has_previous %}<a href="?q={{ query|urlencode }}&estado={{ status_filter|urlencode }}&page={{ page.previous_page_number }}#atenciones">Anterior</a>{% endif %}{% if page.has_next %}<a href="?q={{ query|urlencode }}&estado={{ status_filter|urlencode }}&page={{ page.next_page_number }}#atenciones">Siguiente</a>{% endif %}</div></div>
         </section>
 
-        <section class="delegado-card delegado-team" id="equipo" aria-labelledby="equipo-title"><div class="delegado-card-heading"><div><p class="eyebrow">Personas de tu sede</p><h2 id="equipo-title">Equipo activo</h2><p>Funcionarios asignados a {{ delegation.name }}.</p></div></div><div class="team-grid">{% for member in team %}<div class="team-member"><span class="team-avatar" aria-hidden="true">{{ member.full_name|first|upper }}</span><div><strong>{{ member.full_name }}</strong><small>{{ member.position.name|default:'Cargo sin asignar' }}</small></div></div>{% empty %}<p class="delegado-empty">No hay funcionarios activos asignados a esta sede.</p>{% endfor %}</div></section>
+        <section class="delegado-card" id="casos-sociales" aria-labelledby="casos-title">
+            <div class="delegado-card-heading"><div><p class="eyebrow">Consulta local</p><h2 id="casos-title">Casos sociales de mi delegación</h2><p>{{ social_case_count }} caso{{ social_case_count|pluralize }} en {{ delegation.name }}. Se muestran los 8 más recientes.</p></div></div>
+            <ul class="delegado-record-list">
+                {% for case in social_cases %}<li><span><small>{{ case.entry_date|date:'d/m/Y' }} · Caso #{{ case.pk }}</small><strong>{{ case.user_name }}</strong></span><span class="delegado-badge">Etapa {{ case.latest_stage|default:1 }} de 3</span></li>
+                {% empty %}<li class="delegado-empty">Aún no hay casos sociales registrados en esta delegación.</li>{% endfor %}
+            </ul>
+        </section>
+
+        <section class="delegado-card" id="vecinos" aria-labelledby="vecinos-title">
+            <div class="delegado-card-heading"><div><p class="eyebrow">Padrón local</p><h2 id="vecinos-title">Vecinos de mi delegación</h2><p>{{ neighbor_count }} vecino{{ neighbor_count|pluralize }} de {{ delegation.name }}. Se muestran los 8 registros más recientes.</p></div></div>
+            <ul class="delegado-record-list">
+                {% for neighbor in neighbors %}<li><span><small>{{ neighbor.rut }}</small><strong>{{ neighbor.nombre }}</strong></span><span>{{ neighbor.direccion|default:'Sin dirección' }}</span></li>
+                {% empty %}<li class="delegado-empty">Aún no hay vecinos registrados en esta delegación.</li>{% endfor %}
+            </ul>
+        </section>
+
+        <section class="delegado-card delegado-team" id="equipo" aria-labelledby="equipo-title"><div class="delegado-card-heading"><div><p class="eyebrow">Personas de tu sede</p><h2 id="equipo-title">Equipo activo</h2><p>{{ team_count }} funcionario{{ team_count|pluralize }} asignado{{ team_count|pluralize }} a {{ delegation.name }}.</p></div></div><div class="team-grid">{% for member in team %}<div class="team-member"><span class="team-avatar" aria-hidden="true">{{ member.full_name|first|upper }}</span><div><strong>{{ member.full_name }}</strong><small>{{ member.position.name|default:'Cargo sin asignar' }}</small></div></div>{% empty %}<p class="delegado-empty">No hay funcionarios activos asignados a esta sede.</p>{% endfor %}</div></section>
         {% endif %}
         <footer class="page-footer">Ilustre Municipalidad de La Serena <span aria-hidden="true">·</span> Gestión social y atención ciudadana</footer>
     </main>
