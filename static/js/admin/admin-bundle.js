@@ -384,6 +384,7 @@
             if (viewName === 'cargos') initCargosView();
             if (viewName === 'roles') initRolesView(false);
             if (viewName === 'solicitudes-sociales' && typeof window.loadSocialReviewRequests === 'function') window.loadSocialReviewRequests();
+            if (viewName === 'atenciones') cargarAtencionesDB();
         }
 
         async function cargarVecinosDesdeDB(mostrarAviso = false) {
@@ -531,7 +532,16 @@
             const select = document.getElementById('filtroTerritorioVecino');
             if (!select) return;
             const seleccionado = select.value;
-            const territorios = [...new Set(datasetVecinos.map(v => String(v.territorio || '').trim()).filter(Boolean))].sort((a,b) => a.localeCompare(b, 'es'));
+            const defaultTerritorios = [
+                'Delegación Avenida del Mar',
+                'Delegación Centro Histórico',
+                'Delegación Las Compañías',
+                'Delegación La Pampa',
+                'Delegación La Antena',
+                'Delegación Sector Rural'
+            ];
+            const dataTerritorios = datasetVecinos.map(v => String(v.territorio || '').trim()).filter(Boolean);
+            const territorios = [...new Set([...defaultTerritorios, ...dataTerritorios])].sort((a,b) => a.localeCompare(b, 'es'));
             select.innerHTML = '<option value="">Todos los territorios</option>' + territorios.map(nombre => `<option value="${nombre.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}">${nombre.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}</option>`).join('');
             if (territorios.includes(seleccionado)) select.value = seleccionado;
         }

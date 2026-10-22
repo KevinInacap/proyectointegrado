@@ -12,6 +12,7 @@ urlpatterns = [
     path('dashboard/verificador/', views.dashboard_verificador_view, name='dashboard_verificador'),
     path('dashboard/gestor/', views.dashboard_gestor_view, name='dashboard_gestor'),
     path('dashboard/asistente-social/', views.dashboard_asistente_view, name='dashboard_asistente'),
+    path('dashboard/asistente-social/integral/', views.dashboard_asistente_integral_view, name='dashboard_asistente_integral'),
     path('dashboard/auditoria/', views.dashboard_auditor_view, name='dashboard_auditor'),
     path('dashboard/cargo/', views.dashboard_cargo_view, name='dashboard_cargo'),
     path('dashboard/modulo/<slug:module_slug>/', views.dashboard_module_view, name='dashboard_module'),

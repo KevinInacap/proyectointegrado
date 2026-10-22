@@ -35,15 +35,23 @@ def admin_only(view_func):
         user = getattr(request, 'user', None)
         if not user or not user.is_authenticated or not user.is_active:
             return JsonResponse({'success': False, 'message': 'Autenticación requerida.'}, status=403)
-        if not user.is_superuser:
+        if not user.is_superuser and not getattr(user, 'is_staff', False):
             profile = UserProfile.objects.filter(
                 user=user, status='Activo', deleted_at__isnull=True,
             ).prefetch_related('roles').first()
-            if not profile or not any(
+            has_admin_role = bool(profile and any(
                 is_administrator_role(role)
                 for role in profile.roles.all()
                 if role.deleted_at is None
-            ):
+            ))
+            is_eval_authorized = bool(
+                has_admin_role or (
+                    profile and profile.position and profile.position.name in (
+                        'Asistente Social', 'Administrador General', 'SuperAdministrador', 'Super Administrador'
+                    )
+                )
+            )
+            if not is_eval_authorized:
                 return JsonResponse({'success': False, 'message': f'Se requiere el rol {ADMINISTRATOR_ROLE_NAME}.'}, status=403)
         return view_func(request, *args, **kwargs)
     return wrapped
@@ -52,15 +60,19 @@ def admin_only(view_func):
 def _has_administrator_role(user):
     if not user or not user.is_authenticated or not user.is_active:
         return False
-    if user.is_superuser:
+    if user.is_superuser or getattr(user, 'is_staff', False):
         return True
     profile = UserProfile.objects.filter(
         user=user, status='Activo', deleted_at__isnull=True,
     ).prefetch_related('roles').first()
-    return bool(profile and any(
-        is_administrator_role(role)
-        for role in profile.roles.all()
-        if role.deleted_at is None
+    return bool(profile and (
+        any(
+            is_administrator_role(role)
+            for role in profile.roles.all()
+            if role.deleted_at is None
+        ) or (profile.position and profile.position.name in (
+            'Asistente Social', 'Administrador General', 'SuperAdministrador', 'Super Administrador'
+        ))
     ))
 
 

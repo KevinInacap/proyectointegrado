@@ -33,7 +33,7 @@
     <aside class="asistente-sidebar" aria-label="Navegación Asistencia Social">
         <div>
             <!-- Escudo / Logotipo Oficial de La Serena -->
-            <a href="{% url 'activities:dashboard_asistente' %}" class="asistente-brand">
+            <a href="{% url 'social:dashboard_asistente' %}" class="asistente-brand">
                 <div class="asistente-brand-logo">
                     <i class="bi bi-shield-check"></i>
                 </div>
@@ -94,6 +94,12 @@
                             <span class="asistente-nav-icon"><i class="bi bi-speedometer2"></i></span>
                             <span>Metas y Semáforo SGR</span>
                             <span class="asistente-badge badge-sky">{{ avance_label }}</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a class="asistente-nav-link" href="{% url 'activities:dashboard_asistente_integral' %}">
+                            <span class="asistente-nav-icon"><i class="bi bi-grid-1x2-fill"></i></span>
+                            <span>Padrón y gestión territorial</span>
                         </a>
                     </li>
                 </ul>

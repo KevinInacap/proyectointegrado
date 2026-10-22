@@ -54,7 +54,7 @@ class SocialDashboardPermissionTests(TestCase):
         self.role.permission_definitions.clear()
         self.role.save(update_fields=['permissions_data', 'updated_at'])
 
-        response = self.client.get(reverse('activities:dashboard_asistente'))
+        response = self.client.get(reverse('social:dashboard_asistente'))
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'Tu rol no tiene accesos habilitados')
@@ -83,7 +83,7 @@ class SocialDashboardPermissionTests(TestCase):
         self.profile.position = Position.objects.get(name='Delegado Municipal')
         self.profile.save(update_fields=['position', 'updated_at'])
 
-        response = self.client.get(reverse('activities:dashboard_asistente'))
+        response = self.client.get(reverse('social:dashboard_asistente'))
 
         self.assertEqual(response.status_code, 302)
         self.assertEqual(response.url, reverse('core:login'))
@@ -220,7 +220,7 @@ class SocialDashboardPermissionTests(TestCase):
             management_date=date(2026, 10, 20), result='Dato reservado a otra sede.',
         )
 
-        response = self.client.get(reverse('activities:dashboard_asistente'))
+        response = self.client.get(reverse('social:dashboard_asistente'))
 
         self.assertEqual(response.status_code, 200)
         visits = list(response.context['visitas_terreno'])

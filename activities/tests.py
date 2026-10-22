@@ -1,5 +1,4 @@
 import json
-
 from django.contrib.auth import get_user_model
 from django.test import TestCase
 from django.urls import reverse
@@ -373,6 +372,22 @@ class DashboardAccessTests(TestCase):
         self.assertNotContains(response, 'Gestión de Usuarios y Personal')
         self.assertNotContains(response, 'Registrar atención')
 
+    def test_asistente_social_operational_dashboard(self):
+        self.set_position('Asistente Social')
+        self.profile.roles.clear()
+        role = Role.objects.get(name='Asistente Social')
+        self.profile.roles.add(role)
+        response = self.client.get(reverse('activities:dashboard_asistente'))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Panel de Gestión Social Territorial')
+        self.assertContains(response, 'Semáforo SGR')
+        self.assertContains(response, 'RN-012')
+        self.assertContains(response, 'Evaluación y Diagnóstico')
+        self.assertContains(response, 'Gestión de Beneficios')
+        self.assertContains(response, 'Informes Sociales')
+        self.assertContains(response, 'Atención de Emergencias')
+        self.assertContains(response, 'Articulación de Redes')
+
 
 class RolePermissionToggleApiTests(TestCase):
     def setUp(self):
@@ -702,3 +717,44 @@ class VecinoApiValidationTests(TestCase):
         self.assertEqual(Vecino.objects.count(), 1)
         existing.refresh_from_db()
         self.assertEqual(existing.email, 'vecino@example.test')
+
+    def test_asistente_social_delegation_scoping_strictly_enforced(self):
+        del_sur = Delegation.objects.create(name='Delegación Sur Test', scope='Sur')
+        del_norte = Delegation.objects.create(name='Delegación Norte Test', scope='Norte')
+        pos_asistente, _ = Position.objects.get_or_create(name='Asistente Social')
+        user_asistente = get_user_model().objects.create_user(username='asistente-eval', password='password')
+        prof_asistente = UserProfile.objects.create(
+            user=user_asistente, rut='19.822.450-3', full_name='Asistente Social Test',
+            email='asistente@test.com', delegation=del_sur, position=pos_asistente, status='Activo'
+        )
+        role = Role.objects.create(name='Rol Asistente Test', permissions_data=['lectura', 'edicion', 'cierre'])
+        prof_asistente.roles.add(role)
+        self.client.force_login(user_asistente)
+
+        vecino_sur = Vecino.objects.create(nombre='Vecino Sur', rut='14.892.314-0', territorio='Delegación Sur Test', direccion='Calle Sur')
+        vecino_norte = Vecino.objects.create(nombre='Vecino Norte', rut='16.241.879-2', territorio='Delegación Norte Test', direccion='Calle Norte')
+
+        resp = self.client.get(self.url)
+        self.assertEqual(resp.status_code, 200)
+        nombres = [v['nombre'] for v in resp.json()['vecinos']]
+        # Solo debe ver vecinos de su propia delegación
+        self.assertIn('Vecino Sur', nombres)
+        self.assertNotIn('Vecino Norte', nombres)
+
+        # Al registrar un nuevo vecino, queda estrictamente ligado a su delegación asignada
+        payload = {
+            'nombre': 'Nuevo Vecino Sur',
+            'rut': '18.390.412-4',
+            'email': 'sur@test.com',
+            'direccion': 'Avda Sur 100',
+            'telefono': '+56911223344',
+            'territorio': 'Delegación Sur Test',
+            'estado': 'Activo'
+        }
+        create_resp = self.client.post(self.url, json.dumps(payload), content_type='application/json')
+        self.assertEqual(create_resp.status_code, 200)
+        self.assertTrue(Vecino.objects.filter(rut='18.390.412-4', territorio='Delegación Sur Test').exists())
+
+        # No debe poder acceder ni editar datos de otra delegación
+        detail_norte = self.client.get(reverse('activities:api_vecino_detail', args=[vecino_norte.pk]))
+        self.assertEqual(detail_norte.status_code, 404)
