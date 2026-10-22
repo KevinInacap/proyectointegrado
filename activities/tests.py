@@ -150,19 +150,20 @@ class DashboardAccessTests(TestCase):
             self.profile.roles.add(role)
             response = self.client.get(reverse('activities:' + route))
             self.assertEqual(response.status_code, 200)
-            self.assertContains(response, 'Accesos de ' + position_name)
+            if position_name == 'Delegado Municipal':
+                self.assertContains(response, 'Panel de tu delegación')
+                self.assertContains(response, 'Atenciones de mi delegación')
+                self.assertContains(response, 'Nueva atención')
+            else:
+                self.assertContains(response, 'Accesos de ' + position_name)
+                self.assertContains(response, 'Disponible más adelante')
             self.assertContains(response, 'Usuario Rol')
             self.assertContains(response, 'Centro de prueba')
-            self.assertContains(response, 'Disponible más adelante')
-            self.assertNotContains(response, 'Registrar atención')
             for other in {'dashboard_coordinador', 'dashboard_delegado', 'dashboard_asistente'} - {route}:
                 self.assertNotEqual(self.client.get(reverse('activities:' + other)).status_code, 200)
 
     def test_cargo_panels_are_presentational_not_operational(self):
-        for position_name, route in (
-            ('Coordinador del Sistema', 'dashboard_coordinador'),
-            ('Delegado Municipal', 'dashboard_delegado'),
-        ):
+        for position_name, route in (('Coordinador del Sistema', 'dashboard_coordinador'),):
             self.set_position(position_name)
             self.profile.roles.clear()
             role, _ = Role.objects.get_or_create(name=position_name)
@@ -175,6 +176,76 @@ class DashboardAccessTests(TestCase):
             self.assertEqual(response.status_code, 200)
             self.assertNotContains(response, 'name="q"')
             self.assertNotContains(response, '?module=')
+
+    def test_delegado_dashboard_filters_only_assigned_delegation_and_obeys_role(self):
+        self.set_position('Delegado Municipal')
+        role = Role.objects.create(name='Operación local', permissions_data=['lectura', 'edicion'])
+        self.profile.roles.add(role)
+        other_delegation = Delegation.objects.create(name='Otra sede', scope='Sur')
+        own = Activity.objects.create(
+            activity_code='ACT-LOCAL-1', activity_date='2026-01-02', contact_name='Vecina Local',
+            problem_description='Alumbrado de prueba', executed_action='Recepción',
+            delegation=self.delegation, validation_status='Pending',
+        )
+        Activity.objects.create(
+            activity_code='ACT-AJENA-1', activity_date='2026-01-02', contact_name='Vecina Ajena',
+            problem_description='Otro asunto', executed_action='Recepción',
+            delegation=other_delegation,
+        )
+        url = reverse('activities:dashboard_delegado')
+        response = self.client.get(url)
+        self.assertContains(response, own.activity_code)
+        self.assertNotContains(response, 'ACT-AJENA-1')
+        self.assertContains(response, 'Nueva atención')
+        self.assertNotContains(response, 'Dar de baja')
+        self.assertEqual(self.client.get(f'{url}?q=alumbrado&estado=followup').context['page'].paginator.count, 1)
+        self.assertEqual(self.client.get(f'{url}?q=sin-coincidencia').context['page'].paginator.count, 0)
+        role.permissions_data = ['lectura', 'cierre']
+        role.save(update_fields=['permissions_data', 'updated_at'])
+        response = self.client.get(url)
+        self.assertNotContains(response, 'Nueva atención')
+        self.assertContains(response, 'Dar de baja')
+        role.permissions_data = []
+        role.save(update_fields=['permissions_data', 'updated_at'])
+        response = self.client.get(url)
+        self.assertContains(response, 'Tu rol no tiene accesos habilitados')
+        self.assertNotContains(response, own.activity_code)
+
+    def test_delegado_attention_crud_updates_dashboard_and_paginates(self):
+        from metrics.models import AttentionType, SubAttention
+        self.set_position('Delegado Municipal')
+        role = Role.objects.create(name='Delegado con cierre', permissions_data=['lectura', 'edicion', 'cierre'])
+        self.profile.roles.add(role)
+        attention_type = AttentionType.objects.create(code='DEL-T-1', name='Atención vecinal')
+        subattention = SubAttention.objects.create(code='DEL-S-1', name='Orientación', attention_type=attention_type)
+        api = reverse('activities:api_atenciones')
+        payload = {
+            'delegation': self.delegation.pk, 'contact_name': 'Vecino de prueba',
+            'activity_date': '2026-01-02', 'problem_description': 'Consulta de alumbrado',
+            'executed_action': 'Se registró la solicitud',
+            'attention_type_id': attention_type.pk, 'subattention_id': subattention.pk,
+            'is_collective_agenda': False,
+        }
+        response = self.client.post(api, json.dumps(payload), content_type='application/json')
+        self.assertEqual(response.status_code, 201)
+        pk = response.json()['id']
+        dashboard = reverse('activities:dashboard_delegado')
+        self.assertContains(self.client.get(dashboard), 'Consulta de alumbrado')
+        detail = reverse('activities:api_atencion_detail', args=[pk])
+        self.assertEqual(self.client.put(detail, json.dumps({'problem_description': 'Consulta editada'}), content_type='application/json').status_code, 200)
+        self.assertContains(self.client.get(dashboard), 'Consulta editada')
+        for index in range(9):
+            Activity.objects.create(
+                activity_code=f'DEL-PAGE-{index}', activity_date='2026-01-01',
+                contact_name='Vecino', problem_description=f'Caso {index}',
+                executed_action='Registro', delegation=self.delegation,
+            )
+        first = self.client.get(dashboard)
+        second = self.client.get(f'{dashboard}?page=2')
+        self.assertEqual(len(first.context['page']), 8)
+        self.assertEqual(len(second.context['page']), 2)
+        self.assertEqual(self.client.delete(detail).status_code, 200)
+        self.assertNotContains(self.client.get(dashboard), 'Consulta editada')
 
     def test_operational_dashboards_use_profile_identity_without_mock_records(self):
         for role_name, route in (

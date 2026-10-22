@@ -1,0 +1,123 @@
+{% load static %}
+<!doctype html>
+<html lang="es">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#68121e">
+    <title>Delegado Municipal | SGR La Serena</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="{% static 'css/dashboard_position.css' %}">
+    <link rel="stylesheet" href="{% static 'css/dashboard_delegado.css' %}">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" defer></script>
+    <script src="{% static 'js/dashboard_delegado.js' %}" defer></script>
+</head>
+<body>
+<div class="dashboard-shell delegado-shell" id="delegado-app"
+     data-list-url="{% url 'activities:api_atenciones' %}"
+     data-detail-base="{% url 'activities:api_atenciones' %}"
+     data-delegation="{% if delegation %}{{ delegation.pk }}{% endif %}">
+    <aside class="side-panel" aria-label="Navegación del delegado">
+        <a class="brand" href="{% url 'activities:dashboard' %}">
+            <img src="{% static 'images/laserena_horizontal_blanco.svg' %}" alt="Ilustre Municipalidad de La Serena">
+        </a>
+        <div class="profile-card">
+            <span class="avatar" aria-hidden="true">{{ first_name|first|upper }}</span>
+            <div class="profile-copy">
+                <strong>{{ profile.full_name }}</strong>
+                <span>Delegado Municipal</span>
+                <small>{% if delegation %}{{ delegation.code }} · {{ delegation.name }}{% else %}Sin delegación asignada{% endif %}</small>
+            </div>
+        </div>
+        <nav class="primary-nav" aria-label="Menú principal">
+            <a class="nav-link is-current" href="#inicio" aria-current="page"><span class="nav-mark" aria-hidden="true">⌂</span>Inicio</a>
+            {% if can_read %}
+            <a class="nav-link" href="#atenciones"><span class="nav-mark" aria-hidden="true">01</span>Atenciones</a>
+            <a class="nav-link" href="#equipo"><span class="nav-mark" aria-hidden="true">02</span>Equipo</a>
+            <a class="nav-link" href="?estado=followup#atenciones"><span class="nav-mark" aria-hidden="true">03</span>Seguimiento</a>
+            {% endif %}
+        </nav>
+        <div class="sidebar-photo" role="img" aria-label="Faro Monumental de La Serena">
+            <div class="photo-caption"><span>La Serena</span><small>Siempre cerca de ti</small></div>
+        </div>
+    </aside>
+
+    <main class="main-content" id="inicio">
+        <div class="identity-bar" aria-label="Contexto de trabajo">
+            <span><strong>{{ profile.full_name }}</strong><small>Delegado Municipal · {{ role_name }}</small></span>
+            <span><small>Delegación activa</small><strong>{% if delegation %}{{ delegation.code }} · {{ delegation.name }}{% else %}Sin delegación asignada{% endif %}</strong></span>
+        </div>
+        <header class="page-heading delegado-heading">
+            <div>
+                <p class="eyebrow">Sistema de Gestión de Resultados</p>
+                <h1>Panel de tu delegación</h1>
+                <p class="lead">Hola, {{ first_name }}. Aquí puedes revisar el trabajo de {% if delegation %}{{ delegation.name }}{% else %}tu sede{% endif %}.</p>
+            </div>
+            <a class="logout-link" href="{% url 'core:logout' %}">Cerrar sesión</a>
+        </header>
+
+        {% if not delegation %}
+        <div class="delegado-notice" role="status">Tu perfil no tiene una delegación activa asignada. Solicita a administración que revise tu cargo y sede.</div>
+        {% elif not can_read %}
+        <div class="delegado-notice" role="status">Tu rol no tiene accesos habilitados por ahora. Consulta con la administración si necesitas un permiso.</div>
+        {% else %}
+        <section class="delegado-summary" aria-label="Resumen de la delegación">
+            <article class="delegado-stat" style="--order:0"><span class="stat-icon" aria-hidden="true">01</span><span>Atenciones registradas</span><strong>{{ total }}</strong><small>En {{ delegation.name }}</small></article>
+            <article class="delegado-stat" style="--order:1"><span class="stat-icon" aria-hidden="true">02</span><span>En seguimiento</span><strong>{{ in_followup }}</strong><small>Pendientes o por corregir</small></article>
+            <article class="delegado-stat" style="--order:2"><span class="stat-icon" aria-hidden="true">03</span><span>Equipo activo</span><strong>{{ team_count }}</strong><small>Funcionarios de esta sede</small></article>
+        </section>
+
+        <div class="delegado-context"><span class="context-dot" aria-hidden="true"></span><strong>{{ delegation.name }}</strong><span>Los registros de este panel corresponden solo a tu delegación.</span><span class="context-approved">{{ approved }} aprobada{{ approved|pluralize }}</span></div>
+
+        <section class="delegado-card" id="atenciones" aria-labelledby="atenciones-title">
+            <div class="delegado-card-heading">
+                <div><p class="eyebrow">Trabajo diario</p><h2 id="atenciones-title">Atenciones de mi delegación</h2><p>Busca, filtra y revisa los registros guardados en la base de datos.</p></div>
+                {% if can_edit %}<button class="delegado-primary" type="button" data-bs-toggle="modal" data-bs-target="#attentionModal" data-action="create">+ Nueva atención</button>{% endif %}
+            </div>
+            <form class="delegado-filters" action="{% url 'activities:dashboard_delegado' %}#atenciones" method="get">
+                <label><span>Buscar por código, vecino o asunto</span><input type="search" name="q" value="{{ query }}" placeholder="Escribe para buscar…" maxlength="100"></label>
+                <label><span>Estado</span><select name="estado"><option value="">Todos los estados</option><option value="followup" {% if status_filter == 'followup' %}selected{% endif %}>En seguimiento</option>{% for code, label in statuses %}<option value="{{ code }}" {% if status_filter == code %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></label>
+                <button type="submit">Aplicar filtros</button>
+                {% if query or status_filter %}<a class="clear-filters" href="{% url 'activities:dashboard_delegado' %}#atenciones">Limpiar</a>{% endif %}
+            </form>
+            <div class="delegado-table-wrap">
+                <table class="delegado-table"><thead><tr><th scope="col">Fecha</th><th scope="col">Solicitante</th><th scope="col">Asunto</th><th scope="col">Estado</th><th scope="col">Acciones</th></tr></thead>
+                    <tbody>{% for item in page %}<tr>
+                        <td data-label="Fecha">{{ item.activity_date|date:'d/m/Y' }}<small>{{ item.activity_code }}</small></td>
+                        <td data-label="Solicitante"><strong>{{ item.contact_name|default:'Sin nombre' }}</strong></td>
+                        <td data-label="Asunto">{{ item.problem_description|truncatechars:82 }}</td>
+                        <td data-label="Estado"><span class="delegado-badge badge-{{ item.validation_status|slugify }}">{{ item.get_validation_status_display }}</span></td>
+                        <td data-label="Acciones" class="action-cell"><button type="button" class="row-action" data-action="view" data-id="{{ item.pk }}">Ver</button>{% if can_edit %}<button type="button" class="row-action" data-action="edit" data-id="{{ item.pk }}">Editar</button>{% endif %}{% if can_close %}<button type="button" class="row-action row-danger" data-action="delete" data-id="{{ item.pk }}" data-code="{{ item.activity_code }}">Dar de baja</button>{% endif %}</td>
+                    </tr>{% empty %}<tr><td colspan="5" class="delegado-empty">No hay atenciones para estos filtros. {% if query or status_filter %}Prueba con otra búsqueda.{% else %}Cuando se registren atenciones en {{ delegation.name }}, aparecerán aquí.{% endif %}</td></tr>{% endfor %}</tbody>
+                </table>
+            </div>
+            <div class="delegado-pagination"><span>Mostrando {{ page.start_index }}–{{ page.end_index }} de {{ page.paginator.count }} · Página {{ page.number }} de {{ page.paginator.num_pages }}</span><div>{% if page.has_previous %}<a href="?q={{ query|urlencode }}&estado={{ status_filter|urlencode }}&page={{ page.previous_page_number }}#atenciones">Anterior</a>{% endif %}{% if page.has_next %}<a href="?q={{ query|urlencode }}&estado={{ status_filter|urlencode }}&page={{ page.next_page_number }}#atenciones">Siguiente</a>{% endif %}</div></div>
+        </section>
+
+        <section class="delegado-card delegado-team" id="equipo" aria-labelledby="equipo-title"><div class="delegado-card-heading"><div><p class="eyebrow">Personas de tu sede</p><h2 id="equipo-title">Equipo activo</h2><p>Funcionarios asignados a {{ delegation.name }}.</p></div></div><div class="team-grid">{% for member in team %}<div class="team-member"><span class="team-avatar" aria-hidden="true">{{ member.full_name|first|upper }}</span><div><strong>{{ member.full_name }}</strong><small>{{ member.position.name|default:'Cargo sin asignar' }}</small></div></div>{% empty %}<p class="delegado-empty">No hay funcionarios activos asignados a esta sede.</p>{% endfor %}</div></section>
+        {% endif %}
+        <footer class="page-footer">Ilustre Municipalidad de La Serena <span aria-hidden="true">·</span> Gestión social y atención ciudadana</footer>
+    </main>
+</div>
+
+{% if can_close %}<form id="delegado-csrf" hidden>{% csrf_token %}</form>{% endif %}
+{% if can_edit %}
+<div class="modal fade" id="attentionModal" tabindex="-1" aria-labelledby="attentionModalTitle" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-lg"><div class="modal-content delegado-modal">
+    <div class="modal-header"><div><p class="eyebrow">{{ delegation.name }}</p><h2 class="modal-title fs-4" id="attentionModalTitle">Nueva atención</h2></div><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button></div>
+    <form id="delegado-attention-form" novalidate>{% csrf_token %}<div class="modal-body"><div class="row g-3">
+      <div class="col-md-6"><label for="field-contact" class="form-label">Solicitante *</label><input id="field-contact" name="contact_name" class="form-control" maxlength="150" required></div>
+      <div class="col-md-6"><label for="field-phone" class="form-label">Teléfono</label><input id="field-phone" name="contact_phone" class="form-control" maxlength="20"></div>
+      <div class="col-md-6"><label for="field-date" class="form-label">Fecha *</label><input id="field-date" name="activity_date" type="date" class="form-control" max="{% now 'Y-m-d' %}" required></div>
+      <div class="col-md-6"><label for="field-type" class="form-label">Tipo de atención *</label><select id="field-type" name="attention_type_id" class="form-select" required><option value="">Selecciona un tipo</option>{% for type in attention_types %}<option value="{{ type.pk }}">{{ type.name }}</option>{% endfor %}</select></div>
+      <div class="col-md-6"><label for="field-subtype" class="form-label">Sub atención *</label><select id="field-subtype" name="subattention_id" class="form-select" required><option value="">Selecciona primero el tipo</option>{% for sub in subattentions %}<option value="{{ sub.pk }}" data-type="{{ sub.attention_type_id }}">{{ sub.name }}</option>{% endfor %}</select></div>
+      <div class="col-md-6 d-flex align-items-end"><div class="form-check pb-2"><input class="form-check-input" type="checkbox" id="field-agenda" name="is_collective_agenda"><label for="field-agenda" class="form-check-label">Incorporar a agenda colectiva</label></div></div>
+      <div class="col-md-6"><label for="field-problem" class="form-label">Descripción de la solicitud *</label><textarea id="field-problem" name="problem_description" class="form-control" rows="3" maxlength="10000" required></textarea></div>
+      <div class="col-md-6"><label for="field-action" class="form-label">Acción realizada o derivación *</label><textarea id="field-action" name="executed_action" class="form-control" rows="3" maxlength="10000" required></textarea></div>
+    </div></div><div class="modal-footer"><button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button><button type="submit" class="delegado-primary" id="delegado-save">Guardar atención</button></div></form>
+  </div></div>
+</div>
+{% endif %}
+</body>
+</html>

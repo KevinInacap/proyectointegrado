@@ -4,6 +4,8 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from django.core.exceptions import ValidationError
 from django.core.validators import validate_email
+from django.core.paginator import Paginator
+from django.db.models import Q
 from django.utils import timezone
 from django.utils.text import slugify
 from django.urls import reverse
@@ -212,7 +214,59 @@ def dashboard_coordinador_view(request):
 
 
 def dashboard_delegado_view(request):
-    return _position_dashboard(request, 'Delegado Municipal')
+    denied = _position_required(request, 'Delegado Municipal')
+    if denied:
+        return denied
+    from metrics.models import AttentionType, SubAttention
+
+    profile = _actor(request)
+    delegation = profile.delegation
+    assigned = bool(delegation and delegation.status == 'Activo' and delegation.deleted_at is None)
+    can_read = _has_matrix_permission(request, 'lectura')
+    can_edit = _has_matrix_permission(request, 'edicion') and assigned
+    can_close = _has_matrix_permission(request, 'cierre') and assigned
+    activities = Activity.objects.none()
+    team = UserProfile.objects.none()
+    if assigned and can_read:
+        activities = Activity.objects.filter(
+            delegation_id=delegation.pk, deleted_at__isnull=True,
+        ).select_related('attention_type', 'subattention')
+        team = UserProfile.objects.filter(
+            delegation_id=delegation.pk, status='Activo', deleted_at__isnull=True,
+            user__is_active=True,
+        ).select_related('position').order_by('full_name')
+
+    total = activities.count()
+    in_followup = activities.filter(validation_status__in=['Pending', 'Requires correction']).count()
+    approved = activities.filter(validation_status='Approved').count()
+    query = request.GET.get('q', '').strip()[:100]
+    status = request.GET.get('estado', '').strip()
+    allowed_statuses = {code for code, _ in Activity.VALIDATION_STATUS_CHOICES} | {'followup'}
+    if status not in allowed_statuses:
+        status = ''
+    filtered = activities
+    if query:
+        filtered = filtered.filter(Q(activity_code__icontains=query) |
+                                   Q(contact_name__icontains=query) |
+                                   Q(problem_description__icontains=query))
+    if status == 'followup':
+        filtered = filtered.filter(validation_status__in=['Pending', 'Requires correction'])
+    elif status:
+        filtered = filtered.filter(validation_status=status)
+    page = Paginator(filtered.order_by('-activity_date', '-created_at'), 8).get_page(request.GET.get('page'))
+    role_name = ', '.join(profile.roles.filter(deleted_at__isnull=True).values_list('name', flat=True)) or 'Sin rol asignado'
+    return render(request, 'activities/dashboard_delegado.html', {
+        'profile': profile, 'delegation': delegation if assigned else None,
+        'first_name': profile.full_name.strip().split()[0] if profile.full_name.strip() else request.user.get_username(),
+        'role_name': role_name, 'can_read': can_read and assigned,
+        'can_edit': can_edit, 'can_close': can_close,
+        'total': total, 'in_followup': in_followup, 'approved': approved,
+        'team': team, 'team_count': team.count(), 'page': page,
+        'query': query, 'status_filter': status,
+        'statuses': Activity.VALIDATION_STATUS_CHOICES,
+        'attention_types': AttentionType.objects.filter(status='Activo', deleted_at__isnull=True).order_by('name') if can_edit else [],
+        'subattentions': SubAttention.objects.filter(status='Activo', deleted_at__isnull=True, attention_type__status='Activo', attention_type__deleted_at__isnull=True).order_by('name') if can_edit else [],
+    })
 
 
 def dashboard_consulta_view(request):
