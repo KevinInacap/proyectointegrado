@@ -8,6 +8,7 @@
     <meta name="theme-color" content="#68121e">
     <title>{{ position_name }} | SGR La Serena</title>
     <link rel="stylesheet" href="{% static 'css/dashboard_position.css' %}">
+    <link rel="stylesheet" href="{% static 'css/faro-institucional.css' %}?v=20261027faro">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
 <body>
@@ -39,9 +40,7 @@
                 {% endfor %}
             </nav>
 
-            <div class="sidebar-photo" role="img" aria-label="Faro Monumental de La Serena">
-                <div class="photo-caption"><span>La Serena</span><small>Siempre cerca de ti</small></div>
-            </div>
+            {% include 'includes/faro_institucional.html' %}
         </aside>
 
         <main class="main-content">

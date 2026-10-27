@@ -23,6 +23,7 @@
 
     <!-- Estilos Profesionales del Dashboard Asistente Social -->
     <link rel="stylesheet" href="{% static 'css/dashboard_asistente.css' %}">
+    <link rel="stylesheet" href="{% static 'css/faro-institucional.css' %}?v=20261027faro">
 </head>
 <body>
 
@@ -106,6 +107,8 @@
                 </ul>
             </nav>
         </div>
+
+        {% include 'includes/faro_institucional.html' %}
 
         <!-- Pie del Sidebar: Cerrar Sesión y Ayuda -->
         <div style="border-top: 1px solid rgba(255,255,255,0.15); padding-top: 1rem;">

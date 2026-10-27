@@ -1,0 +1,123 @@
+/* Shared artwork and caption for every municipal dashboard. */
+.municipal-landmark {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    flex: 0 1 300px;
+    min-height: 150px;
+    margin: auto 0 0;
+    padding: 8px 8px 18px;
+    color: #f3dfbd;
+}
+.municipal-landmark > img {
+    display: block;
+    flex: 1 1 0;
+    min-height: 0;
+    width: 100%;
+    height: 100%;
+    max-height: 245px;
+    object-fit: contain;
+    object-position: center bottom;
+    opacity: .86;
+}
+.municipal-landmark > figcaption { flex: 0 0 auto; padding: 7px 0 0; }
+.municipal-landmark > figcaption > span {
+    display: block;
+    font-family: "Dancing Script", Georgia, serif;
+    font-size: 1.9rem;
+    font-style: italic;
+    font-weight: 700;
+    line-height: 1.15;
+}
+.municipal-landmark > figcaption > small {
+    display: block;
+    margin-top: 3px;
+    color: #f5e9e9;
+    font-size: .73rem;
+    font-weight: 600;
+    line-height: 1.5;
+}
+
+/* Navigation can scroll independently on shorter screens. */
+.sidebar:has(> .municipal-landmark) .sidebar-menu-scrollable {
+    flex: 1 1 auto !important;
+    min-height: 0;
+    overflow-y: auto !important;
+}
+.sidebar > .municipal-landmark {
+    flex: 0 0 clamp(170px, 33vh, 315px);
+    min-height: 170px;
+    padding: 0 20px 20px;
+}
+.social-dashboard .sidebar > .municipal-landmark {
+    flex-basis: clamp(150px, 28vh, 280px);
+    min-height: 150px;
+}
+.side-panel > .municipal-landmark { padding-inline: 0; }
+.delegado-shell .side-panel > .municipal-landmark {
+    flex: 1 1 210px;
+    min-height: 155px;
+    max-height: 265px;
+    padding-bottom: 12px;
+}
+.delegado-shell .municipal-landmark > figcaption > span { font-size: 1.65rem; }
+.delegado-shell .municipal-landmark > figcaption > small { font-size: 11px; }
+
+/* The same complete facade also replaces the ornamental hero photos. */
+.serena-hero-vector { background: linear-gradient(110deg, #8b1d2c, #68121e 68%, #4f101b); }
+.serena-hero-vector .serena-hero-bg-img {
+    inset: 8px 20px 8px auto;
+    width: min(32%, 270px);
+    height: calc(100% - 16px);
+    object-fit: contain;
+    object-position: right bottom;
+    opacity: .32;
+    filter: none;
+    transform: none;
+}
+.serena-hero-vector .serena-hero-content h1 { color: #fff !important; text-shadow: none !important; }
+.serena-hero-vector .serena-hero-content p { color: #f5e9e9 !important; text-shadow: none !important; }
+.serena-hero-vector .serena-weather-glass-card,
+.serena-hero-vector .serena-weather-glass-card :is(strong, span, div) { color: #f5e9e9 !important; }
+.delegado-hero .hero-landmark { right: 20px; bottom: 0; width: min(36%, 300px); height: calc(100% - 12px); }
+
+/* The older social route shares the same illustration and crimson sidebar. */
+.asistente-wrapper:has(.municipal-landmark) { background: linear-gradient(135deg, #0f172a, #1e3a8a 50%, #0f172a); }
+.asistente-sidebar:has(> .municipal-landmark) {
+    box-sizing: border-box;
+    overflow-y: auto;
+    background: linear-gradient(180deg, #8b1d2c, #68121e 48%, #50101c);
+}
+.asistente-sidebar > .municipal-landmark { flex: 0 0 230px; margin-top: 18px; }
+
+@media (max-height: 700px) {
+    .sidebar > .municipal-landmark,
+    .social-dashboard .sidebar > .municipal-landmark { flex-basis: 170px; min-height: 170px; }
+    .dashboard-shell:not(.delegado-shell) > .side-panel { overflow-y: auto; }
+    .side-panel > .municipal-landmark { flex-basis: 190px; }
+}
+@media (max-width: 900px) {
+    .serena-hero-vector .serena-hero-bg-img { right: 8px; opacity: .16; }
+    .delegado-hero .hero-landmark { right: 0; width: 42%; opacity: .18; }
+}
+@media (max-width: 700px) {
+    .dashboard-shell:not(.delegado-shell) > .side-panel > .municipal-landmark {
+        flex: none;
+        flex-direction: row;
+        align-items: center;
+        justify-content: flex-start;
+        gap: 16px;
+        height: 126px;
+        min-height: 0;
+        margin-top: 12px;
+        padding: 12px 0;
+        border-top: 1px solid #ffffff24;
+    }
+    .dashboard-shell:not(.delegado-shell) > .side-panel > .municipal-landmark > img {
+        flex: 0 0 100px;
+        width: 100px;
+        height: 98px;
+        max-height: 98px;
+    }
+    .asistente-sidebar > .municipal-landmark { flex-basis: 190px; }
+}

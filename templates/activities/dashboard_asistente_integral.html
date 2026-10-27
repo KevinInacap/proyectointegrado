@@ -333,6 +333,7 @@
         }
     </style>
     <link rel="stylesheet" href="{% static 'css/social-dashboard.css' %}?v=20261027">
+    <link rel="stylesheet" href="{% static 'css/faro-institucional.css' %}?v=20261027faro">
 </head>
 
 <body class="social-dashboard">
@@ -441,20 +442,7 @@
             </a>
         </nav>
 
-        <!-- Fotografía Institucional Faro Monumental La Serena -->
-        <div class="sidebar-faro-footer">
-            <div class="sidebar-faro-image-wrap">
-                <img src="{% static 'img/delegacion_costa.jpg' %}"
-                    data-fallback="{% static 'img/faro_real_sunset.jpg' %}"
-                    onerror="this.onerror=null; if(this.dataset.fallback) this.src=this.dataset.fallback;"
-                    alt="Faro Monumental junto a la costa de La Serena" class="sidebar-faro-bg-img">
-                <div class="sidebar-faro-fade-layer"></div>
-            </div>
-            <div class="sidebar-faro-caption">
-                <div class="sidebar-faro-title">La Serena</div>
-                <div class="sidebar-faro-lema">Siempre cerca de ti</div>
-            </div>
-        </div>
+        {% include 'includes/faro_institucional.html' %}
     </aside>
     <button class="social-sidebar-backdrop" type="button" onclick="toggleSidebar(false)" aria-label="Cerrar menú lateral" tabindex="-1" hidden></button>
 

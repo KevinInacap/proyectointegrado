@@ -9,6 +9,7 @@
     <title>{% if delegation %}{{ delegation.name }}{% else %}Delegado Municipal{% endif %} | SGR La Serena</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
     <link rel="stylesheet" href="{% static 'css/dashboard_delegado.css' %}?v=20261027d">
+    <link rel="stylesheet" href="{% static 'css/faro-institucional.css' %}?v=20261027faro">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.26.25/dist/sweetalert2.all.min.js" defer></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" defer></script>
     <script src="{% static 'js/dashboard_delegado.js' %}?v=20261027c" defer></script>
@@ -60,7 +61,7 @@
             <a class="nav-link" href="?estado=followup#atenciones" data-nav="followup"><svg class="icon" aria-hidden="true"><use href="#i-chart"/></svg>Seguimiento{% if in_followup %}<span class="nav-count">{{ in_followup }}</span>{% endif %}</a>
             {% endif %}
         </nav>
-        <div class="sidebar-scene" aria-hidden="true"><img src="{% static 'images/faro-monumental-linea.svg' %}" width="640" height="300" alt=""></div>
+        {% include 'includes/faro_institucional.html' %}
         <div class="profile-card"><span class="avatar" aria-hidden="true">{{ first_name|first|upper }}</span><div class="profile-copy"><strong>{{ profile.full_name }}</strong><span>{{ profile.position.name|default:'Delegado Municipal' }}</span><small>{% if delegation %}{{ delegation.code }} · {{ delegation.name }}{% else %}Sin delegación asignada{% endif %}</small></div></div>
         <a class="logout-link" href="{% url 'core:logout' %}" data-action="logout"><svg class="icon" aria-hidden="true"><use href="#i-logout"/></svg>Cerrar sesión</a>
     </aside>
@@ -69,7 +70,7 @@
         <header class="delegado-hero" id="inicio">
             <div class="hero-copy"><p class="hero-eyebrow">Delegación municipal{% if delegation %} · {{ delegation.code }}{% endif %}</p><h1>Panel de tu delegación</h1><p class="hero-delegation">{% if delegation %}{{ delegation.name }}{% else %}Tu territorio, tu comunidad{% endif %}</p><p class="hero-description">Hola, {{ first_name }}. Toda la gestión de tu territorio, en un solo lugar.</p><div class="hero-actions">{% if can_read %}{% if can_edit %}<button class="delegado-primary hero-primary" type="button" data-bs-toggle="modal" data-bs-target="#attentionModal" data-action="create"><span aria-hidden="true">+</span>Nueva atención</button>{% endif %}<a class="hero-secondary" href="?estado=followup#atenciones"><svg class="icon" aria-hidden="true"><use href="#i-chart"/></svg>Ver seguimiento</a>{% endif %}</div></div>
             <span class="hero-period">{% now 'F Y' %}</span>
-            <div class="hero-landmark" aria-hidden="true"><img src="{% static 'images/faro-monumental-linea.svg' %}" width="640" height="300" alt=""></div>
+            <div class="hero-landmark" aria-hidden="true"><img src="{% static 'images/faro-monumental-linea.svg' %}?v=20261027faro" width="328" height="320" alt=""></div>
         </header>
         {% if not delegation %}
         <section class="delegado-notice" role="status"><svg class="icon" aria-hidden="true"><use href="#i-alert"/></svg><div><h2>Falta asignar tu delegación</h2><p>Tu perfil no tiene una delegación activa asignada. Solicita a administración que revise tu cargo y sede para habilitar el trabajo territorial.</p></div></section>
