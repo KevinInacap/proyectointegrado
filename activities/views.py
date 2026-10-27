@@ -357,11 +357,19 @@ def dashboard_consulta_view(request):
     return _position_dashboard(request, 'Usuario de Consulta')
 
 
-def dashboard_asistente_view(request):
-    return dashboard_asistente_integral_view(request)
+SOCIAL_DASHBOARD_SECTIONS = (
+    'casos', 'flujo', 'terreno', 'beneficios', 'informes',
+    'emergencias', 'redes', 'metas', 'mantenedores',
+)
 
 
-def dashboard_asistente_integral_view(request):
+def dashboard_asistente_view(request, section='casos'):
+    return dashboard_asistente_integral_view(request, section=section)
+
+
+def dashboard_asistente_integral_view(request, section='casos'):
+    if section not in SOCIAL_DASHBOARD_SECTIONS:
+        raise Http404('La sección de asistencia social no existe.')
     profile = _actor(request)
     if not profile or not profile.position or profile.position.status != 'Activo' or profile.position.deleted_at is not None:
         return redirect('core:login')
@@ -479,6 +487,14 @@ def dashboard_asistente_integral_view(request):
     } for item in referrals[:100]]
 
     context = {
+        'social_active_section': section,
+        'social_navigation': {
+            'initial': section,
+            'routes': {
+                item: reverse('activities:dashboard_asistente_section', kwargs={'section': item})
+                for item in SOCIAL_DASHBOARD_SECTIONS
+            },
+        },
         'user_name': user_name,
         'first_name': first_name,
         'user_role': user_role,

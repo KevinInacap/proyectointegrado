@@ -33,8 +33,12 @@ deployed_marker="$backup_dir/deployed.sha"
 static_matches() {
     cmp -s static/css/admin/admin-glass-pro.css staticfiles/css/admin/admin-glass-pro.css &&
     cmp -s static/js/admin/admin-bundle.js staticfiles/js/admin/admin-bundle.js &&
+    cmp -s static/js/session-guard.js staticfiles/js/session-guard.js &&
+    cmp -s static/js/social-navigation.js staticfiles/js/social-navigation.js &&
     cmp -s staticfiles/css/admin/admin-glass-pro.css /var/www/sgr/static/css/admin/admin-glass-pro.css &&
-    cmp -s staticfiles/js/admin/admin-bundle.js /var/www/sgr/static/js/admin/admin-bundle.js
+    cmp -s staticfiles/js/admin/admin-bundle.js /var/www/sgr/static/js/admin/admin-bundle.js &&
+    cmp -s staticfiles/js/session-guard.js /var/www/sgr/static/js/session-guard.js &&
+    cmp -s staticfiles/js/social-navigation.js /var/www/sgr/static/js/social-navigation.js
 }
 
 if [[ "$current" == "$target" && -f "$deployed_marker" && "$(< "$deployed_marker")" == "$target" ]] && static_matches; then
@@ -85,6 +89,8 @@ for attempt in 1 2 3 4 5; do
        curl --fail --silent --max-time 8 --output /dev/null http://127.0.0.1/static/css/dashboard_position.css &&
        curl --fail --silent --max-time 8 --output /dev/null http://127.0.0.1/static/css/admin/admin-glass-pro.css &&
        curl --fail --silent --max-time 8 --output /dev/null http://127.0.0.1/static/js/admin/admin-bundle.js &&
+       curl --fail --silent --max-time 8 --output /dev/null http://127.0.0.1/static/js/session-guard.js &&
+       curl --fail --silent --max-time 8 --output /dev/null http://127.0.0.1/static/js/social-navigation.js &&
        static_matches; then
         printf '%s\n' "$target" > "$deployed_marker"
         chmod 600 "$deployed_marker"

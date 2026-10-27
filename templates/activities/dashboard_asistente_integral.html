@@ -3,6 +3,7 @@
 <html lang="es">
 
 <head>
+    {% include 'includes/session_guard.html' %}
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Panel de Gestión Social Territorial · DIDECO — Ilustre Municipalidad de La Serena</title>
@@ -376,68 +377,68 @@
         <nav class="sidebar-menu-scrollable px-2 mt-2" aria-label="Gestión social">
             <div class="social-nav-label">Atención y seguimiento</div>
             <!-- 1. Casos Sociales Únicos -->
-            <button class="nav-item-btn active" id="nav-btn-casos" onclick="cambiarVistaPanel('casos', this)">
+            <a class="nav-item-btn{% if social_active_section == 'casos' %} active{% endif %}" id="nav-btn-casos" href="{% url 'activities:dashboard_asistente_section' section='casos' %}" data-social-panel="casos"{% if social_active_section == 'casos' %} aria-current="page"{% endif %}>
                 <i class="bi bi-people-fill main-icon"></i>
                 <span>Casos Sociales Únicos</span>
                 <span class="badge rounded-pill ms-auto" id="sideBadgeCasos" style="background: #C41230; color: #fff; font-size: 0.72rem;">0</span>
-            </button>
+            </a>
 
             <!-- 2. Flujo 3 Etapas (RN - 012) -->
-            <button class="nav-item-btn" id="nav-btn-flujo" onclick="cambiarVistaPanel('flujo', this)">
+            <a class="nav-item-btn{% if social_active_section == 'flujo' %} active{% endif %}" id="nav-btn-flujo" href="{% url 'activities:dashboard_asistente_section' section='flujo' %}" data-social-panel="flujo"{% if social_active_section == 'flujo' %} aria-current="page"{% endif %}>
                 <i class="bi bi-diagram-3-fill main-icon"></i>
                 <span>Flujo 3 Etapas (RN-012)</span>
                 <span class="badge rounded-pill ms-auto" id="sideBadgeFlujo" style="background: rgba(255,255,255,0.18); color: #fff; font-size: 0.72rem;">0</span>
-            </button>
+            </a>
 
             <!-- 3. Evaluación y Visitas a Terreno -->
-            <button class="nav-item-btn" id="nav-btn-terreno" onclick="cambiarVistaPanel('terreno', this)">
+            <a class="nav-item-btn{% if social_active_section == 'terreno' %} active{% endif %}" id="nav-btn-terreno" href="{% url 'activities:dashboard_asistente_section' section='terreno' %}" data-social-panel="terreno"{% if social_active_section == 'terreno' %} aria-current="page"{% endif %}>
                 <i class="bi bi-camera-fill main-icon"></i>
                 <span>Visitas a Terreno</span>
                 <span class="badge rounded-pill ms-auto" id="sideBadgeTerreno" style="background: rgba(255,255,255,0.18); color: #fff; font-size: 0.72rem;">0</span>
-            </button>
+            </a>
 
             <!-- 4. Gestión de Beneficios & Subsidios -->
-            <button class="nav-item-btn" id="nav-btn-beneficios" onclick="cambiarVistaPanel('beneficios', this)">
+            <a class="nav-item-btn{% if social_active_section == 'beneficios' %} active{% endif %}" id="nav-btn-beneficios" href="{% url 'activities:dashboard_asistente_section' section='beneficios' %}" data-social-panel="beneficios"{% if social_active_section == 'beneficios' %} aria-current="page"{% endif %}>
                 <i class="bi bi-gift-fill main-icon"></i>
                 <span>Catálogo de Ayudas</span>
                 <span class="badge rounded-pill ms-auto" id="sideBadgeBeneficios" style="background: rgba(255,255,255,0.18); color: #fff; font-size: 0.72rem;">0</span>
-            </button>
+            </a>
 
             <!-- 5. Informes Sociales Formales -->
-            <button class="nav-item-btn" id="nav-btn-informes" onclick="cambiarVistaPanel('informes', this)">
+            <a class="nav-item-btn{% if social_active_section == 'informes' %} active{% endif %}" id="nav-btn-informes" href="{% url 'activities:dashboard_asistente_section' section='informes' %}" data-social-panel="informes"{% if social_active_section == 'informes' %} aria-current="page"{% endif %}>
                 <i class="bi bi-file-earmark-text-fill main-icon"></i>
                 <span>Informes Sociales</span>
                 <span class="badge rounded-pill ms-auto" id="sideBadgeInformes" style="background: rgba(255,255,255,0.18); color: #fff; font-size: 0.72rem;">0</span>
-            </button>
+            </a>
 
             <!-- 6. Atención de Emergencias & Catástrofes -->
-            <button class="nav-item-btn" id="nav-btn-emergencias" onclick="cambiarVistaPanel('emergencias', this)">
+            <a class="nav-item-btn{% if social_active_section == 'emergencias' %} active{% endif %}" id="nav-btn-emergencias" href="{% url 'activities:dashboard_asistente_section' section='emergencias' %}" data-social-panel="emergencias"{% if social_active_section == 'emergencias' %} aria-current="page"{% endif %}>
                 <i class="bi bi-lightning-charge-fill main-icon text-danger"></i>
                 <span>Emergencias y Crisis</span>
                 <span class="badge rounded-pill ms-auto" id="sideBadgeEmergencias" style="background: #C41230; color: #fff; font-size: 0.72rem;">0</span>
-            </button>
+            </a>
 
             <!-- 7. Articulación de Redes Comunitarias -->
-            <button class="nav-item-btn" id="nav-btn-redes" onclick="cambiarVistaPanel('redes', this)">
+            <a class="nav-item-btn{% if social_active_section == 'redes' %} active{% endif %}" id="nav-btn-redes" href="{% url 'activities:dashboard_asistente_section' section='redes' %}" data-social-panel="redes"{% if social_active_section == 'redes' %} aria-current="page"{% endif %}>
                 <i class="bi bi-diagram-2-fill main-icon"></i>
                 <span>Articulación de Redes</span>
                 <span class="badge rounded-pill ms-auto" id="sideBadgeRedes" style="background: rgba(255,255,255,0.18); color: #fff; font-size: 0.72rem;">0</span>
-            </button>
+            </a>
 
             <div class="social-nav-label social-nav-label-secondary">Gestión territorial</div>
             <!-- 8. Metas y Semáforo SGR -->
-            <button class="nav-item-btn" id="nav-btn-metas" onclick="cambiarVistaPanel('metas', this)">
+            <a class="nav-item-btn{% if social_active_section == 'metas' %} active{% endif %}" id="nav-btn-metas" href="{% url 'activities:dashboard_asistente_section' section='metas' %}" data-social-panel="metas"{% if social_active_section == 'metas' %} aria-current="page"{% endif %}>
                 <i class="bi bi-speedometer2 main-icon"></i>
                 <span>Metas y Semáforo SGR</span>
                 <span class="badge rounded-pill ms-auto bg-danger" id="sideBadgeSgrPct" style="font-size: 0.70rem;">0,0%</span>
-            </button>
+            </a>
 
             <!-- 9. Mantenedores y Padrón Territorial SGR -->
-            <button class="nav-item-btn" id="nav-btn-mantenedores" onclick="cambiarVistaPanel('mantenedores', this)" title="Padrón Territorial de Vecinos">
+            <a class="nav-item-btn{% if social_active_section == 'mantenedores' %} active{% endif %}" id="nav-btn-mantenedores" href="{% url 'activities:dashboard_asistente_section' section='mantenedores' %}" data-social-panel="mantenedores"{% if social_active_section == 'mantenedores' %} aria-current="page"{% endif %} title="Padrón Territorial de Vecinos">
                 <i class="bi bi-building-gear main-icon" style="color: #F59E0B;"></i>
                 <span>Mantenedores SGR</span>
                 <span class="badge rounded-pill ms-auto" id="sideBadgeVecinos" style="background: rgba(245, 158, 11, 0.25); color: #F59E0B; font-size: 0.72rem;">0</span>
-            </button>
+            </a>
         </nav>
 
         <!-- Fotografía Institucional Faro Monumental La Serena -->
@@ -497,8 +498,8 @@
                     <ul class="dropdown-menu dropdown-menu-end shadow-sm border-0 rounded-4 mt-2" style="min-width: 220px;">
                         <li><span class="dropdown-header text-uppercase small fw-bold text-danger">Municipalidad La Serena</span></li>
                         <li><a class="dropdown-item py-2 fw-semibold" href="javascript:void(0)" onclick="abrirModalPerfilAsistente()"><i class="bi bi-person-badge-fill me-2 text-danger"></i> Mi Perfil Funcionario</a></li>
-                        <li><a class="dropdown-item py-2 fw-semibold" href="javascript:void(0)" onclick="cambiarVistaPanel('mantenedores', document.getElementById('nav-btn-mantenedores'))"><i class="bi bi-building-gear me-2 text-danger"></i> Mantenedor de Vecinos</a></li>
-                        <li><a class="dropdown-item py-2 fw-semibold" href="javascript:void(0)" onclick="cambiarVistaPanel('metas', document.getElementById('nav-btn-metas'))"><i class="bi bi-speedometer me-2 text-danger"></i> Metas SGR y Normativa RN-012</a></li>
+                        <li><a class="dropdown-item py-2 fw-semibold" href="{% url 'activities:dashboard_asistente_section' section='mantenedores' %}" data-social-panel="mantenedores"><i class="bi bi-building-gear me-2 text-danger"></i> Mantenedor de Vecinos</a></li>
+                        <li><a class="dropdown-item py-2 fw-semibold" href="{% url 'activities:dashboard_asistente_section' section='metas' %}" data-social-panel="metas"><i class="bi bi-speedometer me-2 text-danger"></i> Metas SGR y Normativa RN-012</a></li>
                         <li><hr class="dropdown-divider"></li>
                         <li><a class="dropdown-item py-2 fw-bold text-danger" href="{% url 'core:logout' %}"><i class="bi bi-box-arrow-right me-2"></i> Cerrar Sesión</a></li>
                     </ul>
@@ -512,7 +513,7 @@
             <!-- =========================================================
                  PANEL 1: CASOS SOCIALES ÚNICOS (VISTA PRINCIPAL DEFAULT)
                  ========================================================= -->
-            <section id="panel-casos" class="panel-view">
+            <section id="panel-casos" class="panel-view{% if social_active_section == 'casos' %} active{% else %} d-none{% endif %}">
                 <!-- 1. Encabezado de la Vista -->
                 <div class="social-page-heading">
                     <div class="social-heading-copy">
@@ -728,7 +729,7 @@
             <!-- =========================================================
                  PANEL 2: FLUJO 3 ETAPAS (RN-012) - KANBAN SECUENCIAL
                  ========================================================= -->
-            <section id="panel-flujo" class="panel-view d-none">
+            <section id="panel-flujo" class="panel-view{% if social_active_section == 'flujo' %} active{% else %} d-none{% endif %}">
                 <div class="d-flex justify-content-between align-items-start flex-wrap gap-3 mb-4">
                     <div>
                         <span class="badge" style="background: rgba(196, 18, 48, 0.1); color: var(--muni-red); font-weight: 800; font-size: 0.76rem; letter-spacing: 0.04em;">
@@ -813,7 +814,7 @@
             <!-- =========================================================
                  PANEL 3: VISITAS A TERRENO & LEVANTAMIENTO FOTOGRÁFICO
                  ========================================================= -->
-            <section id="panel-terreno" class="panel-view d-none">
+            <section id="panel-terreno" class="panel-view{% if social_active_section == 'terreno' %} active{% else %} d-none{% endif %}">
                 <div class="d-flex justify-content-between align-items-start flex-wrap gap-3 mb-4">
                     <div>
                         <span class="badge" style="background: rgba(245, 158, 11, 0.12); color: #B45309; font-weight: 800; font-size: 0.76rem; letter-spacing: 0.04em;">
@@ -867,7 +868,7 @@
             <!-- =========================================================
                  PANEL 4: CATÁLOGO DE AYUDAS Y BENEFICIOS SOCIALES
                  ========================================================= -->
-            <section id="panel-beneficios" class="panel-view d-none">
+            <section id="panel-beneficios" class="panel-view{% if social_active_section == 'beneficios' %} active{% else %} d-none{% endif %}">
                 <div class="d-flex justify-content-between align-items-start flex-wrap gap-3 mb-4">
                     <div>
                         <span class="badge" style="background: rgba(16, 185, 129, 0.12); color: #047857; font-weight: 800; font-size: 0.76rem; letter-spacing: 0.04em;">
@@ -1009,7 +1010,7 @@
             <!-- =========================================================
                  PANEL 5: INFORMES SOCIALES OFICIALES (TRIBUNALES Y SALUD)
                  ========================================================= -->
-            <section id="panel-informes" class="panel-view d-none">
+            <section id="panel-informes" class="panel-view{% if social_active_section == 'informes' %} active{% else %} d-none{% endif %}">
                 <div class="d-flex justify-content-between align-items-start flex-wrap gap-3 mb-4">
                     <div>
                         <span class="badge" style="background: rgba(29, 78, 216, 0.1); color: #1D4ED8; font-weight: 800; font-size: 0.76rem; letter-spacing: 0.04em;">
@@ -1052,7 +1053,7 @@
             <!-- =========================================================
                  PANEL 6: ATENCIÓN DE EMERGENCIAS Y CRISIS
                  ========================================================= -->
-            <section id="panel-emergencias" class="panel-view d-none">
+            <section id="panel-emergencias" class="panel-view{% if social_active_section == 'emergencias' %} active{% else %} d-none{% endif %}">
                 <div class="d-flex justify-content-between align-items-start flex-wrap gap-3 mb-4">
                     <div>
                         <span class="badge" style="background: rgba(239, 68, 68, 0.15); color: #B91C1C; font-weight: 800; font-size: 0.76rem; letter-spacing: 0.04em;">
@@ -1113,7 +1114,7 @@
             <!-- =========================================================
                  PANEL 7: ARTICULACIÓN DE REDES COMUNITARIAS
                  ========================================================= -->
-            <section id="panel-redes" class="panel-view d-none">
+            <section id="panel-redes" class="panel-view{% if social_active_section == 'redes' %} active{% else %} d-none{% endif %}">
                 <div class="d-flex justify-content-between align-items-start flex-wrap gap-3 mb-4">
                     <div>
                         <span class="badge" style="background: rgba(180, 83, 9, 0.12); color: #B45309; font-weight: 800; font-size: 0.76rem; letter-spacing: 0.04em;">
@@ -1190,7 +1191,7 @@
             <!-- =========================================================
                  PANEL 8: METAS Y SEMÁFORO SGR (CÁLCULO NORMATIVO COMPLETO)
                  ========================================================= -->
-            <section id="panel-metas" class="panel-view d-none">
+            <section id="panel-metas" class="panel-view{% if social_active_section == 'metas' %} active{% else %} d-none{% endif %}">
                 <div class="d-flex justify-content-between align-items-start flex-wrap gap-3 mb-4">
                     <div>
                         <span class="badge" style="background: rgba(196, 18, 48, 0.1); color: var(--muni-red); font-weight: 800; font-size: 0.76rem; letter-spacing: 0.04em;">
@@ -1272,7 +1273,7 @@
             <!-- =========================================================
                  PANEL 9: MANTENEDORES SGR - PADRÓN TERRITORIAL DE VECINOS
                  ========================================================= -->
-            <section id="panel-mantenedores" class="panel-view d-none">
+            <section id="panel-mantenedores" class="panel-view{% if social_active_section == 'mantenedores' %} active{% else %} d-none{% endif %}">
                 <div class="d-flex justify-content-between align-items-start flex-wrap gap-3 mb-4">
                     <div>
                         <span class="badge" style="background: rgba(245, 158, 11, 0.15); color: #B45309; font-weight: 800; font-size: 0.76rem; letter-spacing: 0.04em;">
@@ -1830,6 +1831,8 @@
     <!-- =================================================================
          4. SCRIPT PRINCIPAL: GESTIÓN REACTIVA DE LOS 9 PANELES (JS PRO)
          ================================================================= -->
+    {{ social_navigation|json_script:"social-navigation-data" }}
+    <script src="{% static 'js/social-navigation.js' %}?v=20261027a"></script>
     {{ casos_sociales|json_script:"social-cases-data" }}
     {{ vecinos_data|json_script:"social-neighbors-data" }}
     {{ goal_data|json_script:"social-goal-data" }}
@@ -1963,6 +1966,12 @@
             poblarSelectsModales();
             aplicarFiltrosTabla();
             actualizarEstadoMenu();
+            if (window.SocialPanelNavigation) {
+                window.socialPanelNavigation = window.SocialPanelNavigation.init({
+                    ...JSON.parse(document.getElementById('social-navigation-data').textContent),
+                    render: cambiarVistaPanel
+                });
+            }
             document.querySelectorAll('.social-kpi-grid .social-kpi-card').forEach(card => {
                 card.addEventListener('keydown', event => {
                     if (event.key === 'Enter' || event.key === ' ') {
@@ -1976,7 +1985,8 @@
         // =============================================================
         // CONMUTADOR MAESTRO DE VISTAS (SIDEBAR & NAVEGACIÓN REACTIVA)
         // =============================================================
-        function cambiarVistaPanel(panelId, btnElement) {
+        function cambiarVistaPanel(panelId) {
+            if (!document.getElementById('panel-' + panelId)) return;
             // 1. Ocultar todos los paneles
             document.querySelectorAll('.panel-view').forEach(p => {
                 p.classList.add('d-none');
@@ -1991,13 +2001,12 @@
             }
 
             // 3. Actualizar clase active en el menú lateral
-            document.querySelectorAll('.sidebar .nav-item-btn').forEach(btn => btn.classList.remove('active'));
-            if (btnElement) {
-                btnElement.classList.add('active');
-            } else {
-                const sideBtn = document.getElementById('nav-btn-' + panelId);
-                if (sideBtn) sideBtn.classList.add('active');
-            }
+            document.querySelectorAll('.sidebar .nav-item-btn').forEach(link => {
+                const selected = link.dataset.socialPanel === panelId;
+                link.classList.toggle('active', selected);
+                if (selected) link.setAttribute('aria-current', 'page');
+                else link.removeAttribute('aria-current');
+            });
 
             // 4. Actualizar título superior de la aplicación
             const subTitleEl = document.getElementById('headerSubName');
@@ -2014,6 +2023,7 @@
             };
             if (subTitleEl && titulos[panelId]) {
                 subTitleEl.innerText = titulos[panelId];
+                document.title = titulos[panelId].split(' · ')[0] + ' · DIDECO — Ilustre Municipalidad de La Serena';
             }
 
             // 5. Renderizar vista correspondiente
