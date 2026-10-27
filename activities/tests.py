@@ -17,6 +17,7 @@ class AttentionApiSecurityTests(TestCase):
         self.profile = UserProfile.objects.create(
             user=self.user, rut='12345678-5', full_name='Gestor Prueba',
             email='gestor-prueba@example.com', delegation=self.north, status='Activo',
+            position=Position.objects.get(name='Gestor Territorial'),
         )
         self.profile.roles.add(self.role)
         self.client.force_login(self.user)

@@ -8,8 +8,8 @@ from django.http import JsonResponse
 from django.contrib.auth.models import User
 from django.contrib.auth.password_validation import validate_password
 from django.db import transaction
-from django.db.models import Avg, F, Value
-from django.db.models.functions import Replace, Trim, Upper
+from django.db.models import Avg, CharField, F, Q, Value
+from django.db.models.functions import Cast, Replace, Trim, Upper
 from django.utils import timezone
 from django.core.validators import validate_email
 from django.core.exceptions import ValidationError
@@ -92,6 +92,8 @@ def permission_gate(method_permissions):
             user = getattr(request, 'user', None)
             if not user or not user.is_authenticated or not user.is_active:
                 return JsonResponse({'success': False, 'message': 'Autenticación requerida.'}, status=403)
+            if request.method not in method_permissions:
+                return JsonResponse({'success': False, 'message': 'Método no permitido.'}, status=405)
             if user.is_superuser:
                 return view_func(request, *args, **kwargs)
             profile = UserProfile.objects.filter(
@@ -102,6 +104,9 @@ def permission_gate(method_permissions):
             role_rows = [role for role in profile.roles.all() if role.deleted_at is None]
             if any(is_administrator_role(role) for role in role_rows):
                 return view_func(request, *args, **kwargs)
+            if (not profile.position or profile.position.status != 'Activo'
+                    or profile.position.deleted_at is not None):
+                return JsonResponse({'success': False, 'message': 'Cargo activo requerido.'}, status=403)
             required = method_permissions.get(request.method)
             granted = {code for role in role_rows for code in role_permission_codes(role)}
             if required and required.casefold() in granted:
@@ -825,12 +830,46 @@ def api_user_reset_password(request, pk):
         'has_active_role': profile.roles.filter(deleted_at__isnull=True).exists(),
     })
 
+def _territorial_audit_logs(request):
+    """Solo muestra trazas cuyo actor y destino territorial pueden verificarse."""
+    logs = AuditLog.objects.filter(deleted_at__isnull=True)
+    if _has_administrator_role(request.user):
+        return logs
+    actor = UserProfile.objects.select_related('delegation', 'position').filter(
+        user=request.user, status='Activo', deleted_at__isnull=True,
+    ).first()
+    if (not actor or not actor.delegation_id or actor.delegation.status != 'Activo'
+            or actor.delegation.deleted_at is not None or not actor.position
+            or actor.position.status != 'Activo' or actor.position.deleted_at is not None):
+        return logs.none()
+
+    from activities.models import Activity, Vecino
+    from social.models import SocialCase, SocialManagement, SocialReviewRequest
+
+    # AuditLog no conserva una delegación histórica propia. Los registros sin
+    # destino verificable (incluidos catálogos globales) quedan para Administración.
+    sources = (
+        ('usuario', UserProfile.objects.filter(delegation_id=actor.delegation_id, deleted_at__isnull=True)),
+        ('delegacion', Delegation.objects.filter(pk=actor.delegation_id, deleted_at__isnull=True)),
+        ('actividad', Activity.objects.filter(delegation_id=actor.delegation_id, deleted_at__isnull=True)),
+        ('vecino', Vecino.objects.filter(territorio__iexact=actor.delegation.name, deleted_at__isnull=True)),
+        ('caso_social', SocialCase.objects.filter(delegation_id=actor.delegation_id, deleted_at__isnull=True)),
+        ('gestion_social', SocialManagement.objects.filter(case__delegation_id=actor.delegation_id, case__deleted_at__isnull=True, deleted_at__isnull=True)),
+        ('solicitud_revision_social', SocialReviewRequest.objects.filter(case__delegation_id=actor.delegation_id, case__deleted_at__isnull=True, deleted_at__isnull=True)),
+    )
+    targets = Q(pk__in=[])
+    for table, objects in sources:
+        identifiers = objects.annotate(audit_id=Cast('pk', CharField())).values('audit_id')
+        targets |= Q(affected_table=table, affected_record_id__in=identifiers)
+    return logs.filter(user__profile__delegation_id=actor.delegation_id).filter(targets)
+
+
 @permission_gate({'GET': 'auditoria.view'})
 def api_audit_logs(request):
     """
     Retorna el historial de auditoría y trazabilidad de acciones realizadas por administradores.
     """
-    logs_qs = AuditLog.objects.select_related('user').order_by('-created_at')[:150]
+    logs_qs = _territorial_audit_logs(request).select_related('user').order_by('-created_at')[:150]
     logs_data = []
 
     for l in logs_qs:
@@ -1645,6 +1684,34 @@ def api_delegation_delete(request, pk):
     return JsonResponse({'success': True, 'message': f"Delegación '{name}' eliminada de la base de datos."})
 
 
+def _position_mutation_denied(request, item=None, name=None):
+    """Un permiso de catálogo no permite promover roles ni cambiar otras sedes."""
+    if _has_administrator_role(request.user):
+        return None
+    administrative = any(
+        is_administrator_role(role_name_for_position(label))
+        for label in (name, item.name if item else None) if label
+    )
+    if administrative:
+        return JsonResponse({
+            'success': False,
+            'message': 'Solo Administración puede crear o modificar cargos administrativos.',
+        }, status=403)
+    if item:
+        actor = UserProfile.objects.select_related('delegation').filter(
+            user=request.user, status='Activo', deleted_at__isnull=True,
+        ).first()
+        if (not actor or not actor.delegation_id or actor.delegation.status != 'Activo'
+                or actor.delegation.deleted_at is not None or item.users.filter(
+                    deleted_at__isnull=True,
+                ).exclude(delegation_id=actor.delegation_id).exists()):
+            return JsonResponse({
+                'success': False,
+                'message': 'Solo Administración puede modificar cargos de otras delegaciones.',
+            }, status=403)
+    return None
+
+
 @permission_gate({'GET': 'cargos.view', 'POST': 'cargos.create'})
 def api_positions(request):
     """Lista y crea cargos institucionales asignables a funcionarios."""
@@ -1653,7 +1720,7 @@ def api_positions(request):
         return JsonResponse({'success': True, 'positions': [{
             'id': item.id, 'name': item.name, 'description': item.description,
             'status': item.status,
-            'users_count': item.users.filter(deleted_at__isnull=True).count(),
+            'users_count': _users_scope(request).filter(position=item).count(),
         } for item in items]})
     if request.method != 'POST':
         return JsonResponse({'success': False, 'message': 'Método no permitido.'}, status=405)
@@ -1664,6 +1731,9 @@ def api_positions(request):
         return JsonResponse({'success': False, 'message': 'Nombre o descripción inválidos.'}, status=400)
     if status not in ('Activo', 'Inactivo'):
         return JsonResponse({'success': False, 'message': 'Estado inválido.'}, status=400)
+    denied = _position_mutation_denied(request, name=name)
+    if denied:
+        return denied
     if Position.objects.filter(name__iexact=name).exists():
         return JsonResponse({'success': False, 'message': 'Ya existe un cargo con ese nombre.'}, status=400)
     with transaction.atomic():
@@ -1684,6 +1754,9 @@ def api_position_update(request, pk):
     status = data.get('status', item.status)
     if name is None or description is None or not name or len(name) > 50 or len(description) > 500 or status not in ('Activo', 'Inactivo'):
         return JsonResponse({'success': False, 'message': 'Revisa el nombre y estado.'}, status=400)
+    denied = _position_mutation_denied(request, item, name)
+    if denied:
+        return denied
     if status == 'Inactivo' and item.status == 'Activo' and item.users.filter(deleted_at__isnull=True, status='Activo').exists():
         return JsonResponse({'success': False, 'message': 'El cargo tiene funcionarios activos.'}, status=400)
     if Position.objects.filter(name__iexact=name).exclude(id=pk).exists():
@@ -1721,6 +1794,9 @@ def api_position_toggle(request, pk):
     if request.method != 'POST':
         return JsonResponse({'success': False, 'message': 'Método no permitido.'}, status=405)
     item = get_object_or_404(Position, id=pk, deleted_at__isnull=True)
+    denied = _position_mutation_denied(request, item)
+    if denied:
+        return denied
     previous = {'name': item.name, 'description': item.description, 'status': item.status}
     if item.status == 'Activo' and item.users.filter(deleted_at__isnull=True, status='Activo').exists():
         return JsonResponse({'success': False, 'message': 'El cargo tiene funcionarios activos.'}, status=400)
@@ -1737,6 +1813,9 @@ def api_position_delete(request, pk):
     if request.method not in ('POST', 'DELETE'):
         return JsonResponse({'success': False, 'message': 'Método no permitido.'}, status=405)
     item = get_object_or_404(Position, id=pk, deleted_at__isnull=True)
+    denied = _position_mutation_denied(request, item)
+    if denied:
+        return denied
     assigned_count = item.users.filter(deleted_at__isnull=True).count()
     if assigned_count > 0:
         return JsonResponse({

@@ -50,6 +50,9 @@ def _has_matrix_permission(request, permission):
         return False
     if _is_admin(request):
         return True
+    if (not profile.position or profile.position.status != 'Activo'
+            or profile.position.deleted_at is not None):
+        return False
     return any(
         permission.casefold() in role_permission_codes(role)
         for role in profile.roles.filter(deleted_at__isnull=True).prefetch_related('permission_definitions')
@@ -63,7 +66,8 @@ def _activity_scope(request):
         return qs if _is_admin(request) else qs.none()
     if _is_admin(request):
         return qs
-    if profile.delegation_id and profile.delegation and profile.delegation.status == 'Activo':
+    if (profile.delegation_id and profile.delegation and profile.delegation.status == 'Activo'
+            and profile.delegation.deleted_at is None):
         return qs.filter(delegation_id=profile.delegation_id)
     return qs.none()
 
@@ -220,19 +224,20 @@ def _position_dashboard(request, expected_position=None, module_slug=None):
             social_case__pk__isnull=False, social_case__deleted_at__isnull=True,
         ).order_by('activity_date', 'created_at')
         dashboard_activities = pending[:30]
-        dashboard_validations = Validation.objects.filter(
+        visible_validations = Validation.objects.filter(
             verifier=request.user, deleted_at__isnull=True,
-        ).select_related('activity', 'activity__delegation').order_by('-created_at')[:10]
+            activity__in=scoped_activities,
+        )
+        dashboard_validations = visible_validations.select_related(
+            'activity', 'activity__delegation',
+        ).order_by('-created_at')[:10]
         work_kpis = [
             {'label': 'Pendientes', 'value': pending.count()},
-            {'label': 'Revisadas por mí', 'value': Validation.objects.filter(verifier=request.user, deleted_at__isnull=True).count()},
+            {'label': 'Revisadas por mí', 'value': visible_validations.count()},
         ] if has_read else []
     elif position_name == 'Auditor Municipal':
-        logs = AuditLog.objects.filter(deleted_at__isnull=True).select_related('user').order_by('-created_at')
-        if profile.delegation_id and profile.delegation.status == 'Activo' and profile.delegation.deleted_at is None:
-            logs = logs.filter(user__profile__delegation_id=profile.delegation_id)
-        elif not request.user.is_superuser:
-            logs = logs.none()
+        from organization.views import _territorial_audit_logs
+        logs = _territorial_audit_logs(request).select_related('user').order_by('-created_at')
         audit_rows = [{
             'actor': (log.user.get_full_name() or log.user.get_username()) if log.user else 'Sistema',
             'action': log.get_action_display(),
@@ -986,10 +991,17 @@ def api_vecinos(request):
             },
         })
     elif request.method == 'POST':
+        if not _is_admin(request) and not _delegation_for_write(request, None):
+            return JsonResponse({
+                'success': False,
+                'message': 'Se requiere una delegación activa para registrar vecinos.',
+            }, status=403)
         try:
             data = json.loads(request.body)
-        except (TypeError, ValueError):
+        except (TypeError, ValueError, UnicodeDecodeError):
             return JsonResponse({'success': False, 'message': 'Solicitud JSON inválida.'}, status=400)
+        if not isinstance(data, dict):
+            return JsonResponse({'success': False, 'message': 'La solicitud debe ser un objeto JSON.'}, status=400)
         payload = _vecino_payload(data)
         profile = _actor(request)
         if profile and profile.delegation and not _is_admin(request):
@@ -1046,8 +1058,10 @@ def api_vecino_detail(request, pk):
     if request.method == 'PUT' or request.method == 'POST':
         try:
             data = json.loads(request.body)
-        except (TypeError, ValueError):
+        except (TypeError, ValueError, UnicodeDecodeError):
             return JsonResponse({'success': False, 'message': 'Solicitud JSON inválida.'}, status=400)
+        if not isinstance(data, dict):
+            return JsonResponse({'success': False, 'message': 'La solicitud debe ser un objeto JSON.'}, status=400)
         payload = _vecino_payload(data)
         profile = _actor(request)
         if 'territorio' not in data:
@@ -1368,6 +1382,8 @@ def api_atencion_detail(request, pk):
             a.activity_date = datetime.date.fromisoformat(data['activity_date'])
         except (TypeError, ValueError):
             return JsonResponse({'success': False, 'message': 'Fecha de atención o visita inválida.'}, status=400)
+        if a.activity_date > timezone.localdate():
+            return JsonResponse({'success': False, 'message': 'La fecha de atención no puede ser futura.'}, status=400)
     if 'neighbor_id' in data:
         neighbor_id = data.get('neighbor_id')
         if neighbor_id in (None, ''):
@@ -1403,6 +1419,15 @@ def api_atencion_detail(request, pk):
             if value is None:
                 return JsonResponse({'success': False, 'message': f'{key} inválido.'}, status=400)
             setattr(a, key, value)
+    if 'is_collective_agenda' in data:
+        if not isinstance(data['is_collective_agenda'], bool):
+            return JsonResponse({'success': False, 'message': 'Agenda colectiva inválida.'}, status=400)
+        a.is_collective_agenda = data['is_collective_agenda']
+        if a.is_collective_agenda and not a.contact_name.strip():
+            return JsonResponse({
+                'success': False,
+                'message': 'Debe ingresar el nombre de contacto para incorporar la atención a la agenda colectiva.',
+            }, status=400)
     with transaction.atomic():
         if a.neighbor_id and a.contact_name and a.neighbor.nombre != a.contact_name:
             a.neighbor.nombre = a.contact_name
