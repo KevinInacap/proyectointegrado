@@ -1,0 +1,161 @@
+/* Layout scoped to the social worker dashboard; shared municipal panels keep their styles. */
+.social-dashboard .content-body {
+    padding: 1.75rem 2rem 3rem !important;
+}
+
+.social-dashboard .header-left,
+.social-dashboard .header-title-wrapper { min-width: 0; }
+.social-dashboard .header-title-wrapper { flex-wrap: wrap; gap: 2px 10px; }
+.social-dashboard .header-sub-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.social-dashboard .header-right { flex-shrink: 0; }
+.social-dashboard .user-dropdown-btn { min-width: 0; max-width: 330px; }
+.social-dashboard .user-context-text { display: block; }
+.social-dashboard .btn-hamburger { flex-shrink: 0; }
+
+.social-dashboard .sidebar-menu-scrollable {
+    flex: 1 1 auto !important;
+    min-height: 0;
+    overflow-y: auto;
+}
+.social-dashboard .sidebar .nav-item-btn { gap: 10px; padding: 10px 13px; font-size: .82rem; }
+.social-nav-label { padding: 14px 14px 7px; color: #e5bac1; font-size: .63rem; font-weight: 700; letter-spacing: .09em; text-transform: uppercase; }
+.social-nav-label-secondary { margin-top: 9px; border-top: 1px solid rgba(255,255,255,.12); }
+.social-dashboard .sidebar-faro-footer { flex-shrink: 1; min-height: 65px; }
+
+.social-page-heading {
+    display: grid;
+    grid-template-columns: minmax(280px, 1fr) auto;
+    align-items: center;
+    gap: 18px 24px;
+    margin-bottom: 22px;
+}
+.social-heading-copy { min-width: 0; }
+.social-eyebrow { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; margin: 0 0 9px; color: #9b1630; font-size: .69rem; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
+.social-eyebrow span { padding: 3px 7px; border: 1px solid #d8e1ec; border-radius: 5px; color: #50627c; font-size: .62rem; letter-spacing: .03em; }
+.social-page-heading h1 { margin: 0; color: #1b365d; font-family: 'Montserrat', sans-serif; font-size: clamp(1.65rem, 2vw, 2rem); font-weight: 800; letter-spacing: -.04em; }
+.social-page-description { margin: 7px 0 0; color: #66758a; font-size: .85rem; }
+.social-heading-actions { display: flex; align-items: center; justify-content: flex-end; flex-wrap: wrap; gap: 9px; }
+.social-dashboard .social-heading-actions button { min-height: 42px; padding: .6rem .95rem !important; border-radius: 9px !important; font-size: .77rem !important; white-space: nowrap; box-shadow: none !important; }
+.social-export-btn { display: inline-flex; align-items: center; gap: 7px; border: 1px solid #d3deea; background: white; color: #344963; font-weight: 700; }
+.social-export-btn:hover { border-color: #7d8da4; background: #f8fafc; color: #1b365d; }
+.social-page-context { display: flex; flex-wrap: wrap; grid-column: 1 / -1; gap: 8px 22px; padding-top: 14px; border-top: 1px solid #dce5ef; color: #53647c; font-size: .75rem; }
+.social-page-context span { display: inline-flex; align-items: center; gap: 7px; }
+.social-page-context i { color: #8c9bb0; }
+
+.social-dashboard .semaforo-banner-card { padding: 18px 20px; border: 1px solid #dce5ef; border-left: 4px solid #a8b5c5; border-radius: 12px; background: #fff; box-shadow: 0 3px 12px rgba(27,54,93,.025); }
+.social-goal-layout { display: grid; grid-template-columns: minmax(0, 1fr) minmax(240px, .55fr); align-items: center; gap: 24px; }
+.social-goal-status { display: flex; align-items: center; gap: 17px; min-width: 0; }
+.social-goal-status .beacon-pulse { flex: 0 0 11px; width: 11px; height: 11px; box-shadow: none !important; }
+.social-goal-status .beacon-pulse::after { content: none; }
+.social-goal-status .small { margin-top: 5px; font-size: .73rem; line-height: 1.6; }
+.social-goal-progress { min-width: 0; }
+.social-progress-label { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 4px 10px; }
+.social-progress-label .small { font-size: .7rem; }
+.social-dashboard .social-kpi-grid { --bs-gutter-x: 14px; --bs-gutter-y: 14px; }
+.social-kpi-grid .social-kpi-card { height: 100%; padding: 17px 19px; border-radius: 12px; box-shadow: 0 3px 12px rgba(27,54,93,.025); cursor: pointer; }
+.social-kpi-grid .social-kpi-card::before { width: 3px; background: #1b365d; opacity: .75; }
+.social-kpi-grid > :nth-child(2) .social-kpi-card::before { background: #2563eb; }
+.social-kpi-grid > :nth-child(3) .social-kpi-card::before { background: #d97706; }
+.social-kpi-grid > :nth-child(4) .social-kpi-card::before { background: #059669; }
+.social-kpi-grid .social-kpi-card:hover { transform: translateY(-2px); border-color: #acbdcf; box-shadow: 0 5px 15px rgba(27,54,93,.06); }
+.social-kpi-grid .social-kpi-card[aria-pressed="true"] { border-color: #788da8; background: #f8fafd; box-shadow: 0 0 0 1px #788da8; }
+.social-kpi-grid .social-kpi-card .small { font-size: .73rem; }
+.social-kpi-grid .social-kpi-card > .d-flex > span { font-size: .66rem !important; }
+.social-kpi-grid .social-kpi-card > .fw-bold { font-size: 1.9rem !important; }
+
+.social-cases-card { border: 1px solid #dce5ef; border-radius: 13px; background: white; box-shadow: 0 3px 14px rgba(27,54,93,.035); overflow: hidden; }
+.social-cases-heading { display: flex; justify-content: space-between; align-items: center; gap: 15px; padding: 21px 22px 17px; }
+.social-cases-heading h2 { margin: 0; font-family: 'Montserrat', sans-serif; color: #1b365d; font-size: .98rem; font-weight: 700; }
+.social-cases-heading p { margin: 6px 0 0; color: #6b7b8e; font-size: .74rem; }
+.social-results-count { flex-shrink: 0; padding: 6px 10px; border-radius: 6px; background: #f0f4f8; color: #50627b; font-size: .72rem; }
+.social-results-count strong { color: #1b365d; }
+.social-case-filters { display: grid; grid-template-columns: minmax(220px, 1.4fr) minmax(180px, 1fr) minmax(155px, .7fr) auto; gap: 13px; align-items: end; padding: 0 22px 21px; }
+.social-case-filters > div { min-width: 0; }
+.social-case-filters label,
+.social-filter-label { display: block; margin-bottom: 7px; color: #52637b; font-size: .68rem; font-weight: 700; }
+.social-case-filters .form-control,
+.social-case-filters .form-select { min-height: 42px; border: 1px solid #d6dfeb; border-radius: 8px; color: #344963; font-size: .77rem; }
+.social-case-filters .form-control::placeholder { color: #7a889a; }
+.social-assigned-delegation { display: flex; align-items: center; gap: 7px; min-height: 42px; padding: 8px 11px; border: 1px solid #e0e7f0; border-radius: 8px; background: #f8fafc; color: #52637b; font-size: .74rem; line-height: 1.4; }
+.social-assigned-delegation i { flex-shrink: 0; color: #a41832; }
+.social-clear-filters { display: inline-flex; justify-content: center; align-items: center; gap: 5px; min-height: 42px; padding: 8px 12px; border: 1px solid #d6dfeb; border-radius: 8px; background: white; color: #52637b; font-size: .73rem; font-weight: 600; }
+.social-clear-filters:hover { background: #f0f4f8; color: #1b365d; }
+.social-dashboard .social-table-scroll { width: 100%; max-width: 100%; overflow-x: auto !important; overscroll-behavior-x: contain; scrollbar-width: thin !important; scrollbar-color: #aebdce #edf2f7; }
+.social-dashboard .social-table-scroll::-webkit-scrollbar { display: block !important; height: 8px !important; }
+.social-dashboard .social-table-scroll::-webkit-scrollbar-thumb { background: #aebdce; border-radius: 8px; }
+.social-dashboard #tablaCasosSociales { width: 100%; min-width: 1060px; max-width: none !important; table-layout: fixed; border-collapse: collapse; }
+.social-dashboard #tablaCasosSociales thead { border-bottom: 1px solid #dce5ef !important; }
+.social-dashboard #tablaCasosSociales th { background: #f6f8fb; color: #62728a; font-size: .63rem; font-weight: 700; letter-spacing: .04em; }
+.social-dashboard #tablaCasosSociales td { overflow-wrap: anywhere; font-size: .77rem; border-color: #edf1f6; }
+.social-dashboard #tablaCasosSociales td:first-child { white-space: nowrap; font-size: .76rem !important; }
+.social-dashboard #tablaCasosSociales td:last-child { overflow: visible !important; }
+.social-dashboard #tablaCasosSociales tbody tr:hover { --bs-table-bg: #fbfcfe; }
+.social-dashboard .social-case-actions { display: inline-flex; flex-wrap: nowrap; align-items: center; justify-content: center; gap: 5px; }
+.social-dashboard .social-case-actions .btn-action-round { flex-shrink: 0; width: 30px; height: 32px; border-radius: 8px; }
+.social-dashboard .btn-action-round:focus-visible,
+.social-dashboard .social-kpi-card:focus-visible,
+.social-dashboard .social-table-scroll:focus-visible,
+.social-dashboard .social-clear-filters:focus-visible { outline: 2px solid #1b365d; outline-offset: 3px; }
+.social-dashboard button:active { transform: scale(.98); }
+.social-sidebar-backdrop { position: fixed; z-index: 1035; inset: 0; border: 0; background: rgba(15,23,42,.36); }
+.social-sidebar-backdrop[hidden] { display: none; }
+
+@media (min-width: 769px) {
+    .social-dashboard.sidebar-collapsed .sidebar { transform: translateX(-100%); }
+    .social-dashboard.sidebar-collapsed .main-wrapper { margin-left: 0 !important; width: 100% !important; min-width: 100% !important; max-width: 100% !important; }
+}
+@media (max-width: 1399px) {
+    .social-page-heading { grid-template-columns: 1fr; gap: 15px; }
+    .social-heading-actions { justify-content: flex-start; }
+    .social-case-filters { grid-template-columns: minmax(200px, 1fr) minmax(175px, 1fr) minmax(150px, .7fr); }
+    .social-clear-filters { grid-column: 3; justify-self: end; min-height: 30px; padding: 4px 9px; }
+    .social-dashboard .header-title-wrapper { flex-direction: column; align-items: flex-start; }
+    .social-dashboard .header-sys-divider { display: none; }
+    .social-dashboard .header-sub-name { max-width: 33vw; font-size: .7rem; }
+}
+@media (max-width: 1100px) {
+    .social-goal-layout { grid-template-columns: 1fr; gap: 15px; }
+    .social-goal-progress { padding-left: 28px; }
+    .social-case-filters { grid-template-columns: 1fr 1fr; }
+    .social-search-field { grid-column: 1 / -1; }
+    .social-clear-filters { grid-column: 1 / -1; }
+}
+@media (max-width: 768px) {
+    .social-dashboard .main-wrapper { margin-left: 0 !important; width: 100% !important; min-width: 100% !important; max-width: 100% !important; }
+    .social-dashboard .sidebar.mobile-open { transform: translateX(0); }
+    .social-dashboard .content-body { padding: 22px 16px 32px !important; }
+    .social-dashboard .top-header { padding: 0 16px !important; gap: 10px; }
+    .social-dashboard .header-sys-name { font-size: .76rem; }
+    .social-dashboard .header-sub-name { max-width: 34vw; font-size: .65rem; }
+    .social-dashboard .header-left { gap: 9px !important; }
+    .social-dashboard .header-right { gap: 8px !important; }
+    .social-dashboard .user-dropdown-btn { padding: 3px !important; max-width: 42px; }
+    .social-dashboard .user-identity,
+    .social-dashboard .user-dropdown-btn > .bi-chevron-down { display: none !important; }
+    .social-heading-actions { display: grid; grid-template-columns: 1fr 1fr; }
+    .social-heading-actions .liquid-glass-btn-primary { grid-column: 1 / -1; justify-content: center; }
+    .social-dashboard .social-heading-actions button { justify-content: center; white-space: normal; line-height: 1.4; }
+    .social-cases-heading { padding: 18px 16px 17px; align-items: flex-start; }
+    .social-cases-heading p { max-width: 220px; line-height: 1.5; }
+    .social-case-filters { padding: 0 16px 18px; gap: 12px; }
+    .social-page-context { font-size: .7rem; gap: 8px 16px; }
+    .social-dashboard .semaforo-banner-card { padding: 16px; }
+    .social-goal-status > div > .d-flex > .fw-bold { font-size: .88rem !important; }
+}
+@media (max-width: 479px) {
+    .social-case-filters { grid-template-columns: 1fr; }
+    .social-search-field,
+    .social-clear-filters { grid-column: auto; }
+    .social-cases-heading { flex-wrap: wrap; }
+    .social-dashboard .header-sys-name { font-size: .67rem; }
+    .social-dashboard .header-sub-name { max-width: 36vw; font-size: .6rem; }
+    .social-dashboard .header-right .btn-notification { width: 32px; height: 34px; }
+    .social-kpi-grid > div { width: 50%; }
+    .social-kpi-grid .social-kpi-card { padding: 13px 12px; }
+    .social-kpi-grid .social-kpi-card .small { font-size: .65rem; line-height: 1.5; }
+    .social-kpi-grid .social-kpi-card > .d-flex > div { width: 29px !important; height: 29px !important; flex-shrink: 0; }
+    .social-goal-progress { padding-left: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+    .social-dashboard *, .social-dashboard *::before, .social-dashboard *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
+}
