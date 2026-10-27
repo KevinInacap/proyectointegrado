@@ -646,12 +646,12 @@
                             <strong id="lblCasosMostrados">0</strong> de <span id="lblCasosTotales">0</span> casos
                         </div>
                     </div>
-                    <div class="social-case-filters">
+                    <form method="get" class="social-case-filters" id="formFiltrosCasos" onsubmit="event.preventDefault(); aplicarFiltrosTabla(1);">
                         <div class="social-search-field">
                             <label for="txtBusquedaCaso">Buscar caso</label>
                             <div class="position-relative">
                                 <i class="bi bi-search position-absolute top-50 start-0 translate-middle-y ms-3 text-muted" aria-hidden="true"></i>
-                                <input type="search" class="form-control ps-5" placeholder="RUT, nombre, asunto o delegación" id="txtBusquedaCaso" oninput="aplicarFiltrosTabla()">
+                                <input type="search" name="q" value="{{ query|default:'' }}" class="form-control ps-5" placeholder="RUT, nombre, asunto o delegación" id="txtBusquedaCaso" oninput="aplicarFiltrosTabla(1)">
                             </div>
                         </div>
                         <div class="social-delegation-field">
@@ -660,30 +660,30 @@
                         <div class="social-assigned-delegation" title="Tu acceso está restringido a esta delegación">
                             <i class="bi bi-geo-alt" aria-hidden="true"></i> <span>{{ current_delegation }}</span>
                         </div>
-                        <input type="hidden" id="selFiltroDelegacion" value="{{ current_delegation }}">
+                        <input type="hidden" name="delegacion" id="selFiltroDelegacion" value="{{ current_delegation }}">
                         {% else %}
                         <label for="selFiltroDelegacion">Delegación</label>
-                        <select class="form-select" id="selFiltroDelegacion" onchange="aplicarFiltrosTabla()">
+                        <select class="form-select" name="delegacion" id="selFiltroDelegacion" onchange="aplicarFiltrosTabla(1)">
                             <option value="">Todas las Delegaciones</option>
                             {% for d in active_delegations %}
-                            <option value="{{ d.name }}">{{ d.name }}</option>
+                            <option value="{{ d.name }}" {% if delegacion_filter == d.name %}selected{% endif %}>{{ d.name }}</option>
                             {% endfor %}
                         </select>
                         {% endif %}
                         </div>
                         <div class="social-stage-field">
                         <label for="selFiltroEtapa">Etapa de atención</label>
-                        <select class="form-select" id="selFiltroEtapa" onchange="aplicarFiltrosTabla()">
-                            <option value="">Todas las etapas</option>
-                            <option value="1">1 · Ingreso</option>
-                            <option value="2">2 · Terreno</option>
-                            <option value="3">3 · Resuelto</option>
+                        <select class="form-select" name="etapa" id="selFiltroEtapa" onchange="aplicarFiltrosTabla(1)">
+                            <option value="" {% if not etapa_filter %}selected{% endif %}>Todas las etapas</option>
+                            <option value="1" {% if etapa_filter == '1' %}selected{% endif %}>1 · Ingreso</option>
+                            <option value="2" {% if etapa_filter == '2' %}selected{% endif %}>2 · Terreno</option>
+                            <option value="3" {% if etapa_filter == '3' %}selected{% endif %}>3 · Resuelto</option>
                         </select>
                         </div>
                         <button class="social-clear-filters" type="button" onclick="restablecerFiltrosCasos()" title="Limpiar búsqueda y filtros">
                             <i class="bi bi-arrow-counterclockwise" aria-hidden="true"></i> Limpiar
                         </button>
-                    </div>
+                    </form>
 
                 <!-- 5. Tabla de Casos Sociales Territoriales -->
                 <div class="social-table-scroll" role="region" aria-label="Casos sociales; desplaza horizontalmente para ver todas las columnas" tabindex="0">
@@ -691,12 +691,12 @@
                         <caption class="visually-hidden">Casos sociales con datos de contacto, delegación, etapa y acciones disponibles.</caption>
                         <colgroup>
                             <col style="width: 12%;">
-                            <col style="width: 20%;">
-                            <col style="width: 18%;">
+                            <col style="width: 19%;">
+                            <col style="width: 17%;">
                             <col style="width: 11%;">
                             <col style="width: 15%;">
                             <col style="width: 9%;">
-                            <col style="width: 15%;">
+                            <col style="width: 17%;">
                         </colgroup>
                         <thead style="background: rgba(241, 245, 249, 0.95); border-bottom: 2px solid #CBD5E1;">
                             <tr style="font-size: 0.76rem; font-weight: 800; color: #1E293B; text-transform: uppercase; letter-spacing: 0.03em;">
@@ -723,6 +723,16 @@
                             <i class="bi bi-arrow-counterclockwise"></i> Limpiar filtros
                         </button>
                     </div>
+
+                    <!-- Barra de Paginación de Casos Sociales -->
+                    <nav id="paginacionCasosWrapper" class="d-flex justify-content-between align-items-center flex-wrap gap-2 px-3 py-3 border-top bg-light" aria-label="Paginación de casos sociales">
+                        <div class="small text-muted fw-semibold" id="lblResumenPaginacionCasos">
+                            Mostrando {{ casos_page.start_index }}–{{ casos_page.end_index }} de {{ casos_page.paginator.count }} · Página {{ casos_page.number }} de {{ casos_page.paginator.num_pages }}
+                        </div>
+                        <div class="d-flex align-items-center gap-1" id="controlesPaginacionCasos">
+                            <!-- Controles dinámicos -->
+                        </div>
+                    </nav>
                 </div>
             </section>
 
@@ -1298,24 +1308,28 @@
                 </div>
 
                 <!-- Filtros del Mantenedor -->
-                <div class="d-flex justify-content-between align-items-center flex-wrap gap-2.5 mb-3">
+                <form method="get" class="d-flex justify-content-between align-items-center flex-wrap gap-2.5 mb-3" onsubmit="event.preventDefault(); filtrarTablaVecinos(1);">
                     <div class="d-flex align-items-center gap-2 flex-grow-1 flex-wrap">
                         <div class="position-relative" style="min-width: 300px; flex-grow: 1;">
                             <i class="bi bi-search position-absolute top-50 start-0 translate-middle-y ms-3 text-muted"></i>
-                            <input type="text" class="form-control rounded-pill ps-5" placeholder="Buscar por RUT, Nombre o Dirección..." id="txtBusquedaVecino" onkeyup="filtrarTablaVecinos()">
+                            <input type="text" name="vq" value="{{ vecinos_query|default:'' }}" class="form-control rounded-pill ps-5" placeholder="Buscar por RUT, Nombre, Teléfono o Dirección..." id="txtBusquedaVecino" oninput="filtrarTablaVecinos(1)">
                         </div>
 
-                        <select class="form-select rounded-pill w-auto" id="selFiltroEstadoVecino" onchange="filtrarTablaVecinos()" style="font-size: 0.85rem;">
-                            <option value="">Todos los Estados</option>
-                            <option value="Activo">Solo Activos</option>
-                            <option value="Inactivo">Solo Inactivos</option>
+                        <select class="form-select rounded-pill w-auto" name="vestado" id="selFiltroEstadoVecino" onchange="filtrarTablaVecinos(1)" style="font-size: 0.85rem;">
+                            <option value="" {% if not vecinos_estado %}selected{% endif %}>Todos los Estados</option>
+                            <option value="Activo" {% if vecinos_estado == 'Activo' %}selected{% endif %}>Solo Activos</option>
+                            <option value="Inactivo" {% if vecinos_estado == 'Inactivo' %}selected{% endif %}>Solo Inactivos</option>
                         </select>
+
+                        <button type="button" class="btn btn-outline-secondary rounded-pill px-3 py-1.5 fw-bold" style="font-size: 0.82rem;" onclick="restablecerFiltrosVecinos()">
+                            <i class="bi bi-arrow-counterclockwise"></i> Limpiar
+                        </button>
                     </div>
 
                     <div class="text-muted small">
-                        Padrón Sede: <strong id="lblVecinosMostrados" class="text-danger">0</strong> vecinos
+                        Padrón Sede: <strong id="lblVecinosMostrados" class="text-danger">0</strong> de <span id="lblVecinosTotales">0</span> vecinos
                     </div>
-                </div>
+                </form>
 
                 <!-- Tabla de Vecinos -->
                 <div class="rounded-4 border bg-white shadow-sm overflow-hidden mb-4">
@@ -1335,6 +1349,15 @@
                             <!-- Inyectado dinámicamente -->
                         </tbody>
                     </table>
+                    <!-- Barra de Paginación del Mantenedor de Vecinos -->
+                    <nav id="paginacionVecinosWrapper" class="d-flex justify-content-between align-items-center flex-wrap gap-2 px-3 py-3 border-top bg-light" aria-label="Paginación de vecinos">
+                        <div class="small text-muted fw-semibold" id="lblResumenPaginacionVecinos">
+                            Mostrando {{ vecinos_page.start_index }}–{{ vecinos_page.end_index }} de {{ vecinos_page.paginator.count }} · Página {{ vecinos_page.number }} de {{ vecinos_page.paginator.num_pages }}
+                        </div>
+                        <div class="d-flex align-items-center gap-1" id="controlesPaginacionVecinos">
+                            <!-- Controles dinámicos -->
+                        </div>
+                    </nav>
                 </div>
             </section>
 
@@ -1437,6 +1460,66 @@
                             <button type="button" class="btn btn-outline-secondary rounded-pill px-4 fw-bold" data-bs-dismiss="modal">Cancelar</button>
                             <button type="submit" {% if not can_edit_social %}disabled{% endif %} class="liquid-glass-btn-primary">
                                 <i class="bi bi-check-circle-fill"></i> Guardar Caso Social
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal 1B: Editar Caso Social (Persistencia Real API PUT) -->
+    <div class="modal fade" id="modalEditarCaso" tabindex="-1" aria-labelledby="modalEditarCasoLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content rounded-4 border-0 shadow-lg">
+                <div class="modal-header text-white" style="background: linear-gradient(135deg, #1B365D 0%, #0F172A 100%);">
+                    <div>
+                        <h5 class="modal-title fw-bold" id="modalEditarCasoLabel">
+                            <i class="bi bi-pencil-square me-2"></i>Editar Caso Social · DIDECO
+                        </h5>
+                        <p class="small m-0 text-white-50">Actualización directa y auditada de la Ficha Social en base de datos</p>
+                    </div>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <form id="formEditarCaso" onsubmit="guardarEdicionCaso(event)">
+                        <input type="hidden" id="editCasoId">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold small text-dark" for="editCasoRut">RUT de la Persona Usuaria <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control rounded-3" id="editCasoRut" required oninput="formatearRutChileno(this)">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold small text-dark" for="editCasoNombre">Nombre Completo Beneficiario <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control rounded-3" id="editCasoNombre" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold small text-dark" for="editCasoTelefono">Teléfono de Contacto <span class="text-danger">*</span></label>
+                                <input type="tel" class="form-control rounded-3" id="editCasoTelefono" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold small text-dark" for="editCasoCategoria">Función Social / Área <span class="text-danger">*</span></label>
+                                <select class="form-select rounded-3" id="editCasoCategoria" required>
+                                    <option value="beneficio">Gestión de Beneficios y Subsidios</option>
+                                    <option value="diagnostico">Evaluación y Diagnóstico (Visita Terreno)</option>
+                                    <option value="informe">Informe Social Formal (Tribunal / CESFAM)</option>
+                                    <option value="emergencia">Atención de Emergencia / Catástrofe</option>
+                                    <option value="redes">Articulación de Redes Comunitarias</option>
+                                </select>
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label fw-bold small text-dark" for="editCasoAsunto">Asunto / Beneficio Específico <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control rounded-3" id="editCasoAsunto" required>
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label fw-bold small text-dark" for="editCasoDescripcion">Diagnóstico Socioeconómico Inicial <span class="text-danger">*</span></label>
+                                <textarea class="form-control rounded-3" id="editCasoDescripcion" rows="3" required></textarea>
+                            </div>
+                        </div>
+                        <div class="d-flex justify-content-end gap-2 mt-4 pt-3 border-top">
+                            <button type="button" class="btn btn-outline-secondary rounded-pill px-4 fw-bold" data-bs-dismiss="modal">Cancelar</button>
+                            <button type="submit" {% if not can_edit_social %}disabled{% endif %} class="liquid-glass-btn-primary" style="background: linear-gradient(135deg, #1B365D 0%, #0F172A 100%) !important;">
+                                <i class="bi bi-check2-circle"></i> Guardar Cambios
                             </button>
                         </div>
                     </form>
@@ -1861,6 +1944,10 @@
         const funcionarioNombre = JSON.parse(document.getElementById('social-worker-name').textContent);
         let derivacionesRedes = JSON.parse(document.getElementById('social-referrals-data').textContent);
         const puedeCerrarCaso = {{ can_close_social|yesno:"true,false" }};
+        const puedeEditarCaso = {{ can_edit_social|yesno:"true,false" }};
+        const SOCIAL_PAGE_SIZE = 8;
+        let casosPageCurrent = Math.max(1, parseInt(new URLSearchParams(window.location.search).get('page') || '1', 10) || 1);
+        let vecinosPageCurrent = Math.max(1, parseInt(new URLSearchParams(window.location.search).get('vpage') || '1', 10) || 1);
 
         function escapeHtml(value) {
             return String(value ?? '').replace(/[&<>"']/g, char => ({
@@ -1931,14 +2018,19 @@
             try {
                 const data = await apiSocial('/social/api/casos/');
                 casosSociales = data.cases.map(casoDesdeApi);
+                const vecinosData = await apiSocial('/api/vecinos/');
+                if (Array.isArray(vecinosData.vecinos)) {
+                    vecinosList = vecinosData.vecinos;
+                }
                 const metrics = await apiSocial(window.location.pathname + '?metrics=1');
                 Object.assign(metaSgr, metrics.goal);
-                renderizarTablaCasos(casosSociales);
+                aplicarFiltrosTabla(casosPageCurrent);
                 renderizarKanbanFlujo();
                 renderizarVisitasTerreno();
                 renderizarInformesSociales();
                 renderizarEmergencias();
                 renderizarMetasSgr();
+                renderizarTablaVecinosMantenedor();
                 actualizarIndicadores();
                 poblarSelectsModales();
                 return true;
@@ -2041,15 +2133,76 @@
         }
 
         // =============================================================
-        // 1. RENDERIZADO TABLA DE CASOS SOCIALES
+        // 1. RENDERIZADO TABLA DE CASOS SOCIALES (CON PAGINACIÓN Y EDICIÓN)
         // =============================================================
-        function renderizarTablaCasos(lista) {
+        function construirControlesPaginacion(contenedorId, resumenId, totalItems, pageActual, nombreFuncionIrPagina, etiquetaUnidad) {
+            const contenedor = document.getElementById(contenedorId);
+            const resumen = document.getElementById(resumenId);
+            const totalPages = Math.max(1, Math.ceil(totalItems / SOCIAL_PAGE_SIZE));
+            const currentPage = Math.min(Math.max(1, pageActual), totalPages);
+            const startIdx = totalItems === 0 ? 0 : (currentPage - 1) * SOCIAL_PAGE_SIZE + 1;
+            const endIdx = Math.min(currentPage * SOCIAL_PAGE_SIZE, totalItems);
+
+            if (resumen) {
+                resumen.innerText = totalItems === 0
+                    ? `Sin ${etiquetaUnidad} para mostrar`
+                    : `Mostrando ${startIdx}–${endIdx} de ${totalItems} ${etiquetaUnidad} · Página ${currentPage} de ${totalPages}`;
+            }
+            if (!contenedor) return currentPage;
+            contenedor.innerHTML = '';
+
+            const btnPrev = document.createElement('button');
+            btnPrev.type = 'button';
+            btnPrev.className = 'btn btn-sm btn-outline-secondary rounded-pill px-3 fw-bold';
+            btnPrev.disabled = currentPage <= 1;
+            btnPrev.innerHTML = '<i class="bi bi-chevron-left"></i> Anterior';
+            btnPrev.onclick = () => window[nombreFuncionIrPagina](currentPage - 1);
+            contenedor.appendChild(btnPrev);
+
+            for (let p = 1; p <= totalPages; p++) {
+                const btnPage = document.createElement('button');
+                btnPage.type = 'button';
+                btnPage.className = p === currentPage
+                    ? 'btn btn-sm rounded-pill px-3 fw-bold text-white'
+                    : 'btn btn-sm btn-outline-secondary rounded-pill px-2.5 fw-bold';
+                if (p === currentPage) btnPage.style.background = '#C41230';
+                btnPage.innerText = String(p);
+                btnPage.onclick = () => window[nombreFuncionIrPagina](p);
+                contenedor.appendChild(btnPage);
+            }
+
+            const btnNext = document.createElement('button');
+            btnNext.type = 'button';
+            btnNext.className = 'btn btn-sm btn-outline-secondary rounded-pill px-3 fw-bold';
+            btnNext.disabled = currentPage >= totalPages;
+            btnNext.innerHTML = 'Siguiente <i class="bi bi-chevron-right"></i>';
+            btnNext.onclick = () => window[nombreFuncionIrPagina](currentPage + 1);
+            contenedor.appendChild(btnNext);
+
+            return currentPage;
+        }
+
+        function irPaginaCasos(pagina) {
+            aplicarFiltrosTabla(pagina);
+        }
+
+        function renderizarTablaCasos(lista, pagina = casosPageCurrent) {
             const tbody = document.getElementById('tablaCasosSocialesBody');
             const emptyState = document.getElementById('emptyStateCasos');
             if (!tbody) return;
             tbody.innerHTML = '';
 
-            if (lista.length === 0) {
+            const totalFiltrados = lista.length;
+            casosPageCurrent = construirControlesPaginacion(
+                'controlesPaginacionCasos',
+                'lblResumenPaginacionCasos',
+                totalFiltrados,
+                pagina,
+                'irPaginaCasos',
+                'casos'
+            );
+
+            if (totalFiltrados === 0) {
                 if (emptyState) emptyState.style.display = 'block';
                 const lbl = document.getElementById('lblCasosMostrados');
                 if (lbl) lbl.innerText = '0';
@@ -2057,9 +2210,12 @@
             }
             if (emptyState) emptyState.style.display = 'none';
             const lbl = document.getElementById('lblCasosMostrados');
-            if (lbl) lbl.innerText = lista.length;
+            if (lbl) lbl.innerText = totalFiltrados;
 
-            lista.forEach(raw => {
+            const inicio = (casosPageCurrent - 1) * SOCIAL_PAGE_SIZE;
+            const paginaItems = lista.slice(inicio, inicio + SOCIAL_PAGE_SIZE);
+
+            paginaItems.forEach(raw => {
                 const caso = registroSeguro(raw);
                 const tr = document.createElement('tr');
                 tr.style.borderBottom = '1px solid #E2E8F0';
@@ -2135,6 +2291,9 @@
                             <button class="btn-action-round btn-action-view" onclick="verExpedienteCaso(${caso.id})" title="Ver Ficha y Expediente Social" aria-label="Ver ficha y expediente social">
                                 <i class="bi bi-eye-fill"></i>
                             </button>
+                            ${puedeEditarCaso ? `<button class="btn-action-round" style="background: rgba(37, 99, 235, 0.12); color: #1D4ED8;" onclick="abrirModalEditarCaso(${caso.id})" title="Editar Caso Social" aria-label="Editar caso social">
+                                <i class="bi bi-pencil-fill"></i>
+                            </button>` : ''}
                             {% if can_edit_social %}${caso.etapa < 3 ? `<button class="btn-action-round btn-action-advance" onclick="avanzarEtapaCaso(${caso.id})" title="Avanzar Etapa Flujo RN-012" aria-label="Registrar gestión o avanzar etapa">
                                 <i class="bi bi-arrow-right-circle-fill"></i>
                             </button>` : ''}{% endif %}
@@ -2431,28 +2590,66 @@
         }
 
         // =============================================================
-        // 8. RENDERIZADO MANTENEDOR DE VECINOS SGR (CRUD REAL)
+        // 8. RENDERIZADO MANTENEDOR DE VECINOS SGR (CRUD REAL + PAGINACIÓN)
         // =============================================================
-        function renderizarTablaVecinosMantenedor() {
+        function irPaginaVecinos(pagina) {
+            filtrarTablaVecinos(pagina);
+        }
+
+        function restablecerFiltrosVecinos() {
+            const txt = document.getElementById('txtBusquedaVecino');
+            const est = document.getElementById('selFiltroEstadoVecino');
+            if (txt) txt.value = '';
+            if (est) est.value = '';
+            filtrarTablaVecinos(1);
+        }
+
+        function renderizarTablaVecinosMantenedor(listaFiltrada = null, pagina = vecinosPageCurrent) {
             const tbody = document.getElementById('tablaMantenedorVecinosBody');
             const lbl = document.getElementById('lblVecinosMostrados');
+            const lblTotal = document.getElementById('lblVecinosTotales');
             if (!tbody) return;
             tbody.innerHTML = '';
 
-            if (lbl) lbl.innerText = vecinosList.length;
+            if (lblTotal) lblTotal.innerText = vecinosList.length;
 
-            if (vecinosList.length === 0) {
+            const txt = (document.getElementById('txtBusquedaVecino')?.value || '').toLowerCase().trim();
+            const est = document.getElementById('selFiltroEstadoVecino')?.value || '';
+            const filtrados = Array.isArray(listaFiltrada) ? listaFiltrada : vecinosList.filter(v => {
+                if (est && v.estado !== est) return false;
+                if (txt) {
+                    const campos = `${v.rut || ''} ${v.nombre || ''} ${v.direccion || ''} ${v.telefono || ''}`.toLowerCase();
+                    if (!campos.includes(txt)) return false;
+                }
+                return true;
+            });
+
+            if (lbl) lbl.innerText = filtrados.length;
+
+            vecinosPageCurrent = construirControlesPaginacion(
+                'controlesPaginacionVecinos',
+                'lblResumenPaginacionVecinos',
+                filtrados.length,
+                pagina,
+                'irPaginaVecinos',
+                'vecinos'
+            );
+
+            if (filtrados.length === 0) {
                 tbody.innerHTML = `
                     <tr>
                         <td colspan="7" class="p-4 text-center text-muted">
-                            No hay vecinos registrados en {{ current_delegation }}.
+                            No hay vecinos registrados para los filtros seleccionados en {{ current_delegation }}.
                         </td>
                     </tr>
                 `;
                 return;
             }
 
-            vecinosList.forEach(raw => {
+            const inicio = (vecinosPageCurrent - 1) * SOCIAL_PAGE_SIZE;
+            const paginaItems = filtrados.slice(inicio, inicio + SOCIAL_PAGE_SIZE);
+
+            paginaItems.forEach(raw => {
                 const v = registroSeguro(raw);
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
@@ -2479,17 +2676,8 @@
             });
         }
 
-        function filtrarTablaVecinos() {
-            const txt = document.getElementById('txtBusquedaVecino').value.toLowerCase().trim();
-            const est = document.getElementById('selFiltroEstadoVecino').value;
-
-            const rows = document.querySelectorAll('#tablaMantenedorVecinosBody tr');
-            rows.forEach(r => {
-                const textContent = r.innerText.toLowerCase();
-                const matchTxt = !txt || textContent.includes(txt);
-                const matchEst = !est || textContent.includes(est.toLowerCase());
-                r.style.display = (matchTxt && matchEst) ? '' : 'none';
-            });
+        function filtrarTablaVecinos(pagina = 1) {
+            renderizarTablaVecinosMantenedor(null, pagina);
         }
 
         // =============================================================
@@ -2581,7 +2769,7 @@
         function filtrarPorEtapa(etapa) {
             const selEtapa = document.getElementById('selFiltroEtapa');
             if (selEtapa) selEtapa.value = etapa === 'todas' ? '' : etapa;
-            aplicarFiltrosTabla();
+            aplicarFiltrosTabla(1);
         }
 
         function restablecerFiltrosCasos() {
@@ -2589,10 +2777,10 @@
             document.getElementById('selFiltroEtapa').value = '';
             const delegationFilter = document.getElementById('selFiltroDelegacion');
             if (delegationFilter.type !== 'hidden') delegationFilter.value = '';
-            aplicarFiltrosTabla();
+            aplicarFiltrosTabla(1);
         }
 
-        function aplicarFiltrosTabla() {
+        function aplicarFiltrosTabla(pagina = 1) {
             const texto = document.getElementById('txtBusquedaCaso').value.toLowerCase().trim();
             const delegacion = document.getElementById('selFiltroDelegacion').value;
             const etapa = document.getElementById('selFiltroEtapa').value;
@@ -2608,12 +2796,13 @@
                     const matchNombre = caso.nombre.toLowerCase().includes(texto);
                     const matchAsunto = caso.asunto.toLowerCase().includes(texto);
                     const matchDelegacion = caso.delegacion.toLowerCase().includes(texto);
-                    if (!matchRut && !matchNombre && !matchAsunto && !matchDelegacion) return false;
+                    const matchDesc = (caso.descripcion || '').toLowerCase().includes(texto);
+                    if (!matchRut && !matchNombre && !matchAsunto && !matchDelegacion && !matchDesc) return false;
                 }
                 return true;
             });
 
-            renderizarTablaCasos(filtrados);
+            renderizarTablaCasos(filtrados, pagina);
         }
 
         // =============================================================
@@ -2660,6 +2849,71 @@
         function abrirModalNuevoCaso() {
             const modal = new bootstrap.Modal(document.getElementById('modalNuevoCaso'));
             modal.show();
+        }
+
+        function abrirModalEditarCaso(id) {
+            const c = casosSociales.find(item => item.id === id);
+            if (!c) return;
+            document.getElementById('editCasoId').value = c.id;
+            document.getElementById('editCasoRut').value = c.rut;
+            document.getElementById('editCasoNombre').value = c.nombre;
+            document.getElementById('editCasoTelefono').value = c.telefono === 'No informado' ? '' : (c.telefono || '');
+            document.getElementById('editCasoCategoria').value = c.categoria || 'beneficio';
+            document.getElementById('editCasoAsunto').value = c.asunto || '';
+            let descLimpia = c.descripcion || '';
+            if (descLimpia.startsWith('[') && descLimpia.includes('] ')) {
+                const rest = descLimpia.split('] ', 2)[1] || '';
+                const dotIdx = rest.indexOf('. ');
+                descLimpia = dotIdx !== -1 ? rest.slice(dotIdx + 2) : rest;
+            }
+            document.getElementById('editCasoDescripcion').value = descLimpia;
+            const modal = new bootstrap.Modal(document.getElementById('modalEditarCaso'));
+            modal.show();
+        }
+
+        async function guardarEdicionCaso(e) {
+            e.preventDefault();
+            const id = parseInt(document.getElementById('editCasoId').value, 10);
+            const rut = document.getElementById('editCasoRut').value.trim();
+            const nombre = document.getElementById('editCasoNombre').value.trim();
+            const telefono = document.getElementById('editCasoTelefono').value.trim();
+            const categoria = document.getElementById('editCasoCategoria').value;
+            const asunto = document.getElementById('editCasoAsunto').value.trim();
+            const descripcion = document.getElementById('editCasoDescripcion').value.trim();
+
+            if (!validarRutChileno(rut)) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'RUT Inválido',
+                    text: 'El RUT ingresado no cumple con el algoritmo Módulo 11 de Chile.',
+                    confirmButtonColor: '#C41230'
+                });
+                return;
+            }
+
+            try {
+                const data = await apiSocial(`/social/api/casos/${id}/`, 'PUT', {
+                    user_rut: rut,
+                    user_name: nombre,
+                    contact_phone: telefono,
+                    initial_problem: `[${categoria}] ${asunto}. ${descripcion}`
+                });
+                const refreshed = await recargarCasos();
+                bootstrap.Modal.getInstance(document.getElementById('modalEditarCaso')).hide();
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Caso Social Actualizado',
+                    text: mensajeGuardado(data.message, refreshed),
+                    confirmButtonColor: '#C41230'
+                });
+            } catch (err) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'No se pudo actualizar el caso',
+                    text: err.message,
+                    confirmButtonColor: '#C41230'
+                });
+            }
         }
 
         function abrirModalVisitaTerreno() {

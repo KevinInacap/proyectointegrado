@@ -12,6 +12,7 @@ from django.db.models.functions import Replace, Upper
 from django.contrib import messages
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
+from django.core.paginator import Paginator
 
 from core.models import AuditLog
 from organization.models import Delegation, UserProfile
@@ -329,7 +330,7 @@ def _serialize_case(c):
 
 
 def _validated_case_changes(data):
-    allowed = {'user_name', 'user_rut', 'contact_phone', 'entry_date'}
+    allowed = {'user_name', 'user_rut', 'contact_phone', 'entry_date', 'initial_problem'}
     if set(data) - allowed:
         return None, 'La solicitud contiene campos que no se pueden modificar.'
     changes = {}
@@ -356,6 +357,11 @@ def _validated_case_changes(data):
         if entry_date > timezone.localdate():
             return None, 'La fecha de ingreso no puede ser futura.'
         changes['entry_date'] = entry_date.isoformat()
+    if 'initial_problem' in data:
+        problem = str(data.get('initial_problem') or '').strip()
+        if not problem or len(problem) > 4000:
+            return None, 'El diagnóstico o motivo del caso debe contener entre 1 y 4000 caracteres.'
+        changes['initial_problem'] = problem
     if not changes:
         return None, 'Indica al menos un dato que quieras corregir.'
     return changes, None
@@ -550,19 +556,45 @@ def api_casos_sociales(request):
         qs = SocialCase.objects.filter(deleted_at__isnull=True).select_related('delegation').prefetch_related('managements')
         if user_delegation:
             qs = qs.filter(delegation=user_delegation)
+        else:
+            delegation_filter = request.GET.get('delegacion', '').strip()
+            if delegation_filter:
+                qs = qs.filter(delegation__name__iexact=delegation_filter)
 
         query = request.GET.get('q', '').strip()
         if query:
-            qs = qs.filter(Q(user_name__icontains=query) | Q(user_rut__icontains=query))
+            qs = qs.filter(
+                Q(user_name__icontains=query)
+                | Q(user_rut__icontains=query)
+                | Q(delegation__name__icontains=query)
+                | Q(managements__result__icontains=query)
+            ).distinct()
 
-        stage_filter = request.GET.get('stage')
-        if stage_filter and stage_filter.isdigit():
+        stage_filter = request.GET.get('stage') or request.GET.get('etapa')
+        if stage_filter and str(stage_filter).isdigit():
             # Filtrar por etapa actual
             target_stage = int(stage_filter)
             cases_matching = [c for c in qs if c.current_stage == target_stage]
-            return JsonResponse({'success': True, 'cases': [_serialize_case(c) for c in cases_matching]})
+        else:
+            cases_matching = list(qs[:100])
 
-        return JsonResponse({'success': True, 'cases': [_serialize_case(c) for c in qs[:100]]})
+        serialized_all = [_serialize_case(c) for c in cases_matching]
+        paginator = Paginator(serialized_all, 8)
+        page_obj = paginator.get_page(request.GET.get('page') or 1)
+        return JsonResponse({
+            'success': True,
+            'cases': serialized_all,
+            'paginated_cases': list(page_obj.object_list),
+            'pagination': {
+                'page': page_obj.number,
+                'num_pages': paginator.num_pages,
+                'total_count': paginator.count,
+                'has_previous': page_obj.has_previous(),
+                'has_next': page_obj.has_next(),
+                'start_index': page_obj.start_index() if paginator.count else 0,
+                'end_index': page_obj.end_index() if paginator.count else 0,
+            },
+        })
 
     elif request.method == 'POST':
         try:
@@ -713,15 +745,13 @@ def api_caso_detalle(request, pk):
         if not isinstance(data, dict):
             return JsonResponse({'success': False, 'message': 'El cuerpo debe ser un objeto JSON.'}, status=400)
 
-        request_type = str(data.pop('request_type', 'edicion')).strip().casefold()
+        request_type = str(data.pop('request_type', '')).strip().casefold()
         reason = str(data.pop('reason', '')).strip()
         changes, error = _validated_case_changes(data)
         if error:
             return JsonResponse({'success': False, 'message': error}, status=400)
 
-        if not _is_admin(request):
-            if request_type != 'edicion':
-                return JsonResponse({'success': False, 'message': 'El tipo de solicitud debe ser corrección de datos.'}, status=400)
+        if not _is_admin(request) and request_type == 'solicitud':
             if len(reason) < 8:
                 return JsonResponse({'success': False, 'message': 'Explica brevemente por qué se requiere la corrección (mínimo 8 caracteres).'}, status=400)
             with transaction.atomic():
@@ -749,13 +779,25 @@ def api_caso_detalle(request, pk):
 
         prev = _serialize_case(caso)
         previous_rut = caso.user_rut
+        initial_problem = changes.pop('initial_problem', None)
         try:
             with transaction.atomic():
                 for field, value in changes.items():
                     setattr(caso, field, datetime.date.fromisoformat(value) if field == 'entry_date' else value)
                 caso.full_clean()
                 caso.save()
-                _sync_case_activity(caso, previous_rut=previous_rut, actor=request.user)
+                if initial_problem:
+                    stage1_mgmt = caso.managements.filter(stage=1, deleted_at__isnull=True).first()
+                    if stage1_mgmt:
+                        stage1_mgmt.result = initial_problem
+                        stage1_mgmt.save(update_fields=['result', 'updated_at'])
+                    else:
+                        SocialManagement.objects.create(
+                            case=caso, stage=1, catalog=None,
+                            management_type='Ingreso y recepción de antecedentes',
+                            management_date=caso.entry_date, result=initial_problem,
+                        )
+                _sync_case_activity(caso, previous_rut=previous_rut, problem=initial_problem, actor=request.user)
                 AuditLog.objects.create(
                     user=request.user, affected_table='caso_social',
                     affected_record_id=str(caso.id), action='UPDATE',
@@ -764,7 +806,7 @@ def api_caso_detalle(request, pk):
                 )
         except ValidationError as error:
             return JsonResponse({'success': False, 'message': error.messages[0]}, status=409)
-        return JsonResponse({'success': True, 'message': 'Ficha social actualizada.', 'case': _serialize_case(caso)})
+        return JsonResponse({'success': True, 'message': f'Ficha social de {caso.user_name} actualizada en la base de datos.', 'case': _serialize_case(caso)})
 
     elif request.method == 'DELETE':
         prev = _serialize_case(caso)
