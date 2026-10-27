@@ -404,6 +404,18 @@ def dashboard_asistente_integral_view(request, section='casos'):
 
     # Casos sociales y padrón son entidades distintas: un vecino no es un caso.
     vecinos_scoped = _vecino_scope(request).order_by('-created_at')
+    vecinos_query = request.GET.get('vq', '').strip()[:100]
+    vecinos_estado = request.GET.get('vestado', '').strip()
+    if vecinos_query:
+        vecinos_scoped = vecinos_scoped.filter(
+            Q(nombre__icontains=vecinos_query)
+            | Q(rut__icontains=vecinos_query)
+            | Q(direccion__icontains=vecinos_query)
+            | Q(telefono__icontains=vecinos_query)
+        )
+    if vecinos_estado in {'Activo', 'Inactivo'}:
+        vecinos_scoped = vecinos_scoped.filter(estado=vecinos_estado)
+
     cases = SocialCase.objects.filter(deleted_at__isnull=True).select_related('delegation').prefetch_related('managements')
     if not is_admin_user:
         cases = cases.filter(delegation=profile.delegation) if profile.delegation_id else cases.none()
@@ -444,7 +456,26 @@ def dashboard_asistente_integral_view(request, section='casos'):
             'resolucion': latest.result if latest else 'Sin gestión registrada',
         })
 
+    query = request.GET.get('q', '').strip()[:100]
+    etapa_filter = request.GET.get('etapa', '').strip()
+    delegacion_filter = request.GET.get('delegacion', '').strip()
+    casos_filtrados = casos_iniciales
+    if delegacion_filter and not has_assigned_delegation:
+        casos_filtrados = [c for c in casos_filtrados if c['delegacion'].casefold() == delegacion_filter.casefold()]
+    if etapa_filter in {'1', '2', '3'}:
+        casos_filtrados = [c for c in casos_filtrados if str(c['etapa']) == etapa_filter]
+    if query:
+        q_low = query.casefold()
+        casos_filtrados = [
+            c for c in casos_filtrados
+            if any(q_low in str(c.get(k, '')).casefold() for k in ('rut', 'nombre', 'asunto', 'delegacion', 'descripcion'))
+        ]
+    casos_paginator = Paginator(casos_filtrados, 8)
+    casos_page = casos_paginator.get_page(request.GET.get('page') or 1)
+
     vecinos_serializados = [_serialize_vecino(v) for v in vecinos_scoped]
+    vecinos_paginator = Paginator(vecinos_serializados, 8)
+    vecinos_page = vecinos_paginator.get_page(request.GET.get('vpage') or 1)
     goal = None
     if latest_period:
         goal = Goal.objects.filter(
@@ -510,8 +541,16 @@ def dashboard_asistente_integral_view(request, section='casos'):
             status='Activo', deleted_at__isnull=True,
             attention_type__status='Activo', attention_type__deleted_at__isnull=True,
         ).order_by('name'),
-        'casos_sociales': casos_iniciales,
+        'casos_sociales': casos_filtrados,
+        'casos_todos': casos_iniciales,
+        'casos_page': casos_page,
+        'query': query,
+        'etapa_filter': etapa_filter,
+        'delegacion_filter': delegacion_filter,
         'vecinos_data': vecinos_serializados,
+        'vecinos_page': vecinos_page,
+        'vecinos_query': vecinos_query,
+        'vecinos_estado': vecinos_estado,
         'goal_data': goal_data,
         'referrals_data': referrals_data,
         'can_close_social': _has_matrix_permission(request, 'cierre'),
@@ -917,8 +956,35 @@ def api_vecinos(request):
         return _permission_denied(required_permission)
 
     if request.method == 'GET':
-        vecinos = [_serialize_vecino(v) for v in _vecino_scope(request).order_by('nombre')]
-        return JsonResponse({'success': True, 'vecinos': vecinos})
+        qs = _vecino_scope(request).order_by('nombre')
+        q = request.GET.get('q', '').strip()[:100]
+        estado = request.GET.get('estado', '').strip()
+        if q:
+            qs = qs.filter(
+                Q(nombre__icontains=q)
+                | Q(rut__icontains=q)
+                | Q(direccion__icontains=q)
+                | Q(telefono__icontains=q)
+            )
+        if estado in {'Activo', 'Inactivo'}:
+            qs = qs.filter(estado=estado)
+        vecinos = [_serialize_vecino(v) for v in qs]
+        paginator = Paginator(vecinos, 8)
+        page_obj = paginator.get_page(request.GET.get('page') or 1)
+        return JsonResponse({
+            'success': True,
+            'vecinos': vecinos,
+            'paginated_vecinos': list(page_obj.object_list),
+            'pagination': {
+                'page': page_obj.number,
+                'num_pages': paginator.num_pages,
+                'total_count': paginator.count,
+                'has_previous': page_obj.has_previous(),
+                'has_next': page_obj.has_next(),
+                'start_index': page_obj.start_index() if paginator.count else 0,
+                'end_index': page_obj.end_index() if paginator.count else 0,
+            },
+        })
     elif request.method == 'POST':
         try:
             data = json.loads(request.body)
