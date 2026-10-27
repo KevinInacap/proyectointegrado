@@ -282,3 +282,123 @@ class UserCargoRoleSyncTests(TestCase):
         role.refresh_from_db()
         self.assertEqual(role.name, 'Encargado Territorial')
         self.assertEqual(list(profile.roles.values_list('name', flat=True)), ['Encargado Territorial'])
+
+
+class UserIdentityEditingTests(TestCase):
+    """Regresiones de identidad y privilegios al editar la dotación existente."""
+
+    @classmethod
+    def setUpTestData(cls):
+        User = get_user_model()
+        cls.admin = User.objects.create_superuser(
+            username='identity-admin', email='identity-admin@example.test', password='Safe!TestPass2026',
+        )
+        cls.delegation = Delegation.objects.create(name='Identidad territorial', scope='Sector de prueba')
+        cls.assistant_position = Position.objects.get(name='Asistente Social')
+        cls.delegate_position = Position.objects.get(name='Delegado Municipal')
+        cls.super_position, _ = Position.objects.get_or_create(name='SuperAdministrador')
+        cls.extra_role = Role.objects.create(name='Apoyo identidad', permissions_data=['reportes.view'])
+        cls.user = User.objects.create_user(username='legacy-person', is_staff=True)
+        cls.profile = UserProfile.objects.create(
+            user=cls.user, rut='12.345.678-9', full_name='Persona Histórica',
+            email='legacy-person@example.test', delegation=cls.delegation,
+            position=cls.assistant_position,
+        )
+        cls.profile.roles.add(Role.objects.get(name='Asistente Social'))
+
+    def setUp(self):
+        self.client.force_login(self.admin)
+
+    def update(self, payload):
+        return self.client.post(
+            reverse('organization:api_user_update', args=[self.profile.pk]),
+            data=json.dumps(payload), content_type='application/json',
+        )
+
+    def create(self, **overrides):
+        payload = {
+            'username': 'new-identity', 'full_name': 'Nueva Persona',
+            'email': 'new-identity@example.test', 'rut': '10000013-k',
+            'password': 'Safe!TestPass2026', 'delegation_id': self.delegation.pk,
+            'position_id': self.assistant_position.pk,
+        }
+        payload.update(overrides)
+        return self.client.post(
+            reverse('organization:api_user_create'), data=json.dumps(payload), content_type='application/json',
+        )
+
+    def test_cargo_can_change_without_resubmitting_historical_rut(self):
+        response = self.update({'position_id': self.delegate_position.pk})
+        self.assertEqual(response.status_code, 200, response.content)
+        self.profile.refresh_from_db()
+        self.user.refresh_from_db()
+        self.assertEqual(self.profile.rut, '12.345.678-9')
+        self.assertEqual(self.profile.position_id, self.delegate_position.pk)
+        self.assertSetEqual(set(self.profile.roles.values_list('name', flat=True)), {'Delegado Municipal'})
+        self.assertTrue(self.user.is_staff)
+        self.assertFalse(self.user.is_superuser)
+
+    def test_unchanged_historical_rut_allows_role_change_even_when_reformatted(self):
+        response = self.update({'rut': '12345678-9', 'role_ids': [self.extra_role.pk]})
+        self.assertEqual(response.status_code, 200, response.content)
+        self.profile.refresh_from_db()
+        self.assertEqual(self.profile.rut, '12.345.678-9')
+        self.assertSetEqual(set(self.profile.roles.values_list('name', flat=True)), {'Asistente Social', 'Apoyo identidad'})
+
+    def test_changed_invalid_rut_does_not_partially_update_cargo_or_roles(self):
+        from core.models import AuditLog
+        audit_count = AuditLog.objects.count()
+        for rut in ('12.345.678-0', '', 'abc12345678-5', '0-0'):
+            with self.subTest(rut=rut):
+                response = self.update({'rut': rut, 'position_id': self.delegate_position.pk, 'role_ids': [self.extra_role.pk]})
+                self.assertEqual(response.status_code, 400, response.content)
+                self.profile.refresh_from_db()
+                self.assertEqual(self.profile.rut, '12.345.678-9')
+                self.assertEqual(self.profile.position_id, self.assistant_position.pk)
+                self.assertSetEqual(set(self.profile.roles.values_list('name', flat=True)), {'Asistente Social'})
+        self.assertEqual(AuditLog.objects.count(), audit_count)
+
+    def test_new_rut_requires_valid_dv(self):
+        response = self.create(rut='12.345.678-9')
+        self.assertEqual(response.status_code, 400, response.content)
+        self.assertFalse(get_user_model().objects.filter(username='new-identity').exists())
+
+    def test_new_and_changed_valid_rut_store_canonical_format_and_uppercase_k(self):
+        response = self.create()
+        self.assertEqual(response.status_code, 200, response.content)
+        self.assertEqual(UserProfile.objects.get(pk=response.json()['user_id']).rut, '10.000.013-K')
+        response = self.update({'rut': '12345678-5'})
+        self.assertEqual(response.status_code, 200, response.content)
+        self.profile.refresh_from_db()
+        self.assertEqual(self.profile.rut, '12.345.678-5')
+
+    def test_duplicate_identity_is_rejected_for_create_and_update_across_formats(self):
+        other = get_user_model().objects.create_user(username='other-identity')
+        UserProfile.objects.create(user=other, rut='10000013-k', full_name='Otra Persona', email='other-identity@example.test')
+        response = self.create(rut='10.000.013-K')
+        self.assertEqual(response.status_code, 400, response.content)
+        self.assertIn('ya se encuentra registrado', response.json()['message'])
+        response = self.update({'rut': '10.000.013-K', 'position_id': self.delegate_position.pk})
+        self.assertEqual(response.status_code, 400, response.content)
+        self.assertIn('pertenece a otro funcionario', response.json()['message'])
+        self.profile.refresh_from_db()
+        self.assertEqual(self.profile.rut, '12.345.678-9')
+        self.assertEqual(self.profile.position_id, self.assistant_position.pk)
+
+    def test_super_administrator_cargo_cannot_bypass_reserved_role_on_create(self):
+        response = self.create(position_id=self.super_position.pk, role_ids=[])
+        self.assertEqual(response.status_code, 403, response.content)
+        self.assertFalse(get_user_model().objects.filter(username='new-identity').exists())
+
+    def test_super_administrator_cargo_cannot_bypass_reserved_role_on_update(self):
+        from core.models import AuditLog
+        for roles in (None, []):
+            payload = {'position_id': self.super_position.pk}
+            if roles is not None:
+                payload['role_ids'] = roles
+            response = self.update(payload)
+            self.assertEqual(response.status_code, 403, response.content)
+            self.profile.refresh_from_db()
+            self.assertEqual(self.profile.position_id, self.assistant_position.pk)
+            self.assertSetEqual(set(self.profile.roles.values_list('name', flat=True)), {'Asistente Social'})
+        self.assertFalse(AuditLog.objects.filter(affected_record_id=str(self.profile.pk), action='UPDATE').exists())

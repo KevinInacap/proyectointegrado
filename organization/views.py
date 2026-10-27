@@ -8,7 +8,8 @@ from django.http import JsonResponse
 from django.contrib.auth.models import User
 from django.contrib.auth.password_validation import validate_password
 from django.db import transaction
-from django.db.models import Avg
+from django.db.models import Avg, F, Value
+from django.db.models.functions import Replace, Trim, Upper
 from django.utils import timezone
 from django.core.validators import validate_email
 from django.core.exceptions import ValidationError
@@ -203,10 +204,12 @@ def _validated_permissions(value):
 
 
 def _is_valid_chilean_rut(value):
-    if not isinstance(value, str) or not re.fullmatch(r'(?:\d{1,8}|\d{1,2}(?:\.\d{3}){1,2})-?[0-9kK]', value.strip()):
+    if not isinstance(value, str) or not re.fullmatch(r'(?:[0-9]{1,8}|[0-9]{1,2}(?:\.[0-9]{3}){1,2})-?[0-9kK]', value.strip()):
         return False
-    cleaned = value.replace('-', '').replace('.', '')
+    cleaned = _rut_identity(value)
     number, verifier = cleaned[:-1], cleaned[-1].upper()
+    if not int(number):
+        return False
     total, multiplier = 0, 2
     for digit in reversed(number):
         total += int(digit) * multiplier
@@ -214,6 +217,34 @@ def _is_valid_chilean_rut(value):
     result = 11 - (total % 11)
     expected = '0' if result == 11 else ('K' if result == 10 else str(result))
     return verifier == expected
+
+
+def _rut_identity(value):
+    """Compara la identidad sin cambiar ni corregir su dígito verificador."""
+    return str(value or '').strip().replace('.', '').replace('-', '').upper()
+
+
+def _format_rut(value):
+    cleaned = _rut_identity(value)
+    number, verifier = cleaned[:-1], cleaned[-1]
+    groups = []
+    while number:
+        groups.append(number[-3:])
+        number = number[:-3]
+    return '.'.join(reversed(groups)) + '-' + verifier
+
+
+def _profiles_with_rut(value):
+    # Incluye registros históricos con otro formato o dados de baja: el RUT
+    # identifica a una sola persona aunque su cuenta se encuentre inactiva.
+    return UserProfile.objects.annotate(
+        rut_identity=Upper(Replace(Replace(Trim(F('rut')), Value('.'), Value('')), Value('-'), Value(''))),
+    ).filter(rut_identity=_rut_identity(value))
+
+
+def _reserved_super_administrator_identity(rut, email):
+    return (_rut_identity(rut) == _rut_identity(SUPER_ADMINISTRATOR_RUT)
+            or email.strip().lower() == 'keviinencinamolina2k20@gmail.com')
 
 
 def _validate_delegation_details(data):
@@ -364,12 +395,13 @@ def api_user_create(request):
 
     if not _is_valid_chilean_rut(rut):
         return JsonResponse({'success': False, 'message': 'RUT inválido. Revisa el número y el dígito verificador.'}, status=400)
+    rut = _format_rut(rut)
 
     # Validaciones de unicidad
     if User.objects.filter(username__iexact=username).exists():
         return JsonResponse({'success': False, 'message': f"El nombre de usuario '{username}' ya está en uso."}, status=400)
     
-    if UserProfile.objects.filter(rut=rut).exists():
+    if _profiles_with_rut(rut).exists():
         return JsonResponse({'success': False, 'message': f"El RUT '{rut}' ya se encuentra registrado."}, status=400)
 
     if UserProfile.objects.filter(email__iexact=email).exists():
@@ -395,12 +427,12 @@ def api_user_create(request):
         if any(is_administrator_role(role) for role in roles):
             return JsonResponse({'success': False, 'message': 'Solo un Administrador puede asignar el rol global.'}, status=403)
 
-    if roles and any(role.name == SUPER_ADMINISTRATOR_ROLE_NAME for role in roles):
-        norm_rut = re.sub(r'[^0-9kK]', '', rut).upper()
-        target_rut = re.sub(r'[^0-9kK]', '', SUPER_ADMINISTRATOR_RUT).upper()
-        is_target_person = (norm_rut == target_rut) or ((email or '').strip().lower() == 'keviinencinamolina2k20@gmail.com')
-        if not is_target_person:
-            return JsonResponse({'success': False, 'message': 'El rol SuperAdministrador está reservado exclusivamente para la máxima autoridad institucional.'}, status=403)
+    assigns_super_administrator = (
+        any(role_name_for_position(role.name) == SUPER_ADMINISTRATOR_ROLE_NAME for role in roles)
+        or position and role_name_for_position(position.name) == SUPER_ADMINISTRATOR_ROLE_NAME
+    )
+    if assigns_super_administrator and not _reserved_super_administrator_identity(rut, email):
+        return JsonResponse({'success': False, 'message': 'El rol SuperAdministrador está reservado exclusivamente para la máxima autoridad institucional.'}, status=403)
 
     try:
         with transaction.atomic():
@@ -494,8 +526,15 @@ def api_user_update(request, pk):
         validate_email(email)
     except ValidationError:
         return JsonResponse({'success': False, 'message': 'Correo inválido.'}, status=400)
-    if not _is_valid_chilean_rut(rut):
-        return JsonResponse({'success': False, 'message': 'RUT inválido.'}, status=400)
+    rut_changed = _rut_identity(rut) != _rut_identity(profile.rut)
+    if rut_changed:
+        if not _is_valid_chilean_rut(rut):
+            return JsonResponse({'success': False, 'message': 'RUT inválido. Revisa el número y el dígito verificador.'}, status=400)
+        rut = _format_rut(rut)
+    else:
+        # Una edición de cargo/rol no debe modificar ni bloquear un RUT
+        # histórico. Solo exigimos el DV cuando cambia la identidad.
+        rut = profile.rut
     roles = _validated_roles(role_ids) if role_ids is not None else None
     if role_ids is not None and roles is None:
         return JsonResponse({'success': False, 'message': 'Roles inválidos.'}, status=400)
@@ -545,11 +584,25 @@ def api_user_update(request, pk):
             return JsonResponse({'success': False, 'message': 'No puede mover usuarios fuera de su delegación asignada.'}, status=403)
 
     # Validar que no choque RUT o Email con otro usuario
-    if UserProfile.objects.filter(rut=rut).exclude(id=profile.id).exists():
+    if rut_changed and _profiles_with_rut(rut).exclude(id=profile.id).exists():
         return JsonResponse({'success': False, 'message': f"El RUT '{rut}' pertenece a otro funcionario."}, status=400)
     
     if UserProfile.objects.filter(email__iexact=email).exclude(id=profile.id).exists():
         return JsonResponse({'success': False, 'message': f"El correo '{email}' pertenece a otro funcionario."}, status=400)
+
+    selected_roles = roles if role_ids is not None else list(
+        profile.roles.filter(deleted_at__isnull=True)
+    )
+    old_base_name = role_name_for_position(profile.position.name if profile.position else None)
+    next_base_name = role_name_for_position(effective_position.name if effective_position else None)
+    if old_base_name and old_base_name.casefold() != next_base_name.casefold():
+        selected_roles = [role for role in selected_roles if role.name.casefold() != old_base_name.casefold()]
+    assigns_super_administrator = (
+        next_base_name == SUPER_ADMINISTRATOR_ROLE_NAME
+        or any(role_name_for_position(role.name) == SUPER_ADMINISTRATOR_ROLE_NAME for role in selected_roles)
+    )
+    if assigns_super_administrator and not _reserved_super_administrator_identity(rut, email):
+        return JsonResponse({'success': False, 'message': 'El rol SuperAdministrador está reservado exclusivamente para la máxima autoridad institucional.'}, status=403)
 
     try:
         with transaction.atomic():
@@ -570,31 +623,9 @@ def api_user_update(request, pk):
             if 'delegation_id' in data:
                 profile.delegation = delegation
             
-            previous_position = profile.position
             if 'position_id' in data:
                 profile.position = position
 
-            if role_ids is not None:
-                if roles and any(role.name == SUPER_ADMINISTRATOR_ROLE_NAME for role in roles):
-                    norm_rut = re.sub(r'[^0-9kK]', '', rut).upper()
-                    target_rut = re.sub(r'[^0-9kK]', '', SUPER_ADMINISTRATOR_RUT).upper()
-                    is_target_person = (norm_rut == target_rut) or ((email or '').strip().lower() == 'keviinencinamolina2k20@gmail.com')
-                    if not is_target_person:
-                        return JsonResponse({'success': False, 'message': 'El rol SuperAdministrador está reservado exclusivamente para la máxima autoridad institucional.'}, status=403)
-            selected_roles = roles if role_ids is not None else list(
-                profile.roles.filter(deleted_at__isnull=True)
-            )
-            old_base_name = role_name_for_position(
-                previous_position.name if previous_position else None
-            )
-            next_base_name = role_name_for_position(
-                profile.position.name if profile.position else None
-            )
-            if old_base_name and old_base_name.casefold() != next_base_name.casefold():
-                selected_roles = [
-                    role for role in selected_roles
-                    if role.name.casefold() != old_base_name.casefold()
-                ]
             profile.roles.set(_roles_with_position_base(selected_roles, profile.position))
 
             profile.save()

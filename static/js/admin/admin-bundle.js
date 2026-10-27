@@ -2953,7 +2953,7 @@
                 document.getElementById('usrStatus').value = u.status;
                 document.getElementById('usrDelegation').value = u.delegation_id || '';
                 document.getElementById('usrPosition').value = u.position_id || '';
-                document.getElementById('usrIsSuperuser').checked = u.is_superuser || u.is_staff;
+                document.getElementById('usrIsSuperuser').checked = !!u.is_superuser;
                 document.getElementById('lblPasswordUsuario').innerHTML = 'Cambiar Contraseña (Opcional)';
                 document.getElementById('usrPassword').placeholder = 'Nueva contraseña (opcional)';
                 document.getElementById('helpPasswordUsuario').textContent = 'Déjala en blanco para conservar la clave actual; si la cambias, usa 8+ caracteres, mayúscula, minúscula, número y símbolo.';
@@ -3014,12 +3014,20 @@
                 return;
             }
 
-            if (typeof validarRutChileno === 'function' && !validarRutChileno(rut)) {
+            const existente = editId ? datasetUsuarios.find(u => String(u.id) === String(editId)) : null;
+            const normalizarRut = valor => String(valor || '').trim().replace(/[.-]/g, '').toUpperCase();
+            const rutSinCambios = !!existente && normalizarRut(rut) === normalizarRut(existente.rut);
+            if (!rutSinCambios && typeof validarRutChileno === 'function' && !validarRutChileno(rut)) {
                 Swal.fire({
                     icon: 'error',
                     title: 'RUT inválido',
                     text: 'Revisa el número y el dígito verificador antes de continuar.'
                 });
+                return;
+            }
+
+            if (!rutSinCambios && datasetUsuarios.some(u => String(u.id) !== String(editId) && normalizarRut(u.rut) === normalizarRut(rut))) {
+                Swal.fire({icon: 'error', title: 'RUT duplicado', text: 'Ya existe un funcionario registrado con ese RUT.'});
                 return;
             }
 
@@ -3034,17 +3042,23 @@
 
             const payload = {
                 full_name: typeof sanitizarTexto === 'function' ? sanitizarTexto(fullName) : fullName,
-                rut: typeof formatearRutChileno === 'function' ? formatearRutChileno(rut) : rut,
+                rut: rutSinCambios ? existente.rut : (typeof formatearRutChileno === 'function' ? formatearRutChileno(rut) : rut),
                 username: username,
                 email: email.trim().toLowerCase(),
                 password: password,
                 status: status,
                 delegation_id: delegationId ? parseInt(delegationId) : null,
                 position_id: positionId ? parseInt(positionId) : null,
-                role_ids: roleIds,
-                is_staff: isSuperuser,
-                is_superuser: isSuperuser
+                role_ids: roleIds
             };
+            // Editar cargo o roles conserva los permisos técnicos por separado.
+            // El interruptor representa solo superusuario, nunca el flag staff.
+            if (!editId) {
+                payload.is_staff = isSuperuser;
+                payload.is_superuser = isSuperuser;
+            } else if (existente && isSuperuser !== !!existente.is_superuser) {
+                payload.is_superuser = isSuperuser;
+            }
 
             const btn = document.getElementById('btnGuardarUsuarioDB');
             const spinner = document.getElementById('spinnerGuardarUsuario');
@@ -6285,13 +6299,13 @@
         // 2. Validador de RUT Chileno (Algoritmo Oficial Módulo 11)
         function validarRutChileno(rutCompleto) {
             if (!rutCompleto || typeof rutCompleto !== 'string') return false;
+            if (!/^(?:[0-9]{1,8}|[0-9]{1,2}(?:\.[0-9]{3}){1,2})-?[0-9kK]$/.test(rutCompleto.trim())) return false;
             let valor = rutCompleto.replace(/\./g, '').replace(/-/g, '').trim().toUpperCase();
-            if (valor.length < 8 || valor.length > 9) return false;
             
             let cuerpo = valor.slice(0, -1);
             let dv = valor.slice(-1);
             
-            if (!/^\d+$/.test(cuerpo)) return false;
+            if (!/^[0-9]+$/.test(cuerpo) || Number(cuerpo) === 0) return false;
             
             let suma = 0;
             let multiplo = 2;

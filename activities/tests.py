@@ -477,6 +477,22 @@ class DashboardAccessTests(TestCase):
         self.assertContains(response, 'Informes Sociales')
         self.assertContains(response, 'Atención de Emergencias')
         self.assertContains(response, 'Articulación de Redes')
+        self.assertNotContains(response, 'Casos y revisión administrativa')
+        self.assertContains(response, 'id="txtBusquedaCaso"')
+        self.assertContains(response, 'id="selFiltroEtapa"')
+        self.assertContains(response, 'onclick="abrirModalNuevoCaso()"')
+
+    def test_asistente_social_read_only_dashboard_keeps_consultation_without_write_actions(self):
+        self.set_position('Asistente Social')
+        role = Role.objects.create(name='Consulta social de prueba', permissions_data=['lectura'])
+        self.profile.roles.set([role])
+        response = self.client.get(reverse('activities:dashboard_asistente'))
+        self.assertEqual(response.status_code, 200)
+        self.assertNotContains(response, 'Casos y revisión administrativa')
+        self.assertNotContains(response, 'onclick="abrirModalNuevoCaso()"')
+        self.assertNotContains(response, 'onclick="avanzarEtapaCaso(${caso.id})"')
+        self.assertContains(response, 'emitirInformeRapido')
+        self.assertContains(response, 'Exportar Excel')
 
 
 class RolePermissionToggleApiTests(TestCase):
