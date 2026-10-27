@@ -15,6 +15,14 @@
   const menuButton = document.querySelector('.mobile-menu');
   const sidebar = document.getElementById('delegado-sidebar');
   const sidebarBackdrop = document.getElementById('sidebar-backdrop');
+  const neighborSelect = document.getElementById('field-neighbor');
+  const neighborSearch = document.getElementById('neighbor-search');
+  const neighborCache = new Map();
+  const initialNeighbor = JSON.parse(document.getElementById('delegado-selected-neighbor')?.textContent || 'null');
+  let selectedNeighbor = null;
+  let neighborSearchVersion = 0;
+  let neighborSearchTimer;
+  let createCode = '';
   const statusLabels = {
     Pending: 'Pendiente', Approved: 'Aprobada', Rejected: 'Rechazada',
     'Requires correction': 'Requiere corrección',
@@ -42,7 +50,7 @@
         confirmButtonColor: getComputedStyle(app).getPropertyValue('--crimson').trim() || '#c41230', cancelButtonColor: '#6b5e61',
         confirmButtonText: 'Entendido', cancelButtonText: 'Cancelar',
         reverseButtons: true, heightAuto: false,
-        target: modalNode?.classList.contains('show') ? modalNode : document.body,
+        target: document.querySelector('#attentionModal.show, #neighborModal.show') || document.body,
         ...options,
       });
     }
@@ -67,7 +75,7 @@
       }
       actions.append(confirm);
       dialog.append(actions);
-      (modalNode?.classList.contains('show') ? modalNode : document.body).append(dialog);
+      (document.querySelector('#attentionModal.show, #neighborModal.show') || document.body).append(dialog);
       dialog.addEventListener('close', () => {
         dialog.remove();
         resolve({ isConfirmed: confirmed, isDismissed: !confirmed });
@@ -78,7 +86,7 @@
   };
   const notify = (icon, title, text) => popup({ icon, title, text });
   const detailUrl = id => `${app.dataset.detailBase}${encodeURIComponent(id)}/`;
-  const csrf = () => document.querySelector('#delegado-csrf [name=csrfmiddlewaretoken], #delegado-attention-form [name=csrfmiddlewaretoken]')?.value || '';
+  const csrf = () => document.querySelector('#delegado-csrf [name=csrfmiddlewaretoken], #delegado-attention-form [name=csrfmiddlewaretoken], #delegado-neighbor-form [name=csrfmiddlewaretoken]')?.value || '';
 
   const request = async (url, options = {}) => {
     let response;
@@ -133,6 +141,91 @@
   const navLinks = [...document.querySelectorAll('.primary-nav .nav-link')];
   navLinks.forEach(link => link.addEventListener('click', () => setMenu(false)));
 
+  const validRut = value => {
+    const clean = value.replace(/[.\s-]/g, '').toUpperCase();
+    if (!/^\d+[\dK]$/.test(clean)) return false;
+    let sum = 0, factor = 2;
+    for (const digit of clean.slice(0, -1).split('').reverse()) {
+      sum += Number(digit) * factor;
+      factor = factor === 7 ? 2 : factor + 1;
+    }
+    const result = 11 - sum % 11;
+    return clean.slice(-1) === (result === 11 ? '0' : result === 10 ? 'K' : String(result));
+  };
+  const neighborMode = () => form?.querySelector('[name=neighbor_mode]:checked')?.value || 'existing';
+  const selectNeighbor = neighbor => {
+    selectedNeighbor = neighbor || null;
+    if (neighbor) {
+      neighborCache.set(String(neighbor.id), neighbor);
+      if (![...neighborSelect.options].some(option => option.value === String(neighbor.id))) {
+        const option = createElement('option', `${neighbor.nombre} · ${neighbor.rut}`);
+        option.value = neighbor.id;
+        neighborSelect.append(option);
+      }
+    }
+    neighborSelect.value = neighbor ? String(neighbor.id) : '';
+    form.elements.contact_name.value = neighbor?.nombre || '';
+    form.elements.contact_phone.value = neighbor?.telefono || '';
+  };
+  const syncNeighborMode = (clearContact = true) => {
+    if (!form) return;
+    const mode = neighborMode();
+    document.getElementById('neighbor-existing').hidden = mode !== 'existing';
+    document.getElementById('neighbor-registration').hidden = mode !== 'new';
+    form.elements.contact_name.readOnly = mode === 'existing';
+    form.elements.contact_phone.readOnly = mode === 'existing';
+    for (const name of ['neighbor_rut', 'neighbor_address', 'neighbor_email']) form.elements[name].disabled = mode !== 'new';
+    document.getElementById('neighbor-mode-help').textContent = mode === 'new'
+      ? 'Al guardar se registrará al vecino en el padrón y se creará su atención vinculada. Nombre, RUT y dirección son obligatorios.'
+      : mode === 'legacy' ? 'Esta atención anterior solo contiene un contacto. Para incorporarlo al padrón, elige buscar o registrar un vecino. No se creará una ficha automáticamente.'
+      : 'La atención quedará vinculada al vecino seleccionado. Sus datos se editan desde Vecinos.';
+    if (clearContact) {
+      selectedNeighbor = null;
+      neighborSelect.value = '';
+      form.elements.contact_name.value = '';
+      form.elements.contact_phone.value = '';
+    }
+  };
+  const loadNeighbors = async () => {
+    if (!neighborSelect) return;
+    const version = ++neighborSearchVersion;
+    const status = document.getElementById('neighbor-search-status');
+    status.textContent = 'Buscando vecinos de tu delegación…';
+    const url = new URL(app.dataset.neighborsUrl, location.origin);
+    url.searchParams.set('q', neighborSearch.value.trim());
+    url.searchParams.set('estado', 'Activo');
+    try {
+      const data = await request(url);
+      if (version !== neighborSearchVersion) return;
+      neighborSelect.replaceChildren(createElement('option', 'Selecciona un vecino'));
+      neighborSelect.options[0].value = '';
+      for (const neighbor of data.paginated_vecinos) {
+        neighborCache.set(String(neighbor.id), neighbor);
+        const option = createElement('option', `${neighbor.nombre} · ${neighbor.rut}`);
+        option.value = neighbor.id;
+        neighborSelect.append(option);
+      }
+      if (selectedNeighbor) selectNeighbor(selectedNeighbor);
+      status.textContent = data.pagination.total_count
+        ? `${data.pagination.total_count} coincidencias. ${data.pagination.total_count > 8 ? 'Se muestran 8; precisa el nombre o RUT para encontrar al vecino.' : 'Selecciona al vecino.'}`
+        : 'No encontramos vecinos activos. Puedes registrar uno nuevo con sus datos.';
+    } catch (error) {
+      if (version === neighborSearchVersion) status.textContent = error.message;
+    }
+  };
+  neighborSelect?.addEventListener('change', () => selectNeighbor(neighborCache.get(neighborSelect.value)));
+  neighborSearch?.addEventListener('input', () => {
+    ++neighborSearchVersion;
+    selectNeighbor(null);
+    clearTimeout(neighborSearchTimer);
+    neighborSearchTimer = setTimeout(loadNeighbors, 250);
+  });
+  form?.querySelectorAll('[name=neighbor_mode]').forEach(radio => radio.addEventListener('change', () => {
+    clearErrors();
+    syncNeighborMode();
+    if (neighborMode() === 'existing') loadNeighbors();
+  }));
+
   const refreshSubtypes = () => {
     if (!type || !subtype) return;
     let visible = 0;
@@ -146,7 +239,7 @@
     subtype.options[0].textContent = type.value ? (visible ? 'Selecciona una subatención' : 'No hay subatenciones activas') : 'Selecciona primero el tipo';
   };
   type?.addEventListener('change', refreshSubtypes);
-  const fieldMap = { contact: 'field-contact', phone: 'field-phone', date: 'field-date', type: 'field-type', subtype: 'field-subtype', problem: 'field-problem', action: 'field-action' };
+  const fieldMap = { neighbor: 'field-neighbor', rut: 'field-rut', address: 'field-address', email: 'field-email', contact: 'field-contact', phone: 'field-phone', date: 'field-date', type: 'field-type', subtype: 'field-subtype', problem: 'field-problem', action: 'field-action' };
   const clearErrors = () => {
     if (summary) { summary.hidden = true; summary.textContent = ''; }
     Object.keys(fieldMap).forEach(key => {
@@ -168,13 +261,17 @@
     if (summary) { summary.hidden = false; summary.textContent = message; }
     announce(message);
   };
-  const snapshot = () => form ? JSON.stringify([...form.elements].filter(element => element.name && element.name !== 'csrfmiddlewaretoken').map(element => [element.name, element.type === 'checkbox' ? element.checked : element.value])) : '';
+  const snapshot = () => form ? JSON.stringify([...form.elements].filter(element => element.name && element.name !== 'csrfmiddlewaretoken').map(element => [element.name, ['checkbox', 'radio'].includes(element.type) ? element.checked : element.value])) : '';
   const hasChanges = () => Boolean(form && initialSnapshot && snapshot() !== initialSnapshot);
   const resetForm = () => {
     if (!form) return;
     form.reset();
     clearErrors();
     editingId = null;
+    createCode = `DEL-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 12)}`;
+    document.getElementById('neighbor-legacy-option').hidden = true;
+    syncNeighborMode();
+    if (initialNeighbor?.estado === 'Activo') selectNeighbor(initialNeighbor);
     legacyType = false;
     allowModalClose = false;
     date.value = date.max;
@@ -187,11 +284,11 @@
     initialSnapshot = snapshot();
   };
   modalNode?.addEventListener('show.bs.modal', event => {
-    if (event.relatedTarget?.dataset.action === 'create') resetForm();
+    if (event.relatedTarget?.dataset.action === 'create') { resetForm(); loadNeighbors(); }
   });
   modalNode?.addEventListener('shown.bs.modal', () => {
     initialSnapshot = snapshot();
-    document.getElementById('field-contact')?.focus();
+    (neighborMode() === 'existing' ? neighborSearch : document.getElementById('field-contact'))?.focus();
   });
   modalNode?.addEventListener('hide.bs.modal', async event => {
     if (allowModalClose) return;
@@ -210,10 +307,16 @@
     clearErrors();
     const errors = [];
     const fail = (key, message) => { fieldError(key, message); errors.push(key); };
+    if (neighborMode() === 'existing' && !selectedNeighbor) fail('neighbor', 'Busca y selecciona un vecino registrado.');
+    if (neighborMode() === 'new') {
+      if (!validRut(form.elements.neighbor_rut.value.trim())) fail('rut', 'Revisa el RUT y su dígito verificador.');
+      if (!form.elements.neighbor_address.value.trim()) fail('address', 'Escribe la dirección del vecino.');
+      if (form.elements.neighbor_email.validity.typeMismatch) fail('email', 'Revisa el correo del vecino.');
+    }
     if (!form.elements.contact_name.value.trim()) fail('contact', 'Escribe el nombre del solicitante.');
     const phone = form.elements.contact_phone.value.trim();
     const digits = phone.replace(/\D/g, '');
-    if (phone && (!/^\+?[\d\s()-]+$/.test(phone) || digits.length < 7 || digits.length > 15)) fail('phone', 'Usa entre 7 y 15 dígitos, con +, espacios o guiones si los necesitas.');
+    if (neighborMode() !== 'existing' && phone && (!/^\+?[\d\s()-]+$/.test(phone) || digits.length < 7 || digits.length > 15)) fail('phone', 'Usa entre 7 y 15 dígitos, con +, espacios o guiones si los necesitas.');
     if (!date.value || date.validity.badInput) fail('date', 'Selecciona una fecha válida.');
     else if (date.value > date.max) fail('date', 'La fecha de atención no puede ser futura.');
     const keepLegacy = editingId && legacyType && !type.value && !subtype.value;
@@ -241,6 +344,7 @@
     const list = document.createElement('dl');
     const entries = [
       ['Solicitante', attention.contact_name || 'Sin nombre'],
+      ['Padrón de vecinos', attention.neighbor ? `Registrado · ${attention.neighbor.rut}` : 'Contacto anterior sin ficha vinculada'],
       ['Teléfono', attention.contact_phone || 'Sin teléfono'],
       ['Fecha', attention.date],
       ['Estado', statusLabels[attention.validation_status] || attention.validation_status],
@@ -286,6 +390,16 @@
       if (!form || !window.bootstrap) { await notify('error', 'Formulario no disponible', 'Actualiza la página para cargar el formulario de atención.'); return; }
       resetForm();
       editingId = id;
+      if (attention.neighbor) {
+        form.querySelector('[name=neighbor_mode][value=existing]').checked = true;
+        syncNeighborMode();
+        selectNeighbor(attention.neighbor);
+        loadNeighbors();
+      } else {
+        document.getElementById('neighbor-legacy-option').hidden = false;
+        form.querySelector('[name=neighbor_mode][value=legacy]').checked = true;
+        syncNeighborMode();
+      }
       document.getElementById('attentionModalTitle').textContent = `Editar ${attention.activity_code}`;
       save.textContent = 'Guardar cambios';
       form.elements.contact_name.value = attention.contact_name || '';
@@ -333,9 +447,15 @@
       executed_action: form.elements.executed_action.value.trim(),
       is_collective_agenda: form.elements.is_collective_agenda.checked,
     };
+    if (neighborMode() === 'existing') payload.neighbor_id = selectedNeighbor.id;
+    if (neighborMode() === 'new') payload.new_neighbor = {
+      nombre: payload.contact_name, telefono: payload.contact_phone,
+      rut: form.elements.neighbor_rut.value.trim(), direccion: form.elements.neighbor_address.value.trim(),
+      email: form.elements.neighbor_email.value.trim(),
+    };
     // This identifier is context for the API, never authorization. The server
     // independently resolves and checks the authenticated user's delegation.
-    if (!editingId) payload.delegation = app.dataset.delegation;
+    if (!editingId) { payload.delegation = app.dataset.delegation; payload.activity_code = createCode; }
     if (type.value && subtype.value) {
       payload.attention_type_id = Number(type.value);
       payload.subattention_id = Number(subtype.value);
@@ -364,10 +484,118 @@
     }
   });
 
+  const registryForm = document.getElementById('delegado-neighbor-form');
+  const registryModal = document.getElementById('neighborModal');
+  const registrySave = document.getElementById('registry-save');
+  const registryErrors = document.getElementById('neighbor-form-errors');
+  let registryId = null, registrySaving = false, allowRegistryClose = false, registryInitial = '', registryOriginalRut = '';
+  const registrySnapshot = () => registryForm ? JSON.stringify([...registryForm.elements].filter(field => field.name && field.name !== 'csrfmiddlewaretoken').map(field => [field.name, field.value])) : '';
+  const registryHasChanges = () => Boolean(registryInitial && registrySnapshot() !== registryInitial);
+  const neighborUrl = id => `${app.dataset.neighborsUrl}${encodeURIComponent(id)}/`;
+  const showNeighbor = async result => {
+    const neighbor = result.vecino;
+    const content = createElement('div', undefined, 'attention-detail');
+    const list = createElement('dl');
+    for (const [label, value] of [['Nombre', neighbor.nombre], ['RUT', neighbor.rut], ['Teléfono', neighbor.telefono || 'Sin teléfono'], ['Correo', neighbor.email || 'Sin correo'], ['Dirección', neighbor.direccion || 'Sin dirección'], ['Estado', neighbor.estado]]) {
+      list.append(createElement('dt', label), createElement('dd', value));
+    }
+    content.append(list, createElement('h3', 'Historial vinculado'), createElement('p', `${result.attention_count} atenciones · ${result.followup_count} en seguimiento.`));
+    for (const attention of result.recent_attentions) content.append(createElement('p', `${attention.date} · ${attention.code} · ${attention.status}\n${attention.subject}`));
+    const link = createElement('a', 'Ver sus atenciones', 'delegado-secondary');
+    const url = new URL(app.dataset.attentionsUrl, location.origin);
+    url.searchParams.set('vecino', neighbor.id);
+    link.href = url.href;
+    content.append(link);
+    await popup({titleText:'Ficha del vecino',html:content,width:650,confirmButtonText:'Cerrar ficha'});
+  };
+  document.addEventListener('click', async event => {
+    const button = event.target.closest('[data-neighbor-action]');
+    if (!button || button.disabled) return;
+    const action = button.dataset.neighborAction;
+    const id = button.dataset.id;
+    button.disabled = true;
+    try {
+      if (action === 'delete') {
+        const answer = await popup({title:'Dar de baja al vecino',text:'La ficha se dará de baja. Sus atenciones se conservarán. Los vecinos con un caso social activo deben gestionarse desde su ficha social.',icon:'warning',showCancelButton:true,confirmButtonText:'Sí, dar de baja',focusCancel:true});
+        if (!answer.isConfirmed) return;
+        const result = await request(neighborUrl(id), {method:'DELETE'});
+        await notify('success','Vecino dado de baja',result.message);
+        window.location.reload();
+        return;
+      }
+      const result = action === 'create' ? null : await request(neighborUrl(id));
+      if (action === 'view') { await showNeighbor(result); return; }
+      if (!registryForm || !window.bootstrap) throw new Error('No se pudo cargar el formulario de vecinos. Actualiza la página.');
+      registryForm.reset();
+      registryErrors.hidden = true;
+      registryId = action === 'edit' ? id : null;
+      registryOriginalRut = result?.vecino.rut || '';
+      document.getElementById('neighborModalTitle').textContent = registryId ? 'Editar vecino' : 'Registrar vecino';
+      document.getElementById('neighbor-social-note').hidden = !result?.managed_social_case;
+      for (const name of ['nombre','rut','telefono','email','direccion','estado']) {
+        const field = registryForm.elements[name];
+        if (result) field.value = result.vecino[name] || '';
+        field.readOnly = Boolean(result?.managed_social_case && ['nombre','rut','telefono'].includes(name));
+        if (name === 'estado') field.disabled = Boolean(result?.managed_social_case);
+      }
+      allowRegistryClose = false;
+      registryInitial = registrySnapshot();
+      window.bootstrap.Modal.getOrCreateInstance(registryModal).show();
+    } catch (error) { await notify('error','No se pudo completar la operación',error.message); }
+    finally { button.disabled = false; }
+  });
+  registryModal?.addEventListener('shown.bs.modal', () => registryForm.querySelector('input:not([readonly]):not([type=hidden])')?.focus());
+  registryModal?.addEventListener('hide.bs.modal', async event => {
+    if (allowRegistryClose) return;
+    if (registrySaving) { event.preventDefault(); return; }
+    if (!registryHasChanges()) return;
+    event.preventDefault();
+    const result = await popup({title:'¿Descartar los cambios del vecino?',text:'Los cambios todavía no se han guardado.',icon:'warning',showCancelButton:true,confirmButtonText:'Descartar cambios',cancelButtonText:'Seguir editando',focusCancel:true});
+    if (result.isConfirmed) { allowRegistryClose = true; window.bootstrap.Modal.getOrCreateInstance(registryModal).hide(); }
+  });
+  registryForm?.addEventListener('submit', async event => {
+    event.preventDefault();
+    if (registrySaving) return;
+    registryErrors.hidden = true;
+    const unchangedRut = registryId && registryForm.elements.rut.value.trim() === registryOriginalRut;
+    if (!registryForm.checkValidity() || (!unchangedRut && !validRut(registryForm.elements.rut.value.trim()))) {
+      registryErrors.textContent = 'Completa nombre, RUT válido y dirección. Revisa el formato del correo si lo ingresaste.';
+      registryErrors.hidden = false;
+      registryErrors.focus();
+      return;
+    }
+    const payload = Object.fromEntries(['nombre','rut','telefono','email','direccion','estado'].map(name => [name,registryForm.elements[name].value.trim()]));
+    registrySaving = true;
+    registrySave.disabled = true;
+    registrySave.textContent = 'Guardando…';
+    try {
+      const result = await request(registryId ? neighborUrl(registryId) : app.dataset.neighborsUrl,{method:registryId?'PUT':'POST',body:JSON.stringify(payload)});
+      allowRegistryClose = true;
+      const hidden = new Promise(resolve => registryModal.addEventListener('hidden.bs.modal',resolve,{once:true}));
+      window.bootstrap.Modal.getOrCreateInstance(registryModal).hide();
+      await hidden;
+      await notify('success',registryId?'Vecino actualizado':'Vecino registrado',result.message);
+      if (!registryId) window.location.assign(`${app.dataset.neighborPageUrl}?q=${encodeURIComponent(result.vecino.rut)}`);
+      else window.location.reload();
+    } catch (error) {
+      registryErrors.textContent = error.message;
+      registryErrors.hidden = false;
+      registryErrors.focus();
+    } finally { registrySaving = false; registrySave.disabled = false; registrySave.textContent = 'Guardar vecino'; }
+  });
+  if (new URLSearchParams(location.search).get('nueva') === '1' && initialNeighbor?.estado === 'Activo' && form && window.bootstrap) {
+    resetForm();
+    loadNeighbors();
+    window.bootstrap.Modal.getOrCreateInstance(modalNode).show();
+    const currentUrl = new URL(location.href);
+    currentUrl.searchParams.delete('nueva');
+    history.replaceState(null, '', currentUrl);
+  }
+
   document.querySelector('[data-action="logout"]')?.addEventListener('click', async event => {
     event.preventDefault();
     const link = event.currentTarget;
-    const answer = await popup({ title: '¿Cerrar sesión?', text: hasChanges() ? 'Los cambios del formulario que no guardaste se perderán.' : 'Podrás volver a ingresar con tu cuenta institucional.', icon: 'question', showCancelButton: true, confirmButtonText: 'Cerrar sesión', focusCancel: true });
+    const answer = await popup({ title: '¿Cerrar sesión?', text: hasChanges() || registryHasChanges() ? 'Los cambios del formulario que no guardaste se perderán.' : 'Podrás volver a ingresar con tu cuenta institucional.', icon: 'question', showCancelButton: true, confirmButtonText: 'Cerrar sesión', focusCancel: true });
     if (answer.isConfirmed) window.location.assign(link.href);
   });
 

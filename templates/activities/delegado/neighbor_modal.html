@@ -1,0 +1,13 @@
+<div class="modal fade" id="neighborModal" tabindex="-1" aria-labelledby="neighborModalTitle" aria-hidden="true" data-bs-backdrop="static">
+    <div class="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable"><div class="modal-content delegado-modal">
+        <div class="modal-header"><div><p class="eyebrow">Padrón · {{ delegation.name }}</p><h2 class="modal-title" id="neighborModalTitle">Registrar vecino</h2><p class="modal-subtitle">La ficha quedará disponible para asociar sus atenciones.</p></div><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar registro de vecino"></button></div>
+        <form id="delegado-neighbor-form" novalidate>{% csrf_token %}<div class="modal-body"><div id="neighbor-form-errors" class="form-error-summary" role="alert" tabindex="-1" hidden></div><p id="neighbor-social-note" class="legacy-note" hidden>La identidad de este vecino se corrige desde su ficha social. Aquí puedes actualizar su dirección y correo.</p><div class="row g-3">
+            <div class="col-md-6"><label for="registry-name" class="form-label">Nombre completo *</label><input id="registry-name" name="nombre" class="form-control" maxlength="150" autocomplete="name" required></div>
+            <div class="col-md-6"><label for="registry-rut" class="form-label">RUT *</label><input id="registry-rut" name="rut" class="form-control" maxlength="15" placeholder="12.345.678-5" required></div>
+            <div class="col-md-6"><label for="registry-phone" class="form-label">Teléfono</label><input id="registry-phone" name="telefono" type="tel" class="form-control" maxlength="20" autocomplete="tel"></div>
+            <div class="col-md-6"><label for="registry-email" class="form-label">Correo electrónico</label><input id="registry-email" name="email" type="email" class="form-control" maxlength="254" autocomplete="email"></div>
+            <div class="col-12"><label for="registry-address" class="form-label">Dirección *</label><input id="registry-address" name="direccion" class="form-control" maxlength="255" autocomplete="street-address" required></div>
+            <div class="col-md-6"><label for="registry-status" class="form-label">Estado</label><select id="registry-status" name="estado" class="form-select"><option value="Activo">Activo</option><option value="Inactivo">Inactivo</option></select></div>
+        </div></div><div class="modal-footer"><button type="button" class="delegado-secondary" data-bs-dismiss="modal">Cancelar</button><button type="submit" class="delegado-primary" id="registry-save">Guardar vecino</button></div></form>
+    </div></div>
+</div>

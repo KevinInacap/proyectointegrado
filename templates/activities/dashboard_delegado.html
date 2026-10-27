@@ -8,11 +8,11 @@
     {% include 'includes/session_guard.html' %}
     <title>{{ section_title }} | {% if delegation %}{{ delegation.name }}{% else %}Delegado Municipal{% endif %} | SGR La Serena</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
-    <link rel="stylesheet" href="{% static 'css/dashboard_delegado.css' %}?v=20261027sections1">
+    <link rel="stylesheet" href="{% static 'css/dashboard_delegado.css' %}?v=20261027registry1">
     <link rel="stylesheet" href="{% static 'css/faro-institucional.css' %}?v=20261027faro">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.26.25/dist/sweetalert2.all.min.js" defer></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" defer></script>
-    <script src="{% static 'js/dashboard_delegado.js' %}?v=20261027sections1" defer></script>
+    <script src="{% static 'js/dashboard_delegado.js' %}?v=20261027registry1" defer></script>
     <link rel="stylesheet" href="{% static 'css/account-menu.css' %}?v=20261027account1">
     <script src="{% static 'js/account-menu.js' %}?v=20261027account1" defer></script>
 </head>
@@ -45,6 +45,8 @@
 <div class="dashboard-shell delegado-shell" id="delegado-app"
      data-section="{{ section }}"
      data-attentions-url="{% url 'activities:dashboard_delegado_section' 'atenciones' %}"
+     data-neighbors-url="{% url 'activities:api_vecinos' %}"
+     data-neighbor-page-url="{% url 'activities:dashboard_delegado_section' 'vecinos' %}"
      data-list-url="{% url 'activities:api_atenciones' %}"
      data-detail-base="{% url 'activities:api_atenciones' %}"
      data-delegation="{% if delegation %}{{ delegation.pk }}{% endif %}"
@@ -96,18 +98,28 @@
 <div class="modal fade" id="attentionModal" tabindex="-1" aria-labelledby="attentionModalTitle" aria-hidden="true" data-bs-backdrop="static">
     <div class="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable"><div class="modal-content delegado-modal"><div class="modal-header"><div><p class="eyebrow">{{ delegation.code }} · {{ delegation.name }}</p><h2 class="modal-title" id="attentionModalTitle">Nueva atención</h2><p class="modal-subtitle">Completa los antecedentes de la atención. Los campos con * son obligatorios.</p></div><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar formulario"></button></div>
         <form id="delegado-attention-form" novalidate>{% csrf_token %}<div class="modal-body"><div id="form-error-summary" class="form-error-summary" role="alert" tabindex="-1" hidden></div><div class="row g-3">
+            <fieldset class="col-12 citizen-picker"><legend>Vecino solicitante</legend>
+                <div class="citizen-modes"><label><input type="radio" name="neighbor_mode" value="existing" checked> Buscar vecino registrado</label><label><input type="radio" name="neighbor_mode" value="new"> Registrar nuevo vecino</label><label id="neighbor-legacy-option" hidden><input type="radio" name="neighbor_mode" value="legacy"> Conservar contacto anterior</label></div>
+                <div id="neighbor-existing"><label for="neighbor-search" class="form-label">Buscar por nombre o RUT</label><input id="neighbor-search" type="search" class="form-control" maxlength="100" placeholder="Escribe el nombre o RUT…" autocomplete="off" aria-describedby="neighbor-search-status"><p class="field-help" id="neighbor-search-status" role="status" aria-live="polite">Selecciona un vecino de tu delegación.</p><label for="field-neighbor" class="visually-hidden">Vecino registrado</label><select id="field-neighbor" name="neighbor_id" class="form-select" aria-describedby="error-neighbor"><option value="">Selecciona un vecino</option></select><p class="field-error" id="error-neighbor"></p></div>
+                <div class="row g-3 citizen-contact-fields">
             <div class="col-md-6"><label for="field-contact" class="form-label">Solicitante *</label><input id="field-contact" name="contact_name" class="form-control" maxlength="150" autocomplete="name" required aria-describedby="error-contact"><p class="field-error" id="error-contact"></p></div>
             <div class="col-md-6"><label for="field-phone" class="form-label">Teléfono</label><input id="field-phone" name="contact_phone" type="tel" class="form-control" maxlength="20" autocomplete="tel" placeholder="Ej. +56 9 1234 5678" aria-describedby="help-phone error-phone"><small class="field-help" id="help-phone">Facilita el contacto y el seguimiento con el vecino.</small><p class="field-error" id="error-phone"></p></div>
+                </div>
+                <div id="neighbor-registration" class="row g-3" hidden><div class="col-md-6"><label for="field-rut" class="form-label">RUT del nuevo vecino *</label><input id="field-rut" name="neighbor_rut" class="form-control" maxlength="15" placeholder="12.345.678-5" aria-describedby="error-rut"><p class="field-error" id="error-rut"></p></div><div class="col-md-6"><label for="field-email" class="form-label">Correo del vecino</label><input id="field-email" name="neighbor_email" type="email" class="form-control" maxlength="254" autocomplete="email" aria-describedby="error-email"><p class="field-error" id="error-email"></p></div><div class="col-12"><label for="field-address" class="form-label">Dirección del nuevo vecino *</label><input id="field-address" name="neighbor_address" class="form-control" maxlength="255" autocomplete="street-address" aria-describedby="error-address"><p class="field-error" id="error-address"></p></div></div>
+                <p class="citizen-mode-help" id="neighbor-mode-help">La atención quedará vinculada al vecino seleccionado. Sus datos se editan desde Vecinos.</p>
+            </fieldset>
             <div class="col-md-6"><label for="field-date" class="form-label">Fecha *</label><input id="field-date" name="activity_date" type="date" class="form-control" max="{% now 'Y-m-d' %}" required aria-describedby="error-date"><p class="field-error" id="error-date"></p></div>
             <div class="col-md-6"><label for="field-type" class="form-label">Tipo de atención *</label><select id="field-type" name="attention_type_id" class="form-select" required aria-describedby="error-type"><option value="">Selecciona un tipo</option>{% for type in attention_types %}<option value="{{ type.pk }}">{{ type.name }}</option>{% endfor %}</select><p class="field-error" id="error-type"></p></div>
             <div class="col-md-6"><label for="field-subtype" class="form-label">Subatención *</label><select id="field-subtype" name="subattention_id" class="form-select" required aria-describedby="error-subtype"><option value="">Selecciona primero el tipo</option>{% for sub in subattentions %}<option value="{{ sub.pk }}" data-type="{{ sub.attention_type_id }}">{{ sub.name }}</option>{% endfor %}</select><p class="field-error" id="error-subtype"></p></div>
-            <div class="col-md-6 d-flex align-items-center"><div class="form-check"><input class="form-check-input" type="checkbox" id="field-agenda" name="is_collective_agenda"><label for="field-agenda" class="form-check-label">Incorporar a agenda colectiva</label></div></div>
+            <div class="col-md-6 d-flex align-items-center"><div class="form-check"><input class="form-check-input" type="checkbox" id="field-agenda" name="is_collective_agenda"><label for="field-agenda" class="form-check-label">Marcar para agenda colectiva</label></div></div>
             <div class="col-12"><p class="legacy-note" id="legacy-type-note" hidden>Este registro conserva una clasificación anterior. Puedes mantenerla o seleccionar un nuevo tipo y subatención.</p></div>
             <div class="col-md-6"><label for="field-problem" class="form-label">Descripción de la solicitud *</label><textarea id="field-problem" name="problem_description" class="form-control" rows="4" maxlength="1000" required aria-describedby="error-problem"></textarea><p class="field-error" id="error-problem"></p></div>
             <div class="col-md-6"><label for="field-action" class="form-label">Acción realizada o derivación *</label><textarea id="field-action" name="executed_action" class="form-control" rows="4" maxlength="1000" required aria-describedby="error-action"></textarea><p class="field-error" id="error-action"></p></div>
         </div></div><div class="modal-footer"><button type="button" class="delegado-secondary" data-bs-dismiss="modal">Cancelar</button><button type="submit" class="delegado-primary" id="delegado-save">Guardar atención</button></div></form>
     </div></div>
 </div>
+{% include 'activities/delegado/neighbor_modal.html' %}
 {% endif %}
+{{ selected_neighbor_data|json_script:'delegado-selected-neighbor' }}
 </body>
 </html>

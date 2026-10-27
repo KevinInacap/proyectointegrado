@@ -1,6 +1,6 @@
 import datetime
 import json
-from django.db import transaction
+from django.db import IntegrityError, transaction
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from django.core.exceptions import ValidationError
@@ -312,7 +312,7 @@ def dashboard_delegado_view(request, section='inicio'):
             params.pop('estado', None)
         url = reverse('activities:dashboard_delegado_section', args=[target])
         return redirect(f'{url}?{params.urlencode()}' if params else url)
-    from django.db.models import IntegerField, Max
+    from django.db.models import Count, IntegerField, Max
     from django.db.models.functions import Coalesce
     from metrics.models import AttentionType, SubAttention
     from social.models import SocialCase
@@ -330,7 +330,7 @@ def dashboard_delegado_view(request, section='inicio'):
     if assigned and can_read:
         activities = Activity.objects.filter(
             delegation_id=delegation.pk, deleted_at__isnull=True,
-        ).select_related('attention_type', 'subattention', 'social_case')
+        ).select_related('attention_type', 'subattention', 'social_case', 'neighbor', 'user__profile')
         social_cases = SocialCase.objects.filter(
             delegation_id=delegation.pk, deleted_at__isnull=True,
         )
@@ -343,6 +343,8 @@ def dashboard_delegado_view(request, section='inicio'):
     total = activities.count()
     in_followup = activities.filter(validation_status__in=['Pending', 'Requires correction']).count()
     approved = activities.filter(validation_status='Approved').count()
+    unlinked_count = activities.filter(neighbor__isnull=True).count()
+    attention_scope_counts = {'total': total, 'followup': in_followup, 'approved': approved}
     social_case_count = social_cases.count()
     neighbor_count = neighbors.count()
     team_count = team.count()
@@ -350,10 +352,28 @@ def dashboard_delegado_view(request, section='inicio'):
     status = ''
     stage = ''
     position = ''
+    selected_neighbor = None
+    unlinked_filter = request.GET.get('vinculo') == 'sin-vincular'
     statuses = Activity.VALIDATION_STATUS_CHOICES
     page = None
     if section in {'atenciones', 'seguimiento'}:
         filtered = activities
+        neighbor_filter = request.GET.get('vecino', '').strip()
+        if neighbor_filter and assigned and can_read:
+            try:
+                selected_neighbor = neighbors.filter(pk=parse_catalog_id(neighbor_filter)).first()
+            except (TypeError, ValueError):
+                pass
+            if not selected_neighbor:
+                raise Http404('El vecino no está disponible en tu delegación.')
+            filtered = filtered.filter(neighbor=selected_neighbor)
+        if unlinked_filter:
+            filtered = filtered.filter(neighbor__isnull=True)
+        attention_scope_counts = {
+            'total': filtered.count(),
+            'followup': filtered.filter(validation_status__in=['Pending', 'Requires correction']).count(),
+            'approved': filtered.filter(validation_status='Approved').count(),
+        }
         if section == 'seguimiento':
             filtered = filtered.filter(validation_status__in=['Pending', 'Requires correction'])
             statuses = [(code, label) for code, label in statuses if code in {'Pending', 'Requires correction'}]
@@ -389,8 +409,7 @@ def dashboard_delegado_view(request, section='inicio'):
     elif section == 'vecinos':
         filtered = neighbors
         if query:
-            filtered = filtered.filter(Q(nombre__icontains=query) | Q(rut__icontains=query) |
-                                       Q(direccion__icontains=query) | Q(telefono__icontains=query))
+            filtered = _filter_vecinos(filtered, query)
         status = request.GET.get('estado', '').strip()
         if status in {'Activo', 'Inactivo'}:
             filtered = filtered.filter(estado=status)
@@ -398,7 +417,11 @@ def dashboard_delegado_view(request, section='inicio'):
             status = ''
         filtered = filtered.order_by('nombre', 'pk')
     elif section == 'equipo':
-        filtered = team
+        local_activity = Q(user__activities__delegation_id=delegation.pk, user__activities__deleted_at__isnull=True) if assigned else Q(pk__in=[])
+        filtered = team.annotate(
+            attention_count=Count('user__activities', filter=local_activity, distinct=True),
+            followup_count=Count('user__activities', filter=local_activity & Q(user__activities__validation_status__in=['Pending', 'Requires correction']), distinct=True),
+        )
         if query:
             filtered = filtered.filter(Q(full_name__icontains=query) | Q(email__icontains=query) |
                                        Q(position__name__icontains=query))
@@ -426,6 +449,10 @@ def dashboard_delegado_view(request, section='inicio'):
         'team': team[:4], 'team_count': team_count, 'page': page,
         'social_case_count': social_case_count, 'neighbor_count': neighbor_count,
         'query': query, 'status_filter': status,
+        'selected_neighbor': selected_neighbor,
+        'selected_neighbor_data': _serialize_vecino(selected_neighbor) if selected_neighbor else None,
+        'unlinked_count': unlinked_count, 'unlinked_filter': unlinked_filter,
+        'attention_scope_counts': attention_scope_counts,
         'stage_filter': stage, 'position_filter': position,
         'team_positions': team.exclude(position__isnull=True).values('position_id', 'position__name').order_by('position__name').distinct() if section == 'equipo' else [],
         'pagination_query': pagination_query, 'statuses': statuses,
@@ -845,6 +872,7 @@ def activity_create_view(request):
             new_value={
                 'activity_code': act.activity_code,
                 'delegation': delegation.name,
+                'neighbor_id': act.neighbor_id,
                 'validation_status': act.validation_status,
             },
             source_ip=request.META.get('REMOTE_ADDR'),
@@ -1012,6 +1040,63 @@ def _serialize_vecino(vecino):
         'estado': vecino.estado,
     }
 
+
+def _attention_neighbor(request, data, delegation, current=None):
+    """Resolve an explicit registry link without changing a citizen's identity."""
+    registration = data.get('new_neighbor')
+    neighbor_id = data.get('neighbor_id')
+    if 'new_neighbor' in data:
+        if not isinstance(registration, dict) or neighbor_id not in (None, ''):
+            return None, None, 'Selecciona un vecino existente o registra uno nuevo.', 400
+        if any(not isinstance(value, str) for value in registration.values()):
+            return None, None, 'Los datos del vecino deben ser texto.', 400
+        payload = _vecino_payload(registration)
+        payload.update(territorio=delegation.name, estado='Activo')
+        if not payload['nombre'] or not payload['rut'] or not payload['direccion']:
+            return None, None, 'Para registrar al vecino completa nombre, RUT y dirección.', 400
+        if any(len(payload[key] or '') > limit for key, limit in (
+            ('nombre', 150), ('rut', 15), ('direccion', 255), ('email', 254), ('telefono', 20),
+        )):
+            return None, None, 'Revisa el largo de los datos del vecino.', 400
+        if not _valid_vecino_rut(payload['rut']):
+            return None, None, 'RUT inválido. Revisa el número y el dígito verificador.', 400
+        if not _validate_vecino_email(payload['email']):
+            return None, None, 'Correo electrónico no válido.', 400
+        return None, payload, None, None
+    if 'neighbor_id' not in data:
+        return current, None, None, None
+    if neighbor_id in (None, ''):
+        return None, None, None, None
+    try:
+        pk = parse_catalog_id(neighbor_id)
+    except (TypeError, ValueError):
+        return None, None, 'Vecino asociado no válido.', 400
+    neighbor = _vecino_scope(request).filter(pk=pk).first()
+    if not neighbor:
+        return None, None, 'El vecino asociado no existe o no está disponible.', 404
+    if not delegation or (neighbor.territorio or '').casefold() != delegation.name.casefold():
+        return None, None, 'El vecino debe pertenecer a la delegación de la atención.', 400
+    if neighbor.estado != 'Activo' and (not current or current.pk != neighbor.pk):
+        return None, None, 'Selecciona un vecino activo para registrar la atención.', 400
+    return neighbor, None, None, None
+
+
+def _register_attention_neighbor(request, payload):
+    if _vecino_rut_exists(payload['rut']):
+        raise ValidationError('Ya existe un vecino con ese RUT. Búscalo en el padrón; si no está en tu delegación, consulta con administración.')
+    if _vecino_email_exists(payload['email']):
+        raise ValidationError('Ya existe un vecino con ese correo electrónico.')
+    try:
+        with transaction.atomic():
+            neighbor = Vecino.objects.create(**payload)
+            AuditLog.objects.create(
+                user=request.user, affected_table='vecino', affected_record_id=str(neighbor.pk),
+                action='CREATE', new_value=_serialize_vecino(neighbor), source_ip=request.META.get('REMOTE_ADDR'),
+            )
+    except IntegrityError:
+        raise ValidationError('El vecino ya fue registrado. Búscalo en el padrón antes de reintentar.')
+    return neighbor
+
 def _vecino_scope(request):
     profile = _actor(request)
     qs = Vecino.objects.filter(deleted_at__isnull=True)
@@ -1024,6 +1109,19 @@ def _vecino_scope(request):
             and profile.delegation.deleted_at is None):
         return qs.filter(territorio__iexact=profile.delegation.name)
     return qs.none()
+
+
+def _filter_vecinos(qs, query):
+    conditions = (Q(nombre__icontains=query) | Q(rut__icontains=query) |
+                  Q(direccion__icontains=query) | Q(telefono__icontains=query))
+    if re.fullmatch(r'[0-9.kK\s-]+', query) and any(character.isdigit() for character in query):
+        from django.db.models import Value
+        from django.db.models.functions import Replace, Upper
+        qs = qs.annotate(search_rut=Upper(Replace(Replace(Replace('rut', Value('.'), Value('')),
+                                                                        Value('-'), Value('')),
+                                                       Value(' '), Value(''))))
+        conditions |= Q(search_rut__icontains=_normalize_vecino_rut(query))
+    return qs.filter(conditions)
 
 
 def api_vecinos(request):
@@ -1041,12 +1139,7 @@ def api_vecinos(request):
         q = request.GET.get('q', '').strip()[:100]
         estado = request.GET.get('estado', '').strip()
         if q:
-            qs = qs.filter(
-                Q(nombre__icontains=q)
-                | Q(rut__icontains=q)
-                | Q(direccion__icontains=q)
-                | Q(telefono__icontains=q)
-            )
+            qs = _filter_vecinos(qs, q)
         if estado in {'Activo', 'Inactivo'}:
             qs = qs.filter(estado=estado)
         vecinos = [_serialize_vecino(v) for v in qs]
@@ -1120,12 +1213,21 @@ def api_vecino_detail(request, pk):
     except Vecino.DoesNotExist:
         return JsonResponse({'success': False, 'message': 'Vecino no encontrado o no pertenece a tu delegación.'}, status=404)
         
-    if request.method == 'GET':
-        return JsonResponse({'success': True, 'vecino': _serialize_vecino(vecino)})
     from social.models import SocialCase
     linked_social_case = SocialCase.objects.filter(
         activity__neighbor_id=vecino.pk, deleted_at__isnull=True,
     ).exists()
+    if request.method == 'GET':
+        history = _activity_scope(request).filter(neighbor=vecino).order_by('-activity_date', '-pk')
+        return JsonResponse({
+            'success': True, 'vecino': _serialize_vecino(vecino), 'managed_social_case': linked_social_case,
+            'attention_count': history.count(),
+            'followup_count': history.filter(validation_status__in=['Pending', 'Requires correction']).count(),
+            'recent_attentions': [{
+                'id': item.pk, 'code': item.activity_code, 'date': item.activity_date.isoformat(),
+                'subject': item.problem_description, 'status': item.get_validation_status_display(),
+            } for item in history[:5]],
+        })
     if request.method == 'DELETE' and linked_social_case:
         return JsonResponse({
             'success': False,
@@ -1278,10 +1380,14 @@ def _attention_result(a):
     val = a.validations.first()
     social_case = getattr(a, 'social_case', None)
     social_case_id = social_case.pk if social_case and social_case.deleted_at is None else None
+    neighbor = a.neighbor if a.neighbor_id else None
+    visible_neighbor = bool(neighbor and neighbor.deleted_at is None and a.delegation
+                            and (neighbor.territorio or '').casefold() == a.delegation.name.casefold())
     return {
         'id': a.id, 'activity_code': a.activity_code,
         'social_case_id': social_case_id,
         'neighbor_id': a.neighbor_id,
+        'neighbor': _serialize_vecino(neighbor) if visible_neighbor else None,
         'evidence_code': evid.evidence_code if evid else '',
         'contact_name': a.contact_name, 'contact_phone': a.contact_phone,
         'delegation': a.delegation.name if a.delegation else '',
@@ -1320,14 +1426,12 @@ def api_atenciones(request):
     delegation = _delegation_for_write(request, data.get('delegation'))
     if not delegation:
         return JsonResponse({'success': False, 'message': 'Delegación no autorizada o inactiva.'}, status=403)
-    neighbor = None
-    neighbor_id = data.get('neighbor_id')
-    if neighbor_id not in (None, ''):
-        if isinstance(neighbor_id, bool) or not str(neighbor_id).isdecimal():
-            return JsonResponse({'success': False, 'message': 'Vecino asociado no válido.'}, status=400)
-        neighbor = _vecino_scope(request).filter(pk=int(neighbor_id), deleted_at__isnull=True).first()
-        if not neighbor:
-            return JsonResponse({'success': False, 'message': 'El vecino asociado no existe o no está disponible.'}, status=404)
+    neighbor, registration, error, error_status = _attention_neighbor(request, data, delegation)
+    if error:
+        return JsonResponse({'success': False, 'message': error}, status=error_status)
+    if neighbor or registration:
+        data = dict(data, contact_name=neighbor.nombre if neighbor else registration['nombre'],
+                    contact_phone=(neighbor.telefono or '') if neighbor else registration['telefono'])
     catalog, error = _attention_catalog(data)
     attention_type, subattention, typed_error = _typed_attention_selection(data)
     if typed_error:
@@ -1365,11 +1469,16 @@ def api_atenciones(request):
         if code:
             existing = Activity.objects.filter(activity_code=code).first()
             if existing:
+                same_neighbor = existing.neighbor_id == (neighbor.pk if neighbor else None)
+                if registration:
+                    same_neighbor = bool(existing.neighbor and all(
+                        getattr(existing.neighbor, key) == value for key, value in registration.items()
+                    ))
                 if (existing.user_id == request.user.pk and existing.deleted_at is None
                         and existing.contact_name == contact and existing.problem_description == problem
                         and existing.executed_action == action and existing.delegation_id == delegation.id
                         and existing.activity_date == activity_date
-                        and existing.neighbor_id == (neighbor.pk if neighbor else None)
+                        and same_neighbor
                         and existing.contact_phone == phone and existing.catalog_id == (catalog.pk if catalog else None)
                         and existing.attention_type_id == (attention_type.pk if attention_type else None)
                         and existing.subattention_id == (subattention.pk if subattention else None)
@@ -1378,17 +1487,23 @@ def api_atenciones(request):
                 return JsonResponse({'success': False, 'message': 'Código ya utilizado.'}, status=409)
         else:
             cutoff = timezone.now() - datetime.timedelta(seconds=30)
+            identity = {f'neighbor__{key}': value for key, value in registration.items()} if registration else {'neighbor': neighbor}
             existing = _activity_scope(request).filter(
                 user=request.user, delegation=delegation, contact_name=contact,
                 problem_description=problem, executed_action=action,
                 activity_date=activity_date,
                 catalog=catalog, attention_type=attention_type, subattention=subattention,
                 contact_phone=phone, is_collective_agenda=data.get('is_collective_agenda', False),
-                created_at__gte=cutoff
+                created_at__gte=cutoff, **identity,
             ).first()
             if existing:
                 return JsonResponse({'success': True, 'id': existing.id, 'message': 'Atención ya registrada.'})
             code = f"ACT-{timezone.now():%Y%m%d}-{uuid4().hex[:12].upper()}"
+        if registration:
+            try:
+                neighbor = _register_attention_neighbor(request, registration)
+            except ValidationError as exc:
+                return JsonResponse({'success': False, 'message': exc.messages[0]}, status=400)
         typed_fields = {'attention_type': attention_type, 'subattention': subattention} if attention_type else {}
         act = Activity.objects.create(
             activity_code=code, activity_date=activity_date,
@@ -1410,10 +1525,8 @@ def api_atenciones(request):
             },
             source_ip=request.META.get('REMOTE_ADDR'),
         )
-        if neighbor and neighbor.nombre != contact:
-            neighbor.nombre = contact
-            neighbor.save(update_fields=['nombre', 'updated_at'])
-    return JsonResponse({'success': True, 'id': act.id, 'message': f'Atención {code} registrada.'}, status=201)
+    message = f'Vecino registrado y atención {code} vinculada.' if registration else f'Atención {code} registrada.'
+    return JsonResponse({'success': True, 'id': act.id, 'neighbor_id': act.neighbor_id, 'message': message}, status=201)
 
 
 def api_atencion_detail(request, pk):
@@ -1460,22 +1573,20 @@ def api_atencion_detail(request, pk):
             return JsonResponse({'success': False, 'message': 'Fecha de atención o visita inválida.'}, status=400)
         if a.activity_date > timezone.localdate():
             return JsonResponse({'success': False, 'message': 'La fecha de atención no puede ser futura.'}, status=400)
-    if 'neighbor_id' in data:
-        neighbor_id = data.get('neighbor_id')
-        if neighbor_id in (None, ''):
-            a.neighbor = None
-        elif isinstance(neighbor_id, bool) or not str(neighbor_id).isdecimal():
-            return JsonResponse({'success': False, 'message': 'Vecino asociado no válido.'}, status=400)
-        else:
-            neighbor = _vecino_scope(request).filter(pk=int(neighbor_id), deleted_at__isnull=True).first()
-            if not neighbor:
-                return JsonResponse({'success': False, 'message': 'El vecino asociado no existe o no está disponible.'}, status=404)
-            a.neighbor = neighbor
     if 'delegation' in data:
         delegation = _delegation_for_write(request, data['delegation'])
         if not delegation:
             return JsonResponse({'success': False, 'message': 'Delegación no autorizada.'}, status=403)
         a.delegation = delegation
+    neighbor, registration, error, error_status = _attention_neighbor(request, data, a.delegation, current=a.neighbor)
+    if error:
+        return JsonResponse({'success': False, 'message': error}, status=error_status)
+    if neighbor and (neighbor.territorio or '').casefold() != a.delegation.name.casefold():
+        return JsonResponse({'success': False, 'message': 'El vecino debe pertenecer a la delegación de la atención.'}, status=400)
+    a.neighbor = neighbor
+    if neighbor or registration:
+        data = dict(data, contact_name=neighbor.nombre if neighbor else registration['nombre'],
+                    contact_phone=(neighbor.telefono or '') if neighbor else registration['telefono'])
     if any(key in data for key in ('catalog_id', 'attention_type', 'subattention_type')):
         catalog, error = _attention_catalog(data)
         if error or not catalog:
@@ -1505,9 +1616,11 @@ def api_atencion_detail(request, pk):
                 'message': 'Debe ingresar el nombre de contacto para incorporar la atención a la agenda colectiva.',
             }, status=400)
     with transaction.atomic():
-        if a.neighbor_id and a.contact_name and a.neighbor.nombre != a.contact_name:
-            a.neighbor.nombre = a.contact_name
-            a.neighbor.save(update_fields=['nombre', 'updated_at'])
+        if registration:
+            try:
+                a.neighbor = _register_attention_neighbor(request, registration)
+            except ValidationError as exc:
+                return JsonResponse({'success': False, 'message': exc.messages[0]}, status=400)
         a.save()
         AuditLog.objects.create(
             user=request.user,
