@@ -131,18 +131,7 @@
   window.matchMedia('(max-width: 760px)').addEventListener('change', () => setMenu(false));
 
   const navLinks = [...document.querySelectorAll('.primary-nav .nav-link')];
-  const syncNavigation = () => {
-    const followup = new URLSearchParams(location.search).get('estado') === 'followup' && location.hash === '#atenciones';
-    const current = (followup ? navLinks.find(link => link.dataset.nav === 'followup') : navLinks.find(link => link.getAttribute('href') === location.hash)) || navLinks[0];
-    navLinks.forEach(link => {
-      link.classList.toggle('is-current', link === current);
-      if (link === current) link.setAttribute('aria-current', 'location');
-      else link.removeAttribute('aria-current');
-    });
-  };
   navLinks.forEach(link => link.addEventListener('click', () => setMenu(false)));
-  window.addEventListener('hashchange', syncNavigation);
-  syncNavigation();
 
   const refreshSubtypes = () => {
     if (!type || !subtype) return;
@@ -361,7 +350,8 @@
         { method: editingId ? 'PUT' : 'POST', body: JSON.stringify(payload) });
       await hideEditor();
       await notify('success', editingId ? 'Cambios guardados' : 'Atención registrada', result.message);
-      window.location.reload();
+      if (app.dataset.section === 'inicio') window.location.assign(app.dataset.attentionsUrl);
+      else window.location.reload();
     } catch (error) {
       showSummary(error.message);
       await notify('error', 'No se pudo guardar', error.message);

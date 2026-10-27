@@ -243,6 +243,24 @@ button:disabled { opacity: .5; cursor: not-allowed; }
 @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } *,*:before,*:after { animation: none!important; transition: none!important; } }
 
 /* Institutional crimson, with neutral typography and semantic status colors. */
+.section-hero { min-height: 184px; }
+.section-hero h1 { font-size: clamp(27px,2.5vw,38px); }
+.section-content,[data-page-section]> .delegado-workspace { margin-top: 20px; }
+.section-content { min-height: 260px; }
+.section-content .delegado-filters { margin-top: 23px; }
+.section-team-grid { margin-top: 20px; }
+.section-table th:nth-child(n) { width: auto; }
+.home-shortcuts { grid-template-columns: repeat(3,minmax(0,1fr)); padding: 24px; }
+.home-shortcuts>.card-title-group { grid-column: 1/-1; margin-bottom: 9px; }
+.home-shortcuts>a { min-height: 89px; padding: 16px; }
+.home-shortcuts strong { font-size: 13px; }
+.home-shortcuts small { font-size: 11px; }
+@media (max-width: 1020px) { .home-shortcuts { grid-template-columns: repeat(2,minmax(0,1fr)); } }
+@media (max-width: 760px) {
+  .home-shortcuts { grid-template-columns: 1fr; padding: 18px 16px; }
+  .home-shortcuts>a { min-height: 72px; }
+  .section-hero { min-height: 195px; }
+}
 .brand-caption,.nav-group-label { color: #f5dfe3; }
 .nav-link,.profile-copy span,.logout-link { color: #fff0f2; }
 .profile-copy small { color: #eed2d8; }

@@ -225,7 +225,7 @@ class DashboardAccessTests(TestCase):
             self.assertEqual(response.status_code, 200)
             if position_name == 'Delegado Municipal':
                 self.assertContains(response, 'Panel de tu delegación')
-                self.assertContains(response, 'Atenciones de mi delegación')
+                self.assertContains(response, 'Gestión de tu delegación')
                 self.assertContains(response, 'Nueva atención')
             elif position_name == 'Asistente Social':
                 self.assertContains(response, 'Panel de Gestión Social Territorial')
@@ -269,7 +269,7 @@ class DashboardAccessTests(TestCase):
             problem_description='Otro asunto', executed_action='Recepción',
             delegation=other_delegation,
         )
-        url = reverse('activities:dashboard_delegado')
+        url = reverse('activities:dashboard_delegado_section', args=['atenciones'])
         response = self.client.get(url)
         self.assertContains(response, own.activity_code)
         self.assertNotContains(response, 'ACT-AJENA-1')
@@ -305,15 +305,14 @@ class DashboardAccessTests(TestCase):
         )
         Vecino.objects.create(nombre='Vecino local', rut='12345678-5', territorio=self.delegation.name)
         Vecino.objects.create(nombre='Vecino ajeno', rut='23456789-6', territorio=other.name)
-        url = reverse('activities:dashboard_delegado')
-
-        response = self.client.get(url)
-        self.assertContains(response, 'Caso local')
-        self.assertContains(response, 'Vecino local')
-        self.assertNotContains(response, 'Caso ajeno')
-        self.assertNotContains(response, 'Vecino ajeno')
-        self.assertEqual(response.context['social_case_count'], 1)
-        self.assertEqual(response.context['neighbor_count'], 1)
+        url = reverse('activities:dashboard_delegado_section', args=['casos-sociales'])
+        for section, visible in (('casos-sociales', 'Caso local'), ('vecinos', 'Vecino local')):
+            response = self.client.get(reverse('activities:dashboard_delegado_section', args=[section]))
+            self.assertContains(response, visible)
+            self.assertNotContains(response, 'Caso ajeno')
+            self.assertNotContains(response, 'Vecino ajeno')
+            self.assertEqual(response.context['social_case_count'], 1)
+            self.assertEqual(response.context['neighbor_count'], 1)
 
         role.permissions_data = []
         role.save(update_fields=['permissions_data', 'updated_at'])
@@ -345,7 +344,7 @@ class DashboardAccessTests(TestCase):
         response = self.client.post(api, json.dumps(payload), content_type='application/json')
         self.assertEqual(response.status_code, 201)
         pk = response.json()['id']
-        dashboard = reverse('activities:dashboard_delegado')
+        dashboard = reverse('activities:dashboard_delegado_section', args=['atenciones'])
         self.assertContains(self.client.get(dashboard), 'Consulta de alumbrado')
         detail = reverse('activities:api_atencion_detail', args=[pk])
         self.assertEqual(self.client.put(detail, json.dumps({'problem_description': 'Consulta editada'}), content_type='application/json').status_code, 200)

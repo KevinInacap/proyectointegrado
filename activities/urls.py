@@ -10,6 +10,7 @@ urlpatterns = [
     path('dashboard/admin/reportes/<slug:report_view>/', views.dashboard_admin_view, {'section': 'reportes'}, name='dashboard_admin_report'),
     path('dashboard/coordinador/', views.dashboard_coordinador_view, name='dashboard_coordinador'),
     path('dashboard/delegado/', views.dashboard_delegado_view, name='dashboard_delegado'),
+    path('dashboard/delegado/<slug:section>/', views.dashboard_delegado_view, name='dashboard_delegado_section'),
     path('dashboard/consulta/', views.dashboard_consulta_view, name='dashboard_consulta'),
     path('dashboard/verificador/', views.dashboard_verificador_view, name='dashboard_verificador'),
     path('dashboard/gestor/', views.dashboard_gestor_view, name='dashboard_gestor'),

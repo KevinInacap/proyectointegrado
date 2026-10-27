@@ -288,11 +288,32 @@ def dashboard_coordinador_view(request):
     return _position_dashboard(request, 'Coordinador del Sistema')
 
 
-def dashboard_delegado_view(request):
+DELEGADO_DASHBOARD_SECTIONS = {
+    'inicio': ('Resumen de delegación', 'Toda la gestión de tu territorio, en un solo lugar.'),
+    'atenciones': ('Atenciones', 'Consulta y gestiona las solicitudes de tu delegación.'),
+    'casos-sociales': ('Casos sociales', 'Consulta el avance de la atención social de tu territorio.'),
+    'vecinos': ('Vecinos', 'Consulta el padrón de vecinos de tu delegación.'),
+    'equipo': ('Equipo de trabajo', 'Conoce a los funcionarios y sus cargos en tu delegación.'),
+    'seguimiento': ('Seguimiento', 'Revisa las atenciones pendientes o que requieren corrección.'),
+}
+
+
+def dashboard_delegado_view(request, section='inicio'):
     denied = _position_required(request, 'Delegado Municipal')
     if denied:
         return denied
-    from django.db.models import Max
+    if section not in DELEGADO_DASHBOARD_SECTIONS:
+        raise Http404('La sección del delegado no existe.')
+    # Preserve old bookmarks that used the home page as the attention listing.
+    if section == 'inicio' and any(key in request.GET for key in ('q', 'estado', 'page')):
+        target = 'seguimiento' if request.GET.get('estado') == 'followup' else 'atenciones'
+        params = request.GET.copy()
+        if target == 'seguimiento':
+            params.pop('estado', None)
+        url = reverse('activities:dashboard_delegado_section', args=[target])
+        return redirect(f'{url}?{params.urlencode()}' if params else url)
+    from django.db.models import IntegerField, Max
+    from django.db.models.functions import Coalesce
     from metrics.models import AttentionType, SubAttention
     from social.models import SocialCase
 
@@ -322,21 +343,77 @@ def dashboard_delegado_view(request):
     total = activities.count()
     in_followup = activities.filter(validation_status__in=['Pending', 'Requires correction']).count()
     approved = activities.filter(validation_status='Approved').count()
+    social_case_count = social_cases.count()
+    neighbor_count = neighbors.count()
+    team_count = team.count()
     query = request.GET.get('q', '').strip()[:100]
-    status = request.GET.get('estado', '').strip()
-    allowed_statuses = {code for code, _ in Activity.VALIDATION_STATUS_CHOICES} | {'followup'}
-    if status not in allowed_statuses:
-        status = ''
-    filtered = activities
-    if query:
-        filtered = filtered.filter(Q(activity_code__icontains=query) |
-                                   Q(contact_name__icontains=query) |
-                                   Q(problem_description__icontains=query))
-    if status == 'followup':
-        filtered = filtered.filter(validation_status__in=['Pending', 'Requires correction'])
-    elif status:
-        filtered = filtered.filter(validation_status=status)
-    page = Paginator(filtered.order_by('-activity_date', '-created_at'), 8).get_page(request.GET.get('page'))
+    status = ''
+    stage = ''
+    position = ''
+    statuses = Activity.VALIDATION_STATUS_CHOICES
+    page = None
+    if section in {'atenciones', 'seguimiento'}:
+        filtered = activities
+        if section == 'seguimiento':
+            filtered = filtered.filter(validation_status__in=['Pending', 'Requires correction'])
+            statuses = [(code, label) for code, label in statuses if code in {'Pending', 'Requires correction'}]
+        status = request.GET.get('estado', '').strip()
+        allowed_statuses = {code for code, _ in statuses}
+        if section == 'atenciones':
+            allowed_statuses.add('followup')
+        if status not in allowed_statuses:
+            status = ''
+        if query:
+            filtered = filtered.filter(Q(activity_code__icontains=query) |
+                                       Q(contact_name__icontains=query) |
+                                       Q(problem_description__icontains=query))
+        if status == 'followup':
+            filtered = filtered.filter(validation_status__in=['Pending', 'Requires correction'])
+        elif status:
+            filtered = filtered.filter(validation_status=status)
+        filtered = filtered.order_by('-activity_date', '-created_at', '-pk')
+    elif section == 'casos-sociales':
+        filtered = social_cases.annotate(latest_stage=Coalesce(
+            Max('managements__stage', filter=Q(managements__deleted_at__isnull=True)), 1,
+            output_field=IntegerField(),
+        ))
+        if query:
+            filtered = filtered.filter(Q(user_name__icontains=query) | Q(user_rut__icontains=query) |
+                                       Q(contact_phone__icontains=query))
+        stage = request.GET.get('etapa', '').strip()
+        if stage in {'1', '2', '3'}:
+            filtered = filtered.filter(latest_stage=int(stage))
+        else:
+            stage = ''
+        filtered = filtered.order_by('-entry_date', '-created_at', '-pk')
+    elif section == 'vecinos':
+        filtered = neighbors
+        if query:
+            filtered = filtered.filter(Q(nombre__icontains=query) | Q(rut__icontains=query) |
+                                       Q(direccion__icontains=query) | Q(telefono__icontains=query))
+        status = request.GET.get('estado', '').strip()
+        if status in {'Activo', 'Inactivo'}:
+            filtered = filtered.filter(estado=status)
+        else:
+            status = ''
+        filtered = filtered.order_by('nombre', 'pk')
+    elif section == 'equipo':
+        filtered = team
+        if query:
+            filtered = filtered.filter(Q(full_name__icontains=query) | Q(email__icontains=query) |
+                                       Q(position__name__icontains=query))
+        position = request.GET.get('cargo', '').strip()
+        if position.isascii() and position.isdecimal() and len(position) <= 10:
+            filtered = filtered.filter(position_id=int(position))
+        else:
+            position = ''
+        filtered = filtered.order_by('full_name', 'pk')
+    if section != 'inicio':
+        page = Paginator(filtered, 8).get_page(request.GET.get('page'))
+    pagination_params = request.GET.copy()
+    pagination_params.pop('page', None)
+    pagination_query = pagination_params.urlencode()
+    section_title, section_description = DELEGADO_DASHBOARD_SECTIONS[section]
     role_name = ', '.join(profile.roles.filter(deleted_at__isnull=True).values_list('name', flat=True)) or 'Sin rol asignado'
     return render(request, 'activities/dashboard_delegado.html', {
         'profile': profile, 'delegation': delegation if assigned else None,
@@ -344,15 +421,14 @@ def dashboard_delegado_view(request):
         'role_name': role_name, 'can_read': can_read and assigned,
         'can_edit': can_edit, 'can_close': can_close,
         'total': total, 'in_followup': in_followup, 'approved': approved,
-        'team': team, 'team_count': team.count(), 'page': page,
-        'social_case_count': social_cases.count(),
-        'social_cases': social_cases.annotate(
-            latest_stage=Max('managements__stage', filter=Q(managements__deleted_at__isnull=True)),
-        ).order_by('-entry_date', '-created_at')[:8],
-        'neighbor_count': neighbors.count(),
-        'neighbors': neighbors.order_by('-created_at')[:8],
+        'section': section, 'section_title': section_title, 'section_description': section_description,
+        'section_url': reverse('activities:dashboard_delegado') if section == 'inicio' else reverse('activities:dashboard_delegado_section', args=[section]),
+        'team': team[:4], 'team_count': team_count, 'page': page,
+        'social_case_count': social_case_count, 'neighbor_count': neighbor_count,
         'query': query, 'status_filter': status,
-        'statuses': Activity.VALIDATION_STATUS_CHOICES,
+        'stage_filter': stage, 'position_filter': position,
+        'team_positions': team.exclude(position__isnull=True).values('position_id', 'position__name').order_by('position__name').distinct() if section == 'equipo' else [],
+        'pagination_query': pagination_query, 'statuses': statuses,
         'attention_types': AttentionType.objects.filter(status='Activo', deleted_at__isnull=True).order_by('name') if can_edit else [],
         'subattentions': SubAttention.objects.filter(status='Activo', deleted_at__isnull=True, attention_type__status='Activo', attention_type__deleted_at__isnull=True).order_by('name') if can_edit else [],
     })
