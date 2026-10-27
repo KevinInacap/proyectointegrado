@@ -155,6 +155,53 @@ class DashboardAccessTests(TestCase):
         self.profile.position, _ = Position.objects.get_or_create(name=name)
         self.profile.save(update_fields=['position', 'updated_at'])
 
+    def test_account_actions_are_available_once_and_never_in_a_sidebar(self):
+        role = Role.objects.create(name='Consulta de cuenta', permissions_data=['lectura'])
+        for position, route in (
+            ('Administrador General', 'activities:dashboard_admin'),
+            ('Asistente Social', 'activities:dashboard_asistente'),
+            ('Asistente Social', 'social:dashboard_asistente'),
+            ('Auditor Municipal', 'activities:dashboard_auditor'),
+            ('Coordinador del Sistema', 'activities:dashboard_coordinador'),
+            ('Delegado Municipal', 'activities:dashboard_delegado'),
+            ('Gestor Territorial', 'activities:dashboard_gestor'),
+            ('Verificador Técnico', 'activities:dashboard_verificador'),
+            ('Usuario de Consulta', 'activities:dashboard_consulta'),
+            ('Cargo de prueba de cuenta', 'activities:dashboard_cargo'),
+        ):
+            with self.subTest(position=position, route=route):
+                self.set_position(position)
+                self.profile.roles.set([Role.objects.get(name='Administrador') if position == 'Administrador General' else role])
+                response = self.client.get(reverse(route))
+                self.assertEqual(response.status_code, 200)
+                body = response.content.decode()
+                self.assertEqual(body.count('data-account-toggle'), 1)
+                self.assertEqual(body.count('data-account-profile-open'), 1)
+                self.assertEqual(body.count('data-action="logout"'), 1)
+                sidebar = body.partition('<aside')[2].partition('</aside>')[0]
+                self.assertNotIn(self.profile.full_name, sidebar)
+                self.assertNotIn(reverse('core:logout'), sidebar)
+                self.assertNotIn('data-account-toggle', sidebar)
+                self.assertContains(response, 'js/account-menu.js')
+
+    def test_account_profile_displays_only_the_authenticated_identity(self):
+        self.set_position('Delegado Municipal')
+        response = self.client.get(reverse('activities:dashboard_delegado'))
+        dialog = response.content.decode().partition('id="account-profile-dialog"')[2].partition('</dialog>')[0]
+        self.assertIn(self.profile.full_name, dialog)
+        self.assertIn(self.profile.rut, dialog)
+        self.assertIn(self.profile.email, dialog)
+        self.assertIn(self.delegation.name, dialog)
+
+    def test_account_profile_treats_persisted_identity_as_text(self):
+        self.set_position('Delegado Municipal')
+        self.profile.full_name = 'Cuenta <img src=x onerror=alert(1)>'
+        self.profile.save(update_fields=['full_name', 'updated_at'])
+        response = self.client.get(reverse('activities:dashboard_delegado'))
+        dialog = response.content.decode().partition('id="account-profile-dialog"')[2].partition('</dialog>')[0]
+        self.assertIn('Cuenta &lt;img src=x onerror=alert(1)&gt;', dialog)
+        self.assertNotIn('<img src=x', dialog)
+
     def test_session_role_does_not_grant_admin_dashboard(self):
         session = self.client.session
         session['user_role'] = 'Administrador General'

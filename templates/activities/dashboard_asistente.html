@@ -24,6 +24,8 @@
     <!-- Estilos Profesionales del Dashboard Asistente Social -->
     <link rel="stylesheet" href="{% static 'css/dashboard_asistente.css' %}">
     <link rel="stylesheet" href="{% static 'css/faro-institucional.css' %}?v=20261027faro">
+    <link rel="stylesheet" href="{% static 'css/account-menu.css' %}?v=20261027account1">
+    <script src="{% static 'js/account-menu.js' %}?v=20261027account1" defer></script>
 </head>
 <body>
 
@@ -44,21 +46,6 @@
                     <div class="asistente-brand-subtitle">Asistencia Social · DIDECO</div>
                 </div>
             </a>
-
-            <!-- Ficha del Usuario Activo -->
-            <div class="asistente-user-card" id="userCardProfile">
-                <div class="asistente-avatar">
-                    {{ first_name|slice:":1"|default:"A" }}
-                </div>
-                <div>
-                    <div class="asistente-user-name">{{ user_name|default:"Asistente Social" }}</div>
-                    <div class="asistente-user-role"><i class="bi bi-patch-check-fill"></i> Asistente Social</div>
-                    <div class="asistente-user-delegation">
-                        <i class="bi bi-geo-alt-fill"></i>
-                        <span>{{ current_delegation }}</span>
-                    </div>
-                </div>
-            </div>
 
             <!-- Menú de Navegación del Cargo -->
             <nav>
@@ -110,16 +97,6 @@
 
         {% include 'includes/faro_institucional.html' %}
 
-        <!-- Pie del Sidebar: Cerrar Sesión y Ayuda -->
-        <div style="border-top: 1px solid rgba(255,255,255,0.15); padding-top: 1rem;">
-            <a href="{% url 'core:logout' %}" class="asistente-nav-link" style="color: #fca5a5;">
-                <span class="asistente-nav-icon"><i class="bi bi-box-arrow-left"></i></span>
-                <span>Cerrar Sesión</span>
-            </a>
-            <div style="font-size: 0.68rem; color: rgba(255,255,255,0.5); text-align: center; margin-top: 0.5rem;">
-                Sistema SGR Municipal · Versión 2026
-            </div>
-        </div>
     </aside>
 
     <!-- =================================================================
@@ -129,14 +106,17 @@
 
         <!-- Encabezado Superior -->
         <header class="asistente-header">
-            <div>
-                <h1 class="asistente-header-title">
-                    <i class="bi bi-heart-pulse-fill" style="color: #f43f5e;"></i>
-                    Panel de Gestión Social Territorial
-                </h1>
-                <p class="asistente-header-subtitle">
-                    Delegación: <strong>{{ current_delegation }}</strong> · Período: <strong>{{ period_name }}</strong>
-                </p>
+            <div class="asistente-account-heading">
+                <div>
+                    <h1 class="asistente-header-title">
+                        <i class="bi bi-heart-pulse-fill" style="color: #f43f5e;"></i>
+                        Panel de Gestión Social Territorial
+                    </h1>
+                    <p class="asistente-header-subtitle">
+                        Delegación: <strong>{{ current_delegation }}</strong> · Período: <strong>{{ period_name }}</strong>
+                    </p>
+                </div>
+                {% include 'includes/account_menu.html' %}
             </div>
             <div class="asistente-actions">
                 <button class="btn-asistente btn-glass" onclick="exportarCasosExcel()">

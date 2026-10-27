@@ -13,6 +13,8 @@
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.26.25/dist/sweetalert2.all.min.js" defer></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" defer></script>
     <script src="{% static 'js/dashboard_delegado.js' %}?v=20261027c" defer></script>
+    <link rel="stylesheet" href="{% static 'css/account-menu.css' %}?v=20261027account1">
+    <script src="{% static 'js/account-menu.js' %}?v=20261027account1" defer></script>
 </head>
 <body>
 <a class="skip-link" href="#contenido">Saltar al contenido</a>
@@ -62,11 +64,9 @@
             {% endif %}
         </nav>
         {% include 'includes/faro_institucional.html' %}
-        <div class="profile-card"><span class="avatar" aria-hidden="true">{{ first_name|first|upper }}</span><div class="profile-copy"><strong>{{ profile.full_name }}</strong><span>{{ profile.position.name|default:'Delegado Municipal' }}</span><small>{% if delegation %}{{ delegation.code }} · {{ delegation.name }}{% else %}Sin delegación asignada{% endif %}</small></div></div>
-        <a class="logout-link" href="{% url 'core:logout' %}" data-action="logout"><svg class="icon" aria-hidden="true"><use href="#i-logout"/></svg>Cerrar sesión</a>
     </aside>
     <main class="main-content" id="contenido" tabindex="-1">
-        <div class="identity-bar"><div class="breadcrumb-copy"><button class="icon-button mobile-menu" type="button" aria-label="Abrir menú de navegación" aria-expanded="false" aria-controls="delegado-sidebar"><svg class="icon" aria-hidden="true"><use href="#i-menu"/></svg></button><svg class="icon breadcrumb-home" aria-hidden="true"><use href="#i-home"/></svg><a href="#inicio">Inicio</a><span aria-hidden="true">/</span><span>Resumen de delegación</span></div><div class="identity-tools"><span class="today-label"><svg class="icon" aria-hidden="true"><use href="#i-calendar"/></svg>{% now 'j \d\e F \d\e Y' %}</span>{% if can_read %}<a class="icon-button notification-link" href="?estado=followup#atenciones" aria-label="Ver {{ in_followup }} atenciones en seguimiento"><svg class="icon" aria-hidden="true"><use href="#i-bell"/></svg>{% if in_followup %}<span class="notification-dot"></span>{% endif %}</a>{% endif %}<span class="top-avatar" title="{{ profile.full_name }}">{{ first_name|first|upper }}</span></div></div>
+        <div class="identity-bar"><div class="breadcrumb-copy"><button class="icon-button mobile-menu" type="button" aria-label="Abrir menú de navegación" aria-expanded="false" aria-controls="delegado-sidebar"><svg class="icon" aria-hidden="true"><use href="#i-menu"/></svg></button><svg class="icon breadcrumb-home" aria-hidden="true"><use href="#i-home"/></svg><a href="#inicio">Inicio</a><span aria-hidden="true">/</span><span>Resumen de delegación</span></div><div class="identity-tools"><span class="today-label"><svg class="icon" aria-hidden="true"><use href="#i-calendar"/></svg>{% now 'j \d\e F \d\e Y' %}</span>{% if can_read %}<a class="icon-button notification-link" href="?estado=followup#atenciones" aria-label="Ver {{ in_followup }} atenciones en seguimiento"><svg class="icon" aria-hidden="true"><use href="#i-bell"/></svg>{% if in_followup %}<span class="notification-dot"></span>{% endif %}</a>{% endif %}{% include 'includes/account_menu.html' %}</div></div>
         <header class="delegado-hero" id="inicio">
             <div class="hero-copy"><p class="hero-eyebrow">Delegación municipal{% if delegation %} · {{ delegation.code }}{% endif %}</p><h1>Panel de tu delegación</h1><p class="hero-delegation">{% if delegation %}{{ delegation.name }}{% else %}Tu territorio, tu comunidad{% endif %}</p><p class="hero-description">Hola, {{ first_name }}. Toda la gestión de tu territorio, en un solo lugar.</p><div class="hero-actions">{% if can_read %}{% if can_edit %}<button class="delegado-primary hero-primary" type="button" data-bs-toggle="modal" data-bs-target="#attentionModal" data-action="create"><span aria-hidden="true">+</span>Nueva atención</button>{% endif %}<a class="hero-secondary" href="?estado=followup#atenciones"><svg class="icon" aria-hidden="true"><use href="#i-chart"/></svg>Ver seguimiento</a>{% endif %}</div></div>
             <span class="hero-period">{% now 'F Y' %}</span>

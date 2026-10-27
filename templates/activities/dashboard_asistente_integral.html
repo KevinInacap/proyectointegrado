@@ -334,6 +334,8 @@
     </style>
     <link rel="stylesheet" href="{% static 'css/social-dashboard.css' %}?v=20261027">
     <link rel="stylesheet" href="{% static 'css/faro-institucional.css' %}?v=20261027faro">
+    <link rel="stylesheet" href="{% static 'css/account-menu.css' %}?v=20261027account1">
+    <script src="{% static 'js/account-menu.js' %}?v=20261027account1" defer></script>
 </head>
 
 <body class="social-dashboard">
@@ -351,27 +353,6 @@
             <a href="{% url 'activities:dashboard_asistente' %}" class="sidebar-brand-link" title="Asistencia Social DIDECO · Ilustre Municipalidad de La Serena">
                 <img src="{% static 'images/horizontal-blanco.svg' %}" alt="Ilustre Municipalidad de La Serena" class="sidebar-official-logo">
             </a>
-        </div>
-
-        <!-- Tarjeta de Perfil Institucional de Scarlett (Asistente Social) -->
-        <div class="px-3 py-2">
-            <div class="p-2.5 rounded-4 d-flex align-items-center gap-2.5" style="background: rgba(255, 255, 255, 0.08); border: 1px solid rgba(255, 255, 255, 0.12);">
-                <div class="rounded-circle d-flex align-items-center justify-content-center text-white fw-bold shadow-sm"
-                     style="width: 44px; height: 44px; background: linear-gradient(135deg, #C41230 0%, #8B1225 100%); font-size: 1.15rem; flex-shrink: 0; border: 2px solid rgba(255, 255, 255, 0.3);">
-                    {{ first_name|slice:":1"|default:"S"|upper }}
-                </div>
-                <div class="overflow-hidden" style="min-width: 0;">
-                    <div class="text-white fw-bold text-truncate" style="font-size: 0.88rem;">{{ user_name }}</div>
-                    <div class="d-flex align-items-center gap-1.5 mt-0.5">
-                        <span class="badge" style="background: rgba(16, 185, 129, 0.2); color: #34D399; font-size: 0.68rem; font-weight: 700; padding: 2px 6px;">
-                            <i class="bi bi-circle-fill me-1" style="font-size: 0.45rem;"></i> ASISTENTE SOCIAL
-                        </span>
-                    </div>
-                    <div class="text-light text-truncate mt-1" style="font-size: 0.72rem; opacity: 0.8;">
-                        <i class="bi bi-geo-alt-fill text-danger me-1"></i> {{ current_delegation|default:"Consolidado Comunal (Todas las Sedes)" }}
-                    </div>
-                </div>
-            </div>
         </div>
 
         <!-- Menú de Navegación del Asistente Social (9 PANELES INTERACTIVOS CON CONMUTACIÓN DINÁMICA) -->
@@ -470,28 +451,7 @@
                     <span class="badge-count" id="badgeNotifCount">0</span>
                 </button>
 
-                <!-- Perfil y Cierre de Sesión -->
-                <div class="dropdown">
-                    <button class="user-dropdown-btn d-flex align-items-center gap-2 border-0 bg-transparent" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                        <span class="user-avatar-img d-inline-flex align-items-center justify-content-center text-white fw-bold"
-                              style="width: 36px; height: 36px; border-radius: 50%; background: var(--muni-red);">
-                            {{ first_name|slice:":1"|default:"S"|upper }}
-                        </span>
-                        <span class="user-identity text-start d-none d-sm-block">
-                            <span class="user-info-text fw-bold d-block" style="color: var(--muni-navy); font-size: 0.85rem;">{{ user_name }}</span>
-                            <span class="user-context-text text-muted" style="font-size: 0.72rem;">Asistente Social · {{ current_delegation|default:"Consolidado Comunal" }}</span>
-                        </span>
-                        <i class="bi bi-chevron-down text-muted" style="font-size: 0.75rem;"></i>
-                    </button>
-                    <ul class="dropdown-menu dropdown-menu-end shadow-sm border-0 rounded-4 mt-2" style="min-width: 220px;">
-                        <li><span class="dropdown-header text-uppercase small fw-bold text-danger">Municipalidad La Serena</span></li>
-                        <li><a class="dropdown-item py-2 fw-semibold" href="javascript:void(0)" onclick="abrirModalPerfilAsistente()"><i class="bi bi-person-badge-fill me-2 text-danger"></i> Mi Perfil Funcionario</a></li>
-                        <li><a class="dropdown-item py-2 fw-semibold" href="{% url 'activities:dashboard_asistente_section' section='mantenedores' %}" data-social-panel="mantenedores"><i class="bi bi-building-gear me-2 text-danger"></i> Mantenedor de Vecinos</a></li>
-                        <li><a class="dropdown-item py-2 fw-semibold" href="{% url 'activities:dashboard_asistente_section' section='metas' %}" data-social-panel="metas"><i class="bi bi-speedometer me-2 text-danger"></i> Metas SGR y Normativa RN-012</a></li>
-                        <li><hr class="dropdown-divider"></li>
-                        <li><a class="dropdown-item py-2 fw-bold text-danger" href="{% url 'core:logout' %}"><i class="bi bi-box-arrow-right me-2"></i> Cerrar Sesión</a></li>
-                    </ul>
-                </div>
+                {% include 'includes/account_menu.html' %}
             </div>
         </header>
 
@@ -3686,23 +3646,6 @@
         document.addEventListener('keydown', event => {
             if (event.key === 'Escape' && window.matchMedia('(max-width: 768px)').matches) toggleSidebar(false);
         });
-
-        function abrirModalPerfilAsistente() {
-            Swal.fire({
-                title: 'Perfil Institucional DIDECO',
-                html: `
-                    <div class="text-start p-2">
-                        <div class="mb-2"><strong>Funcionario:</strong> {{ user_name }}</div>
-                        <div class="mb-2"><strong>Cargo Institucional:</strong> Asistente Social / Trabajadora Social</div>
-                        <div class="mb-2"><strong>Dirección:</strong> DIDECO (Dirección de Desarrollo Comunitario)</div>
-                        <div class="mb-2"><strong>Delegación Asignada:</strong> {{ current_delegation|default:"Consolidado Comunal" }}</div>
-                        <div class="mb-2"><strong>Sistema:</strong> Sistema de Gestión de Resultados (SGR)</div>
-                        <div><strong>Normativa de Atención:</strong> Flujo Secuencial 3 Etapas (RN-012)</div>
-                    </div>
-                `,
-                confirmButtonColor: '#C41230'
-            });
-        }
 
         function mostrarNotificacionesSociales() {
             const pendientes = derivacionesRedes.filter(d => /pendiente/i.test(d.estado)).length;

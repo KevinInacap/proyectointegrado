@@ -10,23 +10,16 @@
     <link rel="stylesheet" href="{% static 'css/dashboard_position.css' %}">
     <link rel="stylesheet" href="{% static 'css/faro-institucional.css' %}?v=20261027faro">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <link rel="stylesheet" href="{% static 'css/account-menu.css' %}?v=20261027account1">
+    <script src="{% static 'js/account-menu.js' %}?v=20261027account1" defer></script>
 </head>
 <body>
     <div hidden id="csrf-container">{% csrf_token %}</div>
     <div class="dashboard-shell">
-        <aside class="side-panel" aria-label="Navegación y perfil">
+        <aside class="side-panel" aria-label="Navegación principal">
             <a class="brand" href="{% url 'activities:dashboard' %}" aria-label="Inicio del Sistema de Gestión de Resultados">
                 <img src="{% static 'images/laserena_horizontal_blanco.svg' %}" alt="Ilustre Municipalidad de La Serena">
             </a>
-
-            <div class="profile-card">
-                <span class="avatar" aria-hidden="true">{{ first_name|first|upper }}</span>
-                <div class="profile-copy">
-                    <strong>{{ full_name }}</strong>
-                    <span>{{ position_name }}</span>
-                    <small>{% if delegation_code %}{{ delegation_code }} · {% endif %}{{ delegation_name }}</small>
-                </div>
-            </div>
 
             <nav class="primary-nav" aria-label="Menú principal">
                 <a class="nav-link {% if not selected_module and not module_forbidden %}is-current{% endif %}" href="{% url 'activities:dashboard' %}" {% if not selected_module and not module_forbidden %}aria-current="page"{% endif %}>
@@ -45,8 +38,8 @@
 
         <main class="main-content">
             <div class="identity-bar" aria-label="Contexto de trabajo">
-                <span><strong>{{ full_name }}</strong><small>{{ role_name }}</small></span>
                 <span><small>Delegación activa</small><strong>{% if delegation_code %}{{ delegation_code }} · {% endif %}{{ delegation_name }}</strong></span>
+                {% include 'includes/account_menu.html' %}
             </div>
             <header class="page-heading">
                 <div>
@@ -54,7 +47,6 @@
                     <h1>Hola, {{ first_name }}</h1>
                     <p class="lead">{{ dashboard_description }}</p>
                 </div>
-                <a class="logout-link" href="{% url 'core:logout' %}">Cerrar sesión</a>
             </header>
 
             <section class="welcome-panel" aria-labelledby="panel-title">

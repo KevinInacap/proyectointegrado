@@ -1,0 +1,32 @@
+{% with account_profile=request.user.profile %}
+{% firstof account_profile.full_name request.user.get_full_name request.user.username 'Usuario Municipal' as account_name %}
+<div class="account-menu" data-account-menu>
+    <button type="button" class="account-trigger" data-account-toggle aria-label="Menú de cuenta de {{ account_name }}" aria-expanded="false" aria-controls="account-options">
+        <span class="account-avatar" aria-hidden="true">{{ account_name|first|upper }}</span>
+        <span class="account-identity">
+            <span class="account-name">{{ account_name }}</span>
+            <span class="account-context">{{ account_profile.position.name|default:'Sin cargo asignado' }}</span>
+        </span>
+        <span class="account-chevron" aria-hidden="true"></span>
+    </button>
+    <div id="account-options" class="account-options" popover="auto">
+        <button type="button" class="account-option" data-account-profile-open>Ver mi perfil</button>
+        <a class="account-option account-logout" href="{% url 'core:logout' %}" data-action="logout">Cerrar sesión</a>
+    </div>
+</div>
+<dialog class="account-profile-dialog" id="account-profile-dialog" aria-labelledby="account-profile-title">
+    <header class="account-profile-header">
+        <div><p>Cuenta institucional</p><h2 id="account-profile-title">Mi perfil</h2></div>
+        <form method="dialog"><button class="account-profile-close" aria-label="Cerrar perfil">×</button></form>
+    </header>
+    <dl class="account-profile-facts">
+        <div><dt>Nombre</dt><dd>{{ account_name }}</dd></div>
+        <div><dt>RUT</dt><dd>{{ account_profile.rut|default:'Sin registrar' }}</dd></div>
+        <div><dt>Correo</dt><dd>{{ account_profile.email|default:request.user.email|default:'Sin registrar' }}</dd></div>
+        <div><dt>Cargo</dt><dd>{{ account_profile.position.name|default:'Sin cargo asignado' }}</dd></div>
+        <div><dt>Rol</dt><dd>{% for role in account_profile.roles.all %}{% if not role.deleted_at %}<span class="account-role">{{ role.name }}</span>{% endif %}{% empty %}Sin rol asignado{% endfor %}</dd></div>
+        <div><dt>Delegación</dt><dd>{% if account_profile.delegation %}{{ account_profile.delegation.code }} · {{ account_profile.delegation.name }}{% else %}Sin delegación asignada{% endif %}</dd></div>
+    </dl>
+    <form class="account-profile-footer" method="dialog"><button class="account-profile-done">Cerrar</button></form>
+</dialog>
+{% endwith %}
