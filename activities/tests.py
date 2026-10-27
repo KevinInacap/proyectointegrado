@@ -495,6 +495,74 @@ class DashboardAccessTests(TestCase):
         self.assertContains(response, 'Exportar Excel')
 
 
+class SocialDashboardSectionTests(TestCase):
+    sections = ('casos', 'flujo', 'terreno', 'beneficios', 'informes',
+                'emergencias', 'redes', 'metas', 'mantenedores')
+
+    @classmethod
+    def setUpTestData(cls):
+        cls.delegation = Delegation.objects.create(name='Sede navegación social', scope='Centro')
+        cls.position, _ = Position.objects.get_or_create(name='Asistente Social')
+        cls.role = Role.objects.get(name='Asistente Social')
+        cls.user = get_user_model().objects.create_user(username='social-navigation')
+        cls.profile = UserProfile.objects.create(
+            user=cls.user, rut='12.345.678-5', full_name='Prueba navegación social',
+            email='social-navigation@example.test', delegation=cls.delegation, position=cls.position,
+        )
+        cls.profile.roles.add(cls.role)
+
+    def setUp(self):
+        self.client.force_login(self.user)
+
+    def section_url(self, section):
+        return reverse('activities:dashboard_asistente_section', kwargs={'section': section})
+
+    def test_each_section_has_real_links_and_renders_as_the_initial_panel(self):
+        for section in self.sections:
+            with self.subTest(section=section):
+                response = self.client.get(self.section_url(section))
+                self.assertEqual(response.status_code, 200)
+                self.assertEqual(response.context['social_active_section'], section)
+                self.assertContains(response, f'id="panel-{section}" class="panel-view active"')
+                self.assertEqual(response.content.decode().count('class="panel-view active"'), 1)
+                for target in self.sections:
+                    self.assertContains(response, f'href="{self.section_url(target)}"')
+
+    def test_base_and_integral_addresses_remain_compatible_with_cases(self):
+        for route in ('activities:dashboard_asistente', 'activities:dashboard_asistente_integral'):
+            with self.subTest(route=route):
+                response = self.client.get(reverse(route))
+                self.assertEqual(response.status_code, 200)
+                self.assertEqual(response.context['social_navigation']['initial'], 'casos')
+
+    def test_unknown_section_returns_404(self):
+        self.assertEqual(self.client.get(self.section_url('administracion-ajena')).status_code, 404)
+
+    def test_deep_section_requires_the_same_cargo_and_session_as_base_dashboard(self):
+        other_position, _ = Position.objects.get_or_create(name='Gestor Territorial')
+        self.profile.position = other_position
+        self.profile.save(update_fields=['position', 'updated_at'])
+        for section in self.sections:
+            with self.subTest(section=section):
+                self.assertRedirects(self.client.get(self.section_url(section)), reverse('core:login'), fetch_redirect_response=False)
+        self.client.logout()
+        self.assertRedirects(self.client.get(self.section_url('metas')), reverse('core:login'), fetch_redirect_response=False)
+
+    def test_deep_section_obeys_revoked_read_permission(self):
+        self.profile.roles.clear()
+        response = self.client.get(self.section_url('mantenedores'))
+        self.assertNotContains(response, 'id="social-navigation-data"')
+        self.assertNotContains(response, 'id="tablaVecinosMantenedorBody"')
+
+    def test_metrics_refresh_still_works_from_every_deep_section(self):
+        for section in self.sections:
+            with self.subTest(section=section):
+                response = self.client.get(self.section_url(section), {'metrics': '1'})
+                self.assertEqual(response.status_code, 200)
+                self.assertTrue(response.json()['success'])
+                self.assertIn('goal', response.json())
+
+
 class RolePermissionToggleApiTests(TestCase):
     def setUp(self):
         self.admin = get_user_model().objects.create_user(username='admin-role-toggle', password='test-pass')

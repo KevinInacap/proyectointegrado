@@ -1,0 +1,4 @@
+{% load static %}
+<script src="{% static 'js/session-guard.js' %}?v=20261027a"
+        data-session-fingerprint="{{ session_guard_fingerprint }}"
+        data-session-url="{% url 'core:session_state' %}"></script>
