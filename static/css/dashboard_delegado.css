@@ -69,7 +69,7 @@ button:disabled { opacity: .5; cursor: not-allowed; }
 .mobile-menu,.sidebar-close { display: none; }
 .sidebar-backdrop { position: fixed; inset: 0; z-index: 25; background: #1f1b1ca6; }
 .sidebar-backdrop[hidden] { display: none; }
-.delegado-hero { position: relative; display: flex; align-items: center; min-height: 222px; isolation: isolate; overflow: hidden; padding: 25px 31px; border-radius: 13px; background: linear-gradient(110deg,#c41230 0%,#a3102a 40%,#8b1d2c 68%,#68121e 100%); color: #fff; }
+.delegado-hero { position: relative; display: flex; align-items: center; min-height: 222px; isolation: isolate; overflow: hidden; padding: 25px 31px; border-radius: 13px; background: linear-gradient(110deg,var(--crimson-mid) 0%,#7b1827 40%,var(--crimson-deep) 68%,#4f101b 100%); color: #fff; }
 .delegado-hero:before { position: absolute; inset: 0; z-index: -2; content: ""; background: radial-gradient(ellipse at 81% 18%,#e2af6524,transparent 48%); pointer-events: none; }
 .delegado-hero:after { position: absolute; inset: 0; z-index: -1; content: ""; background: linear-gradient(90deg,#a00e261c 0%,transparent 55%,#4f101b24 100%); pointer-events: none; }
 .hero-copy { position: relative; z-index: 2; max-width: 83%; }
