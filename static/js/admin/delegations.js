@@ -493,73 +493,7 @@
             if (typeof initSpotlightEffect === 'function') initSpotlightEffect();
         }
 
-        function abrirDrawerExpediente(id) {
-            cerrarDrawerExpediente();
-            seleccionarDelegacion(id);
-        }
-
-        function cerrarDrawerExpediente() {
-            const drawer = document.getElementById('drawerExpedienteSede');
-            const overlay = document.getElementById('drawerBackdropOverlay');
-            if (drawer) drawer.classList.remove('open');
-            if (overlay) overlay.classList.remove('active');
-        }
-
-        function exportarExpedienteSedePDF(id) {
-            const data = datasetDelegacionesDetalle[id];
-            if (!data) return;
-            try {
-                if (typeof window.jspdf === 'undefined') throw new Error("Librería jsPDF no disponible");
-                const { jsPDF } = window.jspdf;
-                const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
-
-                // Franja Institucional
-                doc.setFillColor(196, 18, 48);
-                doc.rect(0, 0, 210, 8, 'F');
-                doc.setFillColor(27, 54, 93);
-                doc.rect(0, 8, 210, 16, 'F');
-
-                doc.setFont("helvetica", "bold");
-                doc.setFontSize(14);
-                doc.setTextColor(255, 255, 255);
-                doc.text("ILUSTRE MUNICIPALIDAD DE LA SERENA", 14, 18);
-
-                doc.setFontSize(12);
-                doc.setTextColor(27, 54, 93);
-                doc.text(`EXPEDIENTE DE SEDE MUNICIPAL: ${data.nombre.toUpperCase()}`, 14, 34);
-
-                doc.setFont("helvetica", "normal");
-                doc.setFontSize(9);
-                doc.setTextColor(91, 107, 130);
-                doc.text(`Sector: ${data.sector} | Dirección: ${data.direccion}`, 14, 40);
-                doc.text(`Horario: ${data.horario} | Encargado: ${data.delegado}`, 14, 45);
-
-                const tableBody = [
-                    ['Atenciones Mensuales', data.atencionesMes == null ? 'Sin datos' : `${data.atencionesMes} atenciones`],
-                    ['Población Territorial', data.vecinosRegistrados == null ? 'Sin datos' : `${data.vecinosRegistrados} vecinos`],
-                    ['Tasa de Resolución', data.tuboResueltos],
-                    ['Satisfacción Vecinal', data.satisfaccion],
-                    ['Dotación Funcionarios', `${data.funcionarios.length} funcionarios asignados`]
-                ];
-
-                doc.autoTable({
-                    head: [['Indicador Operativo', 'Métrica Oficial']],
-                    body: tableBody,
-                    startY: 50,
-                    theme: 'grid',
-                    headStyles: { fillColor: [27, 54, 93], textColor: [255, 255, 255], fontStyle: 'bold' }
-                });
-
-                doc.save(`Expediente_${data.id}_La_Serena_${new Date().toISOString().slice(0, 10)}.pdf`);
-                mostrarToast('✓ Expediente de delegación descargado en PDF.');
-            } catch (err) {
-                console.error("Error al exportar PDF de sede:", err);
-                mostrarToast('⚠ Error al generar PDF: ' + err.message);
-            }
-        }
-
         function seleccionarDelegacion(id) {
-            cerrarDrawerExpediente();
             if (typeof cerrarAdminDrawer === 'function') cerrarAdminDrawer();
             delegacionSeleccionadaActiva = id;
             const data = datasetDelegacionesDetalle[id];

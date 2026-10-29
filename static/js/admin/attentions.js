@@ -365,7 +365,6 @@
                 return;
             }
 
-            atencionSeleccionadaId = id;
             const elCod = document.getElementById('lblExpedienteCodigo');
             const elVec = document.getElementById('lblExpedienteVecino');
             const elCont = document.getElementById('lblExpedienteContacto');
@@ -402,53 +401,6 @@
                     bsModalExpedienteAtencion = new bootstrap.Modal(el);
                     bsModalExpedienteAtencion.show();
                 }
-            }
-        }
-
-        async function cambiarEstadoAtencionRapido(newStatus) {
-            if (!atencionSeleccionadaId) return;
-            if (datasetAtenciones.some(item => item.id === atencionSeleccionadaId && item.social_case_id)) {
-                Swal.fire({ icon: 'info', title: 'Caso social vinculado', text: 'Revisa esta solicitud desde Solicitudes sociales.' });
-                return;
-            }
-
-            try {
-                const resp = await fetch(`/api/atenciones/${atencionSeleccionadaId}/`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRFToken': getCookie('csrftoken') || ''
-                    },
-                    body: JSON.stringify({ status: newStatus })
-                });
-
-                const data = await resp.json();
-                if (data.success) {
-                    const item = datasetAtenciones.find(it => it.id === atencionSeleccionadaId);
-                    if (item) item.status = newStatus;
-                    renderTablaAtenciones(datasetAtenciones);
-
-                    const elBadge = document.getElementById('lblExpedienteBadgeEstado');
-                    if (elBadge) {
-                        const badgeClass = newStatus === 'Approved' ? 'bg-success text-white' :
-                                           newStatus === 'Requires correction' ? 'bg-danger text-white' : 'bg-warning text-dark';
-                        const statusName = newStatus === 'Approved' ? 'Aprobada' :
-                                           newStatus === 'Requires correction' ? 'Req. Corrección' : 'En Revisión';
-                        elBadge.className = `badge rounded-pill mt-1 ${badgeClass}`;
-                        elBadge.textContent = statusName;
-                    }
-
-                    Swal.fire({
-                        toast: true,
-                        position: 'top-end',
-                        showConfirmButton: false,
-                        timer: 2500,
-                        icon: 'success',
-                        title: `Estado actualizado a "${newStatus}" en la base de datos.`
-                    });
-                }
-            } catch (err) {
-                Swal.fire({ icon: 'error', title: 'Error al cambiar estado', text: err.message });
             }
         }
 

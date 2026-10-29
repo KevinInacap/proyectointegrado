@@ -13,7 +13,7 @@ const context = vm.createContext({
     document: {querySelectorAll: () => [], getElementById: id => id === 'panelDetalleDelegacion' ? panel : null},
     window: {matchMedia: () => ({matches:true})},
     datasetDelegacionesDetalle: {centro:{id:'centro', dbStatus:'Activo', nombre:attack, sector:attack, direccion:attack, telefono:attack, horario:attack, delegado:attack, resumen:attack, statusSemaforo:'Sin medición', colorSemaforo:'#64748B', satisfaccion:'Sin datos', cumplimiento:null, atencionesMes:null, vecinosRegistrados:null, funcionarios:[{nombre:attack, cargo:attack, rol:attack, avatar:attack}], barrios:[attack], metricasAtencion:[]}},
-    cerrarDrawerExpediente() {}, mostrarToast() {}, setTimeout() {},
+    mostrarToast() {}, setTimeout() {},
 });
 vm.runInContext(section('        function escapeHtml(', '        let calFechaActual'), context);
 vm.runInContext(section('        function seleccionarDelegacion(id)', '        function exportarFichaDelegacionPDF'), context);

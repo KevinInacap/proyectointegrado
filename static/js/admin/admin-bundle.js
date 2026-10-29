@@ -7,12 +7,12 @@
         let paginaActual = 1;
         let ordenAsc = true;
         let columnaOrdenVecinos = 'nombre';
-        let bsModalVecino, bsModalFicha, bsModalImportar, bsModalAuditoria, bsModalPerfil, chartInstance;
+        let bsModalVecino, bsModalFicha, bsModalImportar, bsModalAuditoria, chartInstance;
 
         /* Variables Globales de Gestión de Usuarios y Atenciones */
         let bsModalUsuario, bsModalEliminarUsuario, bsModalPasswordUsuario;
         let bsModalNuevaAtencion, bsModalExpedienteAtencion;
-        let datasetAtenciones = [], atencionSeleccionadaId = null;
+        let datasetAtenciones = [];
         let filasPorPaginaAtenciones = 10, paginaActualAtenciones = 1;
         let controlesPaginacionAtencionesInicializados = false;
         window.datasetAtenciones = datasetAtenciones;
@@ -203,12 +203,6 @@
             if (elImp && window.bootstrap) bsModalImportar = new bootstrap.Modal(elImp);
             const elAud = document.getElementById('modalAuditoria');
             if (elAud && window.bootstrap) bsModalAuditoria = new bootstrap.Modal(elAud);
-            const elPerfil = document.getElementById('modalPerfilUsuario');
-            if (elPerfil && window.bootstrap) bsModalPerfil = new bootstrap.Modal(elPerfil);
-
-            // Cargar foto de perfil persistente si existe
-            cargarFotoPerfilGuardada();
-
             // Cargar tema institucional guardado (Modo Oscuro / Claro)
             aplicarTemaGuardado();
 

@@ -1,0 +1,144 @@
+    <!-- MODAL REGISTRAR NUEVA ATENCIÓN CIUDADANA (COMPACTO SIN SCROLL) -->
+    <div class="modal fade" id="modalNuevaAtencion" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content shadow-lg border-0" style="border-radius: 16px; overflow: hidden;">
+                <div class="modal-header text-white py-3 px-4 border-0"
+                    style="background: linear-gradient(110deg, #8b1d2c, #68121e);">
+                    <div class="d-flex align-items-center gap-2">
+                        <i class="bi bi-headset text-warning fs-5"></i>
+                        <div>
+                            <h5 class="modal-title fw-bold m-0 text-white fs-6" id="modalAtencionTitle">Registrar Nueva Atención Ciudadana</h5>
+                            <small class="text-white-50" style="font-size: 0.75rem;">Ingreso de prestación vecinal y evidencia conforme a RN-012</small>
+                        </div>
+                    </div>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                </div>
+                <div class="modal-body p-3">
+                    <form id="formAtencionDB" novalidate onsubmit="event.preventDefault(); guardarAtencionDB();">
+                        <input type="hidden" id="atencionEditId" value="">
+
+                        <div class="row g-2">
+                            <div class="col-12">
+                                <label class="form-label small fw-bold mb-1" for="selAtencionVecino">Vincular ficha de vecino</label>
+                                <select class="form-select form-select-sm" id="selAtencionVecino" onchange="completarDatosVecinoAtencion()"><option value="">Contacto sin ficha de vecino</option></select>
+                                <small class="text-muted">Al guardar el nombre de la atención, también se actualizará el vecino vinculado.</small>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label small fw-bold mb-1">Nombre Vecino(a) / Contacto <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control form-control-sm" id="txtAtencionNombre" maxlength="150" placeholder="Ej: Patricia Soto Cárdenas" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label small fw-bold mb-1">Teléfono o RUT de Contacto</label>
+                                <input type="text" class="form-control form-control-sm" id="txtAtencionTelefono" maxlength="20" placeholder="+56 9 8452 1102">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label small fw-bold mb-1" for="txtAtencionFecha">Fecha de atención / visita <span class="text-danger">*</span></label>
+                                <input type="date" class="form-control form-control-sm" id="txtAtencionFecha" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label small fw-bold mb-1">Delegación Municipal <span class="text-danger">*</span></label>
+                                <select class="form-select form-select-sm" id="selAtencionDelegacion" required>
+                                    <option value="Centro Histórico">Delegación Centro Histórico</option>
+                                    <option value="Las Compañías">Delegación Las Compañías</option>
+                                    <option value="La Pampa">Delegación La Pampa</option>
+                                    <option value="La Antena">Delegación La Antena</option>
+                                    <option value="Avenida del Mar">Delegación Avenida del Mar</option>
+                                    <option value="Sector Rural">Delegación Sector Rural</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label small fw-bold mb-1" for="selAtencionTipo">Tipo de Atención <span class="text-danger">*</span></label>
+                                <select class="form-select form-select-sm" id="selAtencionTipo" required>
+                                    <option value="">Cargando tipos disponibles…</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label small fw-bold mb-1" for="selAtencionSubtipo">Sub Atención <span class="text-danger">*</span></label>
+                                <select class="form-select form-select-sm" id="selAtencionSubtipo" required disabled>
+                                    <option value="">Primero selecciona un tipo</option>
+                                </select>
+                            </div>
+                            <div class="col-12 small text-muted" id="atencionResponsableInfo">El usuario y la fecha se registrarán automáticamente.</div>
+                            <div class="col-12">
+                                <label class="form-label small fw-bold mb-1">Descripción del Requerimiento / Solicitud <span class="text-danger">*</span></label>
+                                <textarea class="form-control form-control-sm" id="txtAtencionProblema" rows="2" maxlength="1000" placeholder="Describa el motivo de la atención ciudadana o caso social..." required></textarea>
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label small fw-bold mb-1">Acción Ejecutada en Terreno / Derivación <span class="text-danger">*</span></label>
+                                <textarea class="form-control form-control-sm" id="txtAtencionAccion" rows="2" maxlength="1000" placeholder="Acción realizada, revisión de antecedentes o derivación técnica..." required></textarea>
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-end gap-2 mt-3 pt-2 border-top">
+                            <button type="button" class="btn btn-outline-secondary rounded-pill px-3 py-1 btn-sm" data-bs-dismiss="modal">Cancelar</button>
+                            <button type="submit" class="btn btn-muni-red rounded-pill px-4 py-1 btn-sm fw-bold shadow-xs" id="btnGuardarAtencionDB">
+                                <i class="bi bi-check-lg me-1"></i> Guardar Atención
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL VER DETALLE / EXPEDIENTE DE ATENCIÓN (BOTÓN OJO) -->
+    <div class="modal fade" id="modalExpedienteAtencion" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content shadow-lg border-0" style="border-radius: 16px; overflow: hidden;">
+                <div class="modal-header text-white py-3 px-4 border-0"
+                    style="background: linear-gradient(110deg, #8b1d2c, #68121e);">
+                    <div class="d-flex align-items-center gap-2">
+                        <i class="bi bi-file-earmark-person-fill text-warning fs-5"></i>
+                        <div>
+                            <h5 class="modal-title fw-bold m-0 text-white fs-6" id="lblExpedienteCodigo">Expediente de Atención</h5>
+                            <small class="text-white-50" style="font-size: 0.75rem;">Detalle técnico, evidencia fotográfica y trazabilidad comunal</small>
+                        </div>
+                    </div>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                </div>
+                <div class="modal-body p-3">
+                    <div class="row g-2 mb-2">
+                        <div class="col-md-6">
+                            <div class="p-2 border rounded-3 bg-light">
+                                <span class="text-muted small d-block" style="font-size: 0.72rem;">Vecino(a) Solicitante</span>
+                                <strong class="text-dark d-block" id="lblExpedienteVecino">--</strong>
+                                <span class="text-muted small" style="font-size: 0.75rem;" id="lblExpedienteContacto">--</span>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="p-2 border rounded-3 bg-light">
+                                <span class="text-muted small d-block" style="font-size: 0.72rem;">Delegación & Estado</span>
+                                <strong class="text-primary d-block" id="lblExpedienteDelegacion">--</strong>
+                                <span id="lblExpedienteBadgeEstado" class="badge rounded-pill mt-1">--</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="p-2 border rounded-3 bg-white mb-2">
+                        <span class="text-muted small d-block fw-bold text-uppercase" style="font-size: 0.72rem;">Requerimiento / Problema</span>
+                        <p class="m-0 text-dark small" id="lblExpedienteProblema">--</p>
+                    </div>
+
+                    <div class="p-2 border rounded-3 bg-white mb-2">
+                        <span class="text-muted small d-block fw-bold text-uppercase" style="font-size: 0.72rem;">Acción Ejecutada en Terreno</span>
+                        <p class="m-0 text-dark small" id="lblExpedienteAccion">--</p>
+                    </div>
+
+                    <div class="p-2 border rounded-3 bg-light d-flex align-items-center justify-content-between">
+                        <div>
+                            <span class="text-muted small d-block" style="font-size: 0.72rem;">Observación de Verificador</span>
+                            <span class="small fw-semibold text-secondary" id="lblExpedienteObservacion">--</span>
+                        </div>
+                        <span class="small text-muted ms-3">La revisión la registra el Verificador Técnico.</span>
+                    </div>
+
+                    <div class="d-flex justify-content-end gap-2 mt-3 pt-2 border-top">
+                        <button type="button" class="btn btn-light rounded-pill px-3 py-1 btn-sm" data-bs-dismiss="modal">Cerrar</button>
+                        <button type="button" class="btn btn-outline-muni-red rounded-pill px-3 py-1 btn-sm fw-bold" onclick="window.print()">
+                            <i class="bi bi-printer me-1"></i> Imprimir Expediente
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>

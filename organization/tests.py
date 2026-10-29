@@ -492,20 +492,6 @@ class AdminCatalogRegressionTests(TestCase):
         self.assertTrue(Position.objects.filter(pk=cargo.pk).exists())
         self.assertTrue(Role.objects.filter(pk=cargo.base_role_id, position=cargo).exists())
 
-    def test_legacy_seeds_cannot_modify_accounts_or_create_unbound_roles(self):
-        from importlib import import_module
-        from scripts.seed_pre_evaluation import seed_pre_evaluation
-        from scripts.seed_evaluation_records import seed
-        users_before = get_user_model().objects.count()
-        roles_before = Role.objects.count()
-        for command in (seed_pre_evaluation, seed):
-            with self.assertRaisesRegex(RuntimeError, 'deshabilitado'):
-                command()
-        with self.assertRaisesRegex(RuntimeError, 'deshabilitado'):
-            import_module('scripts.setup_chat_users')
-        self.assertEqual(get_user_model().objects.count(), users_before)
-        self.assertEqual(Role.objects.count(), roles_before)
-
     def test_django_admin_requires_cargo_for_new_roles(self):
         from .admin import RoleAdminForm
         form = RoleAdminForm(data={'name': 'Rol sin cargo', 'description': '', 'permissions_data': '[]'})

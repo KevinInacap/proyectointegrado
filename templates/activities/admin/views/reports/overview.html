@@ -1,0 +1,111 @@
+                    <!-- =========================================================
+                         SUBVISTA 1: VISIÓN GENERAL (TODOS LOS GRÁFICOS)
+                         ========================================================= -->
+                    <div class="subvista-reportes active" id="subvistaReporteGeneral">
+                        <div class="dashboard-panel dashboard-empty-state mb-4">
+                            <div class="d-flex align-items-start gap-3">
+                                <span class="dashboard-empty-icon"><i class="bi bi-bar-chart-line"></i></span>
+                                <div>
+                                    <h3 class="h6 fw-bold mb-1" style="color:var(--muni-navy)">Análisis con datos verificables</h3>
+                                    <p class="small text-secondary mb-0">Los gráficos y comparaciones se activarán al completar registros operativos y períodos de medición. Por ahora, los paneles no muestran volúmenes simulados ni metas inventadas.</p>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Fila 1 de Gráficos Analíticos -->
+                        <div class="d-none">
+                        <div class="row g-3 mb-4">
+                            <div class="col-lg-7">
+                                <div class="card border p-3 h-100 shadow-sm rounded-3 bg-white">
+                                    <div class="d-flex justify-content-between align-items-center mb-3">
+                                        <h6 class="fw-bold mb-0 text-dark"><i
+                                                class="bi bi-geo-alt-fill text-danger me-2"></i>Volumen de Atenciones
+                                            por Delegación Municipal</h6>
+                                        <span class="badge bg-light text-secondary border">Territorial</span>
+                                    </div>
+                                    <div style="height: 270px; position: relative;">
+                                        <canvas id="chartReporteDelegaciones"></canvas>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-lg-5">
+                                <div class="card border p-3 h-100 shadow-sm rounded-3 bg-white">
+                                    <div class="d-flex justify-content-between align-items-center mb-3">
+                                        <h6 class="fw-bold mb-0 text-dark"><i
+                                                class="bi bi-pie-chart-fill text-primary me-2"></i>Distribución por
+                                            Canal de Atención</h6>
+                                        <span class="badge bg-light text-secondary border">Canales</span>
+                                    </div>
+                                    <div style="height: 270px; position: relative;">
+                                        <canvas id="chartReporteCanales"></canvas>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Fila 2 de Gráficos Analíticos -->
+                        <div class="row g-3 mb-4">
+                            <div class="col-lg-6">
+                                <div class="card border p-3 h-100 shadow-sm rounded-3 bg-white">
+                                    <div class="d-flex justify-content-between align-items-center mb-3">
+                                        <h6 class="fw-bold mb-0 text-dark"><i
+                                                class="bi bi-graph-up text-success me-2"></i>Evolución Mensual:
+                                            Atenciones vs Metas Institucionales</h6>
+                                        <span class="badge bg-light text-secondary border">Tendencia</span>
+                                    </div>
+                                    <div style="height: 260px; position: relative;">
+                                        <canvas id="chartReporteEvolucion"></canvas>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-lg-6">
+                                <div class="card border p-3 h-100 shadow-sm rounded-3 bg-white">
+                                    <div class="d-flex justify-content-between align-items-center mb-3">
+                                        <h6 class="fw-bold mb-0 text-dark"><i
+                                                class="bi bi-list-stars text-warning me-2"></i>Top Trámites con Mayor
+                                            Demanda Ciudadana</h6>
+                                        <span class="badge bg-light text-secondary border">Ranking</span>
+                                    </div>
+                                    <div style="height: 260px; position: relative;">
+                                        <canvas id="chartReporteTramites"></canvas>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Tabla Detallada Consolidada -->
+                        <div class="card border shadow-sm rounded-3 p-3 bg-white">
+                            <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+                                <div>
+                                    <h6 class="fw-bold mb-0 text-dark"><i
+                                            class="bi bi-table text-secondary me-2"></i>Matriz de Rendimiento y Metas
+                                        por Delegación</h6>
+                                    <small class="text-muted">Desglose de atenciones, tiempos de respuesta y porcentaje
+                                        de cumplimiento</small>
+                                </div>
+                                <button class="btn btn-sm btn-outline-muni-red fw-bold"
+                                    onclick="exportarReportesExcel()">
+                                    <i class="bi bi-download me-1"></i> Descargar Datos CSV/Excel
+                                </button>
+                            </div>
+                            <div class="table-responsive">
+                                <table class="table table-hover align-middle mb-0" id="tablaReportesDelegaciones">
+                                    <thead class="table-light text-secondary small fw-bold">
+                                        <tr>
+                                            <th>Delegación Municipal</th>
+                                            <th class="text-center">Total Atenciones</th>
+                                            <th class="text-center">Resueltas</th>
+                                            <th class="text-center">En Proceso</th>
+                                            <th class="text-center">Tpo. Promedio</th>
+                                            <th class="text-center">Meta Trimestral</th>
+                                            <th class="text-center">% Cumplimiento</th>
+                                            <th class="text-center">Calificación</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="small" id="tablaReportesBody">
+                                        <tr><td class="text-center text-secondary py-4" colspan="8">Los resultados se mostrarán al conectar los reportes con registros reales.</td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        </div>
+                    </div>

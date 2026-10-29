@@ -9,7 +9,7 @@ from django.utils import timezone
 from core.models import AuditLog
 from organization.models import Delegation, Position, Role, UserProfile, PermissionDefinition
 from organization.access import ADMINISTRATOR_ROLE_NAME, set_role_permission_codes
-from organization.views import SYSTEM_PERMISSIONS_CATALOG
+from organization.permission_catalog import SYSTEM_PERMISSIONS_CATALOG
 from activities.models import ServiceCatalog, Activity, Evidence, Validation
 from metrics.models import MeasurementPeriod, MeasurementItem, Goal, DailyIndicator, PerformanceAdjustment
 from agenda.models import CollectiveAgenda, CommitmentHistory

@@ -1,0 +1,327 @@
+    <!-- ==========================================================================
+         MODALES DE ROLES Y PRIVILEGIOS (LIQUID GLASS & MYADMIN POWER)
+         ========================================================================== -->
+
+    <!-- MODAL 1: CREAR / EDITAR ROL Y MATRIZ DE PERMISOS -->
+    <div class="modal fade" id="modalRol" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-xl">
+            <div class="modal-content shadow-lg border-0"
+                style="border-radius: 20px; overflow: hidden; background: rgba(255, 255, 255, 0.96); backdrop-filter: blur(20px);">
+                <div class="modal-header text-white py-3 px-4 border-0"
+                    style="background: linear-gradient(110deg,#8b1d2c,#68121e);">
+                    <div>
+                        <h5 class="modal-title fw-bold m-0 text-white" id="modalRolTitle"
+                            style="color: #FFFFFF !important;">
+                            <i class="bi bi-sliders text-warning me-2"></i> Configuración de Rol
+                        </h5>
+                        <p class="text-white-50 m-0" style="font-size: 0.82rem;">Asignación de permisos y facultades
+                            para funcionarios municipales</p>
+                    </div>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                        aria-label="Cerrar"></button>
+                </div>
+                <div class="modal-body p-4 bg-light">
+                    <form id="formRol" novalidate onsubmit="guardarRolSubmit(event)">
+                        <input type="hidden" id="rolFormId">
+                        <p class="small text-muted mb-3">Cada rol pertenece a un cargo. Selecciona el cargo y configura las acciones que podrá realizar.</p>
+
+                        <!-- Datos Generales del Rol -->
+                        <div class="card border-0 shadow-sm rounded-3 p-3 mb-3 bg-white">
+                            <h6 class="fw-bold mb-3" style="color: var(--muni-navy);">
+                                <i class="bi bi-info-circle-fill text-primary me-2"></i> Identificación del Rol
+                            </h6>
+                            <div class="row g-3">
+                                <div class="col-md-12">
+                                    <label for="rolFormCargo" class="form-label small fw-bold text-secondary">Cargo asociado <span class="text-danger">*</span></label>
+                                    <select class="form-select" id="rolFormCargo" required aria-describedby="rolFormCargoHelp" disabled>
+                                        <option value="">Cargando cargos…</option>
+                                    </select>
+                                    <small class="text-muted" id="rolFormCargoHelp">Selecciona un cargo activo. El rol base permanece asociado a su cargo.</small>
+                                </div>
+                                <div class="col-md-5">
+                                    <label for="rolFormNombre" class="form-label small fw-bold text-secondary">Nombre del Rol <span
+                                            class="text-danger">*</span></label>
+                                    <input type="text" class="form-control" id="rolFormNombre" maxlength="50" required
+                                        placeholder="Ej: Operador de Terreno, Coordinador Social">
+                                </div>
+                                <div class="col-md-7">
+                                    <label for="rolFormDescripcion" class="form-label small fw-bold text-secondary">Descripción Institucional
+                                        <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control" id="rolFormDescripcion" maxlength="255" required
+                                        placeholder="Ej: Gestión de atenciones ciudadanas y derivaciones territoriales">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Barra de Herramientas de Selección Rápida -->
+                        <div class="card border-0 shadow-sm rounded-3 p-3 mb-3 bg-white">
+                            <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+                                <div>
+                                    <h6 class="fw-bold m-0" style="color: var(--muni-navy);">
+                                        <i class="bi bi-toggles text-primary me-2"></i> Matriz de Privilegios &
+                                        Funciones
+                                    </h6>
+                                    <span class="text-muted small">Seleccione los permisos autorizados para este perfil
+                                        o aplique una plantilla:</span>
+                                </div>
+                                <div class="d-flex align-items-center flex-wrap gap-1">
+                                    <button type="button"
+                                        class="btn btn-sm btn-outline-muni-red fw-semibold rounded-pill px-3"
+                                        onclick="aplicarPlantillaPermisos('admin')">
+                                        Acceso Total
+                                    </button>
+                                    <button type="button"
+                                        class="btn btn-sm btn-outline-muni-red fw-semibold rounded-pill px-3"
+                                        onclick="aplicarPlantillaPermisos('operador')">
+                                        Operador
+                                    </button>
+                                    <button type="button"
+                                        class="btn btn-sm btn-outline-muni-red fw-semibold rounded-pill px-3"
+                                        onclick="aplicarPlantillaPermisos('consultor')">
+                                        Solo Lectura
+                                    </button>
+                                    <button type="button"
+                                        class="btn btn-sm btn-outline-muni-red fw-semibold rounded-pill px-2"
+                                        onclick="invertirSeleccionPermisos()" title="Invertir selección">
+                                        Invertir
+                                    </button>
+                                    <button type="button"
+                                        class="btn btn-sm btn-outline-muni-red fw-semibold rounded-pill px-2"
+                                        onclick="desmarcarTodosPermisos()" title="Desmarcar todos">
+                                        Limpiar
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Contenedor Dinámico de Módulos y Checkboxes de Permisos -->
+                        <div class="row g-3" id="contenedorModulosPermisos">
+                            <!-- Inyectado dinámicamente vía renderPermisosMatrix() -->
+                            <div class="col-12 text-center py-4 text-muted">
+                                <div class="spinner-border spinner-border-sm text-primary me-2" role="status"></div>
+                                Cargando catálogo de funciones y permisos...
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div
+                    class="modal-footer bg-white py-3 px-4 border-top d-flex justify-content-between align-items-center">
+                    <div class="d-flex align-items-center gap-2">
+                        <span
+                            class="badge bg-primary-subtle text-primary border border-primary-subtle px-3 py-2 fs-7 fw-bold"
+                            id="lblModalPermsCount">
+                            0 permisos seleccionados
+                        </span>
+                        <span class="text-muted small d-none d-sm-inline">Los cambios se auditan formalmente en la base
+                            de datos</span>
+                    </div>
+                    <div class="d-flex align-items-center gap-2">
+                        <button type="button" class="btn btn-secondary rounded-pill px-4 fw-semibold"
+                            data-bs-dismiss="modal">Cancelar</button>
+                        <button type="button" id="btnGuardarRol" class="liquid-glass-btn-primary" onclick="ejecutarGuardarRol()">
+                            <i class="bi bi-check-lg"></i> Guardar Rol & Permisos
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL 2: AGREGAR NUEVA FUNCIÓN AL SISTEMA -->
+    <div class="modal fade" id="modalNuevaFuncion" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content shadow-lg border-0" style="border-radius: 18px; overflow: hidden;">
+                <div class="modal-header text-white py-3 px-4 border-0"
+                    style="background: linear-gradient(110deg,#8b1d2c,#68121e);">
+                    <h5 class="modal-title fw-bold m-0 text-white" style="color: #FFFFFF !important;">
+                        <i class="bi bi-plus-circle text-warning me-2"></i> Registrar Nueva Función
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                        aria-label="Cerrar"></button>
+                </div>
+                <div class="modal-body p-4 bg-light">
+                    <form id="formNuevaFuncion" novalidate onsubmit="guardarNuevaFuncionSubmit(event)">
+                        <div class="mb-3">
+                            <label class="form-label small fw-bold text-secondary">Módulo Institucional <span
+                                    class="text-danger">*</span></label>
+                            <select class="form-select" id="nuevaFuncionModulo" required>
+                                <option value="atenciones">Atenciones y Trámites Ciudadanos</option>
+                                <option value="vecinos">Vecinos y Casos Sociales</option>
+                                <option value="delegaciones">Delegaciones Municipales</option>
+                                <option value="metas">Metas e Indicadores SGR</option>
+                                <option value="tipo_atencion">Catálogo de Atención Municipal</option>
+                                <option value="usuarios">Gestión de Usuarios y Personal</option>
+                                <option value="roles">Roles y Matriz de Permisos</option>
+                                <option value="reportes">Reportes y Estadísticas Oficiales</option>
+                                <option value="auditoria">Auditoría Transversal y Sistema</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label small fw-bold text-secondary">Código del Privilegio (Identificador
+                                Técnico) <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control font-monospace" id="nuevaFuncionCodigo" maxlength="100" required
+                                placeholder="ej: atenciones.aprobar_urgencia">
+                            <div class="form-text small">Formato estándar: <code>modulo.accion_especifica</code></div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label small fw-bold text-secondary">Nombre de la Función <span
+                                    class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="nuevaFuncionNombre" maxlength="120" required
+                                placeholder="ej: Aprobar Ayudas de Emergencia">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label small fw-bold text-secondary">Descripción y Alcance de la
+                                Función</label>
+                            <textarea class="form-control" id="nuevaFuncionDesc" rows="2" maxlength="255"
+                                placeholder="Explique qué permite realizar este privilegio..."></textarea>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer bg-white py-2 px-4 border-top d-flex justify-content-end gap-2">
+                    <button type="button" class="btn btn-secondary rounded-pill px-3"
+                        data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="liquid-glass-btn-primary" onclick="ejecutarGuardarNuevaFuncion()">
+                        <i class="bi bi-check-lg me-1"></i> Guardar Función
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL 3: MATRIZ DE PERMISOS -->
+    <div class="modal fade" id="modalMatrizMyAdmin" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-fullscreen-lg-down modal-xl">
+            <div class="modal-content shadow-lg border-0" style="border-radius: 20px; overflow: hidden;">
+                <div class="modal-header text-white py-3 px-4 border-0"
+                    style="background: linear-gradient(110deg,#8b1d2c,#68121e);">
+                    <div class="d-flex align-items-center gap-3">
+                        <i class="bi bi-grid-3x3-gap text-warning fs-3"></i>
+                        <div>
+                            <h5 class="modal-title fw-bold m-0 text-white" style="color: #FFFFFF !important;">
+                                Matriz de Permisos
+                            </h5>
+                            <p class="text-white-50 m-0" style="font-size: 0.82rem;">Supervisión y control cruzado entre
+                                funciones y roles activos</p>
+                        </div>
+                    </div>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                        aria-label="Cerrar"></button>
+                </div>
+                <div class="modal-body p-4 bg-light">
+                    <div
+                        class="alert alert-info py-2 px-3 small d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
+                        <span><i class="bi bi-info-circle me-1"></i> Active o desactive los privilegios directamente
+                            sobre la cuadrícula. Al finalizar presione <strong>Guardar Matriz</strong>.</span>
+                    </div>
+                    <div class="myadmin-matrix-wrap shadow-sm">
+                        <table class="myadmin-matrix-table table-hover" id="tablaMatrizTransversal">
+                            <thead id="tablaMatrizTransversalHead">
+                                <!-- Generado dinámicamente con columnas por rol -->
+                            </thead>
+                            <tbody id="tablaMatrizTransversalBody">
+                                <!-- Generado dinámicamente con filas por permiso -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div
+                    class="modal-footer bg-white py-3 px-4 border-top d-flex justify-content-between align-items-center">
+                    <span class="text-muted small" id="lblMatrizStatusInfo">Todos los cambios se persisten de manera
+                        inmediata</span>
+                    <div class="d-flex gap-2">
+                        <button type="button" class="btn btn-secondary rounded-pill px-4 fw-semibold"
+                            data-bs-dismiss="modal">Cerrar</button>
+                        <button type="button" class="liquid-glass-btn-primary"
+                            onclick="guardarMatrizTransversalGlobal()">
+                            <i class="bi bi-check-lg me-1"></i> Guardar Matriz
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL 4: CONFIRMACIÓN DE BORRADO DE ROL -->
+    <div class="modal fade" id="modalEliminarRol" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content shadow border-0" style="border-radius: 16px; overflow: hidden;">
+                <div class="modal-header text-white py-3 px-4 border-0" style="background: linear-gradient(110deg,#8b1d2c,#68121e);">
+                    <h5 class="modal-title fw-bold fs-6 text-white m-0" style="color: #FFFFFF !important;">
+                        <i class="bi bi-exclamation-triangle-fill me-2 text-warning"></i> Dar de baja rol
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                        aria-label="Cerrar"></button>
+                </div>
+                <div class="modal-body p-4 text-center">
+                    <div class="mb-3">
+                        <i class="bi bi-shield-x text-danger" style="font-size: 3.5rem;"></i>
+                    </div>
+                    <h5 class="fw-bold mb-2" id="lblEliminarRolNombre" style="color: var(--muni-navy);">¿Eliminar este
+                        Rol?</h5>
+                    <p class="text-secondary small mb-3" id="lblEliminarRolAviso">
+                        El rol dejará de aparecer y de conceder permisos. El registro se conserva para auditoría.
+                    </p>
+                    <div class="alert alert-warning py-2 text-start small mb-0" id="boxEliminarRolDetalle">
+                        <i class="bi bi-shield-lock-fill me-1"></i> Los roles de sistema están protegidos. Un rol con funcionarios asignados debe quedar sin usuarios antes de su baja.
+                    </div>
+                </div>
+                <div class="modal-footer bg-light py-2 px-4 d-flex justify-content-end gap-2">
+                    <button type="button" class="btn btn-secondary rounded-pill px-3"
+                        data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-danger rounded-pill px-4 fw-bold" id="btnConfirmarEliminarRol"
+                        onclick="ejecutarEliminarRolConfirmado()">
+                        Dar de baja rol
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL 5: VER DETALLES Y FICHA DE PRIVILEGIOS DE ROL -->
+    <div class="modal fade" id="modalVerPermisosRol" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content shadow-lg border-0" style="border-radius: 18px; overflow: hidden;">
+                <div class="modal-header text-white py-3 px-4 border-0"
+                    style="background: linear-gradient(110deg,#8b1d2c,#68121e);">
+                    <div>
+                        <h5 class="modal-title fw-bold m-0 text-white" id="modalVerPermisosTitle"
+                            style="color: #FFFFFF !important;">
+                            <i class="bi bi-person-check text-warning me-2"></i> Ficha de Permisos del Rol
+                        </h5>
+                        <p class="text-white-50 m-0" id="modalVerPermisosSubtitle" style="font-size: 0.82rem;">Detalle
+                            de facultades autorizadas</p>
+                    </div>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                        aria-label="Cerrar"></button>
+                </div>
+                <div class="modal-body p-4 bg-light">
+                    <!-- Resumen del Rol -->
+                    <div class="card border-0 shadow-sm rounded-3 p-3 mb-3 bg-white">
+                        <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+                            <div>
+                                <span class="badge bg-danger mb-1" id="lblVerRolNivel">Rol de Sistema</span>
+                                <h4 class="fw-bold m-0" id="lblVerRolNombre" style="color: var(--muni-navy);">
+                                    Administrador</h4>
+                                <p class="text-secondary small m-0 mt-1" id="lblVerRolDesc">Acceso total al sistema</p>
+                            </div>
+                            <div class="text-end">
+                                <div class="fs-4 fw-bold text-primary" id="lblVerRolTotalPerms">40</div>
+                                <div class="text-muted small">Funciones asignadas</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Lista de Módulos con Chequeos -->
+                    <div id="contenedorFichaPermisosDetalle" class="d-flex flex-column gap-2">
+                        <!-- Inyectado dinámicamente -->
+                    </div>
+                </div>
+                <div
+                    class="modal-footer bg-white py-2 px-4 border-top d-flex justify-content-between align-items-center">
+                    <span class="small text-muted" id="lblVerRolUsuariosInfo">1 funcionario asignado</span>
+                    <button type="button" class="btn btn-secondary btn-sm rounded-pill px-4"
+                        data-bs-dismiss="modal">Cerrar</button>
+                </div>
+            </div>
+        </div>
+    </div>

@@ -1,0 +1,75 @@
+    <!-- MODAL CONFIRMAR ELIMINACIÓN DE USUARIO -->
+    <div class="modal fade" id="modalEliminarUsuario" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content shadow border-0" style="border-radius: 14px; overflow: hidden;">
+                <div class="modal-header text-white py-3 px-4 border-0" style="background: linear-gradient(110deg,#8b1d2c,#68121e);">
+                    <h5 class="modal-title fw-bold fs-6 text-white m-0"><i class="bi bi-exclamation-triangle-fill text-warning me-2"></i> Confirmar
+                        Eliminación de Usuario</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-4 text-center">
+                    <div class="mb-3">
+                        <i class="bi bi-person-x-fill text-danger" style="font-size: 3.5rem;"></i>
+                    </div>
+                    <h6 class="fw-bold mb-2">¿Está seguro de eliminar al siguiente usuario?</h6>
+                    <p class="text-dark fw-bold mb-1" id="delUsuarioNombre" style="font-size: 1.05rem;">Nombre</p>
+                    <p class="text-secondary small mb-3">RUT: <span id="delUsuarioRut" class="fw-bold">--</span></p>
+
+                    <div class="alert alert-warning py-2 px-3 small text-start mb-0">
+                        <i class="bi bi-info-circle-fill me-1"></i> Esta acción eliminará permanentemente la cuenta de
+                        acceso y su perfil institucional de la base de datos municipal. El evento quedará registrado en
+                        el historial de auditoría.
+                    </div>
+                </div>
+                <div class="modal-footer bg-light py-2">
+                    <button type="button" class="btn btn-outline-secondary btn-sm rounded-pill px-3"
+                        data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-danger btn-sm rounded-pill px-4 fw-bold"
+                        id="btnConfirmarEliminarUsuario" onclick="ejecutarEliminarUsuarioDB()">
+                        <span class="spinner-border spinner-border-sm me-1" id="spinnerEliminarUsuario"
+                            style="display:none;" role="status"></span>
+                        Sí, Eliminar Usuario
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL RESTABLECER CONTRASEÑA -->
+    <div class="modal fade" id="modalPasswordUsuario" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content shadow border-0" style="border-radius: 14px; overflow: hidden;">
+                <div class="modal-header text-white py-3 px-4 border-0"
+                    style="background: linear-gradient(110deg,#8b1d2c,#68121e);">
+                    <h5 class="modal-title fw-bold fs-6 text-white m-0" style="color: #FFFFFF !important;"><i
+                            class="bi bi-key-fill text-warning me-2"></i> Restablecer Contraseña de Acceso</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <p class="small text-secondary mb-3">Restableciendo contraseña para: <strong id="pwdUsuarioNombre"
+                            class="text-dark"></strong></p>
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold">Nueva Contraseña</label>
+                        <div class="input-group">
+                            <input type="password" class="form-control" id="pwdNuevaClave" maxlength="128"
+                                placeholder="Nueva contraseña segura" minlength="8" autocomplete="new-password"
+                                aria-describedby="pwdReglasClave" required>
+                            <button class="btn btn-outline-secondary" type="button"
+                                onclick="togglePasswordVisibility('pwdNuevaClave', this)"><i
+                                    class="bi bi-eye"></i></button>
+                        </div>
+                        <p class="small text-secondary mb-0" id="pwdReglasClave">Debe incluir 8 caracteres como mínimo, mayúscula, minúscula, número y símbolo. No se solicita la contraseña anterior.</p>
+                        <div class="small text-danger mt-2" id="pwdErrorClave" role="alert" aria-live="polite" hidden></div>
+                    </div>
+                </div>
+                <div class="modal-footer bg-light py-2">
+                    <button type="button" class="btn btn-outline-secondary btn-sm rounded-pill px-3"
+                        data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-muni-red btn-sm rounded-pill px-4 fw-bold"
+                        onclick="guardarPasswordDB()">
+                        <i class="bi bi-check2-circle me-1"></i> Actualizar Contraseña
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>

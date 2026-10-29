@@ -2,6 +2,13 @@
 
 Fecha: 29 de octubre de 2026.
 
+## Limpieza posterior del panel
+
+- Se eliminaron los tres scripts antiguos de evaluación y chat que habían quedado bloqueados. Los comandos de semillas institucionales que siguen en uso se conservaron.
+- El archivo de modales se separó en componentes para vecinos, funcionarios, atenciones, auditoría, roles y catálogos. La vista de reportes se dividió en sus tres sub vistas. Se comparó el HTML renderizado con la versión anterior para las secciones conservadas.
+- Se retiraron un panel lateral de delegación sin acceso desde la interfaz, un modal de perfil antiguo que ya había sido sustituido por el menú de cuenta, sus estilos y funciones asociadas, además de una función sin uso que intentaba cambiar el estado de una atención por una ruta no autorizada. El perfil accesible desde el menú de cuenta se mantiene.
+- Las comprobaciones de autorización y alcance territorial, la auditoría y el catálogo de permisos se separaron de `organization/views.py` en módulos con responsabilidades definidas. El archivo de vistas aún contiene los endpoints de usuarios, roles, cargos y delegaciones; también `activities/views.py` sigue siendo grande. Separarlos adicionalmente requiere preservar sus dependencias y pruebas, y queda como trabajo de mantenimiento posterior.
+
 ## Problemas corregidos
 
 - El código principal del panel concentraba miles de líneas en un solo archivo. Se separó en módulos para vecinos, funcionarios, cargos, roles, delegaciones, atenciones, reportes y edición, conservando el orden de carga y los controles existentes.
@@ -19,4 +26,4 @@ Fecha: 29 de octubre de 2026.
 - Pasaron 242 pruebas con Django 6.1.1. `check` y `makemigrations --check --dry-run` terminaron sin observaciones. Las pruebas se ejecutaron con SQLite de prueba y una clave temporal; la suite completa usa un algoritmo de contraseñas rápido únicamente durante la prueba.
 - Las migraciones `organization.0017_position_base_role` y `organization.0018_role_position` deben aplicarse en cada entorno mediante el proceso habitual de despliegue. Las migraciones históricas ya aplicadas no se vuelven a ejecutar. No se dispuso de una base real para comprobar si hay asociaciones antiguas entre cargos y roles que deban revisarse; no se modificaron esas asignaciones a ciegas.
 - En Chrome, con datos ficticios y SQLite aislado, se verificó la creación de un cargo, el aviso al intentar guardar un rol sin cargo, la creación de un rol asociado y la edición y persistencia de los permisos del rol base, sin errores JavaScript en estos recorridos. No se verificaron correo, MySQL, AWS, archivos reales de importación ni servicios externos. No se desplegaron cambios.
-- Los tres scripts antiguos de datos de evaluación y chat se bloquearon preventivamente: alteraban roles, cuentas o contraseñas fuera del flujo administrativo. Deben adaptarse a la nueva relación cargo-rol antes de volver a utilizarse. No se ejecutaron sobre datos reales.
+- Los tres scripts antiguos de datos de evaluación y chat se eliminaron a petición del usuario: alteraban roles, cuentas o contraseñas fuera del flujo administrativo. No se ejecutaron sobre datos reales. Los comandos de semillas vigentes permanecen disponibles.

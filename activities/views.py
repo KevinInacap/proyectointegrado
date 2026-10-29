@@ -2,7 +2,7 @@ from core.input_validation import payload_errors, NEIGHBOR_FIELDS, field_error
 import datetime
 import json
 from django.db import IntegrityError, transaction
-from django.shortcuts import render, redirect, get_object_or_404
+from django.shortcuts import render, redirect
 from django.contrib import messages
 from django.core.exceptions import ValidationError
 from django.core.validators import validate_email
@@ -237,7 +237,7 @@ def _position_dashboard(request, expected_position=None, module_slug=None):
             {'label': 'Revisadas por mí', 'value': visible_validations.count()},
         ] if has_read else []
     elif position_name == 'Auditor Municipal':
-        from organization.views import _territorial_audit_logs
+        from organization.audit_views import _territorial_audit_logs
         logs = _territorial_audit_logs(request).select_related('user').order_by('-created_at')
         audit_rows = [{
             'actor': (log.user.get_full_name() or log.user.get_username()) if log.user else 'Sistema',

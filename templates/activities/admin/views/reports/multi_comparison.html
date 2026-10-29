@@ -1,0 +1,57 @@
+                    <!-- =========================================================
+                         SUBVISTA 3: COMPARATIVA TODAS CONTRA TODAS
+                         ========================================================= -->
+                    <div class="subvista-reportes" id="subvistaReporteMulti">
+                        <div class="dashboard-panel dashboard-empty-state mb-4">
+                            <div class="d-flex align-items-start gap-3">
+                                <span class="dashboard-empty-icon"><i class="bi bi-bar-chart-line"></i></span>
+                                <div>
+                                    <h3 class="h6 fw-bold mb-1" style="color:var(--muni-navy)">Comparativa territorial</h3>
+                                    <p class="small text-secondary mb-0">El ranking se habilitará al conectar métricas verificables de atención, tiempos y metas. No se presentan posiciones estimadas.</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Gráficos de Comparación Global (Todas las Delegaciones) -->
+                        <div class="row g-3 mb-4">
+                            <div class="col-lg-7">
+                                <div class="card border p-3 h-100 shadow-sm rounded-3 bg-white">
+                                    <div class="d-flex justify-content-between align-items-center mb-3">
+                                        <h6 class="fw-bold mb-0 text-dark"><i
+                                                class="bi bi-bar-chart-fill text-primary me-2"></i>Ranking de
+                                            Cumplimiento de metas por delegación</h6>
+                                        <span class="badge bg-light text-secondary border">Meta vs Real</span>
+                                    </div>
+                                    <div style="height: 290px; position: relative;">
+                                        <canvas id="chartMultiRanking"></canvas>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-lg-5">
+                                <div class="card border p-3 h-100 shadow-sm rounded-3 bg-white">
+                                    <div class="d-flex justify-content-between align-items-center mb-3">
+                                        <h6 class="fw-bold mb-0 text-dark"><i
+                                                class="bi bi-clock-fill text-warning me-2"></i>Tiempos de Espera Comunal
+                                            Comparados</h6>
+                                        <span class="badge bg-light text-secondary border">Minutos promedio</span>
+                                    </div>
+                                    <div style="height: 290px; position: relative;">
+                                        <canvas id="chartMultiTiempos"></canvas>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Gráficos de Satisfacción Global -->
+                        <div class="card border p-3 mb-4 shadow-sm rounded-3 bg-white">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h6 class="fw-bold mb-0 text-dark"><i
+                                        class="bi bi-star-fill text-warning me-2"></i>Índice de Satisfacción Ciudadana
+                                    por Delegación (Escala 1 a 5)</h6>
+                                <span class="badge bg-light text-secondary border">Evaluación Vecinal</span>
+                            </div>
+                            <div style="height: 250px; position: relative;">
+                                <canvas id="chartMultiSatisfaccion"></canvas>
+                            </div>
+                        </div>
+                    </div>

@@ -88,9 +88,6 @@
         };
 
         // Estado del Tiempo Real (Live Mode)
-        let timerLiveReportes = null;
-        let esTiempoRealActivo = false;
-        let segundosLive = 5;
 
         function initReportesCharts() {
             // Inicializar vista general por defecto
@@ -277,7 +274,6 @@
            SISTEMA DE TIEMPO REAL / LIVE STREAM SIMULADO
            ========================================================================== */
         function iniciarTemporizadorTiempoReal() {
-            if (timerLiveReportes) clearInterval(timerLiveReportes);
             const elSec = document.getElementById('liveCounterSec');
             if (elSec) elSec.textContent = 'Pausado';
             const dot = document.getElementById('liveDotIndicator');
@@ -294,7 +290,6 @@
         }
 
         function toggleTiempoRealReportes() {
-            esTiempoRealActivo = false;
             const dot = document.getElementById('liveDotIndicator');
             const txt = document.getElementById('liveTextIndicator');
             const btnTxt = document.getElementById('btnToggleLiveText');
@@ -314,10 +309,6 @@
 
         function forzarActualizacionEnVivo() {
             mostrarToast('Aún no hay una API de reportes conectada para actualizar estos resultados.');
-        }
-
-        function ejecutarTickTiempoReal() {
-            actualizarReportesDatos();
         }
 
         function actualizarReportesDatos() {

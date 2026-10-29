@@ -1,0 +1,140 @@
+    <!-- MODAL CREAR / EDITAR USUARIO (COMPACTO SIN SCROLL) -->
+    <div class="modal fade" id="modalUsuario" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-xl">
+            <div class="modal-content shadow-lg border-0" style="border-radius: 16px; overflow: hidden;">
+                <div class="modal-header text-white py-3 px-4 border-0"
+                    style="background: linear-gradient(110deg, #8b1d2c, #68121e);">
+                    <div class="d-flex align-items-center gap-2">
+                        <i class="bi bi-person-fill-gear text-warning fs-5"></i>
+                        <div>
+                            <h5 class="modal-title fw-bold m-0 text-white fs-6" id="modalUsuarioTitle" style="color: #FFFFFF !important;">Registrar Nuevo Funcionario</h5>
+                            <small class="text-white-50" style="font-size: 0.75rem;">Configuración de credenciales y roles institucionales SGR La Serena</small>
+                        </div>
+                    </div>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                </div>
+                <div class="modal-body p-3">
+                    <form id="formUsuarioDB" novalidate onsubmit="event.preventDefault(); guardarUsuarioDB();">
+                        <input type="hidden" id="usuarioEditId" value="">
+
+                        <div class="row g-3">
+                            <!-- Columna Izquierda: Datos del Funcionario y Credenciales -->
+                            <div class="col-lg-7">
+                                <div class="p-3 border rounded-3 bg-white h-100">
+                                    <div class="d-flex align-items-center gap-2 mb-2 pb-1 border-bottom">
+                                        <i class="bi bi-person-lines-fill text-primary"></i>
+                                        <span class="small fw-bold text-dark text-uppercase">Datos Personales y Acceso</span>
+                                    </div>
+                                    <div class="row g-2">
+                                        <!-- Nombre Completo -->
+                                        <div class="col-md-6">
+                                            <label class="form-label small fw-bold mb-1">Nombre Completo <span class="text-danger">*</span></label>
+                                            <input type="text" class="form-control form-control-sm" id="usrFullName" maxlength="150" placeholder="Ej: Marcela Contreras Vega" required>
+                                        </div>
+
+                                        <!-- RUT -->
+                                        <div class="col-md-6">
+                                            <label class="form-label small fw-bold mb-1">RUT Institucional <span class="text-danger">*</span></label>
+                                        <input type="text" class="form-control form-control-sm" id="usrRut" maxlength="12" placeholder="Ej: 15.678.901-2" required onblur="formatearRutInput(this)">
+                                        </div>
+
+                                        <!-- Username -->
+                                        <div class="col-md-6">
+                                            <label class="form-label small fw-bold mb-1">Usuario (Login) <span class="text-danger">*</span></label>
+                                            <div class="input-group input-group-sm">
+                                                <span class="input-group-text bg-light text-muted">@</span>
+                                                <input type="text" class="form-control form-control-sm" id="usrUsername" maxlength="150" placeholder="marcela_contreras" required>
+                                            </div>
+                                        </div>
+
+                                        <!-- Correo Institucional -->
+                                        <div class="col-md-6">
+                                            <label class="form-label small fw-bold mb-1">Correo Institucional <span class="text-danger">*</span></label>
+                                            <input type="email" class="form-control form-control-sm" id="usrEmail" maxlength="100" placeholder="mcontreras@laserena.cl" required>
+                                        </div>
+
+                                        <!-- Contraseña -->
+                                        <div class="col-md-6" id="wrapperPasswordUsuario">
+                                            <label class="form-label small fw-bold mb-1" id="lblPasswordUsuario">Contraseña <span class="text-danger">*</span></label>
+                                            <div class="input-group input-group-sm">
+                                                <input type="password" class="form-control form-control-sm" id="usrPassword" maxlength="128" placeholder="Mínimo 8 caracteres">
+                                                <button class="btn btn-outline-secondary" type="button" onclick="togglePasswordVisibility('usrPassword', this)">
+                                                    <i class="bi bi-eye"></i>
+                                                </button>
+                                            </div>
+                                            <small class="text-muted d-block" id="helpPasswordUsuario" style="font-size: 0.68rem; line-height: 1.1;">Obligatoria al crear. Usa 8+ caracteres, mayúscula, minúscula, número y símbolo.</small>
+                                        </div>
+
+                                        <!-- Estado -->
+                                        <div class="col-md-6">
+                                            <label class="form-label small fw-bold mb-1">Estado de la Cuenta</label>
+                                            <select class="form-select form-select-sm" id="usrStatus">
+                                                <option value="Activo">Activo (Habilitado)</option>
+                                                <option value="Inactivo">Inactivo (Suspendido)</option>
+                                            </select>
+                                        </div>
+
+                                        <!-- Delegación Asignada -->
+                                        <div class="col-md-6">
+                                            <label class="form-label small fw-bold mb-1">Delegación Asignada</label>
+                                            <select class="form-select form-select-sm" id="usrDelegation">
+                                                <option value="">Sin delegación específica</option>
+                                            </select>
+                                        </div>
+
+                                        <!-- Cargo -->
+                                        <div class="col-md-6">
+                                            <label class="form-label small fw-bold mb-1">Cargo / Función</label>
+                                            <select class="form-select form-select-sm" id="usrPosition">
+                                                <option value="">Sin cargo específico</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Columna Derecha: Roles, Permisos y Privilegios Especiales -->
+                            <div class="col-lg-5">
+                                <div class="p-3 border rounded-3 bg-white h-100 d-flex flex-column justify-content-between">
+                                    <div>
+                                        <div class="d-flex align-items-center justify-content-between mb-2 pb-1 border-bottom">
+                                            <div class="d-flex align-items-center gap-2">
+                                                <i class="bi bi-shield-check text-success"></i>
+                                                <span class="small fw-bold text-dark text-uppercase">Roles y Perfiles SGR</span>
+                                            </div>
+                                            <span class="badge bg-light text-secondary border small" style="font-size: 0.68rem;">RBAC</span>
+                                        </div>
+                                        <div class="p-2 border rounded-3 bg-light mb-2" id="rolesCheckboxesContainer" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 4px;">
+                                            <!-- Generado dinámicamente desde la BD -->
+                                        </div>
+                                        <small class="text-secondary" id="usrCargoRoleHelp">Selecciona un cargo para ver sus roles. El rol base se asigna automáticamente.</small>
+                                    </div>
+
+                                    <!-- Privilegios Superusuario -->
+                                    <div class="p-2 rounded-3 mt-2" style="background: #FFF1F2; border: 1px solid rgba(196, 18, 48, 0.25);">
+                                        <div class="form-check form-switch mb-1">
+                                            <input class="form-check-input" type="checkbox" id="usrIsSuperuser" style="cursor: pointer;">
+                                            <label class="form-check-label fw-bold text-danger small" for="usrIsSuperuser" style="cursor: pointer;">
+                                                <i class="bi bi-shield-fill-check me-1"></i> Privilegios Totales de Administrador
+                                            </label>
+                                        </div>
+                                        <small class="text-muted d-block" style="font-size: 0.70rem; line-height: 1.2;">
+                                            Otorga acceso total a usuarios, auditoría general y configuración municipal.
+                                        </small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-end gap-2 mt-3 pt-2 border-top">
+                            <button type="button" class="btn btn-outline-secondary rounded-pill px-3 py-1 btn-sm" data-bs-dismiss="modal">Cancelar</button>
+                            <button type="submit" class="btn btn-muni-red rounded-pill px-4 py-1 btn-sm fw-bold shadow-xs" id="btnGuardarUsuarioDB">
+                                <span class="spinner-border spinner-border-sm me-1" id="spinnerGuardarUsuario" style="display:none;" role="status"></span>
+                                <i class="bi bi-cloud-arrow-up-fill me-1" id="iconGuardarUsuario"></i> Guardar en Base de Datos
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>

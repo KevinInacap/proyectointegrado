@@ -155,6 +155,23 @@ class DashboardAccessTests(TestCase):
         self.profile.position, _ = Position.objects.get_or_create(name=name)
         self.profile.save(update_fields=['position', 'updated_at'])
 
+    def test_admin_dashboard_renders_all_form_and_report_components_once(self):
+        self.set_position('Administrador General')
+        self.profile.roles.set([Role.objects.get(name='Administrador')])
+        response = self.client.get(reverse('activities:dashboard_admin'))
+        self.assertEqual(response.status_code, 200)
+        body = response.content.decode()
+        for element_id in (
+            'modalFichaVecino', 'modalImportarExcel', 'modalVecino', 'modalUsuario',
+            'modalNuevaAtencion', 'modalExpedienteAtencion', 'modalEliminarUsuario',
+            'modalPasswordUsuario', 'modalAuditoria', 'account-profile-dialog', 'modalRol',
+            'modalNuevaFuncion', 'modalMatrizMyAdmin', 'modalEliminarRol',
+            'modalVerPermisosRol', 'modalCatalogosOrganizacion',
+            'subvistaReporteGeneral', 'subvistaReporte1vs1', 'subvistaReporteMulti',
+        ):
+            with self.subTest(element_id=element_id):
+                self.assertEqual(body.count(f'id="{element_id}"'), 1)
+
     def test_account_actions_are_available_once_and_never_in_a_sidebar(self):
         role = Role.objects.create(name='Consulta de cuenta', permissions_data=['lectura'])
         for position, route in (
