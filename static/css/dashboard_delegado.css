@@ -259,6 +259,12 @@ button:disabled { opacity: .5; cursor: not-allowed; }
 @media (max-width: 760px) { .registry-pending { align-items: flex-start; flex-direction: column; } }
 .citizen-picker [hidden],.citizen-modes [hidden] { display: none!important; }
 .citizen-contact-fields { margin-bottom: 4px; }
+.neighbor-rut-lookup { display: flex; align-items: stretch; gap: 10px; }
+.neighbor-rut-lookup .form-control { min-width: 0; }
+.neighbor-rut-lookup button { flex-shrink: 0; }
+.neighbor-record-link { display: inline-block; margin-bottom: 14px; font-size: 12px; }
+.neighbor-registration-title { margin: 14px 0 5px; font-size: 15px; font-weight: 700; }
+@media (max-width: 420px) { .neighbor-rut-lookup { flex-direction: column; } }
 .neighbor-table th:nth-child(n) { width: auto; }
 .neighbor-table .action-cell { min-width: 130px; }
 .delegado-modal input[readonly] { background: #f4f0f1; color: #786a70; }

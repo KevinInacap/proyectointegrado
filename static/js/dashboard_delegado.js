@@ -17,11 +17,13 @@
   const sidebarBackdrop = document.getElementById('sidebar-backdrop');
   const neighborSelect = document.getElementById('field-neighbor');
   const neighborSearch = document.getElementById('neighbor-search');
-  const neighborCache = new Map();
+  const neighborLookup = document.getElementById('neighbor-rut-lookup');
   const initialNeighbor = JSON.parse(document.getElementById('delegado-selected-neighbor')?.textContent || 'null');
   let selectedNeighbor = null;
   let neighborSearchVersion = 0;
-  let neighborSearchTimer;
+  let applicantMode = 'pending';
+  let resolvedRut = '';
+  let previousContact = null;
   let createCode = '';
   const statusLabels = {
     Pending: 'Pendiente', Approved: 'Aprobada', Rejected: 'Rechazada',
@@ -152,79 +154,99 @@
     const result = 11 - sum % 11;
     return clean.slice(-1) === (result === 11 ? '0' : result === 10 ? 'K' : String(result));
   };
-  const neighborMode = () => form?.querySelector('[name=neighbor_mode]:checked')?.value || 'existing';
+  const normalizeRut = value => String(value || '').replace(/[.\s-]/g, '').toUpperCase();
+  const neighborMode = () => applicantMode;
+  const syncNeighborMode = (mode = 'pending') => {
+    if (!form) return;
+    applicantMode = mode;
+    document.getElementById('neighbor-registration').hidden = mode !== 'new';
+    form.elements.contact_name.readOnly = mode !== 'new';
+    form.elements.contact_phone.readOnly = mode !== 'new';
+    for (const name of ['neighbor_rut', 'neighbor_address', 'neighbor_email']) form.elements[name].disabled = mode !== 'new';
+    document.getElementById('neighbor-mode-help').textContent = mode === 'new'
+      ? 'Este RUT no está en el padrón de tu delegación. Completa nombre y dirección; al guardar se registrarán el vecino y su atención juntos.'
+      : mode === 'existing' ? 'Vecino identificado. Completa la atención; sus datos personales se mantienen desde su ficha en Vecinos.'
+      : mode === 'blocked' ? 'El vecino está inactivo. Revisa o reactiva su ficha en Vecinos antes de registrar la atención.'
+      : 'Consulta primero el RUT. Si no está registrado se habilitará su ficha, sin perder la atención que estás completando.';
+    save.disabled = saving || !['existing', 'new'].includes(mode);
+    const link = document.getElementById('neighbor-record-link');
+    link.hidden = !selectedNeighbor;
+    if (selectedNeighbor) {
+      const url = new URL(app.dataset.neighborPageUrl, location.origin);
+      url.searchParams.set('q', selectedNeighbor.rut);
+      link.href = url.href;
+    }
+  };
   const selectNeighbor = neighbor => {
     selectedNeighbor = neighbor || null;
-    if (neighbor) {
-      neighborCache.set(String(neighbor.id), neighbor);
-      if (![...neighborSelect.options].some(option => option.value === String(neighbor.id))) {
-        const option = createElement('option', `${neighbor.nombre} · ${neighbor.rut}`);
-        option.value = neighbor.id;
-        neighborSelect.append(option);
-      }
-    }
     neighborSelect.value = neighbor ? String(neighbor.id) : '';
     form.elements.contact_name.value = neighbor?.nombre || '';
     form.elements.contact_phone.value = neighbor?.telefono || '';
-  };
-  const syncNeighborMode = (clearContact = true) => {
-    if (!form) return;
-    const mode = neighborMode();
-    document.getElementById('neighbor-existing').hidden = mode !== 'existing';
-    document.getElementById('neighbor-registration').hidden = mode !== 'new';
-    form.elements.contact_name.readOnly = mode === 'existing';
-    form.elements.contact_phone.readOnly = mode === 'existing';
-    for (const name of ['neighbor_rut', 'neighbor_address', 'neighbor_email']) form.elements[name].disabled = mode !== 'new';
-    document.getElementById('neighbor-mode-help').textContent = mode === 'new'
-      ? 'Al guardar se registrará al vecino en el padrón y se creará su atención vinculada. Nombre, RUT y dirección son obligatorios.'
-      : mode === 'legacy' ? 'Esta atención anterior solo contiene un contacto. Para incorporarlo al padrón, elige buscar o registrar un vecino. No se creará una ficha automáticamente.'
-      : 'La atención quedará vinculada al vecino seleccionado. Sus datos se editan desde Vecinos.';
-    if (clearContact) {
-      selectedNeighbor = null;
-      neighborSelect.value = '';
-      form.elements.contact_name.value = '';
-      form.elements.contact_phone.value = '';
-    }
+    resolvedRut = normalizeRut(neighbor?.rut);
+    if (neighbor) neighborSearch.value = neighbor.rut;
+    syncNeighborMode(neighbor ? (neighbor.estado === 'Activo' ? 'existing' : 'blocked') : 'pending');
+    document.getElementById('neighbor-search-status').textContent = neighbor
+      ? `${neighbor.nombre} · ${neighbor.rut} · ${neighbor.estado === 'Activo' ? 'Vecino registrado' : 'Ficha inactiva'}`
+      : 'Ingresa el RUT para buscar al vecino antes de completar la atención.';
   };
   const loadNeighbors = async () => {
-    if (!neighborSelect) return;
+    if (!form || saving || neighborLookup.disabled) return;
+    const rut = neighborSearch.value.trim();
+    if (!validRut(rut)) {
+      fieldError('neighbor', 'Ingresa un RUT válido y revisa su dígito verificador.');
+      neighborSearch.focus();
+      return;
+    }
+    const restorePreviousContact = previousContact && neighborMode() !== 'new';
+    clearErrors();
     const version = ++neighborSearchVersion;
     const status = document.getElementById('neighbor-search-status');
-    status.textContent = 'Buscando vecinos de tu delegación…';
+    status.textContent = 'Consultando el RUT en el padrón de tu delegación…';
+    neighborLookup.disabled = true;
+    neighborLookup.textContent = 'Consultando…';
+    save.disabled = true;
     const url = new URL(app.dataset.neighborsUrl, location.origin);
-    url.searchParams.set('q', neighborSearch.value.trim());
-    url.searchParams.set('estado', 'Activo');
+    url.searchParams.set('rut', rut);
     try {
       const data = await request(url);
       if (version !== neighborSearchVersion) return;
-      neighborSelect.replaceChildren(createElement('option', 'Selecciona un vecino'));
-      neighborSelect.options[0].value = '';
-      for (const neighbor of data.paginated_vecinos) {
-        neighborCache.set(String(neighbor.id), neighbor);
-        const option = createElement('option', `${neighbor.nombre} · ${neighbor.rut}`);
-        option.value = neighbor.id;
-        neighborSelect.append(option);
+      const neighbor = data.paginated_vecinos.find(item => normalizeRut(item.rut) === normalizeRut(rut));
+      if (neighbor) selectNeighbor(neighbor);
+      else {
+        selectedNeighbor = null;
+        neighborSelect.value = '';
+        resolvedRut = normalizeRut(rut);
+        form.elements.neighbor_rut.value = rut;
+        syncNeighborMode('new');
+        if (restorePreviousContact) {
+          form.elements.contact_name.value = previousContact.name;
+          form.elements.contact_phone.value = previousContact.phone;
+        }
+        status.textContent = 'RUT sin ficha en tu delegación. Completa la ficha del nuevo vecino a continuación.';
+        form.elements.contact_name.focus();
       }
-      if (selectedNeighbor) selectNeighbor(selectedNeighbor);
-      status.textContent = data.pagination.total_count
-        ? `${data.pagination.total_count} coincidencias. ${data.pagination.total_count > 8 ? 'Se muestran 8; precisa el nombre o RUT para encontrar al vecino.' : 'Selecciona al vecino.'}`
-        : 'No encontramos vecinos activos. Puedes registrar uno nuevo con sus datos.';
     } catch (error) {
-      if (version === neighborSearchVersion) status.textContent = error.message;
+      if (version === neighborSearchVersion) { syncNeighborMode('pending'); status.textContent = error.message; }
+    } finally {
+      if (version === neighborSearchVersion) {
+        neighborLookup.disabled = false;
+        neighborLookup.textContent = 'Consultar RUT';
+      }
     }
   };
-  neighborSelect?.addEventListener('change', () => selectNeighbor(neighborCache.get(neighborSelect.value)));
+  neighborLookup?.addEventListener('click', loadNeighbors);
   neighborSearch?.addEventListener('input', () => {
+    if (resolvedRut && normalizeRut(neighborSearch.value) === resolvedRut && ['existing', 'new', 'blocked'].includes(neighborMode())) return;
     ++neighborSearchVersion;
     selectNeighbor(null);
-    clearTimeout(neighborSearchTimer);
-    neighborSearchTimer = setTimeout(loadNeighbors, 250);
+    form.elements.neighbor_rut.value = '';
+    form.elements.neighbor_address.value = '';
+    form.elements.neighbor_email.value = '';
+    neighborLookup.disabled = false;
+    neighborLookup.textContent = 'Consultar RUT';
   });
-  form?.querySelectorAll('[name=neighbor_mode]').forEach(radio => radio.addEventListener('change', () => {
-    clearErrors();
-    syncNeighborMode();
-    if (neighborMode() === 'existing') loadNeighbors();
-  }));
+  neighborSearch?.addEventListener('change', () => { if (validRut(neighborSearch.value.trim())) loadNeighbors(); });
+  neighborSearch?.addEventListener('keydown', event => { if (event.key === 'Enter') { event.preventDefault(); loadNeighbors(); } });
 
   const refreshSubtypes = () => {
     if (!type || !subtype) return;
@@ -239,7 +261,7 @@
     subtype.options[0].textContent = type.value ? (visible ? 'Selecciona una subatención' : 'No hay subatenciones activas') : 'Selecciona primero el tipo';
   };
   type?.addEventListener('change', refreshSubtypes);
-  const fieldMap = { neighbor: 'field-neighbor', rut: 'field-rut', address: 'field-address', email: 'field-email', contact: 'field-contact', phone: 'field-phone', date: 'field-date', type: 'field-type', subtype: 'field-subtype', problem: 'field-problem', action: 'field-action' };
+  const fieldMap = { neighbor: 'neighbor-search', rut: 'field-rut', address: 'field-address', email: 'field-email', contact: 'field-contact', phone: 'field-phone', date: 'field-date', type: 'field-type', subtype: 'field-subtype', problem: 'field-problem', action: 'field-action' };
   const clearErrors = () => {
     if (summary) { summary.hidden = true; summary.textContent = ''; }
     Object.keys(fieldMap).forEach(key => {
@@ -269,8 +291,11 @@
     clearErrors();
     editingId = null;
     createCode = `DEL-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 12)}`;
-    document.getElementById('neighbor-legacy-option').hidden = true;
-    syncNeighborMode();
+    ++neighborSearchVersion;
+    previousContact = null;
+    selectNeighbor(null);
+    neighborLookup.disabled = false;
+    neighborLookup.textContent = 'Consultar RUT';
     if (initialNeighbor?.estado === 'Activo') selectNeighbor(initialNeighbor);
     legacyType = false;
     allowModalClose = false;
@@ -284,11 +309,11 @@
     initialSnapshot = snapshot();
   };
   modalNode?.addEventListener('show.bs.modal', event => {
-    if (event.relatedTarget?.dataset.action === 'create') { resetForm(); loadNeighbors(); }
+    if (event.relatedTarget?.dataset.action === 'create') resetForm();
   });
   modalNode?.addEventListener('shown.bs.modal', () => {
     initialSnapshot = snapshot();
-    (neighborMode() === 'existing' ? neighborSearch : document.getElementById('field-contact'))?.focus();
+    (neighborMode() === 'new' ? document.getElementById('field-contact') : neighborSearch)?.focus();
   });
   modalNode?.addEventListener('hide.bs.modal', async event => {
     if (allowModalClose) return;
@@ -307,7 +332,8 @@
     clearErrors();
     const errors = [];
     const fail = (key, message) => { fieldError(key, message); errors.push(key); };
-    if (neighborMode() === 'existing' && !selectedNeighbor) fail('neighbor', 'Busca y selecciona un vecino registrado.');
+    if (!['existing', 'new'].includes(neighborMode()) || resolvedRut !== normalizeRut(neighborSearch.value)) fail('neighbor', 'Consulta primero el RUT del solicitante.');
+    if (neighborMode() === 'existing' && !selectedNeighbor) fail('neighbor', 'Consulta el RUT para identificar al vecino registrado.');
     if (neighborMode() === 'new') {
       if (!validRut(form.elements.neighbor_rut.value.trim())) fail('rut', 'Revisa el RUT y su dígito verificador.');
       if (!form.elements.neighbor_address.value.trim()) fail('address', 'Escribe la dirección del vecino.');
@@ -344,7 +370,7 @@
     const list = document.createElement('dl');
     const entries = [
       ['Solicitante', attention.contact_name || 'Sin nombre'],
-      ['Padrón de vecinos', attention.neighbor ? `Registrado · ${attention.neighbor.rut}` : 'Contacto anterior sin ficha vinculada'],
+      ['Padrón de vecinos', attention.neighbor ? `Registrado · ${attention.neighbor.rut}` : 'Solicitante sin ficha vinculada'],
       ['Teléfono', attention.contact_phone || 'Sin teléfono'],
       ['Fecha', attention.date],
       ['Estado', statusLabels[attention.validation_status] || attention.validation_status],
@@ -368,11 +394,13 @@
       return;
     }
     if (button.dataset.action === 'delete') {
-      const answer = await popup({ title: 'Dar de baja la atención', text: `¿Quieres dar de baja ${button.dataset.code}? El registro se conservará en la auditoría.`, icon: 'warning', showCancelButton: true, confirmButtonText: 'Sí, dar de baja', focusCancel: true });
-      if (!answer.isConfirmed) return;
       button.disabled = true;
       button.setAttribute('aria-busy', 'true');
       try {
+        const { atencion } = await request(detailUrl(id));
+        const identity = atencion.neighbor ? `RUT ${atencion.neighbor.rut}` : 'sin ficha vinculada';
+        const answer = await popup({ title: 'Dar de baja la atención', text: `¿Dar de baja ${atencion.activity_code} de ${atencion.contact_name} (${identity})? Se conservarán la ficha del vecino y la auditoría.`, icon: 'warning', showCancelButton: true, confirmButtonText: 'Sí, dar de baja', focusCancel: true });
+        if (!answer.isConfirmed) return;
         const result = await request(detailUrl(id), { method: 'DELETE' });
         await notify('success', 'Atención dada de baja', result.message);
         window.location.reload();
@@ -391,19 +419,17 @@
       resetForm();
       editingId = id;
       if (attention.neighbor) {
-        form.querySelector('[name=neighbor_mode][value=existing]').checked = true;
-        syncNeighborMode();
         selectNeighbor(attention.neighbor);
-        loadNeighbors();
       } else {
-        document.getElementById('neighbor-legacy-option').hidden = false;
-        form.querySelector('[name=neighbor_mode][value=legacy]').checked = true;
-        syncNeighborMode();
+        previousContact = { name: attention.contact_name || '', phone: attention.contact_phone || '' };
+        document.getElementById('neighbor-search-status').textContent = 'Esta atención no tiene una ficha vinculada. Consulta el RUT para identificar o registrar al solicitante antes de guardar.';
       }
       document.getElementById('attentionModalTitle').textContent = `Editar ${attention.activity_code}`;
       save.textContent = 'Guardar cambios';
-      form.elements.contact_name.value = attention.contact_name || '';
-      form.elements.contact_phone.value = attention.contact_phone || '';
+      if (!attention.neighbor) {
+        form.elements.contact_name.value = previousContact.name;
+        form.elements.contact_phone.value = previousContact.phone;
+      }
       form.elements.activity_date.value = attention.activity_date_iso || '';
       form.elements.problem_description.value = attention.problem_description || '';
       form.elements.executed_action.value = attention.executed_action || '';
@@ -462,6 +488,8 @@
     }
     saving = true;
     save.disabled = true;
+    neighborSearch.disabled = true;
+    neighborLookup.disabled = true;
     save.setAttribute('aria-busy', 'true');
     const originalLabel = save.textContent;
     save.textContent = 'Guardando…';
@@ -478,7 +506,9 @@
       summary?.focus();
     } finally {
       saving = false;
-      save.disabled = false;
+      neighborSearch.disabled = false;
+      neighborLookup.disabled = false;
+      syncNeighborMode(neighborMode());
       save.removeAttribute('aria-busy');
       save.textContent = originalLabel;
     }
@@ -516,7 +546,8 @@
     button.disabled = true;
     try {
       if (action === 'delete') {
-        const answer = await popup({title:'Dar de baja al vecino',text:'La ficha se dará de baja. Sus atenciones se conservarán. Los vecinos con un caso social activo deben gestionarse desde su ficha social.',icon:'warning',showCancelButton:true,confirmButtonText:'Sí, dar de baja',focusCancel:true});
+        const detail = await request(neighborUrl(id));
+        const answer = await popup({title:'Dar de baja al vecino',text:`¿Dar de baja la ficha de ${detail.vecino.nombre} (RUT ${detail.vecino.rut})? Sus atenciones y la auditoría se conservarán. Los vecinos con un caso social activo se gestionan desde su ficha social.`,icon:'warning',showCancelButton:true,confirmButtonText:'Sí, dar de baja',focusCancel:true});
         if (!answer.isConfirmed) return;
         const result = await request(neighborUrl(id), {method:'DELETE'});
         await notify('success','Vecino dado de baja',result.message);
@@ -585,7 +616,6 @@
   });
   if (new URLSearchParams(location.search).get('nueva') === '1' && initialNeighbor?.estado === 'Activo' && form && window.bootstrap) {
     resetForm();
-    loadNeighbors();
     window.bootstrap.Modal.getOrCreateInstance(modalNode).show();
     const currentUrl = new URL(location.href);
     currentUrl.searchParams.delete('nueva');

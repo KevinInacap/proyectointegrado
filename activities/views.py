@@ -370,9 +370,13 @@ def dashboard_delegado_view(request, section='inicio'):
         if unlinked_filter:
             filtered = filtered.filter(neighbor__isnull=True)
         if query:
-            filtered = filtered.filter(Q(activity_code__icontains=query) |
-                                       Q(contact_name__icontains=query) |
-                                       Q(problem_description__icontains=query))
+            search = (Q(activity_code__icontains=query) |
+                      Q(contact_name__icontains=query) |
+                      Q(problem_description__icontains=query))
+            if (len(query) <= 15 and re.fullmatch(r'[0-9.kK\s-]+', query)
+                    and _valid_vecino_rut(query)):
+                search |= Q(neighbor__in=_filter_vecinos(neighbors, query, exact_rut=True))
+            filtered = filtered.filter(search)
         attention_scope_counts = {
             'total': filtered.count(),
             'followup': filtered.filter(validation_status__in=['Pending', 'Requires correction']).count(),
@@ -1111,15 +1115,17 @@ def _vecino_scope(request):
     return qs.none()
 
 
-def _filter_vecinos(qs, query):
+def _filter_vecinos(qs, query, *, exact_rut=False):
     conditions = (Q(nombre__icontains=query) | Q(rut__icontains=query) |
                   Q(direccion__icontains=query) | Q(telefono__icontains=query))
-    if re.fullmatch(r'[0-9.kK\s-]+', query) and any(character.isdigit() for character in query):
+    if exact_rut or (re.fullmatch(r'[0-9.kK\s-]+', query) and any(character.isdigit() for character in query)):
         from django.db.models import Value
         from django.db.models.functions import Replace, Upper
         qs = qs.annotate(search_rut=Upper(Replace(Replace(Replace('rut', Value('.'), Value('')),
                                                                         Value('-'), Value('')),
                                                        Value(' '), Value(''))))
+        if exact_rut:
+            return qs.filter(search_rut=_normalize_vecino_rut(query))
         conditions |= Q(search_rut__icontains=_normalize_vecino_rut(query))
     return qs.filter(conditions)
 
@@ -1136,17 +1142,31 @@ def api_vecinos(request):
 
     if request.method == 'GET':
         qs = _vecino_scope(request).order_by('nombre')
-        q = request.GET.get('q', '').strip()[:100]
-        estado = request.GET.get('estado', '').strip()
-        if q:
-            qs = _filter_vecinos(qs, q)
-        if estado in {'Activo', 'Inactivo'}:
-            qs = qs.filter(estado=estado)
+        rut_lookup = 'rut' in request.GET
+        if rut_lookup:
+            rut = request.GET.get('rut', '').strip()
+            if (not rut or len(rut) > 15 or not re.fullmatch(r'[0-9.kK\s-]+', rut)
+                    or not _valid_vecino_rut(rut)):
+                return JsonResponse({
+                    'success': False, 'found': False,
+                    'message': 'RUT inválido. Revisa el número y el dígito verificador.',
+                }, status=400)
+            # An inactive local record must be identified rather than offered
+            # for duplicate registration. Other delegations remain outside scope.
+            qs = _filter_vecinos(qs, rut, exact_rut=True)
+        else:
+            q = request.GET.get('q', '').strip()[:100]
+            estado = request.GET.get('estado', '').strip()
+            if q:
+                qs = _filter_vecinos(qs, q)
+            if estado in {'Activo', 'Inactivo'}:
+                qs = qs.filter(estado=estado)
         vecinos = [_serialize_vecino(v) for v in qs]
         paginator = Paginator(vecinos, 8)
         page_obj = paginator.get_page(request.GET.get('page') or 1)
         return JsonResponse({
             'success': True,
+            **({'found': bool(vecinos)} if rut_lookup else {}),
             'vecinos': vecinos,
             'paginated_vecinos': list(page_obj.object_list),
             'pagination': {
