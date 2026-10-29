@@ -823,7 +823,7 @@
                                             class="bi bi-geo-alt-fill"></i></span>
                                     <input type="text"
                                         class="form-control bg-light border-start-0 text-dark fw-semibold"
-                                        value="Edificio Consistorial — La Serena Centro" readonly>
+                                        value="{{ request.user.profile.delegation.name|default:'No registrado' }}" readonly>
                                     <span class="input-group-text bg-light border-start-0" title="Dato protegido"><i
                                             class="bi bi-lock-fill text-muted" style="font-size: 0.75rem;"></i></span>
                                 </div>
