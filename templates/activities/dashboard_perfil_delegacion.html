@@ -1,0 +1,1667 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ profile_cfg.position_name }} · SGR 2026 — Ilustre Municipalidad de La Serena</title>
+
+    <!-- Google Fonts: Montserrat (Títulos Oficiales), Plus Jakarta Sans (Lectura) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet">
+
+    <!-- Bootstrap 5.3 & Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+
+    <!-- Librerías Profesionales: Chart.js, SheetJS XLSX, jsPDF, SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <!-- Hojas de Estilo Oficiales del Admin: Base Admin + Liquid Glass Pro -->
+    <link rel="stylesheet" href="{% static 'css/admin/admin-bundle.css' %}?v=20261015L">
+    <link rel="stylesheet" href="{% static 'css/admin/admin-glass-pro.css' %}?v=20261015L">
+
+    <style>
+        :root {
+            --muni-red: #C41230;
+            --muni-red-hover: #A00E26;
+            --muni-navy: #1B365D;
+            --muni-navy-dark: #0F172A;
+            --muni-navy-slate: #1E293B;
+            --surface-bg: #F4F8FC;
+
+            --cargo-accent: {{ profile_cfg.accent_color|default:"#C41230" }};
+        }
+
+        body {
+            background-color: var(--surface-bg) !important;
+            color: var(--muni-navy-slate) !important;
+            font-family: 'Plus Jakarta Sans', sans-serif !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            overflow-x: hidden !important;
+        }
+
+        .semaforo-banner-card {
+            background: linear-gradient(135deg, rgba(254, 242, 242, 0.96) 0%, rgba(255, 255, 255, 0.98) 100%);
+            border: 1.5px solid rgba(196, 18, 48, 0.28);
+            border-left: 6px solid var(--muni-red);
+            border-radius: 16px;
+            padding: 1.1rem 1.4rem;
+            box-shadow: 0 10px 25px -5px rgba(196, 18, 48, 0.10);
+        }
+
+        .sgr-rules-strip {
+            background: linear-gradient(135deg, #1B365D 0%, #0F172A 100%);
+            color: #FFFFFF;
+            border-radius: 16px;
+            padding: 0.9rem 1.25rem;
+            box-shadow: 0 10px 24px -6px rgba(15, 23, 42, 0.22);
+        }
+
+        .beacon-pulse {
+            width: 14px;
+            height: 14px;
+            background-color: #10B981;
+            border-radius: 50%;
+            position: relative;
+            display: inline-block;
+            box-shadow: 0 0 12px #10B981;
+        }
+
+        .social-kpi-card {
+            background: #FFFFFF;
+            border-radius: 16px;
+            padding: 1.2rem 1.35rem;
+            border: 1px solid rgba(226, 235, 246, 0.95);
+            box-shadow: 0 12px 30px -8px rgba(27, 54, 93, 0.06);
+            transition: transform 0.22s ease, box-shadow 0.22s ease;
+            position: relative;
+            overflow: hidden;
+            height: 100%;
+        }
+
+        .social-kpi-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 16px 36px -8px rgba(196, 18, 48, 0.12);
+        }
+
+        .social-kpi-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 100%;
+            background: var(--muni-red);
+        }
+
+        .cat-pill {
+            padding: 3px 9px;
+            border-radius: 50px;
+            font-size: 0.72rem;
+            font-weight: 700;
+            display: inline-block;
+        }
+
+        .cat-diagnostico {
+            background: #F3E8FF;
+            color: #7E22CE;
+            border: 1px solid #E9D5FF;
+        }
+
+        .cat-beneficio {
+            background: #ECFDF5;
+            color: #047857;
+            border: 1px solid #A7F3D0;
+        }
+
+        .cat-informe {
+            background: #EFF6FF;
+            color: #1D4ED8;
+            border: 1px solid #BFDBFE;
+        }
+
+        .cat-emergencia {
+            background: #FEF2F2;
+            color: #B91C1C;
+            border: 1px solid #FECACA;
+            font-weight: 800;
+        }
+
+        .cat-redes {
+            background: #FFFBEB;
+            color: #B45309;
+            border: 1px solid #FDE68A;
+        }
+
+        .liquid-glass-btn-primary {
+            background: linear-gradient(135deg, #C41230 0%, #9E0E26 100%) !important;
+            color: #FFFFFF !important;
+            border: none !important;
+            border-radius: 50px !important;
+            font-weight: 700 !important;
+            padding: 0.55rem 1.3rem !important;
+            font-size: 0.86rem !important;
+            box-shadow: 0 4px 14px rgba(196, 18, 48, 0.35) !important;
+            transition: all 0.22s ease !important;
+            display: inline-flex !important;
+            align-items: center !important;
+            gap: 7px !important;
+            text-decoration: none !important;
+            cursor: pointer;
+        }
+
+        .liquid-glass-btn-primary:hover {
+            transform: translateY(-2px) !important;
+            box-shadow: 0 8px 20px rgba(196, 18, 48, 0.45) !important;
+            color: #FFFFFF !important;
+        }
+
+        .liquid-glass-btn-secondary {
+            background: #FFFFFF !important;
+            color: var(--muni-red) !important;
+            border: 1.5px solid var(--muni-red) !important;
+            border-radius: 50px !important;
+            font-weight: 700 !important;
+            padding: 0.50rem 1.15rem !important;
+            font-size: 0.85rem !important;
+            transition: all 0.2s ease !important;
+            display: inline-flex !important;
+            align-items: center !important;
+            gap: 6px !important;
+            text-decoration: none !important;
+            cursor: pointer;
+        }
+
+        .btn-action-round {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.85rem;
+            border: none;
+            transition: all 0.18s ease;
+            cursor: pointer;
+        }
+
+        .btn-action-view {
+            background: rgba(27, 54, 93, 0.08);
+            color: var(--muni-navy);
+        }
+
+        .btn-action-view:hover {
+            background: var(--muni-navy);
+            color: #FFFFFF;
+        }
+
+        .btn-action-report {
+            background: rgba(16, 185, 129, 0.12);
+            color: #047857;
+        }
+
+        .btn-action-report:hover {
+            background: #047857;
+            color: #FFFFFF;
+        }
+
+        .panel-view {
+            animation: fadeInView 0.22s ease-in-out;
+        }
+
+        @keyframes fadeInView {
+            from {
+                opacity: 0;
+                transform: translateY(5px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    </style>
+</head>
+
+<body>
+    {% csrf_token %}
+
+    <!-- =================================================================
+         1. MENÚ LATERAL OFICIAL LA SERENA (MISMO DISEÑO QUE ADMIN)
+         ================================================================= -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-brand-box">
+            <button class="sidebar-collapse-btn" onclick="toggleSidebar()" title="Colapsar menú lateral"
+                aria-label="Menú">
+                <i class="bi bi-list"></i>
+            </button>
+            <a href="{% url 'activities:dashboard' %}" class="sidebar-brand-link"
+                title="Ilustre Municipalidad de La Serena · SGR 2026">
+                <img src="{% static 'images/horizontal-blanco.svg' %}" alt="Ilustre Municipalidad de La Serena"
+                    class="sidebar-official-logo">
+            </a>
+        </div>
+
+        <!-- Tarjeta de Perfil Institucional -->
+        <div class="px-3 py-2">
+            <div class="p-2.5 rounded-4 d-flex align-items-center gap-2.5"
+                style="background: rgba(255, 255, 255, 0.08); border: 1px solid rgba(255, 255, 255, 0.14);">
+                <div class="rounded-circle d-flex align-items-center justify-content-center text-white fw-bold shadow-sm"
+                    style="width: 44px; height: 44px; background: linear-gradient(135deg, #C41230 0%, #8B1225 100%); font-size: 1.15rem; flex-shrink: 0; border: 2px solid rgba(255, 255, 255, 0.3);">
+                    {{ first_name|slice:":1"|default:"F"|upper }}
+                </div>
+                <div class="overflow-hidden" style="min-width: 0;">
+                    <div class="text-white fw-bold text-truncate" style="font-size: 0.88rem;">{{ user_name }}</div>
+                    <div class="d-flex align-items-center gap-1.5 mt-0.5">
+                        <span class="badge"
+                            style="background: rgba(16, 185, 129, 0.22); color: #34D399; font-size: 0.65rem; font-weight: 800; padding: 2px 6px;">
+                            <i class="bi bi-circle-fill me-1" style="font-size: 0.42rem;"></i> {{ profile_cfg.role_badge }}
+                        </span>
+                    </div>
+                    <div class="text-light text-truncate mt-1" style="font-size: 0.72rem; opacity: 0.85;">
+                        <i class="bi bi-geo-alt-fill text-danger me-1"></i> {{ current_delegation }}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Menú de Navegación Modular del Cargo -->
+        <nav class="sidebar-menu-scrollable px-2 mt-2">
+            {% for nav in profile_cfg.nav_items %}
+            <button class="nav-item-btn {% if forloop.first %}active{% endif %}" id="nav-btn-{{ nav.id }}"
+                onclick="cambiarVistaCargo('{{ nav.id }}', this)">
+                <i class="bi {{ nav.icon }} main-icon"></i>
+                <span>{{ nav.label }}</span>
+                <span class="badge rounded-pill ms-auto" id="sideBadge_{{ nav.id }}"
+                    style="background: {{ nav.badge_color }}; color: #fff; font-size: 0.70rem;">•</span>
+            </button>
+            {% endfor %}
+
+            <button class="nav-item-btn" id="nav-btn-descriptor" onclick="cambiarVistaCargo('descriptor', this)">
+                <i class="bi bi-file-earmark-medical-fill main-icon" style="color: #38BDF8;"></i>
+                <span>Descriptor Oficial 2026</span>
+                <span class="badge rounded-pill ms-auto"
+                    style="background: rgba(56, 189, 248, 0.25); color: #38BDF8; font-size: 0.68rem;">Dec. 3096</span>
+            </button>
+
+            {% if is_admin_user %}
+            <div class="mt-2 pt-2 border-top border-secondary border-opacity-25">
+                <button class="nav-item-btn" onclick="window.location.href='{% url 'activities:dashboard_admin' %}'">
+                    <i class="bi bi-shield-lock-fill main-icon text-warning"></i>
+                    <span>Volver a Panel Admin</span>
+                    <i class="bi bi-box-arrow-up-right ms-auto" style="font-size: 0.72rem;"></i>
+                </button>
+            </div>
+            {% endif %}
+        </nav>
+
+        <!-- Fotografía Institucional Faro Monumental La Serena -->
+        <div class="sidebar-faro-footer">
+            <div class="sidebar-faro-image-wrap">
+                <img src="{% static 'img/delegacion_costa.jpg' %}"
+                    data-fallback="{% static 'img/faro_real_sunset.jpg' %}"
+                    onerror="this.onerror=null; if(this.dataset.fallback) this.src=this.dataset.fallback;"
+                    alt="Faro Monumental de La Serena" class="sidebar-faro-bg-img">
+                <div class="sidebar-faro-fade-layer"></div>
+            </div>
+            <div class="sidebar-faro-caption">
+                <div class="sidebar-faro-title">La Serena</div>
+                <div class="sidebar-faro-lema">Siempre cerca de ti</div>
+            </div>
+        </div>
+    </aside>
+
+    <!-- =================================================================
+         2. CONTENEDOR PRINCIPAL
+         ================================================================= -->
+    <div class="main-wrapper">
+        <header class="top-header" style="border-top: 3.5px solid var(--muni-red);">
+            <div class="header-left d-flex align-items-center gap-3">
+                <button class="btn-hamburger" onclick="toggleSidebar()" title="Alternar menú lateral" aria-label="Menú">
+                    <i class="bi bi-list"></i>
+                </button>
+                <div class="header-title-wrapper">
+                    <span class="header-sys-name fw-bold"
+                        style="color: var(--muni-navy); font-family: 'Montserrat', sans-serif;">{{ profile_cfg.header_system }}</span>
+                    <span class="header-sys-divider text-muted">|</span>
+                    <span class="header-sub-name text-secondary fw-semibold" id="headerSubName">{{ profile_cfg.header_subtitle }}</span>
+                </div>
+            </div>
+
+            <div class="header-right d-flex align-items-center gap-2.5">
+                <!-- Selector Rápido de Perfiles de Delegación (Descriptor 2026) -->
+                <div class="dropdown d-none d-lg-block">
+                    <button class="btn btn-sm rounded-pill px-3 py-1.5 fw-bold dropdown-toggle" type="button"
+                        data-bs-toggle="dropdown"
+                        style="background: rgba(27, 54, 93, 0.08); color: var(--muni-navy); border: 1px solid rgba(27, 54, 93, 0.18); font-size: 0.78rem;">
+                        <i class="bi bi-diagram-3-fill text-danger me-1"></i> Cargos Delegación (2026)
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end shadow-lg border-0 rounded-4 mt-2 p-2"
+                        style="min-width: 270px;">
+                        <li><span class="dropdown-header text-uppercase small fw-bold text-danger">Descriptor de
+                                Funciones 2026</span></li>
+                        <li><a class="dropdown-item rounded-3 py-1.5 small fw-semibold"
+                                href="{% url 'activities:dashboard_delegado' %}?preview=1"><i
+                                    class="bi bi-person-Vcard-fill text-danger me-2"></i>1. Delegado Municipal</a></li>
+                        <li><a class="dropdown-item rounded-3 py-1.5 small fw-semibold"
+                                href="{% url 'activities:dashboard_asistente' %}?preview=1"><i
+                                    class="bi bi-heart-pulse-fill text-danger me-2"></i>2. Gestor Social (DIDECO)</a>
+                        </li>
+                        <li><a class="dropdown-item rounded-3 py-1.5 small fw-semibold"
+                                href="{% url 'activities:dashboard_apoyo_administrativo' %}?preview=1"><i
+                                    class="bi bi-journal-check text-primary me-2"></i>3. Apoyo Administrativo</a></li>
+                        <li><a class="dropdown-item rounded-3 py-1.5 small fw-semibold"
+                                href="{% url 'activities:dashboard_organizaciones_comunitarias' %}?preview=1"><i
+                                    class="bi bi-houses-fill text-success me-2"></i>4. Organizaciones Comunitarias</a>
+                        </li>
+                        <li><a class="dropdown-item rounded-3 py-1.5 small fw-semibold"
+                                href="{% url 'activities:dashboard_compras_proyectos' %}?preview=1"><i
+                                    class="bi bi-cart-check-fill text-purple me-2"></i>5. Gestor de Compras y
+                                Proyectos</a></li>
+                        <li><a class="dropdown-item rounded-3 py-1.5 small fw-semibold"
+                                href="{% url 'activities:dashboard_gestion_planificacion' %}?preview=1"><i
+                                    class="bi bi-graph-up-arrow text-dark me-2"></i>6. Gestión y Planificación</a></li>
+                        <li><a class="dropdown-item rounded-3 py-1.5 small fw-semibold"
+                                href="{% url 'activities:dashboard_servicios_comunitarios' %}?preview=1"><i
+                                    class="bi bi-tools text-warning me-2"></i>7. Coord. Servicios Comunitarios</a></li>
+                        {% if is_admin_user %}
+                        <li>
+                            <hr class="dropdown-divider">
+                        </li>
+                        <li><a class="dropdown-item rounded-3 py-1.5 small fw-bold text-primary"
+                                href="{% url 'activities:dashboard_admin' %}"><i
+                                    class="bi bi-building-gear me-2"></i>Panel Administrador General</a></li>
+                        {% endif %}
+                    </ul>
+                </div>
+
+                <button class="btn-notification" type="button" onclick="mostrarReglasSgrModal()"
+                    title="Ver 10 Puntos Matriz SGR 4to Semestre">
+                    <i class="bi bi-bell"></i>
+                    <span class="badge-count">10</span>
+                </button>
+
+                <div class="dropdown">
+                    <button class="user-dropdown-btn d-flex align-items-center gap-2 border-0 bg-transparent"
+                        type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        <span
+                            class="user-avatar-img d-inline-flex align-items-center justify-content-center text-white fw-bold"
+                            style="width: 36px; height: 36px; border-radius: 50%; background: var(--muni-red);">
+                            {{ first_name|slice:":1"|default:"F"|upper }}
+                        </span>
+                        <span class="user-identity text-start d-none d-sm-block">
+                            <span class="user-info-text fw-bold d-block"
+                                style="color: var(--muni-navy); font-size: 0.85rem;">{{ user_name }}</span>
+                            <span class="user-context-text text-muted" style="font-size: 0.72rem;">{{ profile_cfg.position_name }} · {{ current_delegation }}</span>
+                        </span>
+                        <i class="bi bi-chevron-down text-muted" style="font-size: 0.75rem;"></i>
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end shadow-sm border-0 rounded-4 mt-2"
+                        style="min-width: 230px;">
+                        <li><span class="dropdown-header text-uppercase small fw-bold text-danger">Municipalidad La
+                                Serena</span></li>
+                        <li><a class="dropdown-item py-2 fw-semibold" href="javascript:void(0)"
+                                onclick="cambiarVistaCargo('descriptor', document.getElementById('nav-btn-descriptor'))"><i
+                                    class="bi bi-person-badge-fill me-2 text-danger"></i> Mi Descriptor de Cargo
+                                2026</a></li>
+                        <li><a class="dropdown-item py-2 fw-semibold" href="javascript:void(0)"
+                                onclick="mostrarReglasSgrModal()"><i class="bi bi-check2-all me-2 text-primary"></i> 10
+                                Reglas Matriz SGR 4to Sem.</a></li>
+                        <li>
+                            <hr class="dropdown-divider">
+                        </li>
+                        <li><a class="dropdown-item py-2 fw-bold text-danger" href="{% url 'core:logout' %}"><i
+                                    class="bi bi-box-arrow-right me-2"></i> Cerrar Sesión</a></li>
+                    </ul>
+                </div>
+            </div>
+        </header>
+
+        <!-- Cuerpo Principal -->
+        <main class="content-body p-4">
+
+            <!-- BANDA DE CONTROL NORMATIVO: MATRIZ SGR 4TO SEMESTRE (10 PUNTOS OFICIALES) -->
+            <div class="sgr-rules-strip mb-4 d-flex justify-content-between align-items-center flex-wrap gap-3">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="rounded-circle d-flex align-items-center justify-content-center"
+                        style="width: 42px; height: 42px; background: rgba(255, 255, 255, 0.14); flex-shrink: 0;">
+                        <i class="bi bi-shield-check fs-4 text-warning"></i>
+                    </div>
+                    <div>
+                        <div class="d-flex align-items-center gap-2 flex-wrap">
+                            <span class="badge bg-danger fw-bold" style="font-size: 0.68rem;">MATRIZ SGR 4TO
+                                SEMESTRE</span>
+                            <span class="fw-bold" style="font-size: 0.92rem;">Control Diario de Ingresos y Reglas de
+                                Puntuación Activas</span>
+                        </div>
+                        <div class="small text-white-50 mt-0.5">
+                            <strong class="text-white">Regla 2:</strong> Nombre y Teléfono obligatorios ·
+                            <strong class="text-white">Regla 3:</strong> Máx. 7 ingresos diarios (<span
+                                id="lblHoyIngresosStrip" class="text-warning fw-bold">{{ today_user_count }}</span>/7
+                            hoy) ·
+                            <strong class="text-white">Regla 4:</strong> Cierre semanal lunes ·
+                            <strong class="text-white">Regla 5:</strong> Coordinaciones = 0 pts ·
+                            <strong class="text-white">Regla 7:</strong> Tope 120% por ítem
+                        </div>
+                    </div>
+                </div>
+                <div class="d-flex align-items-center gap-2">
+                    <button class="btn btn-sm btn-warning rounded-pill px-3 fw-bold text-dark"
+                        onclick="mostrarReglasSgrModal()">
+                        <i class="bi bi-list-check me-1"></i> Ver 10 Reglas SGR
+                    </button>
+                </div>
+            </div>
+
+            <!-- =========================================================
+                 PANEL 1: GESTIÓN PRINCIPAL DEL CARGO Y REGISTRO SGR
+                 ========================================================= -->
+            <section id="panel-principal" class="panel-view">
+                <div class="d-flex justify-content-between align-items-start flex-wrap gap-3 mb-4">
+                    <div>
+                        <div class="d-flex align-items-center gap-2 mb-1.5 flex-wrap">
+                            <span class="badge"
+                                style="background: rgba(196, 18, 48, 0.1); color: var(--muni-red); font-weight: 800; font-size: 0.75rem;">
+                                <i class="bi bi-award-fill me-1"></i> {{ profile_cfg.header_badge }}
+                            </span>
+                            <span class="badge"
+                                style="background: rgba(27, 54, 93, 0.08); color: var(--muni-navy); font-weight: 700; font-size: 0.75rem;">
+                                <i class="bi bi-geo-alt-fill text-danger me-1"></i> {{ current_delegation }}
+                            </span>
+                        </div>
+                        <h1 class="fw-bold m-0"
+                            style="font-family: 'Montserrat', sans-serif; color: var(--muni-navy); font-size: 1.65rem;">
+                            {{ profile_cfg.position_name }} · Panel Operativo SGR
+                        </h1>
+                        <p class="text-secondary m-0 mt-1" style="font-size: 0.87rem; max-width: 850px;">
+                            {{ profile_cfg.description }}
+                        </p>
+                    </div>
+
+                    <div class="d-flex align-items-center gap-2 flex-wrap">
+                        <button class="btn btn-outline-secondary rounded-pill px-3 py-1.5 fw-bold"
+                            onclick="exportarGestionesExcel()" style="font-size: 0.85rem;">
+                            <i class="bi bi-file-earmark-excel-fill text-success me-1"></i> Exportar Matriz Excel
+                        </button>
+                        <button class="liquid-glass-btn-secondary" onclick="exportarReporteCargoPdf()">
+                            <i class="bi bi-file-earmark-pdf-fill"></i> Informe PDF
+                        </button>
+                        <button class="liquid-glass-btn-primary" onclick="abrirModalNuevaGestion()">
+                            <i class="bi bi-plus-circle-fill"></i> + Registrar Gestión SGR
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Semáforo SGR y Cumplimiento Colectivo (Regla 7, 9 y 10) -->
+                <div class="semaforo-banner-card mb-4">
+                    <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+                        <div class="d-flex align-items-center gap-3">
+                            <span class="beacon-pulse" id="sgrBeaconMain"></span>
+                            <div>
+                                <div class="d-flex align-items-center gap-2 flex-wrap">
+                                    <span class="fw-bold" style="color: var(--muni-navy); font-size: 1rem;">
+                                        Semáforo SGR {{ profile_cfg.position_name }}: <span id="sgrStatusLabelMain"
+                                            class="text-success fw-bold">Verde (Avance Óptimo de Equipo)</span>
+                                    </span>
+                                    <span class="badge bg-success-subtle text-success border border-success-subtle"
+                                        style="font-size: 0.70rem; font-weight: 800;">REGLA N° 10 · EQUIPO
+                                        EQUILIBRADO</span>
+                                </div>
+                                <div class="text-muted small mt-0.5">
+                                    Días computables ajustados (Regla 9): <strong class="text-dark">90 días</strong> ·
+                                    Tope por ítem (Regla 7): <strong class="text-dark">120,0% máx.</strong> ·
+                                    Felicitaciones formales vía Delegado (Regla 8): <strong class="text-success">+{{ felicitaciones_count|default:2 }} validadas</strong>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="text-end" style="min-width: 280px;">
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <span class="text-muted small fw-bold">Cumplimiento Ponderado SGR:</span>
+                                <span class="fw-bold small" style="color: var(--muni-navy);"
+                                    id="lblPctPonderadoTop">79,8%</span>
+                            </div>
+                            <div class="progress rounded-pill" style="height: 9px; background: #E2E8F0;">
+                                <div class="progress-bar progress-bar-striped progress-bar-animated bg-success"
+                                    id="barPonderadoTop" role="progressbar" style="width: 79.8%;"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 4 Tarjetas KPI del Cargo -->
+                <div class="row g-3 mb-4">
+                    <div class="col-sm-6 col-xl-3">
+                        <div class="social-kpi-card">
+                            <div class="d-flex justify-content-between align-items-start mb-1">
+                                <span class="text-uppercase fw-bold text-muted" style="font-size: 0.74rem;">GESTIONES
+                                    VÁLIDAS SGR</span>
+                                <i class="bi bi-check2-circle fs-4 text-success"></i>
+                            </div>
+                            <div class="fw-bold" id="kpiTotalGestiones"
+                                style="font-size: 2rem; color: var(--muni-navy);">0</div>
+                            <div class="text-muted small mt-1"><i class="bi bi-telephone-check text-success me-1"></i>
+                                Con nombre y teléfono (Regla 2)</div>
+                        </div>
+                    </div>
+                    <div class="col-sm-6 col-xl-3">
+                        <div class="social-kpi-card">
+                            <div class="d-flex justify-content-between align-items-start mb-1">
+                                <span class="text-uppercase fw-bold text-muted" style="font-size: 0.74rem;">CUPO DIARIO
+                                    DISPONIBLE</span>
+                                <i class="bi bi-calendar2-day fs-4 text-primary"></i>
+                            </div>
+                            <div class="fw-bold text-primary" id="kpiCupoDiario" style="font-size: 2rem;">{{ remaining_today|default:5 }} / 7</div>
+                            <div class="text-muted small mt-1"><i class="bi bi-clock-history text-primary me-1"></i>
+                                Regla N° 3: Máx. 7 ingresos por día</div>
+                        </div>
+                    </div>
+                    <div class="col-sm-6 col-xl-3">
+                        <div class="social-kpi-card">
+                            <div class="d-flex justify-content-between align-items-start mb-1">
+                                <span class="text-uppercase fw-bold text-muted" style="font-size: 0.74rem;">FUNCIONES
+                                    DEL CARGO</span>
+                                <i class="bi bi-list-Check fs-4 text-danger"></i>
+                            </div>
+                            <div class="fw-bold text-danger" style="font-size: 2rem;">{{ profile_cfg.official_functions|length }}</div>
+                            <div class="text-muted small mt-1"><i class="bi bi-file-earmark-text text-danger me-1"></i>
+                                Descriptor Oficial Año 2026</div>
+                        </div>
+                    </div>
+                    <div class="col-sm-6 col-xl-3">
+                        <div class="social-kpi-card">
+                            <div class="d-flex justify-content-between align-items-start mb-1">
+                                <span class="text-uppercase fw-bold text-muted" style="font-size: 0.74rem;">VECINOS EN
+                                    PADRÓN SEDE</span>
+                                <i class="bi bi-people-fill fs-4 text-warning"></i>
+                            </div>
+                            <div class="fw-bold" id="kpiTotalVecinosCargo" style="font-size: 2rem; color: #D97706;">0
+                            </div>
+                            <div class="text-muted small mt-1"><i class="bi bi-geo-alt-fill text-danger me-1"></i> {{ current_delegation }}</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Buscador y Filtros -->
+                <div class="d-flex justify-content-between align-items-center flex-wrap gap-2.5 mb-3">
+                    <div class="d-flex align-items-center gap-2 flex-grow-1 flex-wrap">
+                        <div class="position-relative" style="min-width: 280px; flex-grow: 1;">
+                            <i
+                                class="bi bi-search position-absolute top-50 start-0 translate-middle-y ms-3 text-muted"></i>
+                            <input type="text" class="form-control rounded-pill ps-5"
+                                placeholder="Buscar por código, solicitante, teléfono o función ejecutada..."
+                                id="txtBuscarGestion" onkeyup="filtrarGestionesCargo()">
+                        </div>
+                        <select class="form-select rounded-pill w-auto" id="selFiltroPuntajeSgr"
+                            onchange="filtrarGestionesCargo()" style="font-size: 0.85rem;">
+                            <option value="">Todas las Gestiones</option>
+                            <option value="valido">Con Puntaje SGR (+1 Pto · Acción Realizada)</option>
+                            <option value="sin_punto">Sin Puntaje (Coordinación / Interna Delegado / Sin Fono)</option>
+                        </select>
+                    </div>
+                    <div class="text-muted small">
+                        Mostrando <strong id="lblGestionesMostradas" class="text-danger">0</strong> registros en base de
+                        datos
+                    </div>
+                </div>
+
+                <!-- Tabla Principal de Gestiones del Cargo -->
+                <div class="rounded-4 border bg-white shadow-sm overflow-hidden mb-4">
+                    <table class="table align-middle m-0" style="width: 100%;">
+                        <thead style="background: rgba(241, 245, 249, 0.95); border-bottom: 2px solid #CBD5E1;">
+                            <tr
+                                style="font-size: 0.75rem; font-weight: 800; color: #1E293B; text-transform: uppercase;">
+                                <th class="py-3 px-3">CÓDIGO / FECHA</th>
+                                <th class="py-3 px-2">USUARIO / CONTACTO (REGLA 2)</th>
+                                <th class="py-3 px-2">FUNCIÓN / REQUERIMIENTO</th>
+                                <th class="py-3 px-2">ACCIÓN EJECUTADA (REGLA 5)</th>
+                                <th class="py-3 px-2 text-center">PUNTAJE SGR</th>
+                                <th class="py-3 px-2 text-center">ACCIONES</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tablaGestionesCargoBody" style="font-size: 0.86rem;">
+                            <!-- Renderizado con JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- =========================================================
+                 PANEL 2: MÓDULO ESPECIALIZADO 1 DEL DESCRIPTOR 2026
+                 ========================================================= -->
+            <section id="panel-modulo1" class="panel-view d-none">
+                <div class="d-flex justify-content-between align-items-start flex-wrap gap-3 mb-4">
+                    <div>
+                        <span class="badge"
+                            style="background: rgba(196, 18, 48, 0.1); color: var(--muni-red); font-weight: 800; font-size: 0.75rem;">
+                            <i class="bi bi-layers-fill me-1"></i> MÓDULO ESPECIALIZADO · {{ profile_cfg.position_name|upper }}
+                        </span>
+                        <h1 class="fw-bold m-0 mt-1"
+                            style="font-family: 'Montserrat', sans-serif; color: var(--muni-navy); font-size: 1.6rem;">
+                            {{ profile_cfg.modulo1_title }}
+                        </h1>
+                        <p class="text-secondary m-0 mt-1" style="font-size: 0.88rem;">
+                            {{ profile_cfg.modulo1_subtitle }}
+                        </p>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <button class="liquid-glass-btn-primary"
+                            onclick="abrirModalRegistroModulo('modulo1', '{{ profile_cfg.modulo1_title|escapejs }}')">
+                            <i class="bi bi-plus-circle-fill"></i> {{ profile_cfg.modulo1_btn }}
+                        </button>
+                    </div>
+                </div>
+
+                {% if profile_cfg.slug == 'organizaciones_comunitarias' %}
+                <!-- Tarjetas de las 5 Subfamilias de Organizaciones Comunitarias Funcionales y Territoriales (Nuevo Requerimiento PDF 2) -->
+                <div class="row g-3 mb-4">
+                    {% for subf in oocc_subfamilias %}
+                    <div class="col-md-6 col-xl-4">
+                        <div class="social-kpi-card" style="cursor: pointer;"
+                            onclick="filtrarModulo1PorTexto('{{ subf.name|escapejs }}')">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <span class="badge rounded-pill px-2.5 py-1 fw-bold"
+                                    style="background: rgba(27,54,93,0.08); color: {{ subf.color }};">{{ subf.law }}</span>
+                                <i class="bi {{ subf.icon }} fs-4" style="color: {{ subf.color }};"></i>
+                            </div>
+                            <h6 class="fw-bold text-dark mb-1">{{ subf.name }}</h6>
+                            <p class="text-muted small m-0">{{ subf.description }}</p>
+                        </div>
+                    </div>
+                    {% endfor %}
+                    <div class="col-md-6 col-xl-4">
+                        <div class="social-kpi-card"
+                            style="cursor: pointer; background: linear-gradient(135deg, #FEF2F2 0%, #FFFFFF 100%);"
+                            onclick="filtrarModulo1PorTexto('')">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <span class="badge bg-danger text-white fw-bold">BASE DATOS JJVV 2026</span>
+                                <i class="bi bi-file-earmark-spreadsheet-fill fs-4 text-success"></i>
+                            </div>
+                            <h6 class="fw-bold text-dark mb-1">Ver Todas las Subfamilias OROC</h6>
+                            <p class="text-muted small m-0">Incluye organizaciones verificadas y registros de 'base
+                                datos JJVV sin verificar.xlsx' para depuración en terreno.</p>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+
+                <div class="rounded-4 border bg-white shadow-sm overflow-hidden mb-4">
+                    <table class="table align-middle m-0" style="width: 100%;">
+                        <thead style="background: rgba(241, 245, 249, 0.95); border-bottom: 2px solid #CBD5E1;">
+                            <tr
+                                style="font-size: 0.75rem; font-weight: 800; color: #1E293B; text-transform: uppercase;">
+                                {% for col in profile_cfg.modulo1_columns %}
+                                <th class="py-3 px-3">{{ col }}</th>
+                                {% endfor %}
+                                <th class="py-3 px-2 text-center">ACCIÓN</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tablaModulo1Body" style="font-size: 0.85rem;">
+                            {% for row in profile_cfg.modulo1_rows %}
+                            <tr>
+                                {% for cell in row %}
+                                <td
+                                    class="py-3 px-3 {% if forloop.first %}fw-bold font-monospace text-dark{% elif forloop.last %}fw-bold text-success{% endif %}">
+                                    {{ cell }}</td>
+                                {% endfor %}
+                                <td class="py-3 px-2 text-center">
+                                    <button class="btn btn-sm btn-outline-primary rounded-pill px-2.5 py-0.5 fw-bold"
+                                        style="font-size: 0.75rem;"
+                                        onclick="generarComprobanteFilaPdf('{{ profile_cfg.modulo1_title|escapejs }}', '{{ row.0|escapejs }}', '{{ row.1|escapejs }}', '{{ row.2|escapejs }}')">
+                                        <i class="bi bi-file-earmark-pdf"></i> Ficha PDF
+                                    </button>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- =========================================================
+                 PANEL 3: MÓDULO ESPECIALIZADO 2 DEL DESCRIPTOR 2026
+                 ========================================================= -->
+            <section id="panel-modulo2" class="panel-view d-none">
+                <div class="d-flex justify-content-between align-items-start flex-wrap gap-3 mb-4">
+                    <div>
+                        <span class="badge"
+                            style="background: rgba(29, 78, 216, 0.1); color: #1D4ED8; font-weight: 800; font-size: 0.75rem;">
+                            <i class="bi bi-check2-square me-1"></i> GESTIÓN OPERATIVA Y COORDINACIÓN · {{ profile_cfg.position_name|upper }}
+                        </span>
+                        <h1 class="fw-bold m-0 mt-1"
+                            style="font-family: 'Montserrat', sans-serif; color: var(--muni-navy); font-size: 1.6rem;">
+                            {{ profile_cfg.modulo2_title }}
+                        </h1>
+                        <p class="text-secondary m-0 mt-1" style="font-size: 0.88rem;">
+                            {{ profile_cfg.modulo2_subtitle }}
+                        </p>
+                    </div>
+                    <div>
+                        <button class="liquid-glass-btn-primary"
+                            onclick="abrirModalRegistroModulo('modulo2', '{{ profile_cfg.modulo2_title|escapejs }}')">
+                            <i class="bi bi-plus-circle-fill"></i> {{ profile_cfg.modulo2_btn }}
+                        </button>
+                    </div>
+                </div>
+
+                <div class="rounded-4 border bg-white shadow-sm overflow-hidden mb-4">
+                    <table class="table align-middle m-0" style="width: 100%;">
+                        <thead style="background: rgba(241, 245, 249, 0.95); border-bottom: 2px solid #CBD5E1;">
+                            <tr
+                                style="font-size: 0.75rem; font-weight: 800; color: #1E293B; text-transform: uppercase;">
+                                {% for col in profile_cfg.modulo2_columns %}
+                                <th class="py-3 px-3">{{ col }}</th>
+                                {% endfor %}
+                                <th class="py-3 px-2 text-center">RESPALDO</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tablaModulo2Body" style="font-size: 0.85rem;">
+                            {% for row in profile_cfg.modulo2_rows %}
+                            <tr>
+                                {% for cell in row %}
+                                <td
+                                    class="py-3 px-3 {% if forloop.first %}fw-bold font-monospace text-dark{% elif forloop.last %}fw-bold text-primary{% endif %}">
+                                    {{ cell }}</td>
+                                {% endfor %}
+                                <td class="py-3 px-2 text-center">
+                                    <button class="btn btn-sm btn-outline-success rounded-pill px-2.5 py-0.5 fw-bold"
+                                        style="font-size: 0.75rem;"
+                                        onclick="generarComprobanteFilaPdf('{{ profile_cfg.modulo2_title|escapejs }}', '{{ row.0|escapejs }}', '{{ row.1|escapejs }}', '{{ row.2|escapejs }}')">
+                                        <i class="bi bi-printer-fill"></i> Acta PDF
+                                    </button>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- =========================================================
+                 PANEL 4: INFORMES OFICIALES Y EXPEDIENTES DEL CARGO
+                 ========================================================= -->
+            <section id="panel-documentos" class="panel-view d-none">
+                <div class="d-flex justify-content-between align-items-start flex-wrap gap-3 mb-4">
+                    <div>
+                        <span class="badge"
+                            style="background: rgba(16, 185, 129, 0.12); color: #047857; font-weight: 800; font-size: 0.75rem;">
+                            <i class="bi bi-file-earmark-text-fill me-1"></i> DOCUMENTACIÓN OFICIAL Y TRANSPARENCIA
+                        </span>
+                        <h1 class="fw-bold m-0 mt-1"
+                            style="font-family: 'Montserrat', sans-serif; color: var(--muni-navy); font-size: 1.6rem;">
+                            {{ profile_cfg.documentos_title }}
+                        </h1>
+                        <p class="text-secondary m-0 mt-1" style="font-size: 0.88rem;">
+                            {{ profile_cfg.documentos_subtitle }}
+                        </p>
+                    </div>
+                    <div>
+                        <button class="liquid-glass-btn-primary"
+                            onclick="abrirModalRegistroModulo('documentos', '{{ profile_cfg.documentos_title|escapejs }}')">
+                            <i class="bi bi-file-earmark-plus-fill"></i> {{ profile_cfg.documentos_btn }}
+                        </button>
+                    </div>
+                </div>
+
+                <div class="rounded-4 border bg-white shadow-sm overflow-hidden mb-4">
+                    <table class="table align-middle m-0" style="width: 100%;">
+                        <thead style="background: rgba(241, 245, 249, 0.95); border-bottom: 2px solid #CBD5E1;">
+                            <tr
+                                style="font-size: 0.75rem; font-weight: 800; color: #1E293B; text-transform: uppercase;">
+                                {% for col in profile_cfg.documentos_columns %}
+                                <th class="py-3 px-3">{{ col }}</th>
+                                {% endfor %}
+                                <th class="py-3 px-2 text-center">DESCARGA</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tablaDocumentosBody" style="font-size: 0.85rem;">
+                            {% for row in profile_cfg.documentos_rows %}
+                            <tr>
+                                {% for cell in row %}
+                                <td class="py-3 px-3 {% if forloop.first %}fw-bold font-monospace text-dark{% endif %}">
+                                    {{ cell }}</td>
+                                {% endfor %}
+                                <td class="py-3 px-2 text-center">
+                                    <button class="btn btn-sm btn-danger rounded-pill px-3 py-0.5 fw-bold"
+                                        style="font-size: 0.75rem;"
+                                        onclick="generarComprobanteFilaPdf('{{ profile_cfg.documentos_title|escapejs }}', '{{ row.0|escapejs }}', '{{ row.1|escapejs }}', '{{ row.2|escapejs }}')">
+                                        <i class="bi bi-file-earmark-pdf-fill me-1"></i> PDF
+                                    </button>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- =========================================================
+                 PANEL 5: MATRIZ Y SEMÁFORO SGR 4TO SEMESTRE (10 REGLAS)
+                 ========================================================= -->
+            <section id="panel-metas" class="panel-view d-none">
+                <div class="d-flex justify-content-between align-items-start flex-wrap gap-3 mb-4">
+                    <div>
+                        <span class="badge"
+                            style="background: rgba(196, 18, 48, 0.1); color: var(--muni-red); font-weight: 800; font-size: 0.75rem;">
+                            <i class="bi bi-speedometer2 me-1"></i> MATRIZ SGR 4TO SEMESTRE · COORDINACIÓN DE
+                            DELEGACIONES
+                        </span>
+                        <h1 class="fw-bold m-0 mt-1"
+                            style="font-family: 'Montserrat', sans-serif; color: var(--muni-navy); font-size: 1.6rem;">
+                            Matriz de Metas, Tope 120% por Ítem y Reglas 4to Semestre
+                        </h1>
+                        <p class="text-secondary m-0 mt-1" style="font-size: 0.88rem;">
+                            Evaluación de desempeño del cargo <strong>{{ profile_cfg.position_name }}</strong> conforme
+                            a los 10 lineamientos de Gestión de Delegaciones.
+                        </p>
+                    </div>
+                    <div>
+                        <button class="liquid-glass-btn-primary" onclick="exportarReporteCargoPdf()">
+                            <i class="bi bi-file-earmark-pdf-fill"></i> Descargar Matriz SGR PDF
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Tabla de Ítems Medibles con Tope 120% (Regla N° 7) -->
+                <div class="rounded-4 border bg-white shadow-sm overflow-hidden mb-4">
+                    <div class="p-3 border-bottom d-flex justify-content-between align-items-center flex-wrap gap-2">
+                        <span class="fw-bold text-dark"><i class="bi bi-card-checklist text-danger me-2"></i>Matriz SGR
+                            del Cargo: {{ profile_cfg.position_name }} (Ponderación 100%)</span>
+                        <span
+                            class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle fw-bold">Regla
+                            N° 7: Tope máximo de 120% por ítem · Priorizar ítems bajos</span>
+                    </div>
+                    <table class="table align-middle m-0" style="width: 100%;">
+                        <thead style="background: rgba(241, 245, 249, 0.95); border-bottom: 2px solid #CBD5E1;">
+                            <tr
+                                style="font-size: 0.75rem; font-weight: 800; color: #1E293B; text-transform: uppercase;">
+                                <th class="py-3 px-3">CÓDIGO</th>
+                                <th class="py-3 px-2">FUNCIÓN MEDIBLE EN MATRIZ SGR</th>
+                                <th class="py-3 px-2 text-center">META</th>
+                                <th class="py-3 px-2 text-center">AVANCE</th>
+                                <th class="py-3 px-2 text-center">% CUMPLIMIENTO (TOPE 120%)</th>
+                                <th class="py-3 px-2 text-center">PONDERADOR</th>
+                                <th class="py-3 px-2 text-center">APORTE PONDERADO</th>
+                                <th class="py-3 px-2 text-center">ESTADO REGLA 7</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tablaMatrizSgrCargoBody" style="font-size: 0.85rem;">
+                            <!-- Renderizado dinámicamente con tope 120% -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Las 10 Reglas Oficiales del 4to Semestre (Correo Juan Francisco Labra / Javier Godoy) -->
+                <div class="rounded-4 border bg-white shadow-sm p-4 mb-4">
+                    <h5 class="fw-bold mb-3" style="color: var(--muni-navy);">
+                        <i class="bi bi-envelope-paper-fill text-danger me-2"></i>10 Puntos Oficiales a Considerar ·
+                        Matriz SGR 4to Semestre 2026
+                    </h5>
+                    <div class="row g-3">
+                        {% for rule in sgr_rules %}
+                        <div class="col-md-6">
+                            <div class="p-3 rounded-4 border h-100" style="background: #F8FAFC;">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <span class="fw-bold text-dark">{{ rule.num }}. {{ rule.title }}</span>
+                                    <span class="badge bg-{{ rule.color }}">{{ rule.badge }}</span>
+                                </div>
+                                <p class="text-secondary small m-0">{{ rule.summary }}</p>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </section>
+
+            <!-- =========================================================
+                 PANEL 6: MANTENEDOR DE VECINOS Y DIRIGENTES DE LA SEDE
+                 ========================================================= -->
+            <section id="panel-vecinos" class="panel-view d-none">
+                <div class="d-flex justify-content-between align-items-start flex-wrap gap-3 mb-4">
+                    <div>
+                        <span class="badge"
+                            style="background: rgba(245, 158, 11, 0.15); color: #B45309; font-weight: 800; font-size: 0.75rem;">
+                            <i class="bi bi-people-fill me-1"></i> BASE DE DATOS TERRITORIAL SGR
+                        </span>
+                        <h1 class="fw-bold m-0 mt-1"
+                            style="font-family: 'Montserrat', sans-serif; color: var(--muni-navy); font-size: 1.6rem;">
+                            Padrón de Usuarios y Dirigentes · {{ current_delegation }}
+                        </h1>
+                        <p class="text-secondary m-0 mt-1" style="font-size: 0.88rem;">
+                            Base de datos verificada con nombre y teléfono de contacto obligatorio para puntuación SGR
+                            (Regla N° 2).
+                        </p>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <button class="liquid-glass-btn-primary" onclick="abrirModalCrearVecinoCargo()">
+                            <i class="bi bi-person-plus-fill"></i> + Registrar Vecino / Dirigente
+                        </button>
+                    </div>
+                </div>
+
+                <div class="rounded-4 border bg-white shadow-sm overflow-hidden mb-4">
+                    <table class="table align-middle m-0" style="width: 100%;">
+                        <thead style="background: rgba(241, 245, 249, 0.95); border-bottom: 2px solid #CBD5E1;">
+                            <tr
+                                style="font-size: 0.75rem; font-weight: 800; color: #1E293B; text-transform: uppercase;">
+                                <th class="py-3 px-3">RUT</th>
+                                <th class="py-3 px-2">NOMBRE COMPLETO</th>
+                                <th class="py-3 px-2">DIRECCIÓN</th>
+                                <th class="py-3 px-2">TELÉFONO (REGLA 2)</th>
+                                <th class="py-3 px-2">DELEGACIÓN</th>
+                                <th class="py-3 px-2 text-center">ESTADO</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tablaVecinosCargoBody" style="font-size: 0.85rem;">
+                            <!-- Renderizado con JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- =========================================================
+                 PANEL 7: DESCRIPTOR OFICIAL DE FUNCIONES AÑO 2026
+                 ========================================================= -->
+            <section id="panel-descriptor" class="panel-view d-none">
+                <div class="rounded-4 border bg-white shadow-sm p-4 mb-4">
+                    <div
+                        class="d-flex justify-content-between align-items-start flex-wrap gap-3 pb-3 mb-3 border-bottom">
+                        <div>
+                            <span class="badge bg-danger mb-2">DECRETO N° 3096 · VERSIÓN AÑO 2026</span>
+                            <h2 class="fw-bold m-0"
+                                style="color: var(--muni-navy); font-family: 'Montserrat', sans-serif;">
+                                Descriptor Oficial de Funciones: {{ profile_cfg.position_name }}
+                            </h2>
+                            <p class="text-muted small m-0 mt-1">
+                                Dirección Administración Municipal · Departamento Delegaciones Municipales · Sección
+                                Coordinación Delegaciones
+                            </p>
+                        </div>
+                        <button class="liquid-glass-btn-secondary" onclick="exportarReporteCargoPdf()">
+                            <i class="bi bi-printer-fill"></i> Imprimir Descriptor PDF
+                        </button>
+                    </div>
+
+                    <div class="p-3 rounded-4 mb-4"
+                        style="background: rgba(27, 54, 93, 0.05); border-left: 4px solid var(--muni-navy);">
+                        <h6 class="fw-bold text-dark mb-1">Definición del Cargo</h6>
+                        <p class="m-0 text-secondary small">{{ profile_cfg.description }}</p>
+                    </div>
+
+                    <h6 class="fw-bold text-dark mb-3"><i class="bi bi-check2-circle text-danger me-2"></i>Funciones y
+                        Atribuciones Específicas del Puesto de Trabajo:</h6>
+                    <div class="list-group list-group-flush border rounded-4 overflow-hidden">
+                        {% for func in profile_cfg.official_functions %}
+                        <div class="list-group-item py-3 px-3 d-flex align-items-start gap-2.5">
+                            <i class="bi bi-check-circle-fill text-success mt-0.5"></i>
+                            <span class="small fw-semibold text-dark">{{ func }}</span>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </section>
+
+        </main>
+
+        <footer class="p-3 text-center text-muted border-top bg-white small">
+            Ilustre Municipalidad de La Serena · Coordinación de Delegaciones Municipales · Descriptor de Funciones Año
+            2026 (Decreto N° 3096)
+        </footer>
+    </div>
+
+    <!-- =================================================================
+         MODALES OPERATIVOS CON VALIDACIÓN DE LAS 10 REGLAS SGR 4TO SEMESTRE
+         ================================================================= -->
+    <div class="modal fade" id="modalNuevaGestion" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content rounded-4 border-0 shadow-lg">
+                <div class="modal-header text-white"
+                    style="background: linear-gradient(135deg, #C41230 0%, #9E0E26 100%);">
+                    <div>
+                        <h5 class="modal-title fw-bold"><i class="bi bi-plus-circle-fill me-2"></i>Registrar Gestión en
+                            Matriz SGR · {{ profile_cfg.position_name }}</h5>
+                        <p class="small m-0 text-white-50">Validación activa de Reglas SGR 4to Semestre (Tope 7/día,
+                            Nombre+Teléfono, Cierre Lunes)</p>
+                    </div>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <form id="formNuevaGestionCargo" onsubmit="guardarGestionCargo(event)">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold small text-dark">Nombre Completo del Usuario /
+                                    Dirigente <span class="text-danger">* (Regla 2)</span></label>
+                                <input type="text" class="form-control rounded-3" id="gcNombre"
+                                    placeholder="Ej: Héctor Valenzuela Rojas" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold small text-dark">Teléfono del Usuario <span
+                                        class="text-danger">* (Obligatorio para Puntaje · Regla 2)</span></label>
+                                <input type="tel" class="form-control rounded-3" id="gcTelefono"
+                                    placeholder="+56 9 5541 2390" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold small text-dark">Fecha de la Actividad <span
+                                        class="text-danger">* (Regla 3 y 4)</span></label>
+                                <input type="date" class="form-control rounded-3" id="gcFecha" value="{% now 'Y-m-d' %}"
+                                    max="{% now 'Y-m-d' %}" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold small text-dark">Función del Descriptor 2026 <span
+                                        class="text-danger">*</span></label>
+                                <select class="form-select rounded-3" id="gcCategoria" required>
+                                    {% for cat in profile_cfg.categories %}
+                                    <option value="{{ cat.label }}">{{ cat.label }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold small text-dark">Naturaleza de la Acción (Regla N° 5
+                                    SGR) <span class="text-danger">*</span></label>
+                                <select class="form-select rounded-3" id="gcTipoAccionSgr" required>
+                                    <option value="accion_efectiva" selected>Acción Realizada de Cara al Usuario (Suma
+                                        +1 Punto SGR)</option>
+                                    <option value="coordinacion">Gestión Preparatoria: Mail / Coordinación / Invitación
+                                        (0 Puntos · Regla 5)</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold small text-dark">Solicitante (Regla N° 1 SGR) <span
+                                        class="text-danger">*</span></label>
+                                <select class="form-select rounded-3" id="gcOrigenUsuario" required>
+                                    <option value="vecino" selected>Vecino(a) / Organización Comunitaria (Contabiliza en
+                                        SGR)</option>
+                                    <option value="delegado">Solicitud donde el usuario es el Delegado (Otra Gestión · 0
+                                        Puntos · Regla 1)</option>
+                                </select>
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label fw-bold small text-dark">Descripción del Requerimiento /
+                                    Materia <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control rounded-3" id="gcProblema"
+                                    placeholder="Detalle el requerimiento ciudadano o función del cargo..." required>
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label fw-bold small text-dark">Acción Ejecutada y Resultado Obtenido
+                                    <span class="text-danger">*</span></label>
+                                <textarea class="form-control rounded-3" id="gcAccion" rows="3"
+                                    placeholder="Describa la acción efectivamente realizada..." required></textarea>
+                            </div>
+                        </div>
+                        <div class="d-flex justify-content-end gap-2 mt-4 pt-3 border-top">
+                            <button type="button" class="btn btn-outline-secondary rounded-pill px-4 fw-bold"
+                                data-bs-dismiss="modal">Cancelar</button>
+                            <button type="submit" class="liquid-glass-btn-primary">
+                                <i class="bi bi-check-circle-fill"></i> Guardar en Matriz SGR
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Registrar Nuevo Ítem en Módulo Especializado -->
+    <div class="modal fade" id="modalRegistroModulo" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content rounded-4 border-0 shadow-lg">
+                <div class="modal-header text-white"
+                    style="background: linear-gradient(135deg, #1B365D 0%, #0F172A 100%);">
+                    <div>
+                        <h5 class="modal-title fw-bold" id="modalModuloTitulo">Registrar en Módulo</h5>
+                        <p class="small m-0 text-white-50">{{ profile_cfg.position_name }} · {{ current_delegation }}
+                        </p>
+                    </div>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <form id="formRegistroModulo" onsubmit="guardarRegistroModulo(event)">
+                        <input type="hidden" id="modTargetTable">
+                        <div class="mb-3">
+                            <label class="form-label fw-bold small text-dark">Código / Identificador <span
+                                    class="text-danger">*</span></label>
+                            <input type="text" class="form-control rounded-3" id="modCampo1"
+                                placeholder="Ej: REG-2026-105" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-bold small text-dark">Título / Organización / Unidad <span
+                                    class="text-danger">*</span></label>
+                            <input type="text" class="form-control rounded-3" id="modCampo2" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-bold small text-dark">Clasificación / Subfamilia / Área <span
+                                    class="text-danger">*</span></label>
+                            <input type="text" class="form-control rounded-3" id="modCampo3" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-bold small text-dark">Responsable / Dirigente y Teléfono <span
+                                    class="text-danger">*</span></label>
+                            <input type="text" class="form-control rounded-3" id="modCampo4"
+                                placeholder="Nombre + Teléfono (+56 9 ...)" required>
+                        </div>
+                        <div class="d-flex justify-content-end gap-2 mt-4 pt-3 border-top">
+                            <button type="button" class="btn btn-outline-secondary rounded-pill px-4 fw-bold"
+                                data-bs-dismiss="modal">Cancelar</button>
+                            <button type="submit" class="liquid-glass-btn-primary">
+                                <i class="bi bi-save-fill"></i> Guardar Registro
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Crear Vecino en Padrón -->
+    <div class="modal fade" id="modalCrearVecinoCargo" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content rounded-4 border-0 shadow-lg">
+                <div class="modal-header text-white"
+                    style="background: linear-gradient(135deg, #C41230 0%, #9E0E26 100%);">
+                    <h5 class="modal-title fw-bold"><i class="bi bi-person-plus-fill me-2"></i>Registrar Usuario /
+                        Dirigente en Padrón</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <form id="formCrearVecinoCargo" onsubmit="guardarVecinoCargo(event)">
+                        <div class="mb-3">
+                            <label class="form-label fw-bold small">RUT <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control rounded-3" id="vcRut" placeholder="12.345.678-5"
+                                required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-bold small">Nombre Completo <span
+                                    class="text-danger">*</span></label>
+                            <input type="text" class="form-control rounded-3" id="vcNombre" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-bold small">Dirección <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control rounded-3" id="vcDireccion" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-bold small">Teléfono (Obligatorio Regla 2 SGR) <span
+                                    class="text-danger">*</span></label>
+                            <input type="tel" class="form-control rounded-3" id="vcTelefono"
+                                placeholder="+56 9 8888 7777" required>
+                        </div>
+                        <div class="d-flex justify-content-end gap-2 mt-4">
+                            <button type="button" class="btn btn-outline-secondary rounded-pill px-4"
+                                data-bs-dismiss="modal">Cancelar</button>
+                            <button type="submit" class="liquid-glass-btn-primary">Guardar en BD</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let gestionesCargo = {{ gestiones_json|safe }};
+        let vecinosCargo = {{ vecinos_json|safe }};
+        let sgrItemsCargo = {{ sgr_items_json|safe }};
+        let todayCount = {{ today_user_count|default:0 }};
+        const currentCargoName = "{{ profile_cfg.position_name|escapejs }}";
+        const currentDelegationName = "{{ current_delegation|escapejs }}";
+        const currentUserName = "{{ user_name|escapejs }}";
+
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+
+        document.addEventListener('DOMContentLoaded', function () {
+            renderizarGestionesCargo(gestionesCargo);
+            renderizarMatrizSgrCargo();
+            renderizarVecinosCargo();
+        });
+
+        function toggleSidebar() {
+            document.getElementById('sidebar').classList.toggle('active');
+        }
+
+        function cambiarVistaCargo(panelId, btnEl) {
+            document.querySelectorAll('.panel-view').forEach(p => p.classList.add('d-none'));
+            const target = document.getElementById('panel-' + panelId);
+            if (target) target.classList.remove('d-none');
+
+            document.querySelectorAll('.sidebar .nav-item-btn').forEach(b => b.classList.remove('active'));
+            if (btnEl) btnEl.classList.add('active');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function renderizarGestionesCargo(lista) {
+            const tbody = document.getElementById('tablaGestionesCargoBody');
+            if (!tbody) return;
+            tbody.innerHTML = '';
+
+            document.getElementById('lblGestionesMostradas').innerText = lista.length;
+            const validas = gestionesCargo.filter(g => g.computa_sgr !== false).length;
+            document.getElementById('kpiTotalGestiones').innerText = validas;
+            const bPrincipal = document.getElementById('sideBadge_principal');
+            if (bPrincipal) bPrincipal.innerText = lista.length;
+
+            if (lista.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="6" class="p-4 text-center text-muted">No hay gestiones registradas para este filtro.</td></tr>`;
+                return;
+            }
+
+            lista.forEach(g => {
+                const tieneFono = Boolean(g.telefono && g.telefono.trim().length >= 6);
+                const esValido = g.computa_sgr !== false && tieneFono;
+                const badgeSgr = esValido
+                    ? `<span class="badge bg-success-subtle text-success border border-success-subtle fw-bold">+1 Pto SGR</span>`
+                    : `<span class="badge bg-secondary-subtle text-secondary border fw-bold" title="${g.motivo_sin_punto || 'Sin puntaje por Regla SGR'}">0 Pts (${g.motivo_sin_punto || 'Otra Gestión'})</span>`;
+
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td class="py-3 px-3">
+                        <div class="fw-bold font-monospace text-dark">${g.codigo}</div>
+                        <small class="text-muted">${g.fecha}</small>
+                    </td>
+                    <td class="py-3 px-2">
+                        <div class="fw-bold text-dark">${g.contacto}</div>
+                        <div class="small ${tieneFono ? 'text-muted' : 'text-danger fw-bold'}">
+                            <i class="bi bi-telephone-fill text-danger me-1"></i> ${g.telefono || 'SIN TELÉFONO (0 PTS REGLA 2)'}
+                        </div>
+                    </td>
+                    <td class="py-3 px-2">
+                        <span class="cat-pill cat-beneficio">${g.categoria || currentCargoName}</span>
+                        <div class="small fw-semibold text-dark mt-1">${g.problema}</div>
+                    </td>
+                    <td class="py-3 px-2 small text-secondary">${g.accion}</td>
+                    <td class="py-3 px-2 text-center">${badgeSgr}</td>
+                    <td class="py-3 px-2 text-center">
+                        <button class="btn-action-round btn-action-report" onclick="generarComprobanteFilaPdf('${currentCargoName}', '${g.codigo}', '${g.contacto}', '${g.problema.replace(/'/g, '')}')" title="Descargar Comprobante PDF">
+                            <i class="bi bi-file-earmark-pdf-fill"></i>
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function filtrarGestionesCargo() {
+            const q = (document.getElementById('txtBuscarGestion').value || '').toLowerCase().trim();
+            const f = document.getElementById('selFiltroPuntajeSgr').value;
+            const filtradas = gestionesCargo.filter(g => {
+                const tieneFono = Boolean(g.telefono && g.telefono.trim().length >= 6);
+                const esValido = g.computa_sgr !== false && tieneFono;
+                if (f === 'valido' && !esValido) return false;
+                if (f === 'sin_punto' && esValido) return false;
+                if (q) {
+                    const txt = `${g.codigo} ${g.contacto} ${g.telefono} ${g.problema} ${g.accion}`.toLowerCase();
+                    if (!txt.includes(q)) return false;
+                }
+                return true;
+            });
+            renderizarGestionesCargo(filtradas);
+        }
+
+        function filtrarModulo1PorTexto(texto) {
+            const rows = document.querySelectorAll('#tablaModulo1Body tr');
+            rows.forEach(r => {
+                if (!texto || r.innerText.toLowerCase().includes(texto.toLowerCase())) {
+                    r.style.display = '';
+                } else {
+                    r.style.display = 'none';
+                }
+            });
+        }
+
+        function renderizarMatrizSgrCargo() {
+            const tbody = document.getElementById('tablaMatrizSgrCargoBody');
+            if (!tbody) return;
+            tbody.innerHTML = '';
+
+            let totalPonderado = 0;
+            sgrItemsCargo.forEach(it => {
+                const rawPct = (it.progress / it.target) * 100;
+                // Regla N° 7: Tope estricto de 120% por ítem
+                const cappedPct = Math.min(120, rawPct);
+                const aporte = (cappedPct * it.weight) / 100;
+                totalPonderado += aporte;
+
+                let badgeRegla7 = '';
+                if (rawPct >= 120) {
+                    badgeRegla7 = `<span class="badge bg-success fw-bold"><i class="bi bi-lock-fill me-1"></i>TOPE 120% ALCANZADO (Regla 7)</span>`;
+                } else if (rawPct < 75) {
+                    badgeRegla7 = `<span class="badge bg-danger-subtle text-danger border border-danger-subtle fw-bold">BAJO PUNTAJE · PRIORIZAR</span>`;
+                } else {
+                    badgeRegla7 = `<span class="badge bg-primary-subtle text-primary fw-bold">EN RANGO EQUILIBRADO</span>`;
+                }
+
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td class="py-3 px-3 fw-bold font-monospace">${it.code}</td>
+                    <td class="py-3 px-2 fw-semibold text-dark">${it.name}</td>
+                    <td class="py-3 px-2 text-center fw-bold">${it.target}</td>
+                    <td class="py-3 px-2 text-center fw-bold text-primary">${it.progress}</td>
+                    <td class="py-3 px-2 text-center fw-bold">${cappedPct.toFixed(1)}%</td>
+                    <td class="py-3 px-2 text-center">${it.weight}%</td>
+                    <td class="py-3 px-2 text-center fw-bold text-success">${aporte.toFixed(1)}%</td>
+                    <td class="py-3 px-2 text-center">${badgeRegla7}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            const pctStr = totalPonderado.toFixed(1).replace('.', ',') + '%';
+            const lblTop = document.getElementById('lblPctPonderadoTop');
+            if (lblTop) lblTop.innerText = pctStr;
+            const barTop = document.getElementById('barPonderadoTop');
+            if (barTop) barTop.style.width = Math.min(100, totalPonderado) + '%';
+            const bMetas = document.getElementById('sideBadge_metas');
+            if (bMetas) bMetas.innerText = pctStr;
+        }
+
+        function renderizarVecinosCargo() {
+            const tbody = document.getElementById('tablaVecinosCargoBody');
+            if (!tbody) return;
+            tbody.innerHTML = '';
+            document.getElementById('kpiTotalVecinosCargo').innerText = vecinosCargo.length;
+            const bVec = document.getElementById('sideBadge_vecinos');
+            if (bVec) bVec.innerText = vecinosCargo.length;
+
+            vecinosCargo.forEach(v => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td class="py-3 px-3 fw-bold font-monospace">${v.rut}</td>
+                    <td class="py-3 px-2 fw-bold text-dark">${v.nombre}</td>
+                    <td class="py-3 px-2 small text-secondary">${v.direccion}</td>
+                    <td class="py-3 px-2 small fw-semibold"><i class="bi bi-telephone-fill text-success me-1"></i>${v.telefono || '+56 9 8888 7777'}</td>
+                    <td class="py-3 px-2 small text-danger fw-bold">${v.territorio}</td>
+                    <td class="py-3 px-2 text-center"><span class="badge bg-success">${v.estado}</span></td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function abrirModalNuevaGestion() {
+            new bootstrap.Modal(document.getElementById('modalNuevaGestion')).show();
+        }
+
+        async function guardarGestionCargo(e) {
+            e.preventDefault();
+            const nombre = document.getElementById('gcNombre').value.trim();
+            const telefono = document.getElementById('gcTelefono').value.trim();
+            const fecha = document.getElementById('gcFecha').value;
+            const categoria = document.getElementById('gcCategoria').value;
+            const tipoAccion = document.getElementById('gcTipoAccionSgr').value;
+            const origenUsuario = document.getElementById('gcOrigenUsuario').value;
+            const problema = document.getElementById('gcProblema').value.trim();
+            const accion = document.getElementById('gcAccion').value.trim();
+
+            // Validación Regla N° 3: Tope máximo de 7 actividades diarias
+            if (todayCount >= 7 && tipoAccion === 'accion_efectiva' && origenUsuario === 'vecino') {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Tope Diario Alcanzado (Regla N° 3 SGR)',
+                    html: 'El ingreso diario de actividades <strong>no puede superar las 7 gestiones</strong>. Debes realizar tus ingresos diariamente sin acumular para llenar la matriz.',
+                    confirmButtonColor: '#C41230'
+                });
+                return;
+            }
+
+            // Validación Regla N° 4: Cierre semanal el lunes siguiente (bloqueo martes de semana anterior)
+            const hoy = new Date();
+            const fechaSel = new Date(fecha + 'T12:00:00');
+            const diffDays = Math.floor((hoy - fechaSel) / (1000 * 60 * 60 * 24));
+            if (diffDays > 7 || (hoy.getDay() >= 2 && diffDays > hoy.getDay())) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Semana Cerrada (Regla N° 4 SGR)',
+                    html: 'No se pueden acumular gestiones de la semana pasada sin ingresarlas. Llegado el día <strong>martes</strong>, queda cerrada la semana anterior.',
+                    confirmButtonColor: '#C41230'
+                });
+                return;
+            }
+
+            // Determinar si computa puntaje según Reglas 1, 2 y 5
+            let computaSgr = true;
+            let motivoSinPunto = '';
+            if (origenUsuario === 'delegado') {
+                computaSgr = false;
+                motivoSinPunto = 'Regla 1: Usuario Delegado (Otra Gestión)';
+            } else if (tipoAccion === 'coordinacion') {
+                computaSgr = false;
+                motivoSinPunto = 'Regla 5: Coordinación / Mail';
+            } else if (!telefono || telefono.length < 6) {
+                computaSgr = false;
+                motivoSinPunto = 'Regla 2: Sin Teléfono';
+            }
+
+            try {
+                const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value || getCookie('csrftoken');
+                const resp = await fetch('/api/atenciones/', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
+                    body: JSON.stringify({
+                        contact_name: nombre,
+                        contact_phone: telefono,
+                        activity_date: fecha,
+                        delegation: currentDelegationName,
+                        problem_description: `[${categoria}] ${problema}`,
+                        executed_action: computaSgr ? accion : `[OTRA GESTIÓN - ${motivoSinPunto}] ${accion}`,
+                        is_collective_agenda: computaSgr
+                    })
+                });
+                const data = await resp.json();
+
+                if (computaSgr) {
+                    todayCount += 1;
+                    document.getElementById('lblHoyIngresosStrip').innerText = todayCount;
+                    document.getElementById('kpiCupoDiario').innerText = `${Math.max(0, 7 - todayCount)} / 7`;
+                    if (sgrItemsCargo.length > 0) sgrItemsCargo[0].progress += 1;
+                }
+
+                gestionesCargo.unshift({
+                    id: data.id || Date.now(),
+                    codigo: data.id ? `ACT-2026-${data.id}` : `SGR-${Date.now().toString().slice(-4)}`,
+                    fecha: fecha.split('-').reverse().join('/'),
+                    contacto: nombre,
+                    telefono: telefono,
+                    categoria: categoria,
+                    problema: problema,
+                    accion: accion,
+                    computa_sgr: computaSgr,
+                    motivo_sin_punto: motivoSinPunto
+                });
+
+                renderizarGestionesCargo(gestionesCargo);
+                renderizarMatrizSgrCargo();
+                bootstrap.Modal.getInstance(document.getElementById('modalNuevaGestion')).hide();
+                document.getElementById('formNuevaGestionCargo').reset();
+
+                Swal.fire({
+                    icon: computaSgr ? 'success' : 'info',
+                    title: computaSgr ? 'Gestión Registrada (+1 Pto SGR)' : 'Registrada como Otra Gestión (0 Pts)',
+                    html: computaSgr
+                        ? `La acción ejecutada para <strong>${nombre}</strong> cumple las reglas del 4to Semestre y suma al Semáforo SGR.`
+                        : `Se guardó el registro, pero conforme a <strong>${motivoSinPunto}</strong> no contabiliza puntaje en la matriz.`,
+                    confirmButtonColor: '#C41230'
+                });
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        function abrirModalRegistroModulo(targetTable, title) {
+            document.getElementById('modTargetTable').value = targetTable;
+            document.getElementById('modalModuloTitulo').innerText = title;
+            new bootstrap.Modal(document.getElementById('modalRegistroModulo')).show();
+        }
+
+        function guardarRegistroModulo(e) {
+            e.preventDefault();
+            const target = document.getElementById('modTargetTable').value;
+            const c1 = document.getElementById('modCampo1').value.trim();
+            const c2 = document.getElementById('modCampo2').value.trim();
+            const c3 = document.getElementById('modCampo3').value.trim();
+            const c4 = document.getElementById('modCampo4').value.trim();
+            const fecha = new Date().toLocaleDateString('es-CL');
+
+            const tbodyId = target === 'modulo1' ? 'tablaModulo1Body' : (target === 'modulo2' ? 'tablaModulo2Body' : 'tablaDocumentosBody');
+            const tbody = document.getElementById(tbodyId);
+            if (tbody) {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td class="py-3 px-3 fw-bold font-monospace text-dark">${c1}</td>
+                    <td class="py-3 px-3">${c2}</td>
+                    <td class="py-3 px-3">${c3}</td>
+                    <td class="py-3 px-3">${c4}</td>
+                    <td class="py-3 px-3">${fecha}</td>
+                    <td class="py-3 px-3 fw-bold text-success">Registrado SGR</td>
+                    <td class="py-3 px-2 text-center">
+                        <button class="btn btn-sm btn-outline-primary rounded-pill px-2.5 py-0.5 fw-bold" style="font-size: 0.75rem;" onclick="generarComprobanteFilaPdf('${currentCargoName}', '${c1}', '${c2}', '${c3}')">
+                            <i class="bi bi-file-earmark-pdf"></i> PDF
+                        </button>
+                    </td>
+                `;
+                tbody.prepend(tr);
+            }
+            bootstrap.Modal.getInstance(document.getElementById('modalRegistroModulo')).hide();
+            document.getElementById('formRegistroModulo').reset();
+            Swal.fire({ icon: 'success', title: 'Registro Incorporado', text: 'Guardado correctamente en el módulo operativo del cargo.', confirmButtonColor: '#C41230' });
+        }
+
+        function abrirModalCrearVecinoCargo() {
+            new bootstrap.Modal(document.getElementById('modalCrearVecinoCargo')).show();
+        }
+
+        async function guardarVecinoCargo(e) {
+            e.preventDefault();
+            const rut = document.getElementById('vcRut').value.trim();
+            const nombre = document.getElementById('vcNombre').value.trim();
+            const direccion = document.getElementById('vcDireccion').value.trim();
+            const telefono = document.getElementById('vcTelefono').value.trim();
+            const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value || getCookie('csrftoken');
+
+            const resp = await fetch('/api/vecinos/', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
+                body: JSON.stringify({ nombre, rut, direccion, telefono, territorio: currentDelegationName, estado: 'Activo' })
+            });
+            const data = await resp.json();
+            if (!data.success) {
+                Swal.fire({ icon: 'error', title: 'Error de Validación', text: data.message, confirmButtonColor: '#C41230' });
+                return;
+            }
+            vecinosCargo.unshift(data.vecino);
+            renderizarVecinosCargo();
+            bootstrap.Modal.getInstance(document.getElementById('modalCrearVecinoCargo')).hide();
+            document.getElementById('formCrearVecinoCargo').reset();
+            Swal.fire({ icon: 'success', title: 'Usuario Guardado en Base de Datos', text: `${nombre} registrado con teléfono verificado.`, confirmButtonColor: '#C41230' });
+        }
+
+        function mostrarReglasSgrModal() {
+            cambiarVistaCargo('metas', document.getElementById('nav-btn-metas'));
+        }
+
+        function exportarGestionesExcel() {
+            const rows = gestionesCargo.map(g => ({
+                'Código': g.codigo,
+                'Fecha': g.fecha,
+                'Usuario / Solicitante': g.contacto,
+                'Teléfono (Regla 2)': g.telefono,
+                'Función del Cargo': g.categoria,
+                'Requerimiento': g.problema,
+                'Acción Ejecutada': g.accion,
+                'Computa SGR': g.computa_sgr !== false ? 'SÍ (+1 Pto)' : 'NO (0 Pts)'
+            }));
+            const ws = XLSX.utils.json_to_sheet(rows);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "Matriz_SGR_Cargo");
+            XLSX.writeFile(wb, `Matriz_SGR_${currentCargoName.replace(/\s+/g, '_')}_2026.xlsx`);
+        }
+
+        function generarComprobanteFilaPdf(modulo, codigo, titular, detalle) {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            doc.setFillColor(196, 18, 48);
+            doc.rect(0, 0, 210, 16, 'F');
+            doc.setTextColor(255, 255, 255);
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(11);
+            doc.text('ILUSTRE MUNICIPALIDAD DE LA SERENA · COORDINACIÓN DE DELEGACIONES', 15, 11);
+
+            doc.setTextColor(27, 54, 93);
+            doc.setFontSize(15);
+            doc.text(`ACTA / COMPROBANTE OFICIAL · ${currentCargoName.toUpperCase()}`, 15, 30);
+            doc.setFontSize(9);
+            doc.setTextColor(100, 116, 139);
+            doc.text(`Sede: ${currentDelegationName} | Responsable: ${currentUserName} | Fecha: ${new Date().toLocaleDateString('es-CL')}`, 15, 37);
+
+            doc.autoTable({
+                startY: 44,
+                head: [['CAMPO OFICIAL', 'DETALLE DEL EXPEDIENTE MUNICIPAL']],
+                body: [
+                    ['Módulo / Unidad', modulo],
+                    ['Código de Registro', codigo],
+                    ['Titular / Organización / Materia', titular],
+                    ['Clasificación / Detalle Técnico', detalle],
+                    ['Normativa Aplicable', 'Decreto N° 3096 · Descriptor de Funciones 2026 · Matriz SGR 4to Semestre']
+                ],
+                theme: 'striped',
+                headStyles: { fillColor: [27, 54, 93], textColor: [255, 255, 255] }
+            });
+            doc.save(`Comprobante_${codigo}_LaSerena.pdf`);
+        }
+
+        function exportarReporteCargoPdf() {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            doc.setFillColor(196, 18, 48);
+            doc.rect(0, 0, 210, 16, 'F');
+            doc.setTextColor(255, 255, 255);
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(11);
+            doc.text('ILUSTRE MUNICIPALIDAD DE LA SERENA · SISTEMA DE GESTIÓN DE RESULTADOS (SGR)', 15, 11);
+
+            doc.setTextColor(27, 54, 93);
+            doc.setFontSize(15);
+            doc.text(`REPORTE OFICIAL DE GESTIÓN: ${currentCargoName.toUpperCase()}`, 15, 30);
+            doc.setFontSize(9);
+            doc.setTextColor(100, 116, 139);
+            doc.text(`Funcionario: ${currentUserName} | Delegación: ${currentDelegationName} | Decreto N° 3096 (Año 2026)`, 15, 37);
+
+            const bodyRows = sgrItemsCargo.map(it => {
+                const pct = Math.min(120, (it.progress / it.target) * 100);
+                const pond = (pct * it.weight) / 100;
+                return [it.code, it.name, String(it.target), String(it.progress), pct.toFixed(1) + '%', it.weight + '%', pond.toFixed(1) + '%'];
+            });
+
+            doc.autoTable({
+                startY: 44,
+                head: [['CÓDIGO', 'FUNCIÓN MEDIBLE', 'META', 'AVANCE', '% CUMP.', 'POND.', 'PUNTAJE']],
+                body: bodyRows,
+                theme: 'striped',
+                headStyles: { fillColor: [196, 18, 48], textColor: [255, 255, 255] },
+                styles: { fontSize: 8 }
+            });
+            doc.save(`Reporte_SGR_${currentCargoName.replace(/\s+/g, '_')}_LaSerena.pdf`);
+        }
+    </script>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+
+</html>

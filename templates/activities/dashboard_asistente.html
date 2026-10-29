@@ -435,6 +435,13 @@
                 <span>Mantenedores SGR</span>
                 <span class="badge rounded-pill ms-auto" id="sideBadgeVecinos" style="background: rgba(245, 158, 11, 0.25); color: #F59E0B; font-size: 0.72rem;">0</span>
             </button>
+
+            <!-- 10. Descriptor 2026: Ejes Comunitarios, Recursos y 10 Reglas SGR -->
+            <button class="nav-item-btn" id="nav-btn-comunitario" onclick="cambiarVistaPanel('comunitario', this)" title="Ejes II-IV del Descriptor Gestor Social 2026 y 5 Subfamilias OOCC">
+                <i class="bi bi-houses-fill main-icon" style="color: #38BDF8;"></i>
+                <span>Ejes Comunitarios & Descriptor</span>
+                <span class="badge rounded-pill ms-auto" style="background: rgba(56, 189, 248, 0.22); color: #38BDF8; font-size: 0.68rem;">2026</span>
+            </button>
         </nav>
 
         <!-- Fotografía Institucional Faro Monumental La Serena -->
@@ -471,6 +478,28 @@
             </div>
 
             <div class="header-right d-flex align-items-center gap-3">
+                <!-- Selector de Perfiles de la Delegación (Descriptor 2026) -->
+                <div class="dropdown d-none d-lg-block">
+                    <button class="btn btn-sm rounded-pill px-3 py-1.5 fw-bold dropdown-toggle" type="button" data-bs-toggle="dropdown"
+                            style="background: rgba(27, 54, 93, 0.08); color: var(--muni-navy); border: 1px solid rgba(27, 54, 93, 0.18); font-size: 0.78rem;">
+                        <i class="bi bi-diagram-3-fill text-danger me-1"></i> Perfiles Delegación (2026)
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end shadow-lg border-0 rounded-4 mt-2 p-2" style="min-width: 270px;">
+                        <li><span class="dropdown-header text-uppercase small fw-bold text-danger">Descriptor de Funciones 2026</span></li>
+                        <li><a class="dropdown-item rounded-3 py-1.5 small fw-semibold" href="{% url 'activities:dashboard_delegado' %}?preview=1"><i class="bi bi-person-vcard-fill text-primary me-2"></i>1. Delegado Municipal</a></li>
+                        <li><a class="dropdown-item rounded-3 py-1.5 small fw-bold text-danger" href="{% url 'activities:dashboard_asistente' %}?preview=1"><i class="bi bi-heart-pulse-fill text-danger me-2"></i>2. Gestor Social (Actual)</a></li>
+                        <li><a class="dropdown-item rounded-3 py-1.5 small fw-semibold" href="{% url 'activities:dashboard_apoyo_administrativo' %}?preview=1"><i class="bi bi-journal-check text-primary me-2"></i>3. Apoyo Administrativo</a></li>
+                        <li><a class="dropdown-item rounded-3 py-1.5 small fw-semibold" href="{% url 'activities:dashboard_organizaciones_comunitarias' %}?preview=1"><i class="bi bi-houses-fill text-success me-2"></i>4. Organizaciones Comunitarias</a></li>
+                        <li><a class="dropdown-item rounded-3 py-1.5 small fw-semibold" href="{% url 'activities:dashboard_compras_proyectos' %}?preview=1"><i class="bi bi-cart-check-fill text-purple me-2"></i>5. Gestor de Compras y Proyectos</a></li>
+                        <li><a class="dropdown-item rounded-3 py-1.5 small fw-semibold" href="{% url 'activities:dashboard_gestion_planificacion' %}?preview=1"><i class="bi bi-graph-up-arrow text-dark me-2"></i>6. Gestión y Planificación</a></li>
+                        <li><a class="dropdown-item rounded-3 py-1.5 small fw-semibold" href="{% url 'activities:dashboard_servicios_comunitarios' %}?preview=1"><i class="bi bi-tools text-warning me-2"></i>7. Coord. Servicios Comunitarios</a></li>
+                        {% if is_admin_user %}
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item rounded-3 py-1.5 small fw-bold text-primary" href="{% url 'activities:dashboard_admin' %}"><i class="bi bi-building-gear me-2"></i>Panel Administrador General</a></li>
+                        {% endif %}
+                    </ul>
+                </div>
+
                 <!-- Botón de Notificaciones -->
                 <button class="btn-notification" type="button" onclick="mostrarNotificacionesSociales()" title="Notificaciones de Casos y Urgencias">
                     <i class="bi bi-bell"></i>
@@ -486,13 +515,14 @@
                         </span>
                         <span class="user-identity text-start d-none d-sm-block">
                             <span class="user-info-text fw-bold d-block" style="color: var(--muni-navy); font-size: 0.85rem;">{{ user_name|default:"scarlett williams medalla" }}</span>
-                            <span class="user-context-text text-muted" style="font-size: 0.72rem;">Asistente Social · {{ current_delegation|default:"Consolidado Comunal" }}</span>
+                            <span class="user-context-text text-muted" style="font-size: 0.72rem;">Gestor Social · Asistente Social · {{ current_delegation|default:"Consolidado Comunal" }}</span>
                         </span>
                         <i class="bi bi-chevron-down text-muted" style="font-size: 0.75rem;"></i>
                     </button>
                     <ul class="dropdown-menu dropdown-menu-end shadow-sm border-0 rounded-4 mt-2" style="min-width: 220px;">
                         <li><span class="dropdown-header text-uppercase small fw-bold text-danger">Municipalidad La Serena</span></li>
                         <li><a class="dropdown-item py-2 fw-semibold" href="javascript:void(0)" onclick="abrirModalPerfilAsistente()"><i class="bi bi-person-badge-fill me-2 text-danger"></i> Mi Perfil Funcionario</a></li>
+                        <li><a class="dropdown-item py-2 fw-semibold" href="javascript:void(0)" onclick="cambiarVistaPanel('comunitario', document.getElementById('nav-btn-comunitario'))"><i class="bi bi-houses-fill me-2 text-primary"></i> Ejes Comunitarios y Descriptor 2026</a></li>
                         <li><a class="dropdown-item py-2 fw-semibold" href="javascript:void(0)" onclick="cambiarVistaPanel('mantenedores', document.getElementById('nav-btn-mantenedores'))"><i class="bi bi-building-gear me-2 text-danger"></i> Mantenedor de Vecinos</a></li>
                         <li><a class="dropdown-item py-2 fw-semibold" href="javascript:void(0)" onclick="cambiarVistaPanel('metas', document.getElementById('nav-btn-metas'))"><i class="bi bi-speedometer me-2 text-danger"></i> Metas SGR y Normativa RN-012</a></li>
                         <li><hr class="dropdown-divider"></li>
@@ -504,6 +534,37 @@
 
         <!-- Cuerpo del Panel de Gestión Social -->
         <main class="content-body p-4">
+
+            <!-- BANDA DE CONTROL MATRIZ SGR 4TO SEMESTRE (GESTOR SOCIAL / ASISTENTE SOCIAL) -->
+            <div class="p-3 rounded-4 mb-4 text-white shadow-sm d-flex justify-content-between align-items-center flex-wrap gap-3"
+                 style="background: linear-gradient(135deg, #1B365D 0%, #0F172A 100%); border-left: 5px solid #C41230;">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="rounded-circle d-flex align-items-center justify-content-center" style="width: 42px; height: 42px; background: rgba(255,255,255,0.14); flex-shrink: 0;">
+                        <i class="bi bi-shield-check fs-5 text-warning"></i>
+                    </div>
+                    <div>
+                        <div class="d-flex align-items-center gap-2 flex-wrap">
+                            <span class="badge bg-danger fw-bold" style="font-size: 0.68rem;">MATRIZ SGR 4TO SEMESTRE · GESTOR SOCIAL</span>
+                            <span class="fw-bold" style="font-size: 0.90rem;">I. Atención de Casos · II. Acciones Comunitarias (5 Subfamilias OOCC) · III. Coordinación/Recursos · IV. Auto-mejora</span>
+                        </div>
+                        <div class="small text-white-50 mt-0.5">
+                            <strong class="text-white">Regla 2:</strong> Nombre + Teléfono obligatorio ·
+                            <strong class="text-white">Regla 3:</strong> Máx. 7 ingresos diarios ·
+                            <strong class="text-white">Regla 4:</strong> Cierre semanal Lunes ·
+                            <strong class="text-white">Regla 5:</strong> Solo acción realizada da punto (no coordinación) ·
+                            <strong class="text-white">Regla 7:</strong> Tope 120% por ítem
+                        </div>
+                    </div>
+                </div>
+                <div class="d-flex align-items-center gap-2 flex-wrap">
+                    <span class="badge rounded-pill px-3 py-2 fw-bold bg-success-subtle text-success border border-success-subtle" id="sgrDailyQuotaBadge">
+                        <i class="bi bi-calendar2-check-fill me-1"></i>Cupo Diario: <span id="lblDailyCount">{{ today_user_count|default:2 }}</span> / 7 hoy
+                    </span>
+                    <button class="btn btn-sm btn-outline-light rounded-pill px-3 fw-bold" onclick="cambiarVistaPanel('comunitario', document.getElementById('nav-btn-comunitario'))" style="font-size: 0.76rem;">
+                        <i class="bi bi-houses-fill me-1"></i>Ejes II-IV y 5 Subfamilias OOCC
+                    </button>
+                </div>
+            </div>
 
             <!-- =========================================================
                  PANEL 1: CASOS SOCIALES ÚNICOS (VISTA PRINCIPAL DEFAULT)
@@ -1324,6 +1385,209 @@
                 </div>
             </section>
 
+            <!-- =========================================================
+                 PANEL 10: DESCRIPTOR GESTOR SOCIAL 2026 · EJES II-IV & 5 SUBFAMILIAS OOCC
+                 ========================================================= -->
+            <section id="panel-comunitario" class="panel-view d-none">
+                <div class="d-flex justify-content-between align-items-start flex-wrap gap-3 mb-4">
+                    <div>
+                        <span class="badge" style="background: rgba(27, 54, 93, 0.12); color: var(--muni-navy); font-weight: 800; font-size: 0.76rem; letter-spacing: 0.04em;">
+                            <i class="bi bi-file-earmark-medical-fill me-1"></i> DESCRIPTOR DE FUNCIONES 2026 (DECRETO N° 3096) · PERFIL 2: GESTOR SOCIAL
+                        </span>
+                        <h1 class="fw-bold m-0 mt-1" style="font-family: 'Montserrat', sans-serif; color: var(--muni-navy); font-size: 1.65rem;">
+                            <i class="bi bi-houses-fill text-danger me-2"></i>Ejes Comunitarios (II), Recursos (III), Auto-mejora (IV) y 5 Subfamilias OOCC
+                        </h1>
+                        <p class="text-secondary m-0 mt-1" style="font-size: 0.88rem;">
+                            Intervención comunitaria con organizaciones territoriales y funcionales · Regla 5 SGR: la coordinación preparatoria no da punto; el taller/acción ejecutada suma punto SGR.
+                        </p>
+                    </div>
+                    <div class="d-flex align-items-center gap-2">
+                        <button class="liquid-glass-btn-primary" onclick="registrarAccionComunitariaOocc()">
+                            <i class="bi bi-plus-circle-fill"></i> + Registrar Taller / Acción Comunitaria (Eje II)
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Las 5 Subfamilias Oficiales de Organizaciones Comunitarias (4to Semestre) -->
+                <div class="p-4 bg-white rounded-4 border shadow-sm mb-4">
+                    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+                        <h6 class="fw-bold m-0 text-dark">
+                            <i class="bi bi-diagram-3-fill text-danger me-2"></i>Las 5 Subfamilias de Organizaciones Comunitarias Funcionales y Territoriales (4to Semestre)
+                        </h6>
+                        <span class="badge bg-primary-subtle text-primary border border-primary-subtle">Articulación Comunitaria Eje II.3 y II.4</span>
+                    </div>
+                    <div class="row g-3">
+                        {% for sf in oocc_subfamilias %}
+                        <div class="col-md-4 col-lg">
+                            <div class="p-3 rounded-4 border h-100" style="background: #F8FAFC; border-left: 4px solid {{ sf.color }} !important;">
+                                <div class="d-flex align-items-center justify-content-between mb-1">
+                                    <span class="badge text-white" style="background: {{ sf.color }}; font-size: 0.66rem;">{{ sf.tipo }}</span>
+                                    <i class="bi {{ sf.icon }} fs-5" style="color: {{ sf.color }};"></i>
+                                </div>
+                                <div class="fw-bold text-dark small mt-1">{{ sf.nombre }}</div>
+                                <div class="text-muted mt-1" style="font-size: 0.73rem;">{{ sf.foco }}</div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <!-- Los 4 Ejes Oficiales del Cargo GESTOR SOCIAL (PDF Descriptor 2026) -->
+                <div class="row g-3 mb-4">
+                    <div class="col-md-6">
+                        <div class="p-3.5 bg-white rounded-4 border shadow-sm h-100" style="border-top: 4px solid #C41230 !important;">
+                            <span class="badge bg-danger mb-2">EJE I · ATENCIÓN DE CASOS</span>
+                            <h6 class="fw-bold text-dark mb-2">Intervención Individual y Familiar</h6>
+                            <ul class="small text-secondary mb-0 ps-3">
+                                <li class="mb-1"><strong>1. Recepción y evaluación de solicitudes:</strong> Recibir y evaluar solicitudes de asistencia social de residentes de la delegación.</li>
+                                <li class="mb-1"><strong>2. Diagnóstico y planificación:</strong> Realizar diagnósticos sociales y elaborar planes de intervención personalizados.</li>
+                                <li class="mb-1"><strong>3. Intervención y seguimiento:</strong> Brindar apoyo emocional, orientación y recursos a personas y familias en vulnerabilidad.</li>
+                                <li class="mb-1"><strong>4. Derivación y articulación:</strong> Derivar casos a servicios especializados y coordinar con instituciones gubernamentales y ONG.</li>
+                                <li><strong>5. Visitas en terreno:</strong> Verificar condiciones de vida y evaluar necesidades adicionales en domicilio.</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="p-3.5 bg-white rounded-4 border shadow-sm h-100" style="border-top: 4px solid #047857 !important;">
+                            <span class="badge bg-success mb-2">EJE II · ACCIONES COMUNITARIAS</span>
+                            <h6 class="fw-bold text-dark mb-2">Desarrollo Comunitario y Participación</h6>
+                            <ul class="small text-secondary mb-0 ps-3">
+                                <li class="mb-1"><strong>1. Diagnóstico comunitario:</strong> Identificar necesidades y recursos de la comunidad a través de estudios y diagnósticos participativos.</li>
+                                <li class="mb-1"><strong>2. Planificación y ejecución de programas:</strong> Desarrollar y ejecutar programas y proyectos de desarrollo comunitario y promoción social.</li>
+                                <li class="mb-1"><strong>3. Organización y participación comunitaria:</strong> Fomentar la creación y fortalecimiento de organizaciones comunitarias y participación ciudadana.</li>
+                                <li><strong>4. Articular con organizaciones de apoyo social:</strong> Trabajar en conjunto con organizaciones comunitarias para apoyar su gestión social.</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="p-3.5 bg-white rounded-4 border shadow-sm h-100" style="border-top: 4px solid #1B365D !important;">
+                            <span class="badge mb-2" style="background: #1B365D;">EJE III · COORDINACIÓN Y GESTIÓN</span>
+                            <h6 class="fw-bold text-dark mb-2">Servicios, Recursos e Informes Estadísticos</h6>
+                            <ul class="small text-secondary mb-0 ps-3">
+                                <li class="mb-1"><strong>1. Coordinación con otros servicios y programas:</strong> Asegurar una atención integral articulada con unidades municipales y servicios públicos.</li>
+                                <li class="mb-1"><strong>2. Gestión de recursos:</strong> Gestionar recursos financieros, humanos y materiales para la implementación de programas y proyectos sociales.</li>
+                                <li><strong>3. Informes y estadísticas:</strong> Elaborar informes periódicos sobre la gestión social y mantener registros estadísticos actualizados.</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="p-3.5 bg-white rounded-4 border shadow-sm h-100" style="border-top: 4px solid #D97706 !important;">
+                            <span class="badge bg-warning text-dark mb-2">EJE IV · AUTO-MEJORA DE DESEMPEÑO</span>
+                            <h6 class="fw-bold text-dark mb-2">Comités, Capacitación Continua y Gestión Municipal</h6>
+                            <ul class="small text-secondary mb-0 ps-3">
+                                <li class="mb-1"><strong>1. Participación en reuniones y comités:</strong> Participar en reuniones y comités relacionados con la gestión social y el desarrollo comunitario.</li>
+                                <li class="mb-1"><strong>2. Capacitación y actualización:</strong> Mantenerse actualizado en políticas sociales, metodologías de intervención y normativas vigentes.</li>
+                                <li><strong>3. Apoyo a la gestión municipal:</strong> Colaborar en iniciativas y proyectos municipales que promuevan el bienestar social y desarrollo comunitario.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tabla de Acciones Comunitarias (Eje II), Gestión de Recursos (Eje III) y Auto-mejora (Eje IV) -->
+                <div class="rounded-4 border bg-white shadow-sm overflow-hidden mb-4">
+                    <div class="p-3 border-bottom d-flex justify-content-between align-items-center flex-wrap gap-2">
+                        <span class="fw-bold text-dark">
+                            <i class="bi bi-people-fill text-success me-2"></i>Registro de Acciones Comunitarias (Eje II), Gestión de Recursos (Eje III) y Capacitación (Eje IV)
+                        </span>
+                        <span class="badge bg-warning-subtle text-dark border border-warning-subtle">
+                            Regla 5 SGR: Coordinaciones = 0 pts · Taller/Programa Ejecutado = +1 pto SGR
+                        </span>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table align-middle m-0">
+                            <thead style="background: rgba(241, 245, 249, 0.95); border-bottom: 2px solid #CBD5E1;">
+                                <tr style="font-size: 0.74rem; font-weight: 800; color: #1E293B; text-transform: uppercase;">
+                                    <th class="py-3 px-3">EJE DESCRIPTOR</th>
+                                    <th class="py-3 px-2">SUBFAMILIA OOCC / ORGANIZACIÓN</th>
+                                    <th class="py-3 px-2">DIRIGENTE / CONTACTO (REGLA 2)</th>
+                                    <th class="py-3 px-2">PROGRAMA / INTERVENCIÓN</th>
+                                    <th class="py-3 px-2 text-center">NATURALEZA (REGLA 5)</th>
+                                    <th class="py-3 px-2 text-center">PUNTAJE SGR</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tablaAccionesComunitariasBody">
+                                <tr>
+                                    <td class="py-3 px-3"><span class="badge bg-success">Eje II · Comunitario</span></td>
+                                    <td class="py-3 px-2">
+                                        <div class="fw-bold text-dark small">2. Clubes de Adulto Mayor</div>
+                                        <small class="text-muted">CAM Años Dorados del Faro</small>
+                                    </td>
+                                    <td class="py-3 px-2 small">
+                                        <div class="fw-semibold text-dark">Elena Tapia Araya</div>
+                                        <span class="text-muted"><i class="bi bi-telephone text-success"></i> +56 9 7654 3210</span>
+                                    </td>
+                                    <td class="py-3 px-2 small">Ejecución de taller de envejecimiento activo, beneficios SENAMA y postulación Fondo Adulto Mayor.</td>
+                                    <td class="py-3 px-2 text-center"><span class="badge bg-success-subtle text-success border border-success-subtle">Taller Ejecutado</span></td>
+                                    <td class="py-3 px-2 text-center"><span class="badge bg-success">+1 Pto Válido</span></td>
+                                </tr>
+                                <tr>
+                                    <td class="py-3 px-3"><span class="badge bg-success">Eje II · Comunitario</span></td>
+                                    <td class="py-3 px-2">
+                                        <div class="fw-bold text-dark small">1. Juntas de Vecinos (Territoriales)</div>
+                                        <small class="text-muted">JJVV N° 4R Algarrobito</small>
+                                    </td>
+                                    <td class="py-3 px-2 small">
+                                        <div class="fw-semibold text-dark">Pedro Pablo Aguirre</div>
+                                        <span class="text-muted"><i class="bi bi-telephone text-success"></i> +56 9 6543 2109</span>
+                                    </td>
+                                    <td class="py-3 px-2 small">Diagnóstico comunitario participativo sobre déficit hídrico y subsidios de agua potable rural.</td>
+                                    <td class="py-3 px-2 text-center"><span class="badge bg-success-subtle text-success border border-success-subtle">Diagnóstico Ejecutado</span></td>
+                                    <td class="py-3 px-2 text-center"><span class="badge bg-success">+1 Pto Válido</span></td>
+                                </tr>
+                                <tr>
+                                    <td class="py-3 px-3"><span class="badge" style="background:#1B365D;">Eje III · Recursos</span></td>
+                                    <td class="py-3 px-2">
+                                        <div class="fw-bold text-dark small">5. Comités (Vivienda / Seguridad / APR)</div>
+                                        <small class="text-muted">Comité Habitacional Renacer</small>
+                                    </td>
+                                    <td class="py-3 px-2 small">
+                                        <div class="fw-semibold text-dark">Fabiola Cortés Rojas</div>
+                                        <span class="text-muted"><i class="bi bi-telephone text-success"></i> +56 9 5432 1098</span>
+                                    </td>
+                                    <td class="py-3 px-2 small">Envío de correos e invitaciones previas para mesa técnica habitacional SERVIU (gestión preparatoria).</td>
+                                    <td class="py-3 px-2 text-center"><span class="badge bg-warning-subtle text-dark border border-warning-subtle">Coordinación Previa</span></td>
+                                    <td class="py-3 px-2 text-center"><span class="badge bg-secondary">0 Pts (Regla 5)</span></td>
+                                </tr>
+                                <tr>
+                                    <td class="py-3 px-3"><span class="badge bg-warning text-dark">Eje IV · Auto-mejora</span></td>
+                                    <td class="py-3 px-2">
+                                        <div class="fw-bold text-dark small">Comité Técnico DIDECO / MIDESO</div>
+                                        <small class="text-muted">Actualización Normativa RSH 2026</small>
+                                    </td>
+                                    <td class="py-3 px-2 small">
+                                        <div class="fw-semibold text-dark">Coordinación DIDECO</div>
+                                        <span class="text-muted"><i class="bi bi-telephone text-success"></i> +56 51 220 6600</span>
+                                    </td>
+                                    <td class="py-3 px-2 small">Jornada de actualización en metodologías de intervención familiar y plataforma RSH 2026.</td>
+                                    <td class="py-3 px-2 text-center"><span class="badge bg-success-subtle text-success border border-success-subtle">Capacitación Realizada</span></td>
+                                    <td class="py-3 px-2 text-center"><span class="badge bg-success">+1 Pto Válido</span></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Los 10 Puntos Oficiales de la Matriz SGR 4to Semestre -->
+                <div class="p-4 bg-white rounded-4 border shadow-sm">
+                    <h6 class="fw-bold text-dark mb-3">
+                        <i class="bi bi-shield-check text-danger me-2"></i>Decálogo Normativo: 10 Puntos a Considerar en la Matriz SGR (4to Semestre)
+                    </h6>
+                    <div class="row g-2.5">
+                        {% for r in sgr_rules %}
+                        <div class="col-md-6">
+                            <div class="p-2.5 rounded-3 border bg-light d-flex align-items-start gap-2.5 h-100">
+                                <span class="badge rounded-pill bg-danger">{{ r.num }}</span>
+                                <div>
+                                    <div class="fw-bold text-dark small">{{ r.titulo }} <span class="text-muted fw-normal">({{ r.codigo }})</span></div>
+                                    <div class="text-secondary" style="font-size: 0.76rem;">{{ r.detalle }}</div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </section>
+
         </main>
 
         <!-- Pie de Página Institucional -->
@@ -1874,7 +2138,8 @@
                 'emergencias': 'Atención de Emergencias y Crisis · Despacho Inmediato',
                 'redes': 'Articulación de Redes Comunitarias e Intersectoriales',
                 'metas': 'Metas y Semáforo SGR · Tablero de Medición y Control Diario',
-                'mantenedores': 'Mantenedores SGR · Padrón Territorial de Vecinos'
+                'mantenedores': 'Mantenedores SGR · Padrón Territorial de Vecinos',
+                'comunitario': 'Descriptor Gestor Social 2026 · Ejes II-IV y 5 Subfamilias OOCC'
             };
             if (subTitleEl && titulos[panelId]) {
                 subTitleEl.innerText = titulos[panelId];
@@ -2264,13 +2529,16 @@
             let puntajePonderadoTotal = 0;
 
             items.forEach(it => {
-                const cumplimiento = Math.min(150, Math.round((it.avance / it.meta) * 100));
+                const cumplimientoBruto = Math.round((it.avance / it.meta) * 100);
+                // Regla 7 Matriz SGR 4to Semestre: Tope máximo de 120% por ítem
+                const cumplimiento = Math.min(120, cumplimientoBruto);
                 const puntajePond = (cumplimiento * it.ponderador) / 100;
                 puntajePonderadoTotal += puntajePond;
 
                 let badge = '<span class="badge bg-danger">Rojo</span>';
                 if (cumplimiento >= 61.54) badge = '<span class="badge bg-success">Verde</span>';
                 else if (cumplimiento >= 36.92) badge = '<span class="badge bg-warning text-dark">Ámbar</span>';
+                const topeTag = cumplimientoBruto > 120 ? ' <span class="badge bg-warning text-dark ms-1" title="Regla 7 SGR: Tope 120% por ítem">Tope 120%</span>' : '';
 
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
@@ -2278,7 +2546,7 @@
                     <td class="py-3 px-2 fw-semibold text-dark">${it.nombre}</td>
                     <td class="py-3 px-2 text-center fw-bold">${it.meta}</td>
                     <td class="py-3 px-2 text-center text-primary fw-bold">${it.avance}</td>
-                    <td class="py-3 px-2 text-center">${cumplimiento}%</td>
+                    <td class="py-3 px-2 text-center">${cumplimiento}%${topeTag}</td>
                     <td class="py-3 px-2 text-center fw-bold">${it.ponderador}%</td>
                     <td class="py-3 px-2 text-center fw-extrabold text-danger">${puntajePond.toFixed(1)}%</td>
                     <td class="py-3 px-2 text-center">${badge}</td>
@@ -3429,6 +3697,99 @@
                     </div>
                 `,
                 confirmButtonColor: '#C41230'
+            });
+        }
+
+        function registrarAccionComunitariaOocc() {
+            Swal.fire({
+                title: 'Registrar Acción Comunitaria (Ejes II-IV · Gestor Social)',
+                width: 650,
+                html: `
+                    <div class="text-start">
+                        <div class="mb-2">
+                            <label class="form-label small fw-bold">Eje del Descriptor 2026</label>
+                            <select id="swalEjeCom" class="form-select form-select-sm">
+                                <option value="Eje II · Comunitario">Eje II · Acciones Comunitarias (Diagnóstico, Programas, Participación)</option>
+                                <option value="Eje III · Recursos">Eje III · Gestión de Recursos y Coordinación de Servicios</option>
+                                <option value="Eje IV · Auto-mejora">Eje IV · Comité Técnico / Capacitación y Actualización</option>
+                            </select>
+                        </div>
+                        <div class="mb-2">
+                            <label class="form-label small fw-bold">Subfamilia de Organización Comunitaria (4to Semestre)</label>
+                            <select id="swalSubfamiliaCom" class="form-select form-select-sm">
+                                <option value="1. Juntas de Vecinos (Territoriales)">1. Juntas de Vecinos (Territoriales)</option>
+                                <option value="2. Clubes de Adulto Mayor">2. Clubes de Adulto Mayor</option>
+                                <option value="3. Organizaciones Deportivas">3. Organizaciones Deportivas</option>
+                                <option value="4. Centros de Madres / Culturales / Juveniles">4. Centros de Madres / Culturales / Juveniles</option>
+                                <option value="5. Comités (Vivienda / Seguridad / APR)">5. Comités (Vivienda / Seguridad / APR)</option>
+                            </select>
+                        </div>
+                        <div class="row g-2 mb-2">
+                            <div class="col-6">
+                                <label class="form-label small fw-bold">Nombre Dirigente / Usuario (Regla 2) *</label>
+                                <input id="swalDirigenteCom" class="form-control form-control-sm" placeholder="Ej: Juana Rojas Morales">
+                            </div>
+                            <div class="col-6">
+                                <label class="form-label small fw-bold">Teléfono Contacto (Regla 2) *</label>
+                                <input id="swalFonoCom" class="form-control form-control-sm" placeholder="+56 9 8765 4321">
+                            </div>
+                        </div>
+                        <div class="mb-2">
+                            <label class="form-label small fw-bold">Naturaleza de la Gestión (Regla 5 SGR)</label>
+                            <select id="swalNaturalezaCom" class="form-select form-select-sm">
+                                <option value="ejecutada">Taller / Diagnóstico / Programa Ejecutado (+1 Pto SGR)</option>
+                                <option value="coordinacion">Coordinación preparatoria / Invitación / Correo (0 Pts - Regla 5)</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="form-label small fw-bold">Descripción de la Acción o Programa Social *</label>
+                            <textarea id="swalDescCom" class="form-control form-control-sm" rows="2" placeholder="Detalle el taller, diagnóstico participativo o gestión de recursos ejecutada..."></textarea>
+                        </div>
+                    </div>
+                `,
+                showCancelButton: true,
+                confirmButtonText: 'Guardar en Matriz SGR',
+                cancelButtonText: 'Cancelar',
+                confirmButtonColor: '#C41230',
+                preConfirm: () => {
+                    const eje = document.getElementById('swalEjeCom').value;
+                    const sf = document.getElementById('swalSubfamiliaCom').value;
+                    const dir = document.getElementById('swalDirigenteCom').value.trim();
+                    const fono = document.getElementById('swalFonoCom').value.trim();
+                    const nat = document.getElementById('swalNaturalezaCom').value;
+                    const desc = document.getElementById('swalDescCom').value.trim();
+                    if (!dir || !fono || !desc) {
+                        Swal.showValidationMessage('Regla 2 SGR: Nombre del dirigente/usuario, teléfono y descripción son obligatorios.');
+                        return false;
+                    }
+                    return { eje, sf, dir, fono, nat, desc };
+                }
+            }).then((res) => {
+                if (res.isConfirmed && res.value) {
+                    const v = res.value;
+                    const tbody = document.getElementById('tablaAccionesComunitariasBody');
+                    if (tbody) {
+                        const tr = document.createElement('tr');
+                        const isExec = v.nat === 'ejecutada';
+                        tr.innerHTML = `
+                            <td class="py-3 px-3"><span class="badge bg-success">${v.eje}</span></td>
+                            <td class="py-3 px-2"><div class="fw-bold text-dark small">${v.sf}</div><small class="text-muted">{{ current_delegation }}</small></td>
+                            <td class="py-3 px-2 small"><div class="fw-semibold text-dark">${v.dir}</div><span class="text-muted"><i class="bi bi-telephone text-success"></i> ${v.fono}</span></td>
+                            <td class="py-3 px-2 small">${v.desc}</td>
+                            <td class="py-3 px-2 text-center">${isExec ? '<span class="badge bg-success-subtle text-success border border-success-subtle">Acción Ejecutada</span>' : '<span class="badge bg-warning-subtle text-dark border border-warning-subtle">Coordinación Previa</span>'}</td>
+                            <td class="py-3 px-2 text-center">${isExec ? '<span class="badge bg-success">+1 Pto Válido</span>' : '<span class="badge bg-secondary">0 Pts (Regla 5)</span>'}</td>
+                        `;
+                        tbody.insertBefore(tr, tbody.firstChild);
+                    }
+                    Swal.fire({
+                        icon: 'success',
+                        title: v.nat === 'ejecutada' ? 'Acción Comunitaria Contabilizada (+1 Pto SGR)' : 'Coordinación Registrada (0 Pts según Regla 5)',
+                        text: v.nat === 'ejecutada'
+                            ? 'La acción comunitaria ejecutada suma puntaje en el Eje II de la Matriz SGR.'
+                            : 'Conforme al Punto 5 del 4to Semestre, las coordinaciones preparatorias quedan registradas pero el puntaje se otorga al ejecutar el taller/acción.',
+                        confirmButtonColor: '#C41230'
+                    });
+                }
             });
         }
     </script>

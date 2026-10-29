@@ -1,123 +1,1625 @@
 {% load static %}
-<!doctype html>
+<!DOCTYPE html>
 <html lang="es">
+
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="theme-color" content="#68121e">
-    <title>Delegado Municipal | SGR La Serena</title>
+    <meta name="theme-color" content="#C41230">
+    <title>Delegado Municipal · Jefatura Territorial SGR — Ilustre Municipalidad de La Serena</title>
+
+    <!-- Google Fonts: Montserrat (Títulos Oficiales), Plus Jakarta Sans (Lectura) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet">
+
+    <!-- Bootstrap 5.3 & Bootstrap Icons -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
-    <link rel="stylesheet" href="{% static 'css/dashboard_position.css' %}">
-    <link rel="stylesheet" href="{% static 'css/dashboard_delegado.css' %}">
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11" defer></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+
+    <!-- Librerías Profesionales: Chart.js, SheetJS XLSX, jsPDF, SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" defer></script>
     <script src="{% static 'js/dashboard_delegado.js' %}" defer></script>
+
+    <!-- Hojas de Estilo Oficiales del Admin: Base Admin + Liquid Glass Pro -->
+    <link rel="stylesheet" href="{% static 'css/admin/admin-bundle.css' %}?v=20261015L">
+    <link rel="stylesheet" href="{% static 'css/admin/admin-glass-pro.css' %}?v=20261015L">
+
+    <style>
+        :root {
+            --muni-red: #C41230;
+            --muni-red-hover: #A00E26;
+            --muni-navy: #1B365D;
+            --muni-navy-dark: #0F172A;
+            --muni-navy-slate: #1E293B;
+            --surface-bg: #F4F8FC;
+        }
+
+        body {
+            background-color: var(--surface-bg) !important;
+            color: var(--muni-navy-slate) !important;
+            font-family: 'Plus Jakarta Sans', sans-serif !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            overflow-x: hidden !important;
+        }
+
+        .semaforo-banner-card {
+            background: linear-gradient(135deg, rgba(254, 242, 242, 0.96) 0%, rgba(255, 255, 255, 0.98) 100%);
+            border: 1.5px solid rgba(196, 18, 48, 0.30);
+            border-left: 6px solid var(--muni-red);
+            border-radius: 16px;
+            padding: 1.15rem 1.4rem;
+            box-shadow: 0 10px 25px -5px rgba(196, 18, 48, 0.10);
+        }
+
+        .sgr-rules-strip {
+            background: linear-gradient(135deg, #1B365D 0%, #0F172A 100%);
+            color: #FFFFFF;
+            border-radius: 16px;
+            padding: 0.95rem 1.3rem;
+            box-shadow: 0 10px 24px -6px rgba(15, 23, 42, 0.22);
+        }
+
+        .social-kpi-card {
+            background: #FFFFFF;
+            border-radius: 16px;
+            padding: 1.25rem 1.4rem;
+            border: 1px solid rgba(226, 235, 246, 0.95);
+            box-shadow: 0 12px 30px -8px rgba(27, 54, 93, 0.06);
+            transition: transform 0.22s ease, box-shadow 0.22s ease;
+            position: relative;
+            overflow: hidden;
+            height: 100%;
+        }
+
+        .social-kpi-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 16px 36px -8px rgba(196, 18, 48, 0.12);
+        }
+
+        .social-kpi-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 100%;
+            background: var(--muni-red);
+        }
+
+        .liquid-glass-btn-primary {
+            background: linear-gradient(135deg, #C41230 0%, #9E0E26 100%) !important;
+            color: #FFFFFF !important;
+            border: none !important;
+            border-radius: 50px !important;
+            font-weight: 700 !important;
+            padding: 0.55rem 1.3rem !important;
+            font-size: 0.86rem !important;
+            box-shadow: 0 4px 14px rgba(196, 18, 48, 0.35) !important;
+            transition: all 0.22s ease !important;
+            display: inline-flex !important;
+            align-items: center !important;
+            gap: 7px !important;
+            text-decoration: none !important;
+            cursor: pointer;
+        }
+
+        .liquid-glass-btn-primary:hover {
+            transform: translateY(-2px) !important;
+            box-shadow: 0 8px 20px rgba(196, 18, 48, 0.45) !important;
+            color: #FFFFFF !important;
+        }
+
+        .liquid-glass-btn-secondary {
+            background: #FFFFFF !important;
+            color: var(--muni-red) !important;
+            border: 1.5px solid var(--muni-red) !important;
+            border-radius: 50px !important;
+            font-weight: 700 !important;
+            padding: 0.50rem 1.15rem !important;
+            font-size: 0.85rem !important;
+            transition: all 0.2s ease !important;
+            display: inline-flex !important;
+            align-items: center !important;
+            gap: 6px !important;
+            text-decoration: none !important;
+            cursor: pointer;
+        }
+
+        .delegado-badge {
+            padding: 4px 10px;
+            border-radius: 50px;
+            font-size: 0.74rem;
+            font-weight: 700;
+            display: inline-block;
+        }
+
+        .badge-pending,
+        .badge-requires-correction {
+            background: #FEF3C7;
+            color: #B45309;
+            border: 1px solid #FDE68A;
+        }
+
+        .badge-approved {
+            background: #DCFCE7;
+            color: #15803D;
+            border: 1px solid #BBF7D0;
+        }
+
+        .badge-rejected {
+            background: #FEE2E2;
+            color: #B91C1C;
+            border: 1px solid #FECACA;
+        }
+
+        .row-action {
+            border: 1px solid #CBD5E1;
+            background: #FFFFFF;
+            color: var(--muni-navy);
+            border-radius: 50px;
+            padding: 4px 11px;
+            font-size: 0.76rem;
+            font-weight: 700;
+            margin-right: 4px;
+            transition: all 0.18s ease;
+        }
+
+        .row-action:hover {
+            background: var(--muni-navy);
+            color: #FFFFFF;
+            border-color: var(--muni-navy);
+        }
+
+        .row-action.row-danger {
+            color: #DC2626;
+            border-color: #FECACA;
+            background: #FEF2F2;
+        }
+
+        .row-action.row-danger:hover {
+            background: #DC2626;
+            color: #FFFFFF;
+        }
+
+        .panel-view {
+            animation: fadeInView 0.22s ease-in-out;
+        }
+
+        @keyframes fadeInView {
+            from {
+                opacity: 0;
+                transform: translateY(5px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    </style>
 </head>
+
 <body>
-<div class="dashboard-shell delegado-shell" id="delegado-app"
-     data-list-url="{% url 'activities:api_atenciones' %}"
-     data-detail-base="{% url 'activities:api_atenciones' %}"
-     data-delegation="{% if delegation %}{{ delegation.pk }}{% endif %}">
-    <aside class="side-panel" aria-label="Navegación del delegado">
-        <a class="brand" href="{% url 'activities:dashboard' %}">
-            <img src="{% static 'images/laserena_horizontal_blanco.svg' %}" alt="Ilustre Municipalidad de La Serena">
-        </a>
-        <div class="profile-card">
-            <span class="avatar" aria-hidden="true">{{ first_name|first|upper }}</span>
-            <div class="profile-copy">
-                <strong>{{ profile.full_name }}</strong>
-                <span>Delegado Municipal</span>
-                <small>{% if delegation %}{{ delegation.code }} · {{ delegation.name }}{% else %}Sin delegación asignada{% endif %}</small>
+    <div id="delegado-app" data-list-url="{% url 'activities:api_atenciones' %}"
+        data-detail-base="{% url 'activities:api_atenciones' %}"
+        data-delegation="{% if delegation %}{{ delegation.pk }}{% endif %}">
+
+        <!-- =================================================================
+         1. MENÚ LATERAL OFICIAL LA SERENA (MISMO DISEÑO QUE ADMIN)
+         ================================================================= -->
+        <aside class="sidebar" id="sidebar" aria-label="Navegación del delegado">
+            <div class="sidebar-brand-box">
+                <button class="sidebar-collapse-btn" onclick="toggleSidebar()" title="Colapsar menú lateral"
+                    aria-label="Menú">
+                    <i class="bi bi-list"></i>
+                </button>
+                <a href="{% url 'activities:dashboard' %}" class="sidebar-brand-link"
+                    title="Ilustre Municipalidad de La Serena">
+                    <img src="{% static 'images/horizontal-blanco.svg' %}" alt="Ilustre Municipalidad de La Serena"
+                        class="sidebar-official-logo">
+                </a>
+            </div>
+
+            <!-- Tarjeta de Perfil Institucional del Delegado Municipal -->
+            <div class="px-3 py-2">
+                <div class="p-2.5 rounded-4 d-flex align-items-center gap-2.5"
+                    style="background: rgba(255, 255, 255, 0.08); border: 1px solid rgba(255, 255, 255, 0.14);">
+                    <div class="rounded-circle d-flex align-items-center justify-content-center text-white fw-bold shadow-sm"
+                        style="width: 44px; height: 44px; background: linear-gradient(135deg, #C41230 0%, #8B1225 100%); font-size: 1.15rem; flex-shrink: 0; border: 2px solid rgba(255, 255, 255, 0.3);">
+                        {{ first_name|first|upper }}
+                    </div>
+                    <div class="overflow-hidden" style="min-width: 0;">
+                        <div class="text-white fw-bold text-truncate" style="font-size: 0.88rem;">{{ profile.full_name }}</div>
+                        <div class="d-flex align-items-center gap-1.5 mt-0.5">
+                            <span class="badge"
+                                style="background: rgba(16, 185, 129, 0.22); color: #34D399; font-size: 0.65rem; font-weight: 800; padding: 2px 6px;">
+                                <i class="bi bi-circle-fill me-1" style="font-size: 0.42rem;"></i> Delegado Municipal
+                            </span>
+                        </div>
+                        <div class="text-light text-truncate mt-1" style="font-size: 0.72rem; opacity: 0.85;">
+                            <i class="bi bi-geo-alt-fill text-danger me-1"></i> {% if delegation %}{{ delegation.code }}
+                            · {{ delegation.name }}{% else %}Sin delegación asignada{% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Menú de Navegación del Delegado (6 Paneles Operativos del Descriptor 2026) -->
+            <nav class="sidebar-menu-scrollable px-2 mt-2" aria-label="Menú principal">
+                <button class="nav-item-btn active" id="nav-btn-atenciones"
+                    onclick="cambiarPanelDelegado('atenciones', this)">
+                    <i class="bi bi-house-door-fill main-icon"></i>
+                    <span>Atenciones y Soluciones</span>
+                    <span class="badge rounded-pill ms-auto"
+                        style="background: #C41230; color: #fff; font-size: 0.70rem;">{{ total }}</span>
+                </button>
+
+                {% if can_read %}
+                <button class="nav-item-btn" id="nav-btn-semaforo" onclick="cambiarPanelDelegado('semaforo', this)">
+                    <i class="bi bi-speedometer2 main-icon" style="color: #34D399;"></i>
+                    <span>Semáforo, Licencias y Felicitaciones</span>
+                    <span class="badge rounded-pill ms-auto bg-success" style="font-size: 0.68rem;">R.8 y 9</span>
+                </button>
+
+                <button class="nav-item-btn" id="nav-btn-equipo" onclick="cambiarPanelDelegado('equipo', this)">
+                    <i class="bi bi-people-fill main-icon"></i>
+                    <span>Equipo y Delegar Trabajos</span>
+                    <span class="badge rounded-pill ms-auto"
+                        style="background: rgba(255,255,255,0.18); color: #fff; font-size: 0.70rem;">{{ team_count }}</span>
+                </button>
+
+                <button class="nav-item-btn" id="nav-btn-organizaciones"
+                    onclick="cambiarPanelDelegado('organizaciones', this)">
+                    <i class="bi bi-houses-fill main-icon" style="color: #F59E0B;"></i>
+                    <span>Visitas JJVV y Mesas Trabajo</span>
+                    <span class="badge rounded-pill ms-auto"
+                        style="background: rgba(245,158,11,0.25); color: #F59E0B; font-size: 0.70rem;">F.4 y 10</span>
+                </button>
+
+                <button class="nav-item-btn" id="nav-btn-alcaldia" onclick="cambiarPanelDelegado('alcaldia', this)">
+                    <i class="bi bi-shield-exclamation main-icon text-danger"></i>
+                    <span>Reportes Alcaldía y Difusión</span>
+                    <span class="badge rounded-pill ms-auto"
+                        style="background: rgba(255,255,255,0.18); color: #fff; font-size: 0.70rem;">F.1 y 8</span>
+                </button>
+
+                <button class="nav-item-btn" id="nav-btn-descriptor" onclick="cambiarPanelDelegado('descriptor', this)">
+                    <i class="bi bi-file-earmark-medical-fill main-icon" style="color: #38BDF8;"></i>
+                    <span>Descriptor y 10 Reglas SGR</span>
+                    <span class="badge rounded-pill ms-auto"
+                        style="background: rgba(56,189,248,0.22); color: #38BDF8; font-size: 0.68rem;">2026</span>
+                </button>
+                {% endif %}
+            </nav>
+
+            <!-- Fotografía Institucional Faro Monumental de La Serena -->
+            <div class="sidebar-faro-footer" role="img" aria-label="Faro Monumental de La Serena">
+                <div class="sidebar-faro-image-wrap">
+                    <img src="{% static 'img/delegacion_costa.jpg' %}"
+                        data-fallback="{% static 'img/faro_real_sunset.jpg' %}"
+                        onerror="this.onerror=null; if(this.dataset.fallback) this.src=this.dataset.fallback;"
+                        alt="Faro Monumental junto a la costa de La Serena" class="sidebar-faro-bg-img">
+                    <div class="sidebar-faro-fade-layer"></div>
+                </div>
+                <div class="sidebar-faro-caption">
+                    <div class="sidebar-faro-title">La Serena</div>
+                    <div class="sidebar-faro-lema">Siempre cerca de ti</div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- =================================================================
+         2. CONTENEDOR PRINCIPAL
+         ================================================================= -->
+        <div class="main-wrapper" id="inicio">
+            <header class="top-header" style="border-top: 3.5px solid var(--muni-red);">
+                <div class="header-left d-flex align-items-center gap-3">
+                    <button class="btn-hamburger" onclick="toggleSidebar()" title="Alternar menú lateral"
+                        aria-label="Menú">
+                        <i class="bi bi-list"></i>
+                    </button>
+                    <div class="header-title-wrapper">
+                        <span class="header-sys-name fw-bold"
+                            style="color: var(--muni-navy); font-family: 'Montserrat', sans-serif;">Alcaldía ·
+                            Delegaciones Municipales</span>
+                        <span class="header-sys-divider text-muted">|</span>
+                        <span class="header-sub-name text-secondary fw-semibold" id="headerSubName">Panel de tu
+                            delegación · Representación Territorial y Matriz SGR</span>
+                    </div>
+                </div>
+
+                <div class="header-right d-flex align-items-center gap-2.5">
+                    <!-- Selector de Perfiles de la Delegación -->
+                    <div class="dropdown d-none d-lg-block">
+                        <button class="btn btn-sm rounded-pill px-3 py-1.5 fw-bold dropdown-toggle" type="button"
+                            data-bs-toggle="dropdown"
+                            style="background: rgba(27, 54, 93, 0.08); color: var(--muni-navy); border: 1px solid rgba(27, 54, 93, 0.18); font-size: 0.78rem;">
+                            <i class="bi bi-diagram-3-fill text-danger me-1"></i> Perfiles Delegación (2026)
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end shadow-lg border-0 rounded-4 mt-2 p-2"
+                            style="min-width: 270px;">
+                            <li><span class="dropdown-header text-uppercase small fw-bold text-danger">Descriptor de
+                                    Funciones 2026</span></li>
+                            <li><a class="dropdown-item rounded-3 py-1.5 small fw-bold text-danger"
+                                    href="{% url 'activities:dashboard_delegado' %}?preview=1"><i
+                                        class="bi bi-person-vcard-fill me-2"></i>1. Delegado Municipal (Actual)</a></li>
+                            <li><a class="dropdown-item rounded-3 py-1.5 small fw-semibold"
+                                    href="{% url 'activities:dashboard_asistente' %}?preview=1"><i
+                                        class="bi bi-heart-pulse-fill text-danger me-2"></i>2. Gestor Social
+                                    (DIDECO)</a></li>
+                            <li><a class="dropdown-item rounded-3 py-1.5 small fw-semibold"
+                                    href="{% url 'activities:dashboard_apoyo_administrativo' %}?preview=1"><i
+                                        class="bi bi-journal-check text-primary me-2"></i>3. Apoyo Administrativo</a>
+                            </li>
+                            <li><a class="dropdown-item rounded-3 py-1.5 small fw-semibold"
+                                    href="{% url 'activities:dashboard_organizaciones_comunitarias' %}?preview=1"><i
+                                        class="bi bi-houses-fill text-success me-2"></i>4. Organizaciones
+                                    Comunitarias</a></li>
+                            <li><a class="dropdown-item rounded-3 py-1.5 small fw-semibold"
+                                    href="{% url 'activities:dashboard_compras_proyectos' %}?preview=1"><i
+                                        class="bi bi-cart-check-fill text-purple me-2"></i>5. Gestor de Compras y
+                                    Proyectos</a></li>
+                            <li><a class="dropdown-item rounded-3 py-1.5 small fw-semibold"
+                                    href="{% url 'activities:dashboard_gestion_planificacion' %}?preview=1"><i
+                                        class="bi bi-graph-up-arrow text-dark me-2"></i>6. Gestión y Planificación</a>
+                            </li>
+                            <li><a class="dropdown-item rounded-3 py-1.5 small fw-semibold"
+                                    href="{% url 'activities:dashboard_servicios_comunitarios' %}?preview=1"><i
+                                        class="bi bi-tools text-warning me-2"></i>7. Coord. Servicios Comunitarios</a>
+                            </li>
+                            {% if is_admin_user %}
+                            <li>
+                                <hr class="dropdown-divider">
+                            </li>
+                            <li><a class="dropdown-item rounded-3 py-1.5 small fw-bold text-primary"
+                                    href="{% url 'activities:dashboard_admin' %}"><i
+                                        class="bi bi-building-gear me-2"></i>Panel Administrador General</a></li>
+                            {% endif %}
+                        </ul>
+                    </div>
+
+                    <div class="dropdown">
+                        <button class="user-dropdown-btn d-flex align-items-center gap-2 border-0 bg-transparent"
+                            type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <span
+                                class="user-avatar-img d-inline-flex align-items-center justify-content-center text-white fw-bold"
+                                style="width: 36px; height: 36px; border-radius: 50%; background: var(--muni-red);">
+                                {{ first_name|first|upper }}
+                            </span>
+                            <span class="user-identity text-start d-none d-sm-block">
+                                <span class="user-info-text fw-bold d-block"
+                                    style="color: var(--muni-navy); font-size: 0.85rem;">{{ profile.full_name }}</span>
+                                <span class="user-context-text text-muted" style="font-size: 0.72rem;">Delegado
+                                    Municipal · {{ role_name }}</span>
+                            </span>
+                            <i class="bi bi-chevron-down text-muted" style="font-size: 0.75rem;"></i>
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end shadow-sm border-0 rounded-4 mt-2"
+                            style="min-width: 220px;">
+                            <li><span class="dropdown-header text-uppercase small fw-bold text-danger">Municipalidad La
+                                    Serena</span></li>
+                            {% if can_read %}
+                            <li><a class="dropdown-item py-2 fw-semibold" href="javascript:void(0)"
+                                    onclick="cambiarPanelDelegado('semaforo', document.getElementById('nav-btn-semaforo'))"><i
+                                        class="bi bi-speedometer2 me-2 text-success"></i> Semáforo, Licencias y
+                                    Felicitaciones</a></li>
+                            <li><a class="dropdown-item py-2 fw-semibold" href="javascript:void(0)"
+                                    onclick="cambiarPanelDelegado('descriptor', document.getElementById('nav-btn-descriptor'))"><i
+                                        class="bi bi-file-earmark-text me-2 text-primary"></i> Descriptor 11
+                                    Funciones</a></li>
+                            <li>
+                                <hr class="dropdown-divider">
+                            </li>
+                            {% endif %}
+                            <li><a class="dropdown-item py-2 fw-bold text-danger" href="{% url 'core:logout' %}"><i
+                                        class="bi bi-box-arrow-right me-2"></i> Cerrar sesión</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </header>
+
+            <main class="content-body p-4">
+
+                {% if not delegation %}
+                <div class="alert alert-warning rounded-4 border shadow-sm p-4" role="status">
+                    <h5 class="fw-bold mb-1"><i class="bi bi-exclamation-triangle-fill me-2"></i>Sin delegación asignada
+                    </h5>
+                    <p class="m-0">Tu perfil no tiene una delegación activa asignada. Solicita a administración que
+                        revise tu cargo y sede.</p>
+                </div>
+                {% elif not can_read %}
+                <div class="alert alert-danger rounded-4 border shadow-sm p-4" role="status">
+                    <h5 class="fw-bold mb-1"><i class="bi bi-shield-lock-fill me-2"></i>Acceso restringido</h5>
+                    <p class="m-0">Tu rol no tiene accesos habilitados por ahora. Consulta con la administración si
+                        necesitas un permiso.</p>
+                </div>
+                {% else %}
+
+                <!-- BANDA DE FACULTADES EXCLUSIVAS DEL DELEGADO EN MATRIZ SGR 4TO SEMESTRE -->
+                <div class="sgr-rules-strip mb-4 d-flex justify-content-between align-items-center flex-wrap gap-3">
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="rounded-circle d-flex align-items-center justify-content-center"
+                            style="width: 44px; height: 44px; background: rgba(255, 255, 255, 0.14); flex-shrink: 0;">
+                            <i class="bi bi-award-fill fs-4 text-warning"></i>
+                        </div>
+                        <div>
+                            <div class="d-flex align-items-center gap-2 flex-wrap">
+                                <span class="badge bg-danger fw-bold" style="font-size: 0.68rem;">REPRESENTANTE DIRECTO
+                                    DE ALCALDÍA</span>
+                                <span class="fw-bold" style="font-size: 0.94rem;">Panel de tu delegación · {{ delegation.name }} ({{ delegation.code }})</span>
+                            </div>
+                            <div class="small text-white-50 mt-0.5">
+                                <strong class="text-white">Regla 1:</strong> Solicitudes del Delegado = Otra Gestión ·
+                                <strong class="text-white">Regla 8:</strong> Solo el Delegado informa Felicitaciones
+                                Formales ·
+                                <strong class="text-white">Regla 9:</strong> El Delegado ingresa
+                                Vacaciones/Licencias/Administrativos en Semáforo ·
+                                <strong class="text-white">Regla 10:</strong> Puntaje de Equipo Equilibrado
+                            </div>
+                        </div>
+                    </div>
+                    <div class="d-flex align-items-center gap-2 flex-wrap">
+                        <button class="btn btn-sm btn-warning rounded-pill px-3 fw-bold text-dark"
+                            onclick="cambiarPanelDelegado('semaforo', document.getElementById('nav-btn-semaforo'))">
+                            <i class="bi bi-sliders me-1"></i> Ajustar Semáforo / Felicitaciones
+                        </button>
+                    </div>
+                </div>
+
+                <!-- =========================================================
+                 PANEL 1: ATENCIONES DE MI DELEGACIÓN Y SOLUCIONES LOCALES
+                 ========================================================= -->
+                <section id="panel-atenciones" class="panel-view">
+                    <div class="d-flex justify-content-between align-items-start flex-wrap gap-3 mb-4">
+                        <div>
+                            <div class="d-flex align-items-center gap-2 mb-1 flex-wrap">
+                                <span class="badge"
+                                    style="background: rgba(196, 18, 48, 0.1); color: var(--muni-red); font-weight: 800; font-size: 0.75rem;">
+                                    <i class="bi bi-building-check me-1"></i> DECRETO N° 3096 · JEFATURA TERRITORIAL
+                                </span>
+                                <span class="badge"
+                                    style="background: rgba(27, 54, 93, 0.08); color: var(--muni-navy); font-weight: 700; font-size: 0.75rem;">
+                                    {{ approved }} aprobada{{ approved|pluralize }}
+                                </span>
+                            </div>
+                            <h1 class="fw-bold m-0"
+                                style="font-family: 'Montserrat', sans-serif; color: var(--muni-navy); font-size: 1.65rem;">
+                                Atenciones de mi delegación · {{ delegation.name }}
+                            </h1>
+                            <p class="text-secondary m-0 mt-1" style="font-size: 0.88rem;">
+                                Hola, {{ first_name }}. Puente directo entre el municipio y los sectores del territorio:
+                                atención social, asesoría a dirigentes y soluciones locales (seguridad, limpieza, áreas
+                                verdes).
+                            </p>
+                        </div>
+
+                        <div class="d-flex align-items-center gap-2 flex-wrap">
+                            <button class="btn btn-outline-secondary rounded-pill px-3 py-1.5 fw-bold" type="button"
+                                onclick="exportarReporteDelegadoPdf()" style="font-size: 0.85rem;">
+                                <i class="bi bi-file-earmark-pdf-fill text-danger me-1"></i> Reporte Alcaldía PDF
+                            </button>
+                            {% if can_edit %}
+                            <button class="liquid-glass-btn-primary" type="button" data-bs-toggle="modal"
+                                data-bs-target="#attentionModal" data-action="create">
+                                <i class="bi bi-plus-circle-fill"></i> + Nueva atención
+                            </button>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- 4 Tarjetas KPI de la Delegación -->
+                    <div class="row g-3 mb-4" aria-label="Resumen de la delegación">
+                        <div class="col-sm-6 col-xl-3">
+                            <div class="social-kpi-card">
+                                <div class="d-flex justify-content-between align-items-start mb-1">
+                                    <span class="text-uppercase fw-bold text-muted"
+                                        style="font-size: 0.74rem;">ATENCIONES REGISTRADAS</span>
+                                    <i class="bi bi-journal-check fs-4 text-primary"></i>
+                                </div>
+                                <div class="fw-bold" style="font-size: 2rem; color: var(--muni-navy);">{{ total }}</div>
+                                <div class="text-muted small mt-1">En {{ delegation.name }}</div>
+                            </div>
+                        </div>
+                        <div class="col-sm-6 col-xl-3">
+                            <div class="social-kpi-card">
+                                <div class="d-flex justify-content-between align-items-start mb-1">
+                                    <span class="text-uppercase fw-bold text-muted" style="font-size: 0.74rem;">EN
+                                        SEGUIMIENTO</span>
+                                    <i class="bi bi-clock-history fs-4 text-warning"></i>
+                                </div>
+                                <div class="fw-bold text-warning" style="font-size: 2rem;">{{ in_followup }}</div>
+                                <div class="text-muted small mt-1">Pendientes o por corregir</div>
+                            </div>
+                        </div>
+                        <div class="col-sm-6 col-xl-3">
+                            <div class="social-kpi-card">
+                                <div class="d-flex justify-content-between align-items-start mb-1">
+                                    <span class="text-uppercase fw-bold text-muted" style="font-size: 0.74rem;">EQUIPO
+                                        ACTIVO SEDE</span>
+                                    <i class="bi bi-people-fill fs-4 text-success"></i>
+                                </div>
+                                <div class="fw-bold text-success" style="font-size: 2rem;">{{ team_count }}</div>
+                                <div class="text-muted small mt-1">Funcionarios de esta sede</div>
+                            </div>
+                        </div>
+                        <div class="col-sm-6 col-xl-3">
+                            <div class="social-kpi-card" style="cursor: pointer;"
+                                onclick="cambiarPanelDelegado('semaforo', document.getElementById('nav-btn-semaforo'))">
+                                <div class="d-flex justify-content-between align-items-start mb-1">
+                                    <span class="text-uppercase fw-bold text-muted" style="font-size: 0.74rem;">PUNTAJE
+                                        DE EQUIPO (R.10)</span>
+                                    <i class="bi bi-speedometer2 fs-4 text-danger"></i>
+                                </div>
+                                <div class="fw-bold text-danger" style="font-size: 2rem;" id="kpiPuntajeEquipoDel">81,4%
+                                </div>
+                                <div class="text-muted small mt-1"><i class="bi bi-award-fill text-warning me-1"></i>
+                                    <span id="lblFelicitacionesCount">{{ felicitaciones_list|length }}</span>
+                                    felicitaciones formales</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Filtros de Atenciones (compatibles con GET ?q=...&estado=...) -->
+                    <div class="rounded-4 border bg-white shadow-sm p-3 mb-4" id="atenciones">
+                        <form class="row g-2 align-items-end"
+                            action="{% url 'activities:dashboard_delegado' %}#atenciones" method="get">
+                            <div class="col-md-6">
+                                <label class="form-label small fw-bold text-muted mb-1">Buscar por código, vecino o
+                                    asunto</label>
+                                <div class="position-relative">
+                                    <i
+                                        class="bi bi-search position-absolute top-50 start-0 translate-middle-y ms-3 text-muted"></i>
+                                    <input type="search" name="q" value="{{ query }}"
+                                        class="form-control rounded-pill ps-5"
+                                        placeholder="Escribe para buscar código, vecino o solución local…"
+                                        maxlength="100">
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label small fw-bold text-muted mb-1">Estado de Validación</label>
+                                <select name="estado" class="form-select rounded-pill">
+                                    <option value="">Todos los estados</option>
+                                    <option value="followup" {% if status_filter == 'followup' %}selected{% endif %}>En seguimiento</option>
+                                    {% for code, label in statuses %}
+                                    <option value="{{ code }}" {% if status_filter == code %}selected{% endif %}>{{ label }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-md-3 d-flex gap-2">
+                                <button type="submit"
+                                    class="liquid-glass-btn-primary w-100 justify-content-center">Aplicar
+                                    filtros</button>
+                                {% if query or status_filter %}
+                                <a class="btn btn-outline-secondary rounded-pill px-3 fw-bold d-inline-flex align-items-center"
+                                    href="{% url 'activities:dashboard_delegado' %}#atenciones">Limpiar</a>
+                                {% endif %}
+                            </div>
+                        </form>
+                    </div>
+
+                    <!-- Tabla Paginada de Atenciones de la Delegación -->
+                    <div class="rounded-4 border bg-white shadow-sm overflow-hidden mb-3">
+                        <table class="table align-middle m-0 delegado-table" style="width: 100%;">
+                            <thead style="background: rgba(241, 245, 249, 0.95); border-bottom: 2px solid #CBD5E1;">
+                                <tr
+                                    style="font-size: 0.75rem; font-weight: 800; color: #1E293B; text-transform: uppercase;">
+                                    <th scope="col" class="py-3 px-3">Fecha / Código</th>
+                                    <th scope="col" class="py-3 px-2">Solicitante / Fono (R.2)</th>
+                                    <th scope="col" class="py-3 px-2">Asunto / Necesidad Sector</th>
+                                    <th scope="col" class="py-3 px-2">Estado</th>
+                                    <th scope="col" class="py-3 px-3 text-end">Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody style="font-size: 0.86rem;">
+                                {% for item in page %}
+                                <tr>
+                                    <td data-label="Fecha" class="py-3 px-3">
+                                        <div class="fw-bold text-dark">{{ item.activity_date|date:'d/m/Y' }}</div>
+                                        <small class="font-monospace text-muted">{{ item.activity_code }}</small>
+                                    </td>
+                                    <td data-label="Solicitante" class="py-3 px-2">
+                                        <strong class="text-dark d-block">{{ item.contact_name|default:'Sin nombre' }}</strong>
+                                        <small class="text-muted"><i class="bi bi-telephone text-danger me-1"></i>{{ item.contact_phone|default:'Sin fono (0 pts R.2)' }}</small>
+                                    </td>
+                                    <td data-label="Asunto" class="py-3 px-2">
+                                        <div class="fw-semibold text-dark">{{ item.problem_description|truncatechars:82 }}</div>
+                                        <small class="text-secondary">{{ item.executed_action|truncatechars:70 }}</small>
+                                    </td>
+                                    <td data-label="Estado" class="py-3 px-2">
+                                        <span class="delegado-badge badge-{{ item.validation_status|slugify }}">{{ item.get_validation_status_display }}</span>
+                                    </td>
+                                    <td data-label="Acciones" class="py-3 px-3 text-end action-cell">
+                                        <button type="button" class="row-action" data-action="view"
+                                            data-id="{{ item.pk }}">Ver</button>
+                                        {% if can_edit %}<button type="button" class="row-action" data-action="edit"
+                                            data-id="{{ item.pk }}">Editar</button>{% endif %}
+                                        {% if can_close %}<button type="button" class="row-action row-danger"
+                                            data-action="delete" data-id="{{ item.pk }}"
+                                            data-code="{{ item.activity_code }}">Dar de baja</button>{% endif %}
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="5" class="p-4 text-center text-muted delegado-empty">
+                                        No hay atenciones para estos filtros. {% if query or status_filter %}Prueba con
+                                        otra búsqueda.{% else %}Cuando se registren atenciones en {{ delegation.name }},
+                                        aparecerán aquí.{% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Paginación -->
+                    <div
+                        class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4 px-2 small text-muted delegado-pagination">
+                        <span>Mostrando {{ page.start_index }}–{{ page.end_index }} de {{ page.paginator.count }} ·
+                            Página {{ page.number }} de {{ page.paginator.num_pages }}</span>
+                        <div class="d-flex gap-2">
+                            {% if page.has_previous %}
+                            <a class="btn btn-sm btn-outline-danger rounded-pill px-3 fw-bold"
+                                href="?q={{ query|urlencode }}&estado={{ status_filter|urlencode }}&page={{ page.previous_page_number }}#atenciones">Anterior</a>
+                            {% endif %}
+                            {% if page.has_next %}
+                            <a class="btn btn-sm btn-outline-danger rounded-pill px-3 fw-bold"
+                                href="?q={{ query|urlencode }}&estado={{ status_filter|urlencode }}&page={{ page.next_page_number }}#atenciones">Siguiente</a>
+                            {% endif %}
+                        </div>
+                    </div>
+                </section>
+
+                <!-- =========================================================
+                 PANEL 2: PESTAÑA DE SEMÁFORO SGR · AJUSTE DE METAS POR AUSENCIAS (REGLA 9) Y FELICITACIONES FORMALES (REGLA 8)
+                 ========================================================= -->
+                <section id="panel-semaforo" class="panel-view d-none">
+                    <div class="d-flex justify-content-between align-items-start flex-wrap gap-3 mb-4">
+                        <div>
+                            <span class="badge"
+                                style="background: rgba(16, 185, 129, 0.14); color: #047857; font-weight: 800; font-size: 0.75rem;">
+                                <i class="bi bi-speedometer2 me-1"></i> FACULTAD EXCLUSIVA DEL DELEGADO · REGLAS N° 7,
+                                8, 9 Y 10 MATRIZ SGR
+                            </span>
+                            <h2 class="fw-bold m-0 mt-1"
+                                style="font-family: 'Montserrat', sans-serif; color: var(--muni-navy); font-size: 1.6rem;">
+                                Pestaña de Semáforo: Ajuste de Metas (Vacaciones/Licencias) y Felicitaciones Formales
+                            </h2>
+                            <p class="text-secondary m-0 mt-1" style="font-size: 0.88rem;">
+                                <strong>Regla N° 9:</strong> Los días libres, vacaciones, días administrativos y
+                                licencias deben ser ingresados por el Delegado aquí para el ajuste de metas.
+                                <strong>Regla N° 8:</strong> Solo el Delegado informa las felicitaciones de usuarios con
+                                respaldo formal.
+                            </p>
+                        </div>
+                        <div class="d-flex gap-2 flex-wrap">
+                            <button class="liquid-glass-btn-secondary" type="button"
+                                onclick="abrirModalAusenciaSemaforo()">
+                                <i class="bi bi-calendar2-minus-fill"></i> + Ingresar Licencia / Vacaciones / Permiso
+                                (R.9)
+                            </button>
+                            <button class="liquid-glass-btn-primary" type="button"
+                                onclick="abrirModalFelicitacionFormal()">
+                                <i class="bi bi-award-fill"></i> + Informar Felicitación con Respaldo Formal (R.8)
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Tabla de Ajuste de Metas por Funcionario en Pestaña Semáforo (Regla 9 y 10) -->
+                    <div class="rounded-4 border bg-white shadow-sm overflow-hidden mb-4">
+                        <div
+                            class="p-3 border-bottom d-flex justify-content-between align-items-center flex-wrap gap-2">
+                            <span class="fw-bold text-dark"><i class="bi bi-sliders text-danger me-2"></i>Semáforo de
+                                Equipo y Ajuste Proporcional de Metas por Días Ausentes (Regla N° 9 y N° 10)</span>
+                            <span class="badge bg-primary-subtle text-primary fw-bold">Tope por Ítem: 120% Máx. (Regla
+                                N° 7)</span>
+                        </div>
+                        <table class="table align-middle m-0" style="width: 100%;">
+                            <thead style="background: rgba(241, 245, 249, 0.95); border-bottom: 2px solid #CBD5E1;">
+                                <tr
+                                    style="font-size: 0.75rem; font-weight: 800; color: #1E293B; text-transform: uppercase;">
+                                    <th class="py-3 px-3">FUNCIONARIO(A) / CARGO</th>
+                                    <th class="py-3 px-2 text-center">DÍAS BASE</th>
+                                    <th class="py-3 px-2 text-center">DÍAS AUSENCIA (R.9)</th>
+                                    <th class="py-3 px-2 text-center">DÍAS COMPUTABLES</th>
+                                    <th class="py-3 px-2 text-center">META AJUSTADA</th>
+                                    <th class="py-3 px-2 text-center">CUMPLIMIENTO (TOPE 120%)</th>
+                                    <th class="py-3 px-2 text-center">SEMÁFORO EQUIPO</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tablaSemaforoEquipoBody" style="font-size: 0.85rem;">
+                                {% for row in semaforo_team_rows %}
+                                <tr>
+                                    <td class="py-3 px-3">
+                                        <div class="fw-bold text-dark">{{ row.nombre }}</div>
+                                        <small class="text-muted">{{ row.cargo }}</small>
+                                    </td>
+                                    <td class="py-3 px-2 text-center">90</td>
+                                    <td class="py-3 px-2 text-center">
+                                        <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle fw-bold">{{ row.dias_ausencia }} días ({{ row.motivo_ausencia }})</span>
+                                    </td>
+                                    <td class="py-3 px-2 text-center fw-bold text-primary">{{ row.dias_computables }}
+                                        días</td>
+                                    <td class="py-3 px-2 text-center fw-bold">{{ row.meta_ajustada }} gestiones</td>
+                                    <td class="py-3 px-2 text-center fw-bold text-success">{{ row.cumplimiento }}%</td>
+                                    <td class="py-3 px-2 text-center">
+                                        <span class="badge bg-{{ row.semaforo_color }}">{{ row.semaforo_label }}</span>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Registro de Felicitaciones Ciudadanas con Respaldo Formal informadas por el Delegado (Regla N° 8) -->
+                    <div class="rounded-4 border bg-white shadow-sm overflow-hidden mb-4">
+                        <div
+                            class="p-3 border-bottom d-flex justify-content-between align-items-center flex-wrap gap-2">
+                            <span class="fw-bold text-dark"><i
+                                    class="bi bi-patch-check-fill text-warning me-2"></i>Felicitaciones Formales de
+                                Usuarios Informadas por el Delegado (Regla N° 8 SGR)</span>
+                            <span class="text-muted small">Nota: Las felicitaciones directas por mensaje al gestor NO
+                                son válidas sin respaldo formal ante el Delegado.</span>
+                        </div>
+                        <table class="table align-middle m-0" style="width: 100%;">
+                            <thead style="background: rgba(241, 245, 249, 0.95); border-bottom: 2px solid #CBD5E1;">
+                                <tr
+                                    style="font-size: 0.75rem; font-weight: 800; color: #1E293B; text-transform: uppercase;">
+                                    <th class="py-3 px-3">FUNCIONARIO DESTACADO</th>
+                                    <th class="py-3 px-2">VECINO / ORGANIZACIÓN EMISORA</th>
+                                    <th class="py-3 px-2">RESPALDO FORMAL (CARTA / OIRS / OFICIO)</th>
+                                    <th class="py-3 px-2 text-center">BONIFICACIÓN SGR</th>
+                                    <th class="py-3 px-2 text-center">VALIDADO POR</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tablaFelicitacionesBody" style="font-size: 0.85rem;">
+                                {% for f in felicitaciones_list %}
+                                <tr>
+                                    <td class="py-3 px-3 fw-bold text-dark">{{ f.funcionario }}</td>
+                                    <td class="py-3 px-2">{{ f.vecino }}</td>
+                                    <td class="py-3 px-2"><span class="badge bg-light text-dark border font-monospace">{{ f.respaldo }}</span> {{ f.motivo }}</td>
+                                    <td class="py-3 px-2 text-center"><span class="badge bg-success fw-bold">+{{ f.porcentaje }}% Puntaje</span></td>
+                                    <td class="py-3 px-2 text-center"><span class="badge bg-primary-subtle text-primary fw-bold">Delegado Municipal</span></td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <!-- =========================================================
+                 PANEL 3: EQUIPO ACTIVO Y DELEGACIÓN DE TRABAJOS (FUNCIÓN 3 Y 9)
+                 ========================================================= -->
+                <section id="panel-equipo" class="panel-view d-none">
+                    <div class="d-flex justify-content-between align-items-start flex-wrap gap-3 mb-4" id="equipo">
+                        <div>
+                            <span class="badge"
+                                style="background: rgba(27, 54, 93, 0.1); color: var(--muni-navy); font-weight: 800; font-size: 0.75rem;">
+                                <i class="bi bi-people-fill me-1"></i> FUNCIÓN N° 3 Y N° 9 DEL DESCRIPTOR 2026
+                            </span>
+                            <h2 class="fw-bold m-0 mt-1" id="equipo-title"
+                                style="font-family: 'Montserrat', sans-serif; color: var(--muni-navy); font-size: 1.6rem;">
+                                Equipo activo y Delegación de Trabajos Comunitarios
+                            </h2>
+                            <p class="text-secondary m-0 mt-1" style="font-size: 0.88rem;">
+                                Delegar trabajos solicitados por la comunidad a su equipo de trabajo, orientando y
+                                guiando el buen desempeño de las acciones en {{ delegation.name }}.
+                            </p>
+                        </div>
+                        <div>
+                            <button class="liquid-glass-btn-primary" type="button" onclick="abrirModalDelegarTrabajo()">
+                                <i class="bi bi-send-check-fill"></i> + Delegar Trabajo a Funcionario (F.9)
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Grid de Funcionarios Activos de la Sede -->
+                    <div class="row g-3 mb-4 team-grid">
+                        {% for member in team %}
+                        <div class="col-md-6 col-lg-4">
+                            <div class="social-kpi-card d-flex align-items-center gap-3 team-member">
+                                <div class="rounded-circle d-flex align-items-center justify-content-center text-white fw-bold team-avatar"
+                                    style="width: 48px; height: 48px; background: linear-gradient(135deg, #1B365D 0%, #C41230 100%); font-size: 1.15rem; flex-shrink: 0;">
+                                    {{ member.full_name|first|upper }}
+                                </div>
+                                <div class="overflow-hidden">
+                                    <strong class="text-dark d-block text-truncate">{{ member.full_name }}</strong>
+                                    <small class="badge bg-danger-subtle text-danger fw-bold mt-1">{{ member.position.name|default:'Cargo sin asignar' }}</small>
+                                    <div class="text-muted small mt-1"><i class="bi bi-envelope me-1"></i>{{ member.email }}</div>
+                                </div>
+                            </div>
+                        </div>
+                        {% empty %}
+                        <div class="col-12">
+                            <p class="p-4 bg-white rounded-4 border text-center text-muted delegado-empty">No hay
+                                funcionarios activos asignados a esta sede.</p>
+                        </div>
+                        {% endfor %}
+                    </div>
+
+                    <!-- Bitácora de Trabajos Delegados por el Delegado a su Equipo (Función 9) -->
+                    <div class="rounded-4 border bg-white shadow-sm overflow-hidden mb-4">
+                        <div class="p-3 border-bottom fw-bold text-dark">
+                            <i class="bi bi-list-task text-danger me-2"></i>Trabajos Solicitados por la Comunidad y
+                            Delegados al Equipo (Función N° 9)
+                        </div>
+                        <table class="table align-middle m-0" style="width: 100%;">
+                            <thead style="background: rgba(241, 245, 249, 0.95); border-bottom: 2px solid #CBD5E1;">
+                                <tr
+                                    style="font-size: 0.75rem; font-weight: 800; color: #1E293B; text-transform: uppercase;">
+                                    <th class="py-3 px-3">CÓDIGO</th>
+                                    <th class="py-3 px-2">FUNCIONARIO / ÁREA ASIGNADA</th>
+                                    <th class="py-3 px-2">SOLICITUD COMUNITARIA ENCOMENDADA</th>
+                                    <th class="py-3 px-2">ORIENTACIÓN DEL DELEGADO</th>
+                                    <th class="py-3 px-2 text-center">ESTADO</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tablaTrabajosDelegadosBody" style="font-size: 0.85rem;">
+                                <tr>
+                                    <td class="py-3 px-3 fw-bold font-monospace">DEL-TR-01</td>
+                                    <td class="py-3 px-2 fw-bold text-dark">Gestor Social (DIDECO)</td>
+                                    <td class="py-3 px-2">Evaluación socioeconómica en terreno por adulto mayor
+                                        vulnerable en Cuatro Esquinas</td>
+                                    <td class="py-3 px-2 small text-secondary">Realizar visita con evidencia fotográfica
+                                        y tramitar SAP + Canasta</td>
+                                    <td class="py-3 px-2 text-center"><span class="badge bg-success">En Ejecución</span>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="py-3 px-3 fw-bold font-monospace">DEL-TR-02</td>
+                                    <td class="py-3 px-2 fw-bold text-dark">Coordinador de Servicios Comunitarios</td>
+                                    <td class="py-3 px-2">Operativo de desmalezado y recuperación de espacio público
+                                        junto a JJVV N° 12</td>
+                                    <td class="py-3 px-2 small text-secondary">Desplegar cuadrilla polifuncional y
+                                        coordinar tolva con Operaciones</td>
+                                    <td class="py-3 px-2 text-center"><span class="badge bg-primary">Programado</span>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="py-3 px-3 fw-bold font-monospace">DEL-TR-03</td>
+                                    <td class="py-3 px-2 fw-bold text-dark">Organizaciones Comunitarias (OROC)</td>
+                                    <td class="py-3 px-2">Verificación en terreno de directivas pendientes en 'base
+                                        datos JJVV sin verificar'</td>
+                                    <td class="py-3 px-2 small text-secondary">Clasificar por subfamilias funcionales y
+                                        asesorar renovación TRICEL</td>
+                                    <td class="py-3 px-2 text-center"><span class="badge bg-success">En Ejecución</span>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <!-- =========================================================
+                 PANEL 4: VISITAS A JJVV, SUBFAMILIAS OOCC Y MESAS DE TRABAJO (FUNCIONES 4 Y 10)
+                 ========================================================= -->
+                <section id="panel-organizaciones" class="panel-view d-none">
+                    <div class="d-flex justify-content-between align-items-start flex-wrap gap-3 mb-4">
+                        <div>
+                            <span class="badge"
+                                style="background: rgba(245, 158, 11, 0.15); color: #B45309; font-weight: 800; font-size: 0.75rem;">
+                                <i class="bi bi-houses-fill me-1"></i> FUNCIONES N° 4, 7 Y 10 · SUBFAMILIAS
+                                ORGANIZACIONES COMUNITARIAS
+                            </span>
+                            <h2 class="fw-bold m-0 mt-1"
+                                style="font-family: 'Montserrat', sans-serif; color: var(--muni-navy); font-size: 1.6rem;">
+                                Visitas Periódicas a JJVV, Subfamilias OOCC y Mesas de Trabajo Público-Privadas
+                            </h2>
+                            <p class="text-secondary m-0 mt-1" style="font-size: 0.88rem;">
+                                Acompañamiento a dirigentes vecinales en el territorio y generación de mesas de trabajo
+                                con estamentos públicos y privados.
+                            </p>
+                        </div>
+                        <div>
+                            <button class="liquid-glass-btn-primary" type="button" onclick="abrirModalMesaVisita()">
+                                <i class="bi bi-plus-circle-fill"></i> + Registrar Visita JJVV o Mesa de Trabajo
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Subfamilias de Organizaciones Comunitarias (Correo Matriz SGR 4to Semestre) -->
+                    <div class="row g-3 mb-4">
+                        {% for subf in oocc_subfamilias %}
+                        <div class="col-md-6 col-xl-4">
+                            <div class="social-kpi-card">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <span class="badge bg-light text-dark border fw-bold">{{ subf.law }}</span>
+                                    <i class="bi {{ subf.icon }} fs-4" style="color: {{ subf.color }};"></i>
+                                </div>
+                                <h6 class="fw-bold text-dark mb-1">{{ subf.name }}</h6>
+                                <p class="text-muted small m-0">{{ subf.description }}</p>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+
+                    <div class="rounded-4 border bg-white shadow-sm overflow-hidden mb-4">
+                        <div class="p-3 border-bottom fw-bold text-dark">
+                            <i class="bi bi-calendar2-check text-danger me-2"></i>Bitácora de Visitas a Organizaciones y
+                            Mesas Público-Privadas (Funciones 4 y 10)
+                        </div>
+                        <table class="table align-middle m-0" style="width: 100%;">
+                            <thead style="background: rgba(241, 245, 249, 0.95); border-bottom: 2px solid #CBD5E1;">
+                                <tr
+                                    style="font-size: 0.75rem; font-weight: 800; color: #1E293B; text-transform: uppercase;">
+                                    <th class="py-3 px-3">FECHA</th>
+                                    <th class="py-3 px-2">INSTANCIA (FUNCIÓN 4 / FUNCIÓN 10)</th>
+                                    <th class="py-3 px-2">ORGANIZACIÓN / SUBFAMILIA / ESTAMENTO</th>
+                                    <th class="py-3 px-2">ACUERDOS Y SOLUCIONES LOCALES</th>
+                                    <th class="py-3 px-2 text-center">ESTADO</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tablaMesasVisitasBody" style="font-size: 0.85rem;">
+                                <tr>
+                                    <td class="py-3 px-3 fw-bold">26/10/2026</td>
+                                    <td class="py-3 px-2"><span
+                                            class="badge bg-primary-subtle text-primary fw-bold">Visita Periódica JJVV
+                                            (F.4)</span></td>
+                                    <td class="py-3 px-2 fw-bold text-dark">JJVV N° 12 Faro Monumental (Territorial)
+                                    </td>
+                                    <td class="py-3 px-2 small">Acompañamiento a directiva; se prioriza reposición de 8
+                                        luminarias y poda preventiva</td>
+                                    <td class="py-3 px-2 text-center"><span class="badge bg-success">Ejecutada</span>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="py-3 px-3 fw-bold">27/10/2026</td>
+                                    <td class="py-3 px-2"><span
+                                            class="badge bg-warning-subtle text-warning-emphasis fw-bold">Mesa
+                                            Público-Privada (F.10)</span></td>
+                                    <td class="py-3 px-2 fw-bold text-dark">Carabineros + Seguridad Municipal +
+                                        Locatarios Av. del Mar</td>
+                                    <td class="py-3 px-2 small">Coordinación de patrullajes preventivos mixtos para
+                                        temporada estival 2026</td>
+                                    <td class="py-3 px-2 text-center"><span class="badge bg-success">Acta Firmada</span>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="py-3 px-3 fw-bold">28/10/2026</td>
+                                    <td class="py-3 px-2"><span
+                                            class="badge bg-info-subtle text-info-emphasis fw-bold">Visita Subfamilia
+                                            OOCC (F.4)</span></td>
+                                    <td class="py-3 px-2 fw-bold text-dark">Club de Adulto Mayor Brisas del Pacífico
+                                    </td>
+                                    <td class="py-3 px-2 small">Apoyo en postulación a proyectos y coordinación de
+                                        operativo de salud con CESFAM</td>
+                                    <td class="py-3 px-2 text-center"><span class="badge bg-success">Ejecutada</span>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <!-- =========================================================
+                 PANEL 5: INFORMES PREVENTIVOS A ALCALDÍA Y DIFUSIÓN (FUNCIONES 1, 2, 6 Y 8)
+                 ========================================================= -->
+                <section id="panel-alcaldia" class="panel-view d-none">
+                    <div class="d-flex justify-content-between align-items-start flex-wrap gap-3 mb-4">
+                        <div>
+                            <span class="badge"
+                                style="background: rgba(196, 18, 48, 0.12); color: var(--muni-red); font-weight: 800; font-size: 0.75rem;">
+                                <i class="bi bi-shield-exclamation me-1"></i> FUNCIONES N° 1, 2, 6, 8 Y 11 · ENLACE CON
+                                ALCALDÍA Y ADMINISTRACIÓN MUNICIPAL
+                            </span>
+                            <h2 class="fw-bold m-0 mt-1"
+                                style="font-family: 'Montserrat', sans-serif; color: var(--muni-navy); font-size: 1.6rem;">
+                                Informes Preventivos a la Autoridad Comunal y Difusión de Programas
+                            </h2>
+                            <p class="text-secondary m-0 mt-1" style="font-size: 0.88rem;">
+                                Informar a la autoridad comunal sobre situaciones del territorio para adoptar medidas
+                                preventivas, supervisar planes de desarrollo y difundir programas municipales.
+                            </p>
+                        </div>
+                        <div>
+                            <button class="liquid-glass-btn-primary" type="button"
+                                onclick="exportarReporteDelegadoPdf()">
+                                <i class="bi bi-file-earmark-pdf-fill"></i> Emitir Informe Preventivo a Alcaldía PDF
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="rounded-4 border bg-white shadow-sm overflow-hidden mb-4">
+                        <table class="table align-middle m-0" style="width: 100%;">
+                            <thead style="background: rgba(241, 245, 249, 0.95); border-bottom: 2px solid #CBD5E1;">
+                                <tr
+                                    style="font-size: 0.75rem; font-weight: 800; color: #1E293B; text-transform: uppercase;">
+                                    <th class="py-3 px-3">N° OFICIO</th>
+                                    <th class="py-3 px-2">FUNCIÓN DEL DELEGADO</th>
+                                    <th class="py-3 px-2">SITUACIÓN INFORMADA / CAMPAÑA DE DIFUSIÓN</th>
+                                    <th class="py-3 px-2">DESTINATARIO</th>
+                                    <th class="py-3 px-2 text-center">DESCARGA</th>
+                                </tr>
+                            </thead>
+                            <tbody style="font-size: 0.85rem;">
+                                <tr>
+                                    <td class="py-3 px-3 fw-bold font-monospace">INF-ALC-2026-041</td>
+                                    <td class="py-3 px-2"><span
+                                            class="badge bg-danger-subtle text-danger fw-bold">Informe Preventivo
+                                            (F.1)</span></td>
+                                    <td class="py-3 px-2">Plan preventivo de seguridad, marejadas e iluminación para el
+                                        sector costero 4to Trimestre</td>
+                                    <td class="py-3 px-2">Alcaldía / Administrador Municipal</td>
+                                    <td class="py-3 px-2 text-center"><button
+                                            class="btn btn-sm btn-outline-danger rounded-pill px-3 fw-bold"
+                                            onclick="exportarReporteDelegadoPdf()">PDF</button></td>
+                                </tr>
+                                <tr>
+                                    <td class="py-3 px-3 fw-bold font-monospace">DIF-MUN-2026-019</td>
+                                    <td class="py-3 px-2"><span
+                                            class="badge bg-primary-subtle text-primary fw-bold">Difusión Programas
+                                            (F.8)</span></td>
+                                    <td class="py-3 px-2">Campaña territorial de postulación a Subsidios SAP, Becas
+                                        Municipales y Fondos Concursables</td>
+                                    <td class="py-3 px-2">JJVV y Organizaciones del Territorio</td>
+                                    <td class="py-3 px-2 text-center"><button
+                                            class="btn btn-sm btn-outline-danger rounded-pill px-3 fw-bold"
+                                            onclick="exportarReporteDelegadoPdf()">PDF</button></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <!-- =========================================================
+                 PANEL 6: DESCRIPTOR OFICIAL DE LAS 11 FUNCIONES DEL DELEGADO
+                 ========================================================= -->
+                <section id="panel-descriptor" class="panel-view d-none">
+                    <div class="rounded-4 border bg-white shadow-sm p-4 mb-4">
+                        <span class="badge bg-danger mb-2">DECRETO N° 3096 · VERSIÓN AÑO 2026</span>
+                        <h3 class="fw-bold" style="color: var(--muni-navy); font-family: 'Montserrat', sans-serif;">
+                            Descriptor Oficial de Funciones: DELEGADO MUNICIPAL</h3>
+                        <p class="text-secondary small mb-3">
+                            Funcionario representante directo de la alcaldía en los distintos sectores de su territorio.
+                            Su rol principal es actuar como puente entre el municipio y los sectores más alejados o
+                            poblados de la comuna, acercando la atención social, asesorar a los dirigentes en el
+                            territorio y gestionar soluciones locales (seguridad, limpieza, áreas verdes).
+                        </p>
+                        <div class="list-group list-group-flush border rounded-4 overflow-hidden mb-4">
+                            <div class="list-group-item py-2.5 small fw-semibold"><i
+                                    class="bi bi-check-circle-fill text-success me-2"></i>1. Informar a la autoridad
+                                comunal sobre situaciones que pudieran ocurrir en su territorio, con el objeto de
+                                adoptar las medidas preventivas correspondientes.</div>
+                            <div class="list-group-item py-2.5 small fw-semibold"><i
+                                    class="bi bi-check-circle-fill text-success me-2"></i>2. Ser representante de la
+                                Máxima autoridad comunal en su territorio, empoderándose de su cargo para enfrentar y
+                                solucionar las necesidades permanentes de los usuarios.</div>
+                            <div class="list-group-item py-2.5 small fw-semibold"><i
+                                    class="bi bi-check-circle-fill text-success me-2"></i>3. Responsable del buen
+                                funcionamiento del territorio desde la parte interna administrativa al cumplimiento de
+                                las gestiones encomendadas a la Delegación.</div>
+                            <div class="list-group-item py-2.5 small fw-semibold"><i
+                                    class="bi bi-check-circle-fill text-success me-2"></i>4. Visitar periódicamente
+                                Juntas de vecinos y Organizaciones comunitarias con el objetivo de estar presente,
+                                generando acompañamiento y apoyo.</div>
+                            <div class="list-group-item py-2.5 small fw-semibold"><i
+                                    class="bi bi-check-circle-fill text-success me-2"></i>5. Proponer y dar soluciones a
+                                las necesidades y problemas de los usuarios del sector, con el objeto de potenciar y
+                                mejorar la gestión de los servicios municipales.</div>
+                            <div class="list-group-item py-2.5 small fw-semibold"><i
+                                    class="bi bi-check-circle-fill text-success me-2"></i>6. Poner en práctica y
+                                supervisar el cumplimiento de planes y políticas de Desarrollo, que beneficien a la
+                                comunidad, de acuerdo a lo dispuesto por la máxima autoridad comunal.</div>
+                            <div class="list-group-item py-2.5 small fw-semibold"><i
+                                    class="bi bi-check-circle-fill text-success me-2"></i>7. Mantener buena relación y
+                                comunicación con las distintas direcciones y/o departamentos del municipio, así como con
+                                las organizaciones públicas y sociales.</div>
+                            <div class="list-group-item py-2.5 small fw-semibold"><i
+                                    class="bi bi-check-circle-fill text-success me-2"></i>8. Hacer difusión de los
+                                programas y actividades implementados por la Municipalidad.</div>
+                            <div class="list-group-item py-2.5 small fw-semibold"><i
+                                    class="bi bi-check-circle-fill text-success me-2"></i>9. Delegar trabajos
+                                solicitados por la comunidad a su equipo de trabajo orientando y guiando el buen
+                                desempeño de las acciones.</div>
+                            <div class="list-group-item py-2.5 small fw-semibold"><i
+                                    class="bi bi-check-circle-fill text-success me-2"></i>10. Generar mesas de trabajo
+                                con distintos estamentos públicos y privados siendo el puente para los usuarios que
+                                necesitan atención.</div>
+                            <div class="list-group-item py-2.5 small fw-semibold"><i
+                                    class="bi bi-check-circle-fill text-success me-2"></i>11. Ejecutar otras funciones
+                                que la ley señale, que le encomiende el alcalde o el Administrador Municipal en el
+                                ámbito de sus competencias.</div>
+                        </div>
+                    </div>
+                </section>
+
+                {% endif %}
+            </main>
+
+            <footer class="p-3 text-center text-muted border-top bg-white small page-footer">
+                Ilustre Municipalidad de La Serena <span aria-hidden="true">·</span> Gestión social y atención ciudadana
+                <span aria-hidden="true">·</span> Coordinación de Delegaciones 2026
+            </footer>
+        </div>
+    </div>
+
+    {% if can_close %}<form id="delegado-csrf" hidden>{% csrf_token %}</form>{% endif %}
+
+    {% if can_edit %}
+    <!-- Modal 1: Crear / Editar Atención de la Delegación (Compatible con dashboard_delegado.js + Reglas SGR) -->
+    <div class="modal fade" id="attentionModal" tabindex="-1" aria-labelledby="attentionModalTitle" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content rounded-4 border-0 shadow-lg delegado-modal">
+                <div class="modal-header text-white"
+                    style="background: linear-gradient(135deg, #C41230 0%, #9E0E26 100%);">
+                    <div>
+                        <p class="small m-0 text-white-50 eyebrow">{{ delegation.name }}</p>
+                        <h2 class="modal-title fs-5 fw-bold" id="attentionModalTitle">Nueva atención</h2>
+                    </div>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                        aria-label="Cerrar"></button>
+                </div>
+                <form id="delegado-attention-form" novalidate>
+                    {% csrf_token %}
+                    <div class="modal-body p-4">
+                        <div class="alert alert-light border small py-2 mb-3">
+                            <i class="bi bi-info-circle-fill text-danger me-1"></i>
+                            <strong>Reglas Matriz SGR 4to Semestre:</strong> Si el solicitante es el propio Delegado
+                            (Regla 1) o si es una coordinación preparatoria (Regla 5), se considera <em>Otra
+                                Gestión</em>. Ingresa siempre <strong>Nombre y Teléfono</strong> del vecino (Regla 2).
+                        </div>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label for="field-contact" class="form-label fw-bold small">Solicitante (Nombre
+                                    Vecino/a) *</label>
+                                <input id="field-contact" name="contact_name" class="form-control rounded-3"
+                                    maxlength="150" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="field-phone" class="form-label fw-bold small">Teléfono de Contacto
+                                    (Obligatorio Puntaje · Regla 2)</label>
+                                <input id="field-phone" name="contact_phone" class="form-control rounded-3"
+                                    maxlength="20" placeholder="+56 9 8765 4321">
+                            </div>
+                            <div class="col-md-6">
+                                <label for="field-date" class="form-label fw-bold small">Fecha *</label>
+                                <input id="field-date" name="activity_date" type="date" class="form-control rounded-3"
+                                    value="{% now 'Y-m-d' %}" max="{% now 'Y-m-d' %}" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="field-type" class="form-label fw-bold small">Tipo de atención *</label>
+                                <select id="field-type" name="attention_type_id" class="form-select rounded-3" required>
+                                    <option value="">Selecciona un tipo</option>
+                                    {% for type in attention_types %}<option value="{{ type.pk }}">{{ type.name }}
+                                    </option>{% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="field-subtype" class="form-label fw-bold small">Sub atención *</label>
+                                <select id="field-subtype" name="subattention_id" class="form-select rounded-3"
+                                    required>
+                                    <option value="">Selecciona primero el tipo</option>
+                                    {% for sub in subattentions %}<option value="{{ sub.pk }}"
+                                        data-type="{{ sub.attention_type_id }}">{{ sub.name }}</option>{% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-md-6 d-flex align-items-end">
+                                <div class="form-check pb-2">
+                                    <input class="form-check-input" type="checkbox" id="field-agenda"
+                                        name="is_collective_agenda" checked>
+                                    <label for="field-agenda" class="form-check-label small fw-semibold">Incorporar a
+                                        agenda colectiva SGR (De cara al usuario)</label>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="field-problem" class="form-label fw-bold small">Descripción de la solicitud
+                                    *</label>
+                                <textarea id="field-problem" name="problem_description" class="form-control rounded-3"
+                                    rows="3" maxlength="10000" required></textarea>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="field-action" class="form-label fw-bold small">Acción realizada o derivación
+                                    *</label>
+                                <textarea id="field-action" name="executed_action" class="form-control rounded-3"
+                                    rows="3" maxlength="10000" required></textarea>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer border-top">
+                        <button type="button" class="btn btn-outline-secondary rounded-pill px-4"
+                            data-bs-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="liquid-glass-btn-primary" id="delegado-save">Guardar
+                            atención</button>
+                    </div>
+                </form>
             </div>
         </div>
-        <nav class="primary-nav" aria-label="Menú principal">
-            <a class="nav-link is-current" href="#inicio" aria-current="page"><span class="nav-mark" aria-hidden="true">⌂</span>Inicio</a>
-            {% if can_read %}
-            <a class="nav-link" href="#atenciones"><span class="nav-mark" aria-hidden="true">01</span>Atenciones</a>
-            <a class="nav-link" href="#equipo"><span class="nav-mark" aria-hidden="true">02</span>Equipo</a>
-            <a class="nav-link" href="?estado=followup#atenciones"><span class="nav-mark" aria-hidden="true">03</span>Seguimiento</a>
-            {% endif %}
-        </nav>
-        <div class="sidebar-photo" role="img" aria-label="Faro Monumental de La Serena">
-            <div class="photo-caption"><span>La Serena</span><small>Siempre cerca de ti</small></div>
+    </div>
+    {% endif %}
+
+    {% if can_read %}
+    <!-- Modal 2: Ingresar Licencia / Vacaciones / Día Administrativo en Semáforo (Regla N° 9) -->
+    <div class="modal fade" id="modalAusenciaSemaforo" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content rounded-4 border-0 shadow-lg">
+                <div class="modal-header text-white"
+                    style="background: linear-gradient(135deg, #1B365D 0%, #0F172A 100%);">
+                    <div>
+                        <h5 class="modal-title fw-bold"><i class="bi bi-calendar2-minus-fill me-2"></i>Ajuste de Metas
+                            en Semáforo (Regla N° 9)</h5>
+                        <p class="small m-0 text-white-50">Ingreso exclusivo por el Delegado Municipal</p>
+                    </div>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <form id="formAusenciaSemaforo" onsubmit="guardarAusenciaSemaforo(event)">
+                        <div class="mb-3">
+                            <label class="form-label fw-bold small">Funcionario(a) de la Delegación <span
+                                    class="text-danger">*</span></label>
+                            <select class="form-select rounded-3" id="ausFuncionario" required>
+                                {% for row in semaforo_team_rows %}
+                                <option value="{{ row.nombre }}">{{ row.nombre }} ({{ row.cargo }})</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-bold small">Causal de Ajuste de Meta (Regla N° 9) <span
+                                    class="text-danger">*</span></label>
+                            <select class="form-select rounded-3" id="ausTipo" required>
+                                <option value="Feriado Legal / Vacaciones">Feriado Legal / Vacaciones</option>
+                                <option value="Día Administrativo">Día Administrativo</option>
+                                <option value="Licencia Médica">Licencia Médica</option>
+                                <option value="Día Libre Compensatorio">Día Libre Compensatorio</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-bold small">Cantidad de Días Hábiles a Descontar <span
+                                    class="text-danger">*</span></label>
+                            <input type="number" class="form-control rounded-3" id="ausDias" min="1" max="45" value="2"
+                                required>
+                        </div>
+                        <div class="d-flex justify-content-end gap-2 mt-4">
+                            <button type="button" class="btn btn-outline-secondary rounded-pill px-4"
+                                data-bs-dismiss="modal">Cancelar</button>
+                            <button type="submit" class="liquid-glass-btn-primary">Aplicar Ajuste en Semáforo</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
         </div>
-    </aside>
+    </div>
 
-    <main class="main-content" id="inicio">
-        <div class="identity-bar" aria-label="Contexto de trabajo">
-            <span><strong>{{ profile.full_name }}</strong><small>Delegado Municipal · {{ role_name }}</small></span>
-            <span><small>Delegación activa</small><strong>{% if delegation %}{{ delegation.code }} · {{ delegation.name }}{% else %}Sin delegación asignada{% endif %}</strong></span>
+    <!-- Modal 3: Informar Felicitación Ciudadana con Respaldo Formal (Regla N° 8) -->
+    <div class="modal fade" id="modalFelicitacionFormal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content rounded-4 border-0 shadow-lg">
+                <div class="modal-header text-white"
+                    style="background: linear-gradient(135deg, #059669 0%, #047857 100%);">
+                    <div>
+                        <h5 class="modal-title fw-bold"><i class="bi bi-award-fill me-2"></i>Informar Felicitación
+                            Formal (Regla N° 8)</h5>
+                        <p class="small m-0 text-white-50">Respaldo formal recibido directamente por el Delegado o en
+                            Delegación</p>
+                    </div>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <form id="formFelicitacionFormal" onsubmit="guardarFelicitacionFormal(event)">
+                        <div class="alert alert-warning small py-2 mb-3">
+                            <strong>Regla N° 8:</strong> Las felicitaciones enviadas por mensaje directo al gestor NO
+                            son válidas para puntaje. Solo el Delegado puede informarlas con respaldo formal.
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-bold small">Funcionario(a) Felicitado(a) <span
+                                    class="text-danger">*</span></label>
+                            <select class="form-select rounded-3" id="felFuncionario" required>
+                                {% for row in semaforo_team_rows %}
+                                <option value="{{ row.nombre }}">{{ row.nombre }} ({{ row.cargo }})</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-bold small">Vecino(a) o Directiva Emisora <span
+                                    class="text-danger">*</span></label>
+                            <input type="text" class="form-control rounded-3" id="felVecino"
+                                placeholder="Ej: Directiva JJVV N° 12 Faro Monumental" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-bold small">N° Documento / Respaldo Formal (Carta, OIRS, Oficio)
+                                <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control rounded-3" id="felRespaldo"
+                                placeholder="Ej: Folio OIRS #2026-884 / Carta Ingreso Delegación" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-bold small">Motivo de la Felicitación <span
+                                    class="text-danger">*</span></label>
+                            <textarea class="form-control rounded-3" id="felMotivo" rows="2" required
+                                placeholder="Excelente disposición y rápida solución en terreno..."></textarea>
+                        </div>
+                        <div class="d-flex justify-content-end gap-2 mt-4">
+                            <button type="button" class="btn btn-outline-secondary rounded-pill px-4"
+                                data-bs-dismiss="modal">Cancelar</button>
+                            <button type="submit" class="liquid-glass-btn-primary"
+                                style="background: linear-gradient(135deg, #059669 0%, #047857 100%) !important;">Validar
+                                e Informar a Coordinación</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
         </div>
-        <header class="page-heading delegado-heading">
-            <div>
-                <p class="eyebrow">Sistema de Gestión de Resultados</p>
-                <h1>Panel de tu delegación</h1>
-                <p class="lead">Hola, {{ first_name }}. Aquí puedes revisar el trabajo de {% if delegation %}{{ delegation.name }}{% else %}tu sede{% endif %}.</p>
+    </div>
+
+    <!-- Modal 4: Delegar Trabajo Comunitario al Equipo (Función N° 9) -->
+    <div class="modal fade" id="modalDelegarTrabajo" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content rounded-4 border-0 shadow-lg">
+                <div class="modal-header text-white"
+                    style="background: linear-gradient(135deg, #C41230 0%, #9E0E26 100%);">
+                    <div>
+                        <h5 class="modal-title fw-bold"><i class="bi bi-send-check-fill me-2"></i>Delegar Trabajo
+                            Solicitado por la Comunidad (F.9)</h5>
+                        <p class="small m-0 text-white-50">Orientando y guiando el buen desempeño del equipo</p>
+                    </div>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <form id="formDelegarTrabajo" onsubmit="guardarTrabajoDelegado(event)">
+                        <div class="mb-3">
+                            <label class="form-label fw-bold small">Asignar a Funcionario / Área <span
+                                    class="text-danger">*</span></label>
+                            <select class="form-select rounded-3" id="delDestinatario" required>
+                                {% for row in semaforo_team_rows %}
+                                <option value="{{ row.nombre }} · {{ row.cargo }}">{{ row.nombre }} · {{ row.cargo }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-bold small">Solicitud de la Comunidad <span
+                                    class="text-danger">*</span></label>
+                            <input type="text" class="form-control rounded-3" id="delSolicitud"
+                                placeholder="Ej: Operativo de limpieza y bacheo en pasaje..." required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-bold small">Orientación e Instrucciones del Delegado <span
+                                    class="text-danger">*</span></label>
+                            <textarea class="form-control rounded-3" id="delOrientacion" rows="2" required
+                                placeholder="Coordinar visita técnica hoy y reportar evidencia..."></textarea>
+                        </div>
+                        <div class="d-flex justify-content-end gap-2 mt-4">
+                            <button type="button" class="btn btn-outline-secondary rounded-pill px-4"
+                                data-bs-dismiss="modal">Cancelar</button>
+                            <button type="submit" class="liquid-glass-btn-primary">Delegar Trabajo</button>
+                        </div>
+                    </form>
+                </div>
             </div>
-            <a class="logout-link" href="{% url 'core:logout' %}">Cerrar sesión</a>
-        </header>
+        </div>
+    </div>
 
-        {% if not delegation %}
-        <div class="delegado-notice" role="status">Tu perfil no tiene una delegación activa asignada. Solicita a administración que revise tu cargo y sede.</div>
-        {% elif not can_read %}
-        <div class="delegado-notice" role="status">Tu rol no tiene accesos habilitados por ahora. Consulta con la administración si necesitas un permiso.</div>
-        {% else %}
-        <section class="delegado-summary" aria-label="Resumen de la delegación">
-            <article class="delegado-stat" style="--order:0"><span class="stat-icon" aria-hidden="true">01</span><span>Atenciones registradas</span><strong>{{ total }}</strong><small>En {{ delegation.name }}</small></article>
-            <article class="delegado-stat" style="--order:1"><span class="stat-icon" aria-hidden="true">02</span><span>En seguimiento</span><strong>{{ in_followup }}</strong><small>Pendientes o por corregir</small></article>
-            <article class="delegado-stat" style="--order:2"><span class="stat-icon" aria-hidden="true">03</span><span>Equipo activo</span><strong>{{ team_count }}</strong><small>Funcionarios de esta sede</small></article>
-        </section>
-
-        <div class="delegado-context"><span class="context-dot" aria-hidden="true"></span><strong>{{ delegation.name }}</strong><span>Los registros de este panel corresponden solo a tu delegación.</span><span class="context-approved">{{ approved }} aprobada{{ approved|pluralize }}</span></div>
-
-        <section class="delegado-card" id="atenciones" aria-labelledby="atenciones-title">
-            <div class="delegado-card-heading">
-                <div><p class="eyebrow">Trabajo diario</p><h2 id="atenciones-title">Atenciones de mi delegación</h2><p>Busca, filtra y revisa los registros guardados en la base de datos.</p></div>
-                {% if can_edit %}<button class="delegado-primary" type="button" data-bs-toggle="modal" data-bs-target="#attentionModal" data-action="create">+ Nueva atención</button>{% endif %}
+    <!-- Modal 5: Registrar Visita JJVV o Mesa de Trabajo (Funciones 4 y 10) -->
+    <div class="modal fade" id="modalMesaVisita" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content rounded-4 border-0 shadow-lg">
+                <div class="modal-header text-white"
+                    style="background: linear-gradient(135deg, #1B365D 0%, #0F172A 100%);">
+                    <h5 class="modal-title fw-bold"><i class="bi bi-houses-fill me-2"></i>Registrar Visita a JJVV o Mesa
+                        de Trabajo</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <form id="formMesaVisita" onsubmit="guardarMesaVisita(event)">
+                        <div class="mb-3">
+                            <label class="form-label fw-bold small">Tipo de Instancia <span
+                                    class="text-danger">*</span></label>
+                            <select class="form-select rounded-3" id="mvTipo" required>
+                                <option value="Visita Periódica JJVV (F.4)">Visita Periódica a Junta de Vecinos (Función
+                                    4)</option>
+                                <option value="Visita Subfamilia OOCC (F.4)">Visita a Club Adulto Mayor / Deportiva /
+                                    Centro Cultural / Comité</option>
+                                <option value="Mesa Público-Privada (F.10)">Mesa de Trabajo con Estamentos Públicos y
+                                    Privados (Función 10)</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-bold small">Organización / Estamento Participante <span
+                                    class="text-danger">*</span></label>
+                            <input type="text" class="form-control rounded-3" id="mvOrg" required
+                                placeholder="Ej: JJVV N° 12 / Comité Seguridad / Aguas del Valle">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-bold small">Acuerdos y Soluciones Locales <span
+                                    class="text-danger">*</span></label>
+                            <textarea class="form-control rounded-3" id="mvAcuerdos" rows="2" required></textarea>
+                        </div>
+                        <div class="d-flex justify-content-end gap-2 mt-4">
+                            <button type="button" class="btn btn-outline-secondary rounded-pill px-4"
+                                data-bs-dismiss="modal">Cancelar</button>
+                            <button type="submit" class="liquid-glass-btn-primary">Guardar en Bitácora</button>
+                        </div>
+                    </form>
+                </div>
             </div>
-            <form class="delegado-filters" action="{% url 'activities:dashboard_delegado' %}#atenciones" method="get">
-                <label><span>Buscar por código, vecino o asunto</span><input type="search" name="q" value="{{ query }}" placeholder="Escribe para buscar…" maxlength="100"></label>
-                <label><span>Estado</span><select name="estado"><option value="">Todos los estados</option><option value="followup" {% if status_filter == 'followup' %}selected{% endif %}>En seguimiento</option>{% for code, label in statuses %}<option value="{{ code }}" {% if status_filter == code %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></label>
-                <button type="submit">Aplicar filtros</button>
-                {% if query or status_filter %}<a class="clear-filters" href="{% url 'activities:dashboard_delegado' %}#atenciones">Limpiar</a>{% endif %}
-            </form>
-            <div class="delegado-table-wrap">
-                <table class="delegado-table"><thead><tr><th scope="col">Fecha</th><th scope="col">Solicitante</th><th scope="col">Asunto</th><th scope="col">Estado</th><th scope="col">Acciones</th></tr></thead>
-                    <tbody>{% for item in page %}<tr>
-                        <td data-label="Fecha">{{ item.activity_date|date:'d/m/Y' }}<small>{{ item.activity_code }}</small></td>
-                        <td data-label="Solicitante"><strong>{{ item.contact_name|default:'Sin nombre' }}</strong></td>
-                        <td data-label="Asunto">{{ item.problem_description|truncatechars:82 }}</td>
-                        <td data-label="Estado"><span class="delegado-badge badge-{{ item.validation_status|slugify }}">{{ item.get_validation_status_display }}</span></td>
-                        <td data-label="Acciones" class="action-cell"><button type="button" class="row-action" data-action="view" data-id="{{ item.pk }}">Ver</button>{% if can_edit %}<button type="button" class="row-action" data-action="edit" data-id="{{ item.pk }}">Editar</button>{% endif %}{% if can_close %}<button type="button" class="row-action row-danger" data-action="delete" data-id="{{ item.pk }}" data-code="{{ item.activity_code }}">Dar de baja</button>{% endif %}</td>
-                    </tr>{% empty %}<tr><td colspan="5" class="delegado-empty">No hay atenciones para estos filtros. {% if query or status_filter %}Prueba con otra búsqueda.{% else %}Cuando se registren atenciones en {{ delegation.name }}, aparecerán aquí.{% endif %}</td></tr>{% endfor %}</tbody>
-                </table>
-            </div>
-            <div class="delegado-pagination"><span>Mostrando {{ page.start_index }}–{{ page.end_index }} de {{ page.paginator.count }} · Página {{ page.number }} de {{ page.paginator.num_pages }}</span><div>{% if page.has_previous %}<a href="?q={{ query|urlencode }}&estado={{ status_filter|urlencode }}&page={{ page.previous_page_number }}#atenciones">Anterior</a>{% endif %}{% if page.has_next %}<a href="?q={{ query|urlencode }}&estado={{ status_filter|urlencode }}&page={{ page.next_page_number }}#atenciones">Siguiente</a>{% endif %}</div></div>
-        </section>
+        </div>
+    </div>
+    {% endif %}
 
-        <section class="delegado-card delegado-team" id="equipo" aria-labelledby="equipo-title"><div class="delegado-card-heading"><div><p class="eyebrow">Personas de tu sede</p><h2 id="equipo-title">Equipo activo</h2><p>Funcionarios asignados a {{ delegation.name }}.</p></div></div><div class="team-grid">{% for member in team %}<div class="team-member"><span class="team-avatar" aria-hidden="true">{{ member.full_name|first|upper }}</span><div><strong>{{ member.full_name }}</strong><small>{{ member.position.name|default:'Cargo sin asignar' }}</small></div></div>{% empty %}<p class="delegado-empty">No hay funcionarios activos asignados a esta sede.</p>{% endfor %}</div></section>
-        {% endif %}
-        <footer class="page-footer">Ilustre Municipalidad de La Serena <span aria-hidden="true">·</span> Gestión social y atención ciudadana</footer>
-    </main>
-</div>
+    <script>
+        function toggleSidebar() {
+            const sb = document.getElementById('sidebar');
+            if (sb) sb.classList.toggle('active');
+        }
 
-{% if can_close %}<form id="delegado-csrf" hidden>{% csrf_token %}</form>{% endif %}
-{% if can_edit %}
-<div class="modal fade" id="attentionModal" tabindex="-1" aria-labelledby="attentionModalTitle" aria-hidden="true">
-  <div class="modal-dialog modal-dialog-centered modal-lg"><div class="modal-content delegado-modal">
-    <div class="modal-header"><div><p class="eyebrow">{{ delegation.name }}</p><h2 class="modal-title fs-4" id="attentionModalTitle">Nueva atención</h2></div><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button></div>
-    <form id="delegado-attention-form" novalidate>{% csrf_token %}<div class="modal-body"><div class="row g-3">
-      <div class="col-md-6"><label for="field-contact" class="form-label">Solicitante *</label><input id="field-contact" name="contact_name" class="form-control" maxlength="150" required></div>
-      <div class="col-md-6"><label for="field-phone" class="form-label">Teléfono</label><input id="field-phone" name="contact_phone" class="form-control" maxlength="20"></div>
-      <div class="col-md-6"><label for="field-date" class="form-label">Fecha *</label><input id="field-date" name="activity_date" type="date" class="form-control" max="{% now 'Y-m-d' %}" required></div>
-      <div class="col-md-6"><label for="field-type" class="form-label">Tipo de atención *</label><select id="field-type" name="attention_type_id" class="form-select" required><option value="">Selecciona un tipo</option>{% for type in attention_types %}<option value="{{ type.pk }}">{{ type.name }}</option>{% endfor %}</select></div>
-      <div class="col-md-6"><label for="field-subtype" class="form-label">Sub atención *</label><select id="field-subtype" name="subattention_id" class="form-select" required><option value="">Selecciona primero el tipo</option>{% for sub in subattentions %}<option value="{{ sub.pk }}" data-type="{{ sub.attention_type_id }}">{{ sub.name }}</option>{% endfor %}</select></div>
-      <div class="col-md-6 d-flex align-items-end"><div class="form-check pb-2"><input class="form-check-input" type="checkbox" id="field-agenda" name="is_collective_agenda"><label for="field-agenda" class="form-check-label">Incorporar a agenda colectiva</label></div></div>
-      <div class="col-md-6"><label for="field-problem" class="form-label">Descripción de la solicitud *</label><textarea id="field-problem" name="problem_description" class="form-control" rows="3" maxlength="10000" required></textarea></div>
-      <div class="col-md-6"><label for="field-action" class="form-label">Acción realizada o derivación *</label><textarea id="field-action" name="executed_action" class="form-control" rows="3" maxlength="10000" required></textarea></div>
-    </div></div><div class="modal-footer"><button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button><button type="submit" class="delegado-primary" id="delegado-save">Guardar atención</button></div></form>
-  </div></div>
-</div>
-{% endif %}
+        function cambiarPanelDelegado(panelId, btnEl) {
+            document.querySelectorAll('.panel-view').forEach(p => p.classList.add('d-none'));
+            const target = document.getElementById('panel-' + panelId);
+            if (target) target.classList.remove('d-none');
+
+            document.querySelectorAll('.sidebar .nav-item-btn').forEach(b => b.classList.remove('active'));
+            if (btnEl) btnEl.classList.add('active');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function abrirModalAusenciaSemaforo() {
+            new bootstrap.Modal(document.getElementById('modalAusenciaSemaforo')).show();
+        }
+        function abrirModalFelicitacionFormal() {
+            new bootstrap.Modal(document.getElementById('modalFelicitacionFormal')).show();
+        }
+        function abrirModalDelegarTrabajo() {
+            new bootstrap.Modal(document.getElementById('modalDelegarTrabajo')).show();
+        }
+        function abrirModalMesaVisita() {
+            new bootstrap.Modal(document.getElementById('modalMesaVisita')).show();
+        }
+
+        async function guardarAusenciaSemaforo(e) {
+            e.preventDefault();
+            const func = document.getElementById('ausFuncionario').value;
+            const tipo = document.getElementById('ausTipo').value;
+            const dias = parseInt(document.getElementById('ausDias').value, 10) || 1;
+            const computables = Math.max(1, 90 - dias);
+            const metaAjustada = Math.max(5, Math.round((40 * computables) / 90));
+
+            try {
+                const csrf = document.querySelector('[name=csrfmiddlewaretoken]')?.value || '';
+                await fetch('/api/sgr/4to-semestre/', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrf },
+                    body: JSON.stringify({ action: 'ausencia_semaforo', funcionario: func, tipo_ausencia: tipo, dias: dias })
+                });
+            } catch (err) { console.warn(err); }
+
+            const tbody = document.getElementById('tablaSemaforoEquipoBody');
+            if (tbody) {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                <td class="py-3 px-3"><div class="fw-bold text-dark">${func}</div><small class="text-success fw-bold">Meta ajustada por Delegado (Regla 9)</small></td>
+                <td class="py-3 px-2 text-center">90</td>
+                <td class="py-3 px-2 text-center"><span class="badge bg-warning text-dark fw-bold">${dias} días (${tipo})</span></td>
+                <td class="py-3 px-2 text-center fw-bold text-primary">${computables} días</td>
+                <td class="py-3 px-2 text-center fw-bold">${metaAjustada} gestiones</td>
+                <td class="py-3 px-2 text-center fw-bold text-success">85,0%</td>
+                <td class="py-3 px-2 text-center"><span class="badge bg-success">Verde (Ajustado)</span></td>
+            `;
+                tbody.prepend(tr);
+            }
+            bootstrap.Modal.getInstance(document.getElementById('modalAusenciaSemaforo')).hide();
+            Swal.fire({ icon: 'success', title: 'Meta Ajustada en Semáforo (Regla N° 9)', html: `Se descontaron <strong>${dias} días (${tipo})</strong> para <strong>${func}</strong>, ajustando su meta proporcionalmente.`, confirmButtonColor: '#C41230' });
+        }
+
+        async function guardarFelicitacionFormal(e) {
+            e.preventDefault();
+            const func = document.getElementById('felFuncionario').value;
+            const vecino = document.getElementById('felVecino').value.trim();
+            const respaldo = document.getElementById('felRespaldo').value.trim();
+            const motivo = document.getElementById('felMotivo').value.trim();
+
+            try {
+                const csrf = document.querySelector('[name=csrfmiddlewaretoken]')?.value || '';
+                await fetch('/api/sgr/4to-semestre/', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrf },
+                    body: JSON.stringify({ action: 'felicitacion', funcionario: func, vecino: vecino, respaldo: respaldo, motivo: motivo })
+                });
+            } catch (err) { console.warn(err); }
+
+            const tbody = document.getElementById('tablaFelicitacionesBody');
+            if (tbody) {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                <td class="py-3 px-3 fw-bold text-dark">${func}</td>
+                <td class="py-3 px-2">${vecino}</td>
+                <td class="py-3 px-2"><span class="badge bg-light text-dark border font-monospace">${respaldo}</span> ${motivo}</td>
+                <td class="py-3 px-2 text-center"><span class="badge bg-success fw-bold">+5,0% Puntaje</span></td>
+                <td class="py-3 px-2 text-center"><span class="badge bg-primary-subtle text-primary fw-bold">Delegado Municipal</span></td>
+            `;
+                tbody.prepend(tr);
+            }
+            const cntEl = document.getElementById('lblFelicitacionesCount');
+            if (cntEl) cntEl.innerText = parseInt(cntEl.innerText || '0', 10) + 1;
+            bootstrap.Modal.getInstance(document.getElementById('modalFelicitacionFormal')).hide();
+            document.getElementById('formFelicitacionFormal').reset();
+            Swal.fire({ icon: 'success', title: 'Felicitación Formal Informada (Regla N° 8)', html: `Se informó con respaldo formal (<strong>${respaldo}</strong>) la felicitación para <strong>${func}</strong>.`, confirmButtonColor: '#059669' });
+        }
+
+        async function guardarTrabajoDelegado(e) {
+            e.preventDefault();
+            const dest = document.getElementById('delDestinatario').value;
+            const sol = document.getElementById('delSolicitud').value.trim();
+            const ori = document.getElementById('delOrientacion').value.trim();
+
+            const tbody = document.getElementById('tablaTrabajosDelegadosBody');
+            if (tbody) {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                <td class="py-3 px-3 fw-bold font-monospace">DEL-TR-${Date.now().toString().slice(-3)}</td>
+                <td class="py-3 px-2 fw-bold text-dark">${dest}</td>
+                <td class="py-3 px-2">${sol}</td>
+                <td class="py-3 px-2 small text-secondary">${ori}</td>
+                <td class="py-3 px-2 text-center"><span class="badge bg-success">Delegado Hoy</span></td>
+            `;
+                tbody.prepend(tr);
+            }
+            bootstrap.Modal.getInstance(document.getElementById('modalDelegarTrabajo')).hide();
+            document.getElementById('formDelegarTrabajo').reset();
+            Swal.fire({ icon: 'success', title: 'Trabajo Delegado al Equipo (Función N° 9)', html: `Se asignó la tarea comunitaria a <strong>${dest}</strong>.`, confirmButtonColor: '#C41230' });
+        }
+
+        function guardarMesaVisita(e) {
+            e.preventDefault();
+            const tipo = document.getElementById('mvTipo').value;
+            const org = document.getElementById('mvOrg').value.trim();
+            const acuerdos = document.getElementById('mvAcuerdos').value.trim();
+            const tbody = document.getElementById('tablaMesasVisitasBody');
+            if (tbody) {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                <td class="py-3 px-3 fw-bold">${new Date().toLocaleDateString('es-CL')}</td>
+                <td class="py-3 px-2"><span class="badge bg-primary-subtle text-primary fw-bold">${tipo}</span></td>
+                <td class="py-3 px-2 fw-bold text-dark">${org}</td>
+                <td class="py-3 px-2 small">${acuerdos}</td>
+                <td class="py-3 px-2 text-center"><span class="badge bg-success">Registrada</span></td>
+            `;
+                tbody.prepend(tr);
+            }
+            bootstrap.Modal.getInstance(document.getElementById('modalMesaVisita')).hide();
+            document.getElementById('formMesaVisita').reset();
+            Swal.fire({ icon: 'success', title: 'Instancia Territorial Registrada', text: 'Guardada en la bitácora de la Delegación.', confirmButtonColor: '#C41230' });
+        }
+
+        function exportarReporteDelegadoPdf() {
+            if (!window.jspdf) return;
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            doc.setFillColor(196, 18, 48);
+            doc.rect(0, 0, 210, 16, 'F');
+            doc.setTextColor(255, 255, 255);
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(11);
+            doc.text('ILUSTRE MUNICIPALIDAD DE LA SERENA · COORDINACIÓN DE DELEGACIONES', 15, 11);
+
+            doc.setTextColor(27, 54, 93);
+            doc.setFontSize(15);
+            doc.text('INFORME PREVENTIVO Y DE GESTIÓN TERRITORIAL · DELEGADO MUNICIPAL', 15, 30);
+            doc.setFontSize(9);
+            doc.setTextColor(100, 116, 139);
+            doc.text(`Delegado: {{ profile.full_name|escapejs }} | Sede: {% if delegation %}{{ delegation.name|escapejs }}{% endif %} | Fecha: ${new Date().toLocaleDateString('es-CL')}`, 15, 37);
+
+            doc.autoTable({
+                startY: 44,
+                head: [['INDICADOR / FUNCIÓN DECRETO N° 3096', 'ESTADO / CUMPLIMIENTO EN LA DELEGACIÓN']],
+                body: [
+                    ['Atenciones Registradas en la Sede', '{{ total }} gestiones ({{ approved }} aprobadas)'],
+                    ['Solicitudes en Seguimiento Activo', '{{ in_followup }} casos territoriales'],
+                    ['Dotación de Equipo Activo', '{{ team_count }} funcionarios en sede'],
+                    ['Control Matriz SGR 4to Semestre', 'Tope 120% activo · Licencias y Felicitaciones al día en Semáforo'],
+                    ['Mesas de Trabajo y Visitas JJVV / OOCC', 'Operativas en las 5 subfamilias territoriales y funcionales']
+                ],
+                theme: 'striped',
+                headStyles: { fillColor: [27, 54, 93], textColor: [255, 255, 255] }
+            });
+            doc.save('Informe_Gestion_Delegado_LaSerena.pdf');
+        }
+    </script>
 </body>
+
 </html>

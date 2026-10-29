@@ -1,88 +1,108 @@
 {% load static %}
-    <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
+<div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
 
-    <!-- ==========================================================================
+<!-- ==========================================================================
         SIDEBAR: LOGO GRANDE + ESCUDO + SCROLL INTERNO + FARO EN GLASSMORPHISM
         ========================================================================== -->
-    <aside class="sidebar" id="sidebar">
-        <!-- Logo Oficial La Serena (Manual de Normas Gráficas laserena.cl) -->
-        <div class="sidebar-brand-box">
-            <button class="sidebar-collapse-btn" onclick="toggleSidebar()" title="Colapsar menú lateral"
-                aria-label="Menú">
-                <i class="bi bi-list"></i>
+<aside class="sidebar" id="sidebar">
+    <!-- Logo Oficial La Serena (Manual de Normas Gráficas laserena.cl) -->
+    <div class="sidebar-brand-box">
+        <button class="sidebar-collapse-btn" onclick="toggleSidebar()" title="Colapsar menú lateral" aria-label="Menú">
+            <i class="bi bi-list"></i>
+        </button>
+        <a href="javascript:void(0)" onclick="switchView('dashboard')" class="sidebar-brand-link"
+            title="Portal Municipal - Ilustre Municipalidad de La Serena">
+            <img src="{% static 'images/horizontal-blanco.svg' %}" alt="Ilustre Municipalidad de La Serena"
+                class="sidebar-official-logo">
+        </a>
+    </div>
+
+    <!-- Menú de Navegación con Scroll Independiente -->
+    <nav class="sidebar-menu-scrollable">
+        <!-- 1. Inicio (Dashboard) - Resaltado con Degradado Azul y Glow (Referencia Visual) -->
+        <button class="nav-item-btn active" id="nav-btn-dashboard" onclick="switchView('dashboard')">
+            <i class="bi bi-house-door-fill main-icon"></i>
+            <span>Inicio</span>
+        </button>
+
+        <!-- 2. Mantenedores (Sin espacio excesivo a la izquierda) -->
+        <div class="accordion-item-custom">
+            <button class="nav-item-btn" id="nav-btn-mantenedores" onclick="toggleSubmenu('mantenedores-sub')">
+                <i class="bi bi-building-gear main-icon"></i>
+                <span>Mantenedores</span>
+                <i class="bi bi-chevron-down ms-auto" id="submenu-chevron"
+                    style="font-size: 0.8rem; transition: transform 0.25s ease;"></i>
             </button>
-            <a href="javascript:void(0)" onclick="switchView('dashboard')" class="sidebar-brand-link"
-                title="Portal Municipal - Ilustre Municipalidad de La Serena">
-                <img src="{% static 'images/horizontal-blanco.svg' %}" alt="Ilustre Municipalidad de La Serena"
-                    class="sidebar-official-logo">
-            </a>
-        </div>
-
-        <!-- Menú de Navegación con Scroll Independiente -->
-        <nav class="sidebar-menu-scrollable">
-            <!-- 1. Inicio (Dashboard) - Resaltado con Degradado Azul y Glow (Referencia Visual) -->
-            <button class="nav-item-btn active" id="nav-btn-dashboard" onclick="switchView('dashboard')">
-                <i class="bi bi-house-door-fill main-icon"></i>
-                <span>Inicio</span>
-            </button>
-
-            <!-- 2. Mantenedores (Sin espacio excesivo a la izquierda) -->
-            <div class="accordion-item-custom">
-                <button class="nav-item-btn" id="nav-btn-mantenedores" onclick="toggleSubmenu('mantenedores-sub')">
-                    <i class="bi bi-building-gear main-icon"></i>
-                    <span>Mantenedores</span>
-                    <i class="bi bi-chevron-down ms-auto" id="submenu-chevron"
-                        style="font-size: 0.8rem; transition: transform 0.25s ease;"></i>
-                </button>
-                <div class="sidebar-submenu" id="mantenedores-sub" style="display: block;">
-                    <button class="submenu-item-btn" id="sub-delegaciones"
-                        onclick="switchView('delegaciones')">Delegaciones Municipales</button>
-                    <button class="submenu-item-btn" id="sub-cargos"
-                        onclick="switchView('cargos')">Cargos</button>
-                    <button class="submenu-item-btn" id="sub-usuarios"
-                        onclick="switchView('usuarios')">Usuarios</button>
-                    <button class="submenu-item-btn" id="sub-roles" onclick="switchView('roles')">Roles</button>
-                    <button class="submenu-item-btn" id="sub-metas" onclick="switchView('metas')">Metas</button>
-                    <button class="submenu-item-btn" id="sub-tipo-atencion" onclick="switchView('tipo-atencion')">Tipo
-                        de Atención</button>
-                    <button class="submenu-item-btn" id="sub-sub-atencion" onclick="switchView('sub-atencion')">Sub
-                        Atención</button>
-                    <button class="submenu-item-btn" id="sub-atenciones"
-                        onclick="switchView('atenciones')">Atenciones</button>
-                    <button class="submenu-item-btn" id="sub-tipo-gestion" onclick="switchView('tipo-gestion')">Tipo de
-                        Gestión</button>
-                    <button class="submenu-item-btn" id="sub-vecinos" onclick="switchView('vecinos')">Vecinos</button>
-                </div>
-            </div>
-
-            <!-- 3. Reportes y Estadísticas -->
-            <button class="nav-item-btn" id="nav-btn-reportes" onclick="switchView('reportes')">
-                <i class="bi bi-bar-chart-line-fill main-icon"></i>
-                <span>Reportes y Estadísticas</span>
-                <i class="bi bi-chevron-right ms-auto" style="font-size: 0.8rem; opacity: 0.6;"></i>
-            </button>
-
-            <!-- 4. Panel de Gestión Social (DIDECO) -->
-            <button class="nav-item-btn" id="nav-btn-social" onclick="window.location.href='{% url 'activities:dashboard_asistente' %}'" title="Ir al Panel de Asistencia Social">
-                <i class="bi bi-heart-pulse-fill main-icon" style="color: #EF4444;"></i>
-                <span>Gestión Social DIDECO</span>
-                <i class="bi bi-box-arrow-up-right ms-auto" style="font-size: 0.75rem; opacity: 0.7;"></i>
-            </button>
-        </nav>
-
-        <!-- Fotografía Real del Faro Monumental integrada armónicamente al fondo del Sidebar -->
-        <div class="sidebar-faro-footer">
-            <div class="sidebar-faro-image-wrap">
-                <img src="{% static 'img/delegacion_costa.jpg' %}"
-                    data-fallback="{% static 'img/faro_real_sunset.jpg' %}"
-                    onerror="this.onerror=null; if(this.dataset.fallback) this.src=this.dataset.fallback;"
-                    alt="Faro Monumental junto a la costa de La Serena" class="sidebar-faro-bg-img">
-                <div class="sidebar-faro-fade-layer"></div>
-            </div>
-            <div class="sidebar-faro-caption">
-                <div class="sidebar-faro-title">La Serena</div>
-                <div class="sidebar-faro-lema">Siempre cerca de ti</div>
+            <div class="sidebar-submenu" id="mantenedores-sub" style="display: block;">
+                <button class="submenu-item-btn" id="sub-delegaciones" onclick="switchView('delegaciones')">Delegaciones
+                    Municipales</button>
+                <button class="submenu-item-btn" id="sub-cargos" onclick="switchView('cargos')">Cargos</button>
+                <button class="submenu-item-btn" id="sub-usuarios" onclick="switchView('usuarios')">Usuarios</button>
+                <button class="submenu-item-btn" id="sub-roles" onclick="switchView('roles')">Roles</button>
+                <button class="submenu-item-btn" id="sub-metas" onclick="switchView('metas')">Metas</button>
+                <button class="submenu-item-btn" id="sub-tipo-atencion" onclick="switchView('tipo-atencion')">Tipo
+                    de Atención</button>
+                <button class="submenu-item-btn" id="sub-sub-atencion" onclick="switchView('sub-atencion')">Sub
+                    Atención</button>
+                <button class="submenu-item-btn" id="sub-atenciones"
+                    onclick="switchView('atenciones')">Atenciones</button>
+                <button class="submenu-item-btn" id="sub-tipo-gestion" onclick="switchView('tipo-gestion')">Tipo de
+                    Gestión</button>
+                <button class="submenu-item-btn" id="sub-vecinos" onclick="switchView('vecinos')">Vecinos</button>
             </div>
         </div>
-    </aside>
 
+        <!-- 3. Reportes y Estadísticas -->
+        <button class="nav-item-btn" id="nav-btn-reportes" onclick="switchView('reportes')">
+            <i class="bi bi-bar-chart-line-fill main-icon"></i>
+            <span>Reportes y Estadísticas</span>
+            <i class="bi bi-chevron-right ms-auto" style="font-size: 0.8rem; opacity: 0.6;"></i>
+        </button>
+
+        <!-- 4. Perfiles de Delegaciones (Descriptor de Funciones 2026) -->
+        <div class="accordion-item-custom">
+            <button class="nav-item-btn" id="nav-btn-perfiles-2026" onclick="toggleSubmenu('perfiles-2026-sub')">
+                <i class="bi bi-diagram-3-fill main-icon" style="color: #F59E0B;"></i>
+                <span>Perfiles Delegación (7)</span>
+                <i class="bi bi-chevron-down ms-auto" style="font-size: 0.8rem;"></i>
+            </button>
+            <div class="sidebar-submenu" id="perfiles-2026-sub" style="display: block;">
+                <button class="submenu-item-btn"
+                    onclick="window.location.href='{% url 'activities:dashboard_delegado' %}?preview=1'">1. Delegado
+                    Municipal</button>
+                <button class="submenu-item-btn"
+                    onclick="window.location.href='{% url 'activities:dashboard_asistente' %}?preview=1'">2. Gestor
+                    Social (DIDECO)</button>
+                <button class="submenu-item-btn"
+                    onclick="window.location.href='{% url 'activities:dashboard_apoyo_administrativo' %}?preview=1'">3.
+                    Apoyo Administrativo</button>
+                <button class="submenu-item-btn"
+                    onclick="window.location.href='{% url 'activities:dashboard_organizaciones_comunitarias' %}?preview=1'">4.
+                    Organizaciones Comunitarias</button>
+                <button class="submenu-item-btn"
+                    onclick="window.location.href='{% url 'activities:dashboard_compras_proyectos' %}?preview=1'">5.
+                    Compras y Proyectos</button>
+                <button class="submenu-item-btn"
+                    onclick="window.location.href='{% url 'activities:dashboard_gestion_planificacion' %}?preview=1'">6.
+                    Gestión y Planificación</button>
+                <button class="submenu-item-btn"
+                    onclick="window.location.href='{% url 'activities:dashboard_servicios_comunitarios' %}?preview=1'">7.
+                    Servicios Comunitarios</button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Fotografía Real del Faro Monumental integrada armónicamente al fondo del Sidebar -->
+    <div class="sidebar-faro-footer">
+        <div class="sidebar-faro-image-wrap">
+            <img src="{% static 'img/delegacion_costa.jpg' %}" data-fallback="{% static 'img/faro_real_sunset.jpg' %}"
+                onerror="this.onerror=null; if(this.dataset.fallback) this.src=this.dataset.fallback;"
+                alt="Faro Monumental junto a la costa de La Serena" class="sidebar-faro-bg-img">
+            <div class="sidebar-faro-fade-layer"></div>
+        </div>
+        <div class="sidebar-faro-caption">
+            <div class="sidebar-faro-title">La Serena</div>
+            <div class="sidebar-faro-lema">Siempre cerca de ti</div>
+        </div>
+    </div>
+</aside>

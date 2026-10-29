@@ -82,20 +82,25 @@ def seed_pre_evaluation():
         del_objs[d.name] = d
         print(f"  [OK] Delegación: {d.name} ({d.scope})")
 
-    # 3. CARGOS MUNICIPALES
-    pos_asistente, _ = Position.objects.get_or_create(name="Asistente Social", defaults={"description": "Atención social y visitas domiciliarias DIDECO", "status": "Activo"})
+    # 3. CARGOS MUNICIPALES (DESCRIPTOR DE FUNCIONES 2026 - DECRETO N° 3096)
+    pos_asistente, _ = Position.objects.get_or_create(name="Asistente Social", defaults={"description": "Gestor Social: Atención de Casos (Eje I), Acciones Comunitarias OOCC (Eje II), Coordinación/Recursos (Eje III) y Auto-mejora (Eje IV)", "status": "Activo"})
     pos_admin, _ = Position.objects.get_or_create(name="Administrador General", defaults={"description": "Coordinación y gestión de la plataforma SGR", "status": "Activo"})
     pos_super, _ = Position.objects.get_or_create(name="SuperAdministrador", defaults={"description": "Dirección superior y gobernanza SGR", "status": "Activo"})
     pos_gestor, _ = Position.objects.get_or_create(name="Gestor Territorial", defaults={"description": "Gestión vecinal y comunitaria en terreno", "status": "Activo"})
-    pos_delegado, _ = Position.objects.get_or_create(name="Delegado Municipal", defaults={"description": "Jefatura territorial de sede municipal", "status": "Activo"})
+    pos_delegado, _ = Position.objects.get_or_create(name="Delegado Municipal", defaults={"description": "Representante directo de Alcaldía en el territorio; Semáforo SGR, felicitaciones formales, ausencias y liderazgo de equipo", "status": "Activo"})
+    pos_apoyo_adm, _ = Position.objects.get_or_create(name="Apoyo Administrativo", defaults={"description": "Agenda del Delegado, transporte, mantención/auxiliares, registro SGR con llamado preventivo, inventario trimestral e informes de personal/transparencia", "status": "Activo"})
+    pos_oocc, _ = Position.objects.get_or_create(name="Organizaciones Comunitarias", defaults={"description": "Constitución y vigencia OOCC Leyes 19.418 y 20.500, 5 subfamilias funcionales/territoriales, verificación base JJVV y talleres", "status": "Activo"})
+    pos_compras, _ = Position.objects.get_or_create(name="Gestor de Compras y Proyectos", defaults={"description": "Titular/Suplente Decreto Alcaldicio: POA, Control PAC, V°B° pliegos Unidad Revisora, Oficios de Contratación y propuesta ITC", "status": "Activo"})
+    pos_planificacion, _ = Position.objects.get_or_create(name="Gestión y Planificación", defaults={"description": "Diagnóstico estratégico del sector, auditoría Matriz SGR por colaborador (fortalezas/debilidades), derivaciones de Gabinete y reunión semanal", "status": "Activo"})
+    pos_servicios, _ = Position.objects.get_or_create(name="Coordinador de Servicios Comunitarios", defaults={"description": "Operativos de limpieza y recuperación BNUP, cuadrillas de empleabilidad y emergencia polifuncional, educación ambiental y denuncias de espacios públicos", "status": "Activo"})
 
-    for p in (pos_asistente, pos_admin, pos_super, pos_gestor, pos_delegado):
+    for p in (pos_asistente, pos_admin, pos_super, pos_gestor, pos_delegado, pos_apoyo_adm, pos_oocc, pos_compras, pos_planificacion, pos_servicios):
         p.status = 'Activo'
         p.deleted_at = None
         p.save()
 
-    # 4. CUENTAS DE USUARIO CLAVE PARA LA EVALUACIÓN
-    # 4.1 Scarlett Williams (Asistente Social + Rol Administrador para control de mantenedores)
+    # 4. CUENTAS DE USUARIO CLAVE PARA LA EVALUACIÓN Y LOS 7 PERFILES DEL DESCRIPTOR 2026
+    # 4.1 Scarlett Williams (Asistente Social / Gestor Social + Rol Administrador)
     u_scarlett, _ = User.objects.get_or_create(username='scarlett')
     u_scarlett.set_password('Admin123!')
     u_scarlett.first_name = 'Scarlett'
@@ -116,7 +121,7 @@ def seed_pre_evaluation():
     p_scarlett.deleted_at = None
     p_scarlett.save()
     p_scarlett.roles.set([admin_role, asistente_role])
-    print(f"  [USER] scarlett -> Password: Admin123! (Asistente Social + Rol Administrador)")
+    print(f"  [USER] scarlett -> Password: Admin123! (Gestor Social / Asistente Social)")
 
     # 4.2 Administrador General
     u_admin, _ = User.objects.get_or_create(username='admin')
@@ -141,6 +146,48 @@ def seed_pre_evaluation():
     p_admin.save()
     p_admin.roles.set([admin_role, super_role])
     print(f"  [USER] admin -> Password: Admin123! (Superuser + Administrador General)")
+
+    # 4.3 Los demás perfiles oficiales del Descriptor de Funciones 2026
+    perfiles_2026_users = [
+        ('delegado', 'Javier Ignacio', 'Godoy Cazaux', '14.521.309-4', 'javier.godoy@laserena.cl', '+56 9 8112 3344', pos_delegado, "Delegación Avenida del Mar"),
+        ('administrativo', 'Marcela Paz', 'Zepeda Rojas', '16.410.228-7', 'marcela.zepeda@laserena.cl', '+56 9 8223 4455', pos_apoyo_adm, "Delegación Avenida del Mar"),
+        ('oocc', 'Rodrigo Andrés', 'Pizarro Santander', '17.309.114-K', 'rodrigo.pizarro@laserena.cl', '+56 9 8334 5566', pos_oocc, "Delegación Las Compañías"),
+        ('compras', 'Claudia Alejandra', 'Araya Contreras', '15.908.431-2', 'claudia.araya@laserena.cl', '+56 9 8445 6677', pos_compras, "Delegación La Pampa"),
+        ('planificacion', 'Camila Fernanda', 'Cortés Alcayaga', '18.112.540-6', 'camila.cortes@laserena.cl', '+56 9 8556 7788', pos_planificacion, "Delegación Centro Histórico"),
+        ('servicios', 'Héctor Mauricio', 'Olivares Galleguillos', '13.785.920-1', 'hector.olivares@laserena.cl', '+56 9 8667 8899', pos_servicios, "Delegación La Antena"),
+    ]
+    for uname, fname, lname, rut, email, phone, pos_obj, del_name in perfiles_2026_users:
+        u_obj, _ = User.objects.get_or_create(username=uname)
+        u_obj.set_password('Admin123!')
+        u_obj.first_name = fname
+        u_obj.last_name = lname
+        u_obj.email = email
+        u_obj.is_active = True
+        u_obj.save()
+
+        role_obj, _ = Role.objects.get_or_create(
+            name=pos_obj.name,
+            defaults={
+                'description': pos_obj.description,
+                'is_system': False,
+                'permissions_data': ['lectura', 'edicion', 'derivacion', 'cierre'],
+            },
+        )
+        role_obj.permissions_data = ['lectura', 'edicion', 'derivacion', 'cierre']
+        role_obj.save()
+
+        prof_obj, _ = UserProfile.objects.get_or_create(user=u_obj)
+        prof_obj.full_name = f"{fname} {lname}"
+        prof_obj.rut = rut
+        prof_obj.email = email
+        prof_obj.phone = phone
+        prof_obj.position = pos_obj
+        prof_obj.delegation = del_objs[del_name]
+        prof_obj.status = 'Activo'
+        prof_obj.deleted_at = None
+        prof_obj.save()
+        prof_obj.roles.set([role_obj])
+        print(f"  [USER] {uname} -> Password: Admin123! ({pos_obj.name} - {del_name})")
 
     # 5. VECINOS DISTRIBUIDOS EN LAS 6 DELEGACIONES (>= 2 por sede, total 14 vecinos)
     vecinos_seed = [

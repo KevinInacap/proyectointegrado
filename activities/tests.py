@@ -661,3 +661,103 @@ class VecinoApiValidationTests(TestCase):
         detail_norte = self.client.get(reverse('activities:api_vecino_detail', args=[vecino_norte.pk]))
         self.assertEqual(detail_norte.status_code, 404)
 
+
+class Descriptor2026AndSgr4toSemestreTests(TestCase):
+    def setUp(self):
+        self.delegation = Delegation.objects.create(name='Delegación Avenida del Mar Test', scope='Costero', status='Activo')
+        self.user = get_user_model().objects.create_user(username='perfil-2026', password='test-pass')
+        self.profile = UserProfile.objects.create(
+            user=self.user,
+            rut='14.521.309-4',
+            full_name='Funcionario Descriptor 2026',
+            email='descriptor2026@laserena.cl',
+            delegation=self.delegation,
+            status='Activo',
+        )
+        self.role = Role.objects.create(
+            name='Rol Operativo Delegación 2026',
+            permissions_data=['lectura', 'edicion', 'derivacion', 'cierre'],
+        )
+        self.profile.roles.add(self.role)
+        self.client.force_login(self.user)
+
+    def test_five_new_delegation_profiles_route_and_render_admin_design(self):
+        new_profiles = [
+            ('Apoyo Administrativo', 'dashboard_apoyo_administrativo', 'Agenda del Delegado'),
+            ('Organizaciones Comunitarias', 'dashboard_organizaciones_comunitarias', 'Ley N° 19.418'),
+            ('Gestor de Compras y Proyectos', 'dashboard_compras_proyectos', 'Plan Anual de Compras (PAC)'),
+            ('Gestión y Planificación', 'dashboard_gestion_planificacion', 'Auditoría del Llenado Matriz SGR'),
+            ('Coordinador de Servicios Comunitarios', 'dashboard_servicios_comunitarios', 'Cuadrillas de Empleabilidad'),
+        ]
+        for pos_name, route_name, expected_snippet in new_profiles:
+            with self.subTest(position=pos_name):
+                pos, _ = Position.objects.get_or_create(name=pos_name, defaults={'status': 'Activo'})
+                self.profile.position = pos
+                self.profile.save(update_fields=['position', 'updated_at'])
+
+                redirect_resp = self.client.get(reverse('activities:dashboard'))
+                self.assertRedirects(redirect_resp, reverse('activities:' + route_name), fetch_redirect_response=False)
+
+                page_resp = self.client.get(reverse('activities:' + route_name))
+                self.assertEqual(page_resp.status_code, 200)
+                self.assertContains(page_resp, pos_name)
+                self.assertContains(page_resp, expected_snippet)
+                self.assertContains(page_resp, 'Tope 120%')
+
+    def test_sgr_4to_semestre_api_enforces_delegado_faculty_for_rules_8_and_9(self):
+        api_url = reverse('activities:api_sgr_4to_semestre')
+
+        # Un perfil que no es Delegado ni Admin no puede informar felicitaciones ni ausencias (Reglas 8 y 9)
+        pos_oocc, _ = Position.objects.get_or_create(name='Organizaciones Comunitarias', defaults={'status': 'Activo'})
+        self.profile.position = pos_oocc
+        self.profile.save(update_fields=['position', 'updated_at'])
+
+        forbidden_resp = self.client.post(
+            api_url,
+            json.dumps({
+                'action': 'felicitacion',
+                'funcionario': 'Scarlett Rojas',
+                'vecino': 'Vecino Test (+56 9 1111 2222)',
+                'canal': 'Libro de Felicitaciones',
+                'respaldo': 'ACTA-001',
+                'motivo': 'Excelente atención',
+            }),
+            content_type='application/json',
+        )
+        self.assertEqual(forbidden_resp.status_code, 403)
+
+        # El Delegado Municipal sí puede registrar felicitaciones con respaldo formal y ausencias en Semáforo
+        pos_delegado, _ = Position.objects.get_or_create(name='Delegado Municipal', defaults={'status': 'Activo'})
+        self.profile.position = pos_delegado
+        self.profile.save(update_fields=['position', 'updated_at'])
+
+        ok_fel = self.client.post(
+            api_url,
+            json.dumps({
+                'action': 'felicitacion',
+                'funcionario': 'Scarlett Rojas',
+                'vecino': 'Vecino Test (+56 9 1111 2222)',
+                'canal': 'Carta Formal dirigida al Delegado Municipal',
+                'respaldo': 'OIRS-2026-999',
+                'motivo': 'Agradecimiento formal por visita en terreno.',
+            }),
+            content_type='application/json',
+        )
+        self.assertEqual(ok_fel.status_code, 200)
+        self.assertTrue(ok_fel.json()['success'])
+
+        ok_aus = self.client.post(
+            api_url,
+            json.dumps({
+                'action': 'ausencia_semaforo',
+                'funcionario': 'Rodrigo Pizarro',
+                'tipo': 'Feriado Legal / Vacaciones',
+                'dias': 5,
+                'respaldo': 'DEC-2026-501',
+            }),
+            content_type='application/json',
+        )
+        self.assertEqual(ok_aus.status_code, 200)
+        self.assertTrue(ok_aus.json()['success'])
+
+
