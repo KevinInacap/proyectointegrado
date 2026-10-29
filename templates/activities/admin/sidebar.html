@@ -68,27 +68,8 @@
                 <i class="bi bi-chevron-right ms-auto" style="font-size: 0.8rem; opacity: 0.6;"></i>
             </button>
 
-            <!-- 4. Panel de Gestión Social (DIDECO) -->
-            <button class="nav-item-btn" id="nav-btn-social" onclick="window.location.href='{% url 'activities:dashboard_asistente' %}'" title="Ir al Panel de Asistencia Social">
-                <i class="bi bi-heart-pulse-fill main-icon" style="color: #EF4444;"></i>
-                <span>Gestión Social DIDECO</span>
-                <i class="bi bi-box-arrow-up-right ms-auto" style="font-size: 0.75rem; opacity: 0.7;"></i>
-            </button>
         </nav>
 
-        <!-- Fotografía Real del Faro Monumental integrada armónicamente al fondo del Sidebar -->
-        <div class="sidebar-faro-footer">
-            <div class="sidebar-faro-image-wrap">
-                <img src="{% static 'img/delegacion_costa.jpg' %}"
-                    data-fallback="{% static 'img/faro_real_sunset.jpg' %}"
-                    onerror="this.onerror=null; if(this.dataset.fallback) this.src=this.dataset.fallback;"
-                    alt="Faro Monumental junto a la costa de La Serena" class="sidebar-faro-bg-img">
-                <div class="sidebar-faro-fade-layer"></div>
-            </div>
-            <div class="sidebar-faro-caption">
-                <div class="sidebar-faro-title">La Serena</div>
-                <div class="sidebar-faro-lema">Siempre cerca de ti</div>
-            </div>
-        </div>
+        {% include 'includes/faro_institucional.html' %}
     </aside>
 

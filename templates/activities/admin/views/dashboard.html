@@ -1,43 +1,15 @@
 {% load static %}
 <section id="view-dashboard" class="maintainer-view active">
-    <!-- 1. HERO BANNER PANORÁMICO DE IDENTIDAD SERENENSE (FOTO REAL Y LIQUID GLASS) -->
-    <div class="serena-hero-glass-banner mb-4">
-        <img src="/static/img/faro_laserena_bg.jpg" alt="Faro Monumental de La Serena" class="serena-hero-bg-img" onerror="this.src='/static/img/faro_real_sunset.jpg'">
+    <!-- Identidad municipal con el Faro Monumental en líneas doradas. -->
+    <div class="serena-hero-glass-banner serena-hero-vector mb-4" aria-labelledby="municipal-hero-title">
         <div class="serena-hero-content">
-            <div style="max-width: 680px;">
-                <div class="d-flex align-items-center gap-2 mb-2 flex-wrap">
-                    <span class="badge" style="background: var(--muni-red, #C41230); color: #FFFFFF; font-weight: 800; font-size: 0.78rem; letter-spacing: 0.06em; padding: 0.4rem 0.9rem; border-radius: 50px; box-shadow: 0 4px 12px rgba(196, 18, 48, 0.25);">
-                        <i class="bi bi-geo-alt-fill me-1"></i> ILUSTRE MUNICIPALIDAD DE LA SERENA
-                    </span>
-                    <span class="badge" style="background: rgba(255, 255, 255, 0.65); color: var(--muni-navy); font-weight: 700; font-size: 0.78rem; padding: 0.4rem 0.9rem; border-radius: 50px; border: 1px solid rgba(27, 54, 93, 0.18); backdrop-filter: blur(8px);">
-                        <i class="bi bi-shield-check me-1"></i> GESTIÓN SOCIAL Y ATENCIÓN CIUDADANA
-                    </span>
-                </div>
-                <h1 style="font-size: 2.15rem; font-weight: 800; color: var(--muni-navy); letter-spacing: -0.02em; margin-bottom: 0.4rem; line-height: 1.2; text-shadow: 0 1px 3px rgba(255, 255, 255, 0.8);">
-                    Portal Municipal de La Serena
-                </h1>
-                <p style="font-size: 0.98rem; color: #1E293B; line-height: 1.5; margin: 0; font-weight: 600; text-shadow: 0 1px 2px rgba(255, 255, 255, 0.8);">
-                    Gestión social, atención ciudadana y coordinación territorial de la comuna.
-                </p>
+            <div class="serena-hero-copy">
+                <p class="serena-hero-eyebrow">Ilustre Municipalidad de La Serena</p>
+                <h1 id="municipal-hero-title">Portal Municipal de La Serena</h1>
+                <p class="serena-hero-description">Gestión social, atención ciudadana y coordinación territorial de la comuna.</p>
             </div>
-
-            <!-- Cápsula de Clima y Costas de La Serena -->
-            <div class="serena-weather-glass-card">
-                <div style="font-size: 2.2rem; line-height: 1;" title="Clima de La Serena">
-                    ☀️
-                </div>
-                <div>
-                    <div class="d-flex align-items-baseline gap-2">
-                        <strong style="font-size: 1.45rem; font-weight: 800; color: var(--muni-navy); line-height: 1;">Portal</strong>
-                        <span style="font-size: 0.82rem; font-weight: 700; color: #334155;">Municipal</span>
-                    </div>
-                        <div style="font-size: 0.80rem; color: #334155; margin-top: 2px; font-weight: 600;">
-                        Plataforma de gestión municipal
-                    </div>
-                    <div style="font-size: 0.74rem; color: #047857; font-weight: 700; margin-top: 2px;">
-                        <i class="bi bi-building me-1"></i> Atención ciudadana y delegaciones
-                    </div>
-                </div>
+            <div class="serena-hero-art" aria-hidden="true">
+                <img src="{% static 'images/faro-monumental-linea.svg' %}?v=20261027faro" alt="" width="328" height="320">
             </div>
         </div>
     </div>
