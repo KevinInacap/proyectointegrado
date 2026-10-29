@@ -33,8 +33,18 @@ deployed_marker="$backup_dir/deployed.sha"
 static_matches() {
     cmp -s static/css/admin/admin-glass-pro.css staticfiles/css/admin/admin-glass-pro.css &&
     cmp -s static/js/admin/admin-bundle.js staticfiles/js/admin/admin-bundle.js &&
+    cmp -s static/js/admin/roles.js staticfiles/js/admin/roles.js &&
+    cmp -s static/js/admin/form-feedback.js staticfiles/js/admin/form-feedback.js &&
+    cmp -s static/css/admin/interactions.css staticfiles/css/admin/interactions.css &&
+    cmp -s static/js/session-guard.js staticfiles/js/session-guard.js &&
+    cmp -s static/js/social-navigation.js staticfiles/js/social-navigation.js &&
     cmp -s staticfiles/css/admin/admin-glass-pro.css /var/www/sgr/static/css/admin/admin-glass-pro.css &&
-    cmp -s staticfiles/js/admin/admin-bundle.js /var/www/sgr/static/js/admin/admin-bundle.js
+    cmp -s staticfiles/js/admin/admin-bundle.js /var/www/sgr/static/js/admin/admin-bundle.js &&
+    cmp -s staticfiles/js/admin/roles.js /var/www/sgr/static/js/admin/roles.js &&
+    cmp -s staticfiles/js/admin/form-feedback.js /var/www/sgr/static/js/admin/form-feedback.js &&
+    cmp -s staticfiles/css/admin/interactions.css /var/www/sgr/static/css/admin/interactions.css &&
+    cmp -s staticfiles/js/session-guard.js /var/www/sgr/static/js/session-guard.js &&
+    cmp -s staticfiles/js/social-navigation.js /var/www/sgr/static/js/social-navigation.js
 }
 
 if [[ "$current" == "$target" && -f "$deployed_marker" && "$(< "$deployed_marker")" == "$target" ]] && static_matches; then
@@ -85,6 +95,11 @@ for attempt in 1 2 3 4 5; do
        curl --fail --silent --max-time 8 --output /dev/null http://127.0.0.1/static/css/dashboard_position.css &&
        curl --fail --silent --max-time 8 --output /dev/null http://127.0.0.1/static/css/admin/admin-glass-pro.css &&
        curl --fail --silent --max-time 8 --output /dev/null http://127.0.0.1/static/js/admin/admin-bundle.js &&
+       curl --fail --silent --max-time 8 --output /dev/null http://127.0.0.1/static/js/admin/roles.js &&
+       curl --fail --silent --max-time 8 --output /dev/null http://127.0.0.1/static/js/admin/form-feedback.js &&
+       curl --fail --silent --max-time 8 --output /dev/null http://127.0.0.1/static/css/admin/interactions.css &&
+       curl --fail --silent --max-time 8 --output /dev/null http://127.0.0.1/static/js/session-guard.js &&
+       curl --fail --silent --max-time 8 --output /dev/null http://127.0.0.1/static/js/social-navigation.js &&
        static_matches; then
         printf '%s\n' "$target" > "$deployed_marker"
         chmod 600 "$deployed_marker"
@@ -96,3 +111,4 @@ done
 
 echo 'El portal no respondió tras actualizar. Revisa sgr y conserva los respaldos indicados.' >&2
 exit 1
+

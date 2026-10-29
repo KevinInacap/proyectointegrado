@@ -12,11 +12,13 @@ from django.contrib.auth import get_user_model
 from activities.models import Vecino, Activity, ServiceCatalog
 from metrics.models import ManagementType, AttentionType, SubAttention, MeasurementItem, Goal, MeasurementPeriod
 from organization.models import Position, Delegation, Role, UserProfile, PermissionDefinition
-from organization.access import ADMINISTRATOR_ROLE_NAME, SUPER_ADMINISTRATOR_ROLE_NAME
+from organization.access import ADMINISTRATOR_ROLE_NAME, SUPER_ADMINISTRATOR_ROLE_NAME, set_role_permission_codes
+from social.models import SocialCase, SocialManagement
 
 User = get_user_model()
 
 def seed_pre_evaluation():
+    raise RuntimeError('Este generador antiguo está deshabilitado: debe adaptarse a roles por cargo y proteger las cuentas existentes antes de volver a utilizarse.')
     print("=" * 65)
     print("  SEEDING PRE-EVALUACIÓN SUMATIVA III — LA SERENA 2026")
     print("=" * 65)
@@ -55,12 +57,21 @@ def seed_pre_evaluation():
         name='Asistente Social',
         defaults={
             'description': 'Gestión de casos sociales, fichas de vecinos y atenciones en territorio.',
-            'is_system': False,
+            'is_system': True,
             'permissions_data': ['lectura', 'edicion', 'derivacion', 'cierre']
         }
     )
-    asistente_role.permissions_data = ['lectura', 'edicion', 'derivacion', 'cierre']
-    asistente_role.save()
+    set_role_permission_codes(asistente_role, ['lectura', 'edicion', 'derivacion', 'cierre'])
+
+    delegado_role, _ = Role.objects.get_or_create(
+        name='Delegado Municipal',
+        defaults={
+            'description': 'Jefatura territorial de delegación municipal con control operativo de atenciones.',
+            'is_system': True,
+            'permissions_data': ['lectura', 'edicion', 'derivacion', 'cierre']
+        }
+    )
+    set_role_permission_codes(delegado_role, ['lectura', 'edicion', 'derivacion', 'cierre'])
 
     # 2. LAS 6 DELEGACIONES TERRITORIALES OFICIALES DE LA SERENA
     delegaciones_data = [
@@ -115,8 +126,31 @@ def seed_pre_evaluation():
     p_scarlett.status = 'Activo'
     p_scarlett.deleted_at = None
     p_scarlett.save()
-    p_scarlett.roles.set([admin_role, asistente_role])
-    print(f"  [USER] scarlett -> Password: Admin123! (Asistente Social + Rol Administrador)")
+    p_scarlett.roles.set([asistente_role])
+    print(f"  [USER] scarlett -> Password: Admin123! (Cargo: Asistente Social · Delegación Avenida del Mar)")
+
+    # 4.1B Delegado Municipal (Delegación Avenida del Mar)
+    u_delegado, _ = User.objects.get_or_create(username='delegado')
+    u_delegado.set_password('Admin123!')
+    u_delegado.first_name = 'Roberto'
+    u_delegado.last_name = 'Campusano Rojas'
+    u_delegado.email = 'delegado.avenidadelmar@laserena.cl'
+    u_delegado.is_active = True
+    u_delegado.is_staff = False
+    u_delegado.save()
+
+    p_delegado, _ = UserProfile.objects.get_or_create(user=u_delegado)
+    p_delegado.full_name = 'Roberto Campusano Rojas'
+    p_delegado.rut = '14.521.890-2'
+    p_delegado.email = 'delegado.avenidadelmar@laserena.cl'
+    p_delegado.phone = '+56 9 8765 4321'
+    p_delegado.position = pos_delegado
+    p_delegado.delegation = del_objs["Delegación Avenida del Mar"]
+    p_delegado.status = 'Activo'
+    p_delegado.deleted_at = None
+    p_delegado.save()
+    p_delegado.roles.set([delegado_role])
+    print(f"  [USER] delegado -> Password: Admin123! (Cargo: Delegado Municipal · Delegación Avenida del Mar)")
 
     # 4.2 Administrador General
     u_admin, _ = User.objects.get_or_create(username='admin')
@@ -142,12 +176,21 @@ def seed_pre_evaluation():
     p_admin.roles.set([admin_role, super_role])
     print(f"  [USER] admin -> Password: Admin123! (Superuser + Administrador General)")
 
-    # 5. VECINOS DISTRIBUIDOS EN LAS 6 DELEGACIONES (>= 2 por sede, total 14 vecinos)
+    # 5. VECINOS DISTRIBUIDOS EN LAS 6 DELEGACIONES (>= 12 en Avenida del Mar para demostrar paginación)
     vecinos_seed = [
-        # Avenida del Mar
+        # Avenida del Mar (12 vecinos)
         {"nombre": "Héctor Valenzuela Rojas", "rut": "12.784.561-3", "email": "h.valenzuela@gmail.com", "telefono": "+56 9 5541 2390", "direccion": "Av. Cuatro Esquinas 1205", "territorio": "Delegación Avenida del Mar", "estado": "Activo"},
         {"nombre": "Diego Tapia Castillo", "rut": "19.822.450-3", "email": "diego.tapia@outlook.cl", "telefono": "+56 9 7889 0012", "direccion": "Av. del Mar 4100 Depto 302", "territorio": "Delegación Avenida del Mar", "estado": "Activo"},
         {"nombre": "Camila Andrea Soto", "rut": "17.452.193-4", "email": "camila.soto@gmail.com", "telefono": "+56 9 6654 3210", "direccion": "Los Nísperos 850", "territorio": "Delegación Avenida del Mar", "estado": "Inactivo"},
+        {"nombre": "Javiera Paz Olivares", "rut": "16.100.132-K", "email": "javiera.olivares@gmail.com", "telefono": "+56 9 6111 2233", "direccion": "Av. Pacífico 1890", "territorio": "Delegación Avenida del Mar", "estado": "Activo"},
+        {"nombre": "Matías Ignacio Galleguillos", "rut": "17.100.140-4", "email": "matias.g@gmail.com", "telefono": "+56 9 6222 3344", "direccion": "Los Arrayanes 430", "territorio": "Delegación Avenida del Mar", "estado": "Activo"},
+        {"nombre": "Valentina Constanza Cortés", "rut": "18.100.156-4", "email": "valentina.c@gmail.com", "telefono": "+56 9 6333 4455", "direccion": "Av. del Mar 2950 Depto 501", "territorio": "Delegación Avenida del Mar", "estado": "Activo"},
+        {"nombre": "Sebastián Andrés Zepeda", "rut": "19.100.167-3", "email": "sebastian.z@gmail.com", "telefono": "+56 9 6444 5566", "direccion": "Calle Los Lúcumos 610", "territorio": "Delegación Avenida del Mar", "estado": "Activo"},
+        {"nombre": "Lorena del Carmen Alfaro", "rut": "20.100.172-2", "email": "lorena.alfaro@gmail.com", "telefono": "+56 9 6555 6677", "direccion": "Pasaje Las Gaviotas 215", "territorio": "Delegación Avenida del Mar", "estado": "Inactivo"},
+        {"nombre": "Cristián Eduardo Pizarro", "rut": "21.100.188-2", "email": "cristian.pizarro@gmail.com", "telefono": "+56 9 6666 7788", "direccion": "Av. Cuatro Esquinas 940", "territorio": "Delegación Avenida del Mar", "estado": "Activo"},
+        {"nombre": "Paulina Alejandra Carvajal", "rut": "22.100.193-1", "email": "paulina.carvajal@gmail.com", "telefono": "+56 9 6777 8899", "direccion": "Los Perales 775", "territorio": "Delegación Avenida del Mar", "estado": "Activo"},
+        {"nombre": "Gonzalo Hernán Santander", "rut": "13.222.111-3", "email": "gonzalo.santander@gmail.com", "telefono": "+56 9 6888 9900", "direccion": "Av. del Mar 3400 Depto 804", "territorio": "Delegación Avenida del Mar", "estado": "Activo"},
+        {"nombre": "Claudia Verónica Mundaca", "rut": "14.222.111-0", "email": "claudia.mundaca@gmail.com", "telefono": "+56 9 6999 0011", "direccion": "Calle Los Plátanos 512", "territorio": "Delegación Avenida del Mar", "estado": "Inactivo"},
 
         # Centro Histórico
         {"nombre": "Rosa Elena Villalobos", "rut": "14.892.314-5", "email": "rosita.villalobos@hotmail.com", "telefono": "+56 9 8471 2033", "direccion": "Calle Balmaceda 1042", "territorio": "Delegación Centro Histórico", "estado": "Activo"},
@@ -222,9 +265,10 @@ def seed_pre_evaluation():
     # 7. PERÍODO OPERATIVO 2026 Y METAS
     period, _ = MeasurementPeriod.objects.get_or_create(
         name="Período Operativo 2026",
-        defaults={"start_date": date(2026, 1, 1), "end_date": date(2026, 12, 31), "status": "Activo"}
+        defaults={"start_date": date(2026, 1, 1), "end_date": date(2026, 12, 31), "computable_days": 240, "status": "Abierto"}
     )
-    period.status = "Activo"
+    period.status = "Abierto"
+    period.computable_days = 240
     period.deleted_at = None
     period.save()
 
@@ -252,7 +296,7 @@ def seed_pre_evaluation():
         g.status = "Activo"
         g.save()
 
-    # 8. ATENCIONES CIUDADANAS REALES (PERSISTIDAS EN BD)
+    # 8. ATENCIONES CIUDADANAS REALES (PERSISTIDAS EN BD, >= 12 EN AVENIDA DEL MAR PARA PAGINACIÓN)
     atenciones_sample = [
         ("AT-2026-001", "Héctor Valenzuela Rojas", "+56 9 5541 2390", del_objs["Delegación Avenida del Mar"], "TIP-004-SUB", "SUB-004-AGU", "Postulación a Subsidio de Agua Potable (SAP) por vulnerabilidad socioeconómica.", "Ficha social RSH validada al 40%. Ingresado decreto de beneficio.", "Approved"),
         ("AT-2026-002", "Rosa Elena Villalobos", "+56 9 8471 2033", del_objs["Delegación Centro Histórico"], "TIP-001-ORI", "SUB-001-INF", "Actualización de cartola del Registro Social de Hogares.", "Se descarga cartola y se registra cambio de domicilio en el sistema.", "Approved"),
@@ -262,6 +306,14 @@ def seed_pre_evaluation():
         ("AT-2026-006", "María Ignacia Cortés", "+56 9 9120 4855", del_objs["Delegación La Pampa"], "TIP-006-SEG", "SUB-006-LUM", "Reporte de falla en luminarias públicas en Los Corsarios.", "Orden de trabajo emitida a cuadrilla de alumbrado público.", "Approved"),
         ("AT-2026-007", "Diego Tapia Castillo", "+56 9 7889 0012", del_objs["Delegación Avenida del Mar"], "TIP-002-TER", "SUB-002-CON", "Visita domiciliaria e inspección en terreno de habitabilidad sociofamiliar.", "Levantamiento fotográfico en terreno y verificación de ficha social.", "Pending"),
         ("AT-2026-008", "Camila Andrea Soto", "+56 9 6654 3210", del_objs["Delegación Avenida del Mar"], "TIP-001-ORI", "SUB-001-INF", "Emisión de informe social oficial para Tribunal de Familia por pensión.", "Informe social pericial emitido formalmente con código INF-2026-AVM-001.", "Approved"),
+        ("AT-2026-009", "Javiera Paz Olivares", "+56 9 6111 2233", del_objs["Delegación Avenida del Mar"], "TIP-005-MED", "SUB-005-PLA", "Solicitud de poda preventiva de arbolado urbano frente a acceso peatonal.", "Cuadrilla de áreas verdes programada para intervención en Av. Pacífico.", "Approved"),
+        ("AT-2026-010", "Matías Ignacio Galleguillos", "+56 9 6222 3344", del_objs["Delegación Avenida del Mar"], "TIP-006-SEG", "SUB-006-LUM", "Reposición de foco LED en poste de alumbrado público sector Los Arrayanes.", "Derivado a equipo eléctrico municipal para reemplazo de luminaria.", "Pending"),
+        ("AT-2026-011", "Valentina Constanza Cortés", "+56 9 6333 4455", del_objs["Delegación Avenida del Mar"], "TIP-004-SUB", "SUB-004-AGU", "Renovación de Subsidio de Agua Potable y actualización de tramo RSH.", "Antecedentes verificados y recepcionados en plataforma DIDECO.", "Approved"),
+        ("AT-2026-012", "Sebastián Andrés Zepeda", "+56 9 6444 5566", del_objs["Delegación Avenida del Mar"], "TIP-003-COM", "SUB-003-ORG", "Apoyo social de emergencia por filtración severa de techumbre.", "Evaluación social en terreno y gestión de materiales de emergencia.", "Pending"),
+        ("AT-2026-013", "Lorena del Carmen Alfaro", "+56 9 6555 6677", del_objs["Delegación Avenida del Mar"], "TIP-001-ORI", "SUB-001-INF", "Orientación sobre postulación a Subsidio Único Familiar (SUF).", "Se revisa cumplimiento de requisitos y se agenda hora de ingreso.", "Rejected"),
+        ("AT-2026-014", "Cristián Eduardo Pizarro", "+56 9 6666 7788", del_objs["Delegación Avenida del Mar"], "TIP-002-TER", "SUB-002-CON", "Coordinación de operativo de limpieza de borde costero con junta vecinal.", "Operativo agendado con Dirección de Aseo y Ornato.", "Approved"),
+        ("AT-2026-015", "Paulina Alejandra Carvajal", "+56 9 6777 8899", del_objs["Delegación Avenida del Mar"], "TIP-005-MED", "SUB-005-PLA", "Recuperación de espacio público y mantención de juegos infantiles.", "Inspección técnica realizada por delegación municipal.", "Pending"),
+        ("AT-2026-016", "Gonzalo Hernán Santander", "+56 9 6888 9900", del_objs["Delegación Avenida del Mar"], "TIP-006-SEG", "SUB-006-LUM", "Solicitud de patrullaje preventivo nocturno en sector Cuatro Esquinas.", "Requerimiento coordinado con Seguridad Ciudadana Municipal.", "Approved"),
     ]
     for code, contact, phone, deleg, tip_code, sub_code, prob, act_desc, v_status in atenciones_sample:
         v_obj = Vecino.objects.filter(rut__in=[vd['rut'] for vd in vecinos_seed if vd['nombre'] == contact]).first()
@@ -278,7 +330,7 @@ def seed_pre_evaluation():
                 "executed_action": act_desc,
                 "validation_status": v_status,
                 "neighbor": v_obj,
-                "user": u_scarlett
+                "user": u_delegado
             }
         )
         if not created:
@@ -295,6 +347,71 @@ def seed_pre_evaluation():
             act.save()
         print(f"  [ATENCIÓN] {act.activity_code} -> {act.contact_name} ({act.delegation.name})")
 
+    # 9. CASOS SOCIALES ÚNICOS (RN-012, >= 10 EN AVENIDA DEL MAR PARA DEMOSTRAR PAGINACIÓN Y 3 ETAPAS)
+    casos_seed = [
+        ("12.784.561-3", "Héctor Valenzuela Rojas", "+56 9 5541 2390", "[beneficio] Subsidio de Agua Potable (SAP). Adulto mayor con pensión básica solidaria solicita renovación de SAP.", 3),
+        ("19.822.450-3", "Diego Tapia Castillo", "+56 9 7889 0012", "[diagnostico] Evaluación habitacional en terreno. Familia monoparental solicita visita domiciliaria por humedad severa.", 2),
+        ("17.452.193-4", "Camila Andrea Soto", "+56 9 6654 3210", "[informe] Informe Social para Tribunal de Familia. Requerimiento de peritaje socioeconómico urgente.", 1),
+        ("16.100.132-K", "Javiera Paz Olivares", "+56 9 6111 2233", "[beneficio] Canasta Familiar de Alimentos DIDECO. Jefa de hogar cesante requiere apoyo alimentario.", 3),
+        ("17.100.140-4", "Matías Ignacio Galleguillos", "+56 9 6222 3344", "[emergencia] Incendio Habitacional parcial. Solicita ayuda de emergencia con colchonetas y frazadas.", 2),
+        ("18.100.156-4", "Valentina Constanza Cortés", "+56 9 6333 4455", "[beneficio] Subsidio Único Familiar (SUF). Postulación para dos cargas familiares menores de edad.", 1),
+        ("19.100.167-3", "Sebastián Andrés Zepeda", "+56 9 6444 5566", "[redes] Derivación a CESFAM Emilio Schaffhauser. Adulto mayor requiere atención domiciliaria de salud.", 2),
+        ("20.100.172-2", "Lorena del Carmen Alfaro", "+56 9 6555 6677", "[beneficio] Exención de Derechos de Aseo Municipal. Vivienda vulnerable tramo 40% RSH.", 3),
+        ("21.100.188-2", "Cristián Eduardo Pizarro", "+56 9 6666 7788", "[diagnostico] Visita domiciliaria por hacinamiento. Levantamiento técnico para comité habitacional.", 1),
+        ("22.100.193-1", "Paulina Alejandra Carvajal", "+56 9 6777 8899", "[beneficio] Ayuda Médica y Fármacos de alto costo. Receta médica hospitalaria adjunta.", 1),
+    ]
+    avm_del = del_objs["Delegación Avenida del Mar"]
+    for idx, (rut, nombre, fono, problema, max_stage) in enumerate(casos_seed, start=1):
+        caso, _ = SocialCase.objects.get_or_create(
+            user_rut=rut,
+            delegation=avm_del,
+            defaults={
+                "user_name": nombre,
+                "contact_phone": fono,
+                "entry_date": date.today(),
+            }
+        )
+        caso.user_name = nombre
+        caso.contact_phone = fono
+        caso.deleted_at = None
+        caso.save()
+
+        m1, _ = SocialManagement.objects.get_or_create(
+            case=caso, stage=1,
+            defaults={
+                "management_type": "Ingreso y recepción de antecedentes",
+                "management_date": date.today(),
+                "result": problema,
+            }
+        )
+        m1.result = problema
+        m1.deleted_at = None
+        m1.save()
+
+        if max_stage >= 2:
+            m2, _ = SocialManagement.objects.get_or_create(
+                case=caso, stage=2,
+                defaults={
+                    "management_type": "Visita en terreno y levantamiento técnico",
+                    "management_date": date.today(),
+                    "result": f"[Respaldo: ACT-AVM-0{idx}] Se realizó inspección domiciliaria verificando situación sociofamiliar en terreno.",
+                }
+            )
+            m2.deleted_at = None
+            m2.save()
+        if max_stage >= 3:
+            m3, _ = SocialManagement.objects.get_or_create(
+                case=caso, stage=3,
+                defaults={
+                    "management_type": "Resolución, dictamen y entrega de prestación",
+                    "management_date": date.today(),
+                    "result": "[Subsidio/Prestación: Beneficio Municipal DIDECO] Caso resuelto favorablemente con acta de entrega.",
+                }
+            )
+            m3.deleted_at = None
+            m3.save()
+        print(f"  [CASO SOCIAL] #{caso.id} {caso.user_name} ({caso.user_rut}) -> Etapa {max_stage}")
+
     print("=" * 65)
     print(f"  SEED COMPLETADO CON ÉXITO:")
     print(f"  - Delegaciones: {Delegation.objects.filter(deleted_at__isnull=True).count()}")
@@ -307,3 +424,4 @@ def seed_pre_evaluation():
 
 if __name__ == '__main__':
     seed_pre_evaluation()
+

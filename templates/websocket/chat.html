@@ -1,0 +1,199 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Chat de la Organización | Sistema de Gestión{% endblock %}
+
+{% block extra_css %}
+<style>
+    .chat-container {
+        max-width: 800px;
+        margin: 2rem auto;
+        background: #ffffff;
+        border-radius: 14px;
+        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.08), 0 8px 10px -6px rgba(0, 0, 0, 0.04);
+        border: 1px solid #e2e8f0;
+        overflow: hidden;
+    }
+    .chat-header {
+        background: linear-gradient(135deg, #1e293b, #0f172a);
+        color: #ffffff;
+        padding: 1.25rem 1.75rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: 3px solid #dc2626;
+    }
+    .chat-header h1 {
+        font-size: 1.35rem;
+        font-weight: 700;
+        margin: 0;
+        color: #ffffff;
+    }
+    .status-badge {
+        font-size: 0.8rem;
+        padding: 0.35rem 0.75rem;
+        border-radius: 9999px;
+        font-weight: 600;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        background: rgba(255, 255, 255, 0.15);
+        color: #e2e8f0;
+        margin-bottom: 0;
+    }
+    .status-badge.connected {
+        background: #10b981;
+        color: #ffffff;
+    }
+    .status-badge.disconnected {
+        background: #ef4444;
+        color: #ffffff;
+    }
+    .chat-messages-area {
+        height: 420px;
+        overflow-y: auto;
+        padding: 1.5rem;
+        background-color: #f8fafc;
+    }
+    #messages {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 0.85rem;
+    }
+    #messages li {
+        padding: 0.75rem 1rem;
+        background: #ffffff;
+        border-radius: 10px;
+        border-left: 4px solid #3b82f6;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+        font-size: 0.95rem;
+        line-height: 1.4;
+        word-break: break-word;
+    }
+    #messages li strong {
+        color: #1e293b;
+    }
+    .chat-input-area {
+        padding: 1.25rem 1.75rem;
+        background: #ffffff;
+        border-top: 1px solid #e2e8f0;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="chat-container">
+        <div class="chat-header">
+            <div>
+                <h1>Chat de la organización</h1>
+                {% if delegation_name %}
+                <small class="text-white-50"><i class="bi bi-geo-alt-fill me-1"></i>{{ delegation_name }}</small>
+                {% endif %}
+            </div>
+            <p id="chat-status" class="status-badge" role="status">Conectando...</p>
+        </div>
+
+        <div class="chat-messages-area" id="messages-scroll">
+            <ul id="messages" aria-live="polite"></ul>
+        </div>
+
+        <div class="chat-input-area">
+            <form id="chat-form" action="{% url 'websocket:send' %}" class="d-flex flex-column gap-2">
+                {% csrf_token %}
+                <label for="message" class="form-label fw-semibold small text-secondary mb-0">Mensaje</label>
+                <div class="input-group">
+                    <input id="message" name="message" class="form-control" maxlength="300" placeholder="Escribe un mensaje aquí..." required autocomplete="off">
+                    <button id="send" class="btn btn-primary px-4 fw-semibold" type="submit" disabled>
+                        <i class="bi bi-send-fill me-1"></i> Enviar
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+// Parte 2: Conexión y estado WebSocket (Slides 20 y 22)
+const form = document.querySelector("#chat-form");
+const button = document.querySelector("#send");
+const input = document.querySelector("#message");
+const state = document.querySelector("#chat-status");
+const messagesList = document.querySelector("#messages");
+const messagesScroll = document.querySelector("#messages-scroll");
+
+const scheme = location.protocol === "https:" ? "wss" : "ws";
+const chatSocket = new WebSocket(
+  scheme + "://" + location.host + "/ws/chat/"
+);
+
+chatSocket.onopen = () => {
+  state.textContent = "Conectado";
+  state.className = "status-badge connected";
+  button.disabled = false;
+};
+
+chatSocket.onclose = () => {
+  state.textContent = "Desconectado. Vuelve a abrir el chat.";
+  state.className = "status-badge disconnected";
+  button.disabled = true;
+};
+
+chatSocket.onerror = () => console.error("Error WebSocket");
+
+// Parte 3: El formulario usa HTTP: POST y CSRF (Slide 21)
+form.onsubmit = async (event) => {
+  event.preventDefault();
+  const message = input.value.trim();
+  if (!message || chatSocket.readyState !== WebSocket.OPEN) return;
+  const response = await fetch(form.action, {
+    method: "POST",
+    headers: {
+      "X-CSRFToken": form.querySelector("[name=csrfmiddlewaretoken]").value
+    },
+    body: new URLSearchParams({ message })
+  });
+  if (response.redirected || !response.ok) {
+    state.textContent = "No se pudo enviar el mensaje";
+    state.className = "status-badge disconnected";
+    return;
+  }
+  input.value = "";
+  input.focus();
+};
+
+// Parte 4: Presentar mensajes recibidos por WebSocket (Slide 22)
+chatSocket.onmessage = (event) => {
+  const data = JSON.parse(event.data);
+  if (data.type !== "chat_message") {
+    // Si es un evento CRUD en tiempo real (Etapa 3 del laboratorio)
+    if (data.type === "crud_update") {
+      const alertItem = document.createElement("li");
+      alertItem.style.borderLeftColor = "#10b981";
+      alertItem.style.backgroundColor = "#f0fdf4";
+      alertItem.innerHTML = `<span class="badge bg-success me-1">Notificación CRUD</span> ${data.message || 'Se actualizó un registro en tiempo real'}`;
+      messagesList.append(alertItem);
+      messagesScroll.scrollTop = messagesScroll.scrollHeight;
+    }
+    return;
+  }
+  const item = document.createElement("li");
+  const author = data.username || data.usuario || "Usuario";
+  const msg = data.message || data.mensaje || "";
+  
+  const authorSpan = document.createElement("strong");
+  authorSpan.textContent = author + ": ";
+  item.appendChild(authorSpan);
+
+  const textSpan = document.createElement("span");
+  textSpan.textContent = msg;
+  item.appendChild(textSpan);
+
+  messagesList.append(item);
+  messagesScroll.scrollTop = messagesScroll.scrollHeight;
+};
+</script>
+{% endblock %}

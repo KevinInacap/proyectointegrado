@@ -69,6 +69,17 @@ class AdminApiIsolatedTests(SimpleTestCase):
         self.assertIsNone(views._validated_permissions('usuarios.view'))
         self.assertIsNone(views._validated_permissions([123]))
 
+    def test_administrator_password_length_limit(self):
+        self.assertEqual(views._password({'password': 'A' * 128}), 'A' * 128)
+        self.assertIsNone(views._password({'password': 'A' * 129}))
+
+    def test_delegation_text_minimum_matches_form(self):
+        valid = {'name': 'Sede Norte', 'scope': 'Zona Norte', 'commune': 'La Serena'}
+        self.assertIsNone(views._validate_delegation_details(valid))
+        for field in ('name', 'scope', 'commune'):
+            with self.subTest(field=field):
+                self.assertIsNotNone(views._validate_delegation_details({**valid, field: 'Ab'}))
+
     def test_unsafe_delegation_url(self):
         self.assertIsNotNone(views._validate_delegation_details({
             'photo_url': '/static/../secret.png',
@@ -88,6 +99,79 @@ class AdminApiIsolatedTests(SimpleTestCase):
         })
         request.user = SimpleNamespace(is_authenticated=True, is_active=True, is_superuser=True)
         self.assertEqual(views.api_user_create(request).status_code, 400)
+
+
+class TerritorialAccessTests(TestCase):
+    def setUp(self):
+        User = get_user_model()
+        self.north = Delegation.objects.create(name='Sede Norte RBAC', scope='Norte')
+        self.south = Delegation.objects.create(name='Sede Sur RBAC', scope='Sur')
+        local_reader = Role.objects.create(
+            name='Consulta territorial RBAC',
+            permissions_data=['delegaciones.view', 'usuarios.view', 'roles.create'],
+        )
+        self.assistant = User.objects.create_user(
+            username='assistant-rbac', password='Safe!TestPass2026', is_staff=True,
+        )
+        self.delegate = User.objects.create_user(
+            username='delegate-rbac', password='Safe!TestPass2026',
+        )
+        self.admin = User.objects.create_user(
+            username='admin-rbac', password='Safe!TestPass2026',
+        )
+        for user, rut, position, delegation, base_role in (
+            (self.assistant, '12.345.678-5', 'Asistente Social', self.north, 'Asistente Social'),
+            (self.delegate, '11.111.111-1', 'Delegado Municipal', self.south, 'Delegado Municipal'),
+            (self.admin, '10.000.000-8', 'Administrador General', self.north, 'Administrador'),
+        ):
+            profile = UserProfile.objects.create(
+                user=user, rut=rut, full_name=user.username,
+                email=f'{user.username}@example.test', delegation=delegation,
+                position=Position.objects.get(name=position),
+            )
+            profile.roles.add(Role.objects.get(name=base_role))
+            if user != self.admin:
+                profile.roles.add(local_reader)
+
+    def test_assistant_and_delegate_only_list_their_assigned_delegation(self):
+        for user, expected in ((self.assistant, self.north), (self.delegate, self.south)):
+            self.client.force_login(user)
+            delegations = self.client.get(reverse('organization:api_delegations'))
+            self.assertEqual(delegations.status_code, 200)
+            self.assertEqual(
+                [item['id'] for item in delegations.json()['delegations']], [expected.pk],
+            )
+            users = self.client.get(reverse('organization:api_users_list'))
+            self.assertEqual(users.status_code, 200)
+            self.assertEqual(
+                {item['delegation_id'] for item in users.json()['users']}, {expected.pk},
+            )
+
+    def test_administrator_role_lists_both_delegations_despite_local_assignment(self):
+        self.client.force_login(self.admin)
+        delegations = self.client.get(reverse('organization:api_delegations'))
+        self.assertEqual(delegations.status_code, 200)
+        self.assertTrue(
+            {self.north.pk, self.south.pk}.issubset(
+                {item['id'] for item in delegations.json()['delegations']}
+            )
+        )
+        users = self.client.get(reverse('organization:api_users_list'))
+        self.assertEqual(users.status_code, 200)
+        self.assertEqual(
+            {self.assistant.username, self.delegate.username, self.admin.username},
+            {item['username'] for item in users.json()['users']},
+        )
+
+    def test_staff_flag_and_assistant_cargo_do_not_grant_admin_only_actions(self):
+        self.client.force_login(self.assistant)
+        response = self.client.post(
+            reverse('organization:api_role_create'),
+            data=json.dumps({'name': 'Rol no autorizado', 'permissions': []}),
+            content_type='application/json',
+        )
+        self.assertEqual(response.status_code, 403)
+        self.assertFalse(Role.objects.filter(name='Rol no autorizado').exists())
 
 
 class UserCargoRoleSyncTests(TestCase):
@@ -127,7 +211,7 @@ class UserCargoRoleSyncTests(TestCase):
         self.assertEqual(list(profile.roles.values_list('name', flat=True)), ['Asistente Social'])
         self.assertIn('lectura', profile.roles.get().permissions_data)
 
-    def test_changing_cargo_replaces_only_old_base_role_and_keeps_extra_roles(self):
+    def test_changing_cargo_applies_only_roles_of_new_cargo(self):
         User = get_user_model()
         user = User.objects.create_user(username='cambio-cargo', password='L3tra!Segura-de-Universidad2026')
         profile = UserProfile.objects.create(
@@ -136,7 +220,7 @@ class UserCargoRoleSyncTests(TestCase):
             position=self.assistant_position,
         )
         assistant_role = Role.objects.get(name='Asistente Social')
-        extra_role = Role.objects.create(name='Permiso complementario', permissions_data=['reportes.view'])
+        extra_role = Role.objects.create(name='Permiso complementario', position=self.delegado_position, permissions_data=['reportes.view'])
         profile.roles.set([assistant_role, extra_role])
 
         response = self.client.post(reverse('organization:api_user_update', args=[profile.pk]), data=json.dumps({
@@ -178,6 +262,20 @@ class UserCargoRoleSyncTests(TestCase):
         profile.refresh_from_db()
         self.assertSetEqual(set(profile.roles.values_list('name', flat=True)), {'Delegado Municipal'})
 
+    def test_cannot_assign_role_from_other_cargo_and_keeps_existing_roles(self):
+        user = get_user_model().objects.create_user(username='cargo-cruzado')
+        profile = UserProfile.objects.create(user=user, rut='11.111.111-1', full_name='Persona Cruzada',
+                                             email='cargo-cruzado@example.test', position=self.assistant_position)
+        base_role = Role.objects.get(name='Asistente Social')
+        profile.roles.add(base_role)
+        other_role = Role.objects.create(name='Permiso de otro cargo', position=self.delegado_position,
+                                         permissions_data=['usuarios.delete'])
+        response = self.client.post(reverse('organization:api_user_update', args=[profile.pk]), data=json.dumps({
+            'role_ids': [other_role.pk],
+        }), content_type='application/json')
+        self.assertEqual(response.status_code, 400, response.content)
+        self.assertSetEqual(set(profile.roles.values_list('id', flat=True)), {base_role.pk})
+
     def test_creating_cargo_also_creates_its_base_role(self):
         response = self.client.post(reverse('organization:api_positions'), data=json.dumps({
             'name': 'Orientador Comunitario',
@@ -192,6 +290,8 @@ class UserCargoRoleSyncTests(TestCase):
     def test_renaming_cargo_keeps_assigned_users_and_base_role_in_sync(self):
         position = Position.objects.create(name='Encargado de Prueba', description='Cargo temporal')
         role = Role.objects.create(name='Encargado de Prueba', is_system=True, permissions_data=['lectura'])
+        position.base_role = role
+        position.save(update_fields=['base_role'])
         User = get_user_model()
         user = User.objects.create_user(username='encargado-prueba', password='Safe!TestPass2026')
         profile = UserProfile.objects.create(
@@ -209,3 +309,301 @@ class UserCargoRoleSyncTests(TestCase):
         role.refresh_from_db()
         self.assertEqual(role.name, 'Encargado Territorial')
         self.assertEqual(list(profile.roles.values_list('name', flat=True)), ['Encargado Territorial'])
+
+
+class UserIdentityEditingTests(TestCase):
+    """Regresiones de identidad y privilegios al editar la dotación existente."""
+
+    @classmethod
+    def setUpTestData(cls):
+        User = get_user_model()
+        cls.admin = User.objects.create_superuser(
+            username='identity-admin', email='identity-admin@example.test', password='Safe!TestPass2026',
+        )
+        cls.delegation = Delegation.objects.create(name='Identidad territorial', scope='Sector de prueba')
+        cls.assistant_position = Position.objects.get(name='Asistente Social')
+        cls.delegate_position = Position.objects.get(name='Delegado Municipal')
+        cls.super_position, _ = Position.objects.get_or_create(name='SuperAdministrador')
+        cls.extra_role = Role.objects.create(name='Apoyo identidad', position=cls.assistant_position, permissions_data=['reportes.view'])
+        cls.user = User.objects.create_user(username='legacy-person', is_staff=True)
+        cls.profile = UserProfile.objects.create(
+            user=cls.user, rut='12.345.678-9', full_name='Persona Histórica',
+            email='legacy-person@example.test', delegation=cls.delegation,
+            position=cls.assistant_position,
+        )
+        cls.profile.roles.add(Role.objects.get(name='Asistente Social'))
+
+    def setUp(self):
+        self.client.force_login(self.admin)
+
+    def update(self, payload):
+        return self.client.post(
+            reverse('organization:api_user_update', args=[self.profile.pk]),
+            data=json.dumps(payload), content_type='application/json',
+        )
+
+    def create(self, **overrides):
+        payload = {
+            'username': 'new-identity', 'full_name': 'Nueva Persona',
+            'email': 'new-identity@example.test', 'rut': '10000013-k',
+            'password': 'Safe!TestPass2026', 'delegation_id': self.delegation.pk,
+            'position_id': self.assistant_position.pk,
+        }
+        payload.update(overrides)
+        return self.client.post(
+            reverse('organization:api_user_create'), data=json.dumps(payload), content_type='application/json',
+        )
+
+    def test_cargo_can_change_without_resubmitting_historical_rut(self):
+        response = self.update({'position_id': self.delegate_position.pk})
+        self.assertEqual(response.status_code, 200, response.content)
+        self.profile.refresh_from_db()
+        self.user.refresh_from_db()
+        self.assertEqual(self.profile.rut, '12.345.678-9')
+        self.assertEqual(self.profile.position_id, self.delegate_position.pk)
+        self.assertSetEqual(set(self.profile.roles.values_list('name', flat=True)), {'Delegado Municipal'})
+        self.assertTrue(self.user.is_staff)
+        self.assertFalse(self.user.is_superuser)
+
+    def test_unchanged_historical_rut_allows_role_change_even_when_reformatted(self):
+        response = self.update({'rut': '12345678-9', 'role_ids': [self.extra_role.pk]})
+        self.assertEqual(response.status_code, 200, response.content)
+        self.profile.refresh_from_db()
+        self.assertEqual(self.profile.rut, '12.345.678-9')
+        self.assertSetEqual(set(self.profile.roles.values_list('name', flat=True)), {'Asistente Social', 'Apoyo identidad'})
+
+    def test_changed_invalid_rut_does_not_partially_update_cargo_or_roles(self):
+        from core.models import AuditLog
+        audit_count = AuditLog.objects.count()
+        for rut in ('12.345.678-0', '', 'abc12345678-5', '0-0'):
+            with self.subTest(rut=rut):
+                response = self.update({'rut': rut, 'position_id': self.delegate_position.pk, 'role_ids': [self.extra_role.pk]})
+                self.assertEqual(response.status_code, 400, response.content)
+                self.profile.refresh_from_db()
+                self.assertEqual(self.profile.rut, '12.345.678-9')
+                self.assertEqual(self.profile.position_id, self.assistant_position.pk)
+                self.assertSetEqual(set(self.profile.roles.values_list('name', flat=True)), {'Asistente Social'})
+        self.assertEqual(AuditLog.objects.count(), audit_count)
+
+    def test_new_rut_requires_valid_dv(self):
+        response = self.create(rut='12.345.678-9')
+        self.assertEqual(response.status_code, 400, response.content)
+        self.assertFalse(get_user_model().objects.filter(username='new-identity').exists())
+
+    def test_new_and_changed_valid_rut_store_canonical_format_and_uppercase_k(self):
+        response = self.create()
+        self.assertEqual(response.status_code, 200, response.content)
+        self.assertEqual(UserProfile.objects.get(pk=response.json()['user_id']).rut, '10.000.013-K')
+        response = self.update({'rut': '12345678-5'})
+        self.assertEqual(response.status_code, 200, response.content)
+        self.profile.refresh_from_db()
+        self.assertEqual(self.profile.rut, '12.345.678-5')
+
+    def test_duplicate_identity_is_rejected_for_create_and_update_across_formats(self):
+        other = get_user_model().objects.create_user(username='other-identity')
+        UserProfile.objects.create(user=other, rut='10000013-k', full_name='Otra Persona', email='other-identity@example.test')
+        response = self.create(rut='10.000.013-K')
+        self.assertEqual(response.status_code, 400, response.content)
+        self.assertIn('ya se encuentra registrado', response.json()['message'])
+        response = self.update({'rut': '10.000.013-K', 'position_id': self.delegate_position.pk})
+        self.assertEqual(response.status_code, 400, response.content)
+        self.assertIn('pertenece a otro funcionario', response.json()['message'])
+        self.profile.refresh_from_db()
+        self.assertEqual(self.profile.rut, '12.345.678-9')
+        self.assertEqual(self.profile.position_id, self.assistant_position.pk)
+
+    def test_super_administrator_cargo_cannot_bypass_reserved_role_on_create(self):
+        response = self.create(position_id=self.super_position.pk, role_ids=[])
+        self.assertEqual(response.status_code, 403, response.content)
+        self.assertFalse(get_user_model().objects.filter(username='new-identity').exists())
+
+    def test_super_administrator_cargo_cannot_bypass_reserved_role_on_update(self):
+        from core.models import AuditLog
+        for roles in (None, []):
+            payload = {'position_id': self.super_position.pk}
+            if roles is not None:
+                payload['role_ids'] = roles
+            response = self.update(payload)
+            self.assertEqual(response.status_code, 403, response.content)
+            self.profile.refresh_from_db()
+            self.assertEqual(self.profile.position_id, self.assistant_position.pk)
+            self.assertSetEqual(set(self.profile.roles.values_list('name', flat=True)), {'Asistente Social'})
+        self.assertFalse(AuditLog.objects.filter(affected_record_id=str(self.profile.pk), action='UPDATE').exists())
+
+
+class AdminCatalogRegressionTests(TestCase):
+    def setUp(self):
+        self.admin = get_user_model().objects.create_superuser(username='audit', password='Safe!Pass2026')
+        self.client.force_login(self.admin)
+
+    def post(self, name, data, *args):
+        return self.client.post(reverse('organization:' + name, args=args), data=json.dumps(data), content_type='application/json')
+
+    def test_long_cargo_description_does_not_overflow_role_and_both_persist(self):
+        response = self.post('api_positions', {'name': 'Orientador Comunitario Auditado', 'description': 'X' * 500})
+        self.assertEqual(response.status_code, 200, response.content)
+        cargo = Position.objects.get(pk=response.json()['id'])
+        self.assertEqual(len(cargo.description), 500)
+        self.assertIsNotNone(cargo.base_role_id)
+        self.assertLessEqual(len(cargo.base_role.description), 255)
+        self.assertEqual(cargo.base_role.name, cargo.name)
+
+    def test_creating_role_never_creates_cargo(self):
+        before = Position.objects.count()
+        cargo = Position.objects.get(name='Asistente Social')
+        response = self.post('api_role_create', {'name': 'Solo Permisos', 'description': 'Rol complementario', 'permissions': [], 'position_id': cargo.pk})
+        self.assertEqual(response.status_code, 200, response.content)
+        self.assertEqual(Position.objects.count(), before)
+        self.assertEqual(Role.objects.get(name='Solo Permisos').position_id, cargo.pk)
+
+    def test_role_creation_and_duplication_require_an_active_cargo(self):
+        cargo = Position.objects.get(name='Asistente Social')
+        inactive = Position.objects.create(name='Cargo inactivo', status='Inactivo')
+        origin = Role.objects.get(name='Asistente Social')
+        for position_id in (None, 999999, inactive.pk, True):
+            payload = {'name': 'Rol asociado', 'permissions': [], 'position_id': position_id}
+            self.assertEqual(self.post('api_role_create', payload).status_code, 400)
+            self.assertEqual(self.post('api_role_duplicate', {'position_id': position_id}, origin.pk).status_code, 400)
+        created = self.post('api_role_create', {'name': 'Rol asociado', 'permissions': ['vecinos.view'], 'position_id': cargo.pk})
+        self.assertEqual(created.status_code, 200, created.content)
+        role = Role.objects.get(pk=created.json()['role']['id'])
+        self.assertEqual(role.position_id, cargo.pk)
+        listing = self.client.get(reverse('organization:api_roles_list')).json()['roles']
+        self.assertEqual(next(item for item in listing if item['id'] == role.pk)['position_id'], cargo.pk)
+
+    def test_legacy_role_cannot_be_assigned_to_cargo_of_other_existing_users(self):
+        cargo = Position.objects.get(name='Asistente Social')
+        other = Position.objects.get(name='Delegado Municipal')
+        user = get_user_model().objects.create_user(username='legacy-cross')
+        profile = UserProfile.objects.create(user=user, rut='10.222.333-4', full_name='Persona Legado',
+                                             email='legacy-cross@example.test', position=other)
+        role = Role.objects.create(name='Rol sin cargo', permissions_data=['lectura'])
+        profile.roles.add(role)
+        response = self.post('api_role_update', {'name': role.name, 'position_id': cargo.pk}, role.pk)
+        self.assertEqual(response.status_code, 409, response.content)
+        role.refresh_from_db()
+        self.assertIsNone(role.position_id)
+
+    def test_cargo_with_roles_is_not_deleted_and_permissions_are_preserved(self):
+        response = self.post('api_positions', {'name': 'Cargo para conservar'})
+        cargo = Position.objects.get(pk=response.json()['id'])
+        response = self.post('api_position_delete', {}, cargo.pk)
+        self.assertEqual(response.status_code, 409, response.content)
+        self.assertTrue(Position.objects.filter(pk=cargo.pk).exists())
+        self.assertTrue(Role.objects.filter(pk=cargo.base_role_id, position=cargo).exists())
+
+    def test_legacy_seeds_cannot_modify_accounts_or_create_unbound_roles(self):
+        from importlib import import_module
+        from scripts.seed_pre_evaluation import seed_pre_evaluation
+        from scripts.seed_evaluation_records import seed
+        users_before = get_user_model().objects.count()
+        roles_before = Role.objects.count()
+        for command in (seed_pre_evaluation, seed):
+            with self.assertRaisesRegex(RuntimeError, 'deshabilitado'):
+                command()
+        with self.assertRaisesRegex(RuntimeError, 'deshabilitado'):
+            import_module('scripts.setup_chat_users')
+        self.assertEqual(get_user_model().objects.count(), users_before)
+        self.assertEqual(Role.objects.count(), roles_before)
+
+    def test_django_admin_requires_cargo_for_new_roles(self):
+        from .admin import RoleAdminForm
+        form = RoleAdminForm(data={'name': 'Rol sin cargo', 'description': '', 'permissions_data': '[]'})
+        self.assertFalse(form.is_valid())
+        self.assertIn('position', form.errors)
+
+    def test_unlinked_position_never_adopts_existing_role_by_name(self):
+        from .role_assignment import roles_with_position_base
+        role = Role.objects.create(name='Cargo sin vínculo', permissions_data=['usuarios.delete'])
+        cargo = Position.objects.create(name=role.name)
+        with self.assertRaises(ValueError):
+            roles_with_position_base([], cargo)
+        cargo.refresh_from_db()
+        self.assertIsNone(cargo.base_role_id)
+
+    def test_custom_role_linked_to_position_is_not_granted_implicitly(self):
+        from .role_assignment import roles_with_position_base
+        role = Role.objects.create(name='Rol legado', permissions_data=['usuarios.delete'])
+        cargo = Position.objects.create(name=role.name, base_role=role)
+        with self.assertRaises(ValueError):
+            roles_with_position_base([], cargo)
+        response = self.post('api_position_update', {'name': 'Otro cargo'}, cargo.pk)
+        self.assertEqual(response.status_code, 409, response.content)
+        role.refresh_from_db()
+        self.assertEqual(role.name, 'Rol legado')
+
+    def test_deleted_base_role_is_not_reactivated_implicitly(self):
+        from .role_assignment import roles_with_position_base
+        from django.utils import timezone
+        role = Role.objects.create(name='Rol eliminado legado', is_system=True, deleted_at=timezone.now())
+        cargo = Position.objects.create(name=role.name, base_role=role)
+        with self.assertRaises(ValueError):
+            roles_with_position_base([], cargo)
+        role.refresh_from_db()
+        self.assertIsNotNone(role.deleted_at)
+
+    def test_protected_admin_base_role_cannot_be_renamed_via_position(self):
+        role = Role.objects.get(name='Administrador')
+        cargo = Position.objects.get(name='Administrador General')
+        self.assertEqual(cargo.base_role_id, role.pk)
+        response = self.post('api_position_update', {'name': 'Cargo renombrado'}, cargo.pk)
+        self.assertEqual(response.status_code, 403, response.content)
+        role.refresh_from_db()
+        cargo.refresh_from_db()
+        self.assertEqual(role.name, 'Administrador')
+        self.assertEqual(cargo.name, 'Administrador General')
+
+    def test_role_listing_preserves_empty_description(self):
+        role = Role.objects.create(name='Sin descripción guardada', description='')
+        response = self.client.get(reverse('organization:api_roles_list'))
+        self.assertEqual(response.status_code, 200, response.content)
+        result = next(item for item in response.json()['roles'] if item['id'] == role.pk)
+        self.assertEqual(result['description'], '')
+
+    def test_existing_role_name_does_not_silently_grant_access_to_new_cargo(self):
+        Role.objects.create(name='Rol Manual', permissions_data=['usuarios.delete'])
+        response = self.post('api_positions', {'name': 'Rol Manual'})
+        self.assertEqual(response.status_code, 400)
+        self.assertFalse(Position.objects.filter(name='Rol Manual').exists())
+
+    def test_cargo_role_can_update_permissions_but_name_is_owned_by_cargo(self):
+        response = self.post('api_positions', {'name': 'Orientador Auditado'})
+        cargo = Position.objects.get(pk=response.json()['id'])
+        role = cargo.base_role
+        response = self.post('api_role_update', {'name': role.name, 'description': 'Acceso ajustado', 'permissions': ['vecinos.view']}, role.pk)
+        self.assertEqual(response.status_code, 200, response.content)
+        role.refresh_from_db()
+        self.assertIn('vecinos.view', role.permissions_data)
+        response = self.post('api_role_update', {'name': 'Otro nombre'}, role.pk)
+        self.assertEqual(response.status_code, 400)
+
+    def test_repeated_duplication_of_maximum_length_role(self):
+        role = Role.objects.create(name='A' * 50)
+        cargo = Position.objects.get(name='Asistente Social')
+        first = self.post('api_role_duplicate', {'position_id': cargo.pk}, role.pk)
+        second = self.post('api_role_duplicate', {'position_id': cargo.pk}, role.pk)
+        self.assertEqual(first.status_code, 200, first.content)
+        self.assertEqual(second.status_code, 200, second.content)
+        self.assertNotEqual(first.json()['role']['name'], second.json()['role']['name'])
+        self.assertLessEqual(len(second.json()['role']['name']), 50)
+
+    def test_duplicate_role_with_full_description_does_not_overflow(self):
+        role = Role.objects.create(name='Descripción Completa', description='X' * 255)
+        response = self.post('api_role_duplicate', {'position_id': Position.objects.get(name='Asistente Social').pk}, role.pk)
+        self.assertEqual(response.status_code, 200, response.content)
+        self.assertTrue(Role.objects.filter(description='X' * 255).count() >= 2)
+
+    def test_invalid_types_markup_and_names_are_rejected_without_write(self):
+        for value in ({'script': 1}, ['Cargo'], '<img src=x onerror=alert(1)>', '  ', '12345'):
+            with self.subTest(value=value):
+                response = self.post('api_positions', {'name': value})
+                self.assertEqual(response.status_code, 400, response.content)
+
+    def test_phone_email_and_name_validation(self):
+        from core.input_validation import field_error
+        for value in ('123', '+56 9 abcdefghi', '1-------', '9' * 16):
+            self.assertIsNotNone(field_error(value, 30, 'phone'))
+        self.assertIsNone(field_error('+56 9 1234 5678', 30, 'phone'))
+        self.assertIsNone(field_error("María José O'Connor", 150, 'name', True))
+        self.assertIsNotNone(field_error('Juan 123', 150, 'name', True))
+        self.assertIsNotNone(field_error('hola@@ejemplo.cl', 100, 'email', True))

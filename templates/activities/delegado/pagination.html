@@ -1,0 +1,8 @@
+<div class="delegado-pagination">
+    <span>Mostrando {{ page.start_index }}–{{ page.end_index }} de {{ page.paginator.count }} {{ record_label }}</span>
+    <nav aria-label="Páginas de {{ record_label }}">
+        {% if page.has_previous %}<a href="?{% if pagination_query %}{{ pagination_query }}&amp;{% endif %}page={{ page.previous_page_number }}" aria-label="Página anterior">Anterior</a>{% endif %}
+        <span class="current-page" aria-current="page" aria-label="Página {{ page.number }} de {{ page.paginator.num_pages }}">{{ page.number }} / {{ page.paginator.num_pages }}</span>
+        {% if page.has_next %}<a href="?{% if pagination_query %}{{ pagination_query }}&amp;{% endif %}page={{ page.next_page_number }}" aria-label="Página siguiente">Siguiente</a>{% endif %}
+    </nav>
+</div>

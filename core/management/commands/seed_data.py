@@ -96,10 +96,14 @@ class Command(BaseCommand):
             name="Auditor Municipal",
             defaults={"description": "Fiscalización, calidad y auditoría.", "status": "Activo"}
         )
+        pos_consulta, _ = Position.objects.get_or_create(
+            name="Usuario de Consulta",
+            defaults={"description": "Consulta de tableros e indicadores.", "status": "Activo"}
+        )
 
         role_admin, _ = Role.objects.get_or_create(
             name=ADMINISTRATOR_ROLE_NAME,
-            defaults={"description": "Configuración integral, parámetros, usuarios y auditoría transversal.", "is_system": True}
+            defaults={"description": "Configuración integral, parámetros, usuarios y auditoría transversal.", "is_system": True, "position": pos_admin}
         )
         role_admin.is_system = True
         admin_permissions = [
@@ -127,25 +131,26 @@ class Command(BaseCommand):
         role_admin.save(update_fields=['is_system', 'updated_at'])
         role_coordinador, _ = Role.objects.get_or_create(
             name="Coordinador del Sistema",
-            defaults={"description": "Supervisión institucional, metas y reportes consolidados comunales."}
+            defaults={"description": "Supervisión institucional, metas y reportes consolidados comunales.", "position": pos_coordinador}
         )
         role_delegado, _ = Role.objects.get_or_create(
             name="Delegado Municipal",
-            defaults={"description": "Jefatura de delegación y gestión del tubo de trabajo colectivo."}
+            defaults={"description": "Jefatura de delegación y gestión del tubo de trabajo colectivo.", "position": pos_delegado}
         )
         role_funcionario, _ = Role.objects.get_or_create(
             name="Gestor Territorial",
-            defaults={"description": "Registro operativo de actividades, atenciones, compromisos y evidencias."}
+            defaults={"description": "Registro operativo de actividades, atenciones, compromisos y evidencias.", "position": pos_gestor}
         )
         role_verificador, _ = Role.objects.get_or_create(
             name="Verificador Técnico",
-            defaults={"description": "Revisión técnica, aprobación o rechazo de evidencias registradas."}
+            defaults={"description": "Revisión técnica, aprobación o rechazo de evidencias registradas.", "position": pos_verificador}
         )
         role_consulta, _ = Role.objects.get_or_create(
             name="Usuario de Consulta",
             defaults={
                 "description": "Visualización de tableros, reportes e indicadores sin facultades de edición.",
                 "permissions_data": ['lectura'],
+                "position": pos_consulta,
             }
         )
         # The application checks these persisted role permissions at request time;
@@ -153,7 +158,7 @@ class Command(BaseCommand):
         # system-role matrices so rerunning the seed does not overwrite custom grants.
         role_permission_defaults = (
             (role_coordinador, ['lectura', 'edicion', 'derivacion']),
-            (role_delegado, ['lectura', 'edicion', 'derivacion']),
+            (role_delegado, ['lectura', 'edicion', 'derivacion', 'cierre']),
             (role_funcionario, ['lectura', 'edicion', 'derivacion']),
             (role_verificador, ['lectura', 'edicion', 'cierre']),
             (role_consulta, ['lectura']),
@@ -163,6 +168,14 @@ class Command(BaseCommand):
                 role.permissions_data = permissions
             role.is_system = True
             role.save(update_fields=['permissions_data', 'is_system', 'updated_at'])
+        # Solo vinculamos automáticamente roles que ya nacieron asociados a ese cargo.
+        # Los roles históricos ambiguos no se apropian por coincidencia de nombres.
+        for position, role in ((pos_admin, role_admin), (pos_coordinador, role_coordinador),
+                               (pos_delegado, role_delegado), (pos_gestor, role_funcionario),
+                               (pos_verificador, role_verificador), (pos_consulta, role_consulta)):
+            if role.position_id == position.pk and not position.base_role_id:
+                position.base_role = role
+                position.save(update_fields=['base_role', 'updated_at'])
         self.stdout.write(self.style.SUCCESS("[OK] Cargos y 6 Roles maestros institucionales creados."))
 
         # -------------------------------------------------------------
@@ -795,3 +808,4 @@ class Command(BaseCommand):
             "Las claves existentes no se modificaron; rota las claves iniciales antes de compartir el entorno.\n"
             "======================================================="
         ))
+

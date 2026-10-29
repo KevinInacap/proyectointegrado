@@ -36,11 +36,17 @@
     const panels = [];
     const labels = { code: 'Código', name: 'Nombre', description: 'Descripción', status: 'Estado', item_type: 'Tipo de ítem', period: 'Período de medición', position: 'Cargo', item: 'Ítem', target_value: 'Valor objetivo', unit_of_measure: 'Unidad de medida', weight: 'Ponderación (%)', attention_type: 'Tipo de atención', __all__: 'Registro' };
 
+    function escapeText(value) {
+        return String(value ?? '').replace(/[&<>"']/g, char => ({
+            '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+        })[char]);
+    }
+
     function element(tag, className, text, isHtml = false) {
         const node = document.createElement(tag);
         node.className = className || '';
         if (text !== undefined) {
-            if (isHtml || (typeof text === 'string' && text.includes('<'))) {
+            if (isHtml) {
                 node.innerHTML = String(text);
             } else {
                 node.textContent = String(text);
@@ -213,22 +219,27 @@
                     const rawValue = record[key];
                     const value = refs[key] ? (refs[key].find(item => Number(item.id) === Number(rawValue))?.name || `ID ${rawValue}`) : rawValue;
                     const td = element('td', 'py-2.5 px-2');
+                    let span;
                     if (key === 'code') {
-                        td.innerHTML = `<span class="badge bg-light text-dark border font-monospace px-2 py-1" style="font-size: 0.78rem; letter-spacing: 0.5px; white-space: nowrap;">${record.code}</span>`;
+                        span = element('span', 'badge bg-light text-dark border font-monospace px-2 py-1', value ?? '');
                     } else if (key === 'status') {
                         td.className = 'py-2.5 px-2 text-center';
-                        const isActivo = record.status === 'Activo';
-                        td.innerHTML = `<span class="badge rounded-pill fw-bold border ${isActivo ? 'bg-success-subtle text-success border-success-subtle' : 'bg-secondary-subtle text-secondary border-secondary-subtle'}" style="font-size: 0.72rem; padding: 4px 8px;">${record.status}</span>`;
+                        const stateClass = record.status === 'Activo' ? 'bg-success-subtle text-success border-success-subtle' : 'bg-secondary-subtle text-secondary border-secondary-subtle';
+                        span = element('span', `badge rounded-pill fw-bold border ${stateClass}`, value ?? '');
                     } else if (key === 'name') {
-                        td.innerHTML = `<span class="fw-semibold text-dark d-block text-truncate" title="${value ?? ''}">${value ?? ''}</span>`;
+                        span = element('span', 'fw-semibold text-dark d-block text-truncate', value ?? '');
+                        span.title = value ?? '';
                     } else if (key === 'description') {
-                        td.innerHTML = `<span class="text-muted d-block text-truncate" style="font-size: 0.78rem;" title="${value || 'Sin descripción'}">${value || '—'}</span>`;
+                        span = element('span', 'text-muted d-block text-truncate', value || '-');
+                        span.title = value || 'Sin descripción';
                     } else if (key === 'target_value' || key === 'weight') {
                         td.className = 'py-2.5 px-2 text-center';
-                        td.innerHTML = `<span class="font-monospace fw-semibold" style="font-size: 0.80rem;">${value ?? '—'}</span>`;
+                        span = element('span', 'font-monospace fw-semibold', value ?? '-');
                     } else {
-                        td.innerHTML = `<span class="d-block text-truncate" title="${value ?? ''}">${value ?? ''}</span>`;
+                        span = element('span', 'd-block text-truncate', value ?? '');
+                        span.title = value ?? '';
                     }
+                    td.append(span);
                     tr.append(td);
                 });
                 const actions = element('td', 'py-2.5 px-2 text-center text-nowrap');
@@ -410,7 +421,7 @@
                     const invalid = [...form.elements].find(input => !input.checkValidity());
                     if (invalid) {
                         const label = invalid.labels?.[0]?.textContent?.trim() || labels[invalid.name] || 'dato requerido';
-                        Swal.showValidationMessage(`Revisa ${label}: ${invalid.validationMessage}`);
+                        Swal.showValidationMessage(escapeText(`Revisa ${label}: ${invalid.validationMessage}`));
                         invalid.focus();
                         return false;
                     }
@@ -421,7 +432,7 @@
                         await request(endpoint(panel.catalog, id), id === undefined ? 'POST' : 'PATCH', payload);
                         return true;
                     } catch (error) {
-                        Swal.showValidationMessage(error.message);
+                        Swal.showValidationMessage(escapeText(error.message));
                         return false;
                     } finally {
                         saving = false;
@@ -459,7 +470,7 @@
                         </div>
                     </div>
                 `,
-                html: `<p class="my-3 text-secondary" style="font-size: 0.95rem;">¿Estás seguro de dar de baja <strong>${record.name || record.code}</strong>?</p>`,
+                text: `¿Estás seguro de dar de baja ${record.name || record.code}?`,
                 showCancelButton: true,
                 confirmButtonText: '<i class="bi bi-trash3-fill me-1"></i> Dar de baja',
                 cancelButtonText: 'Cancelar',
@@ -484,7 +495,7 @@
                         await request(endpoint(panel.catalog, record.id), 'DELETE');
                         return true;
                     } catch (error) {
-                        Swal.showValidationMessage('No se pudo dar de baja: ' + error.message);
+                        Swal.showValidationMessage(escapeText('No se pudo dar de baja: ' + error.message));
                         return false;
                     } finally {
                         deleting = false;
@@ -628,9 +639,9 @@
             filterGroup.prepend(panel.search, panel.status);
             filterGroup.append(panel.size);
 
-            panel.exportButton = button('<i class="bi bi-file-earmark-excel me-1 text-success"></i> Exportar a Excel', () => exportPanel(panel), 'btn btn-outline-secondary rounded-pill px-3 py-1 fw-bold small');
-            const reloadBtn = button('<i class="bi bi-arrow-clockwise me-1"></i> Recargar', () => { notice(panel, ''); load(panel); }, 'btn btn-outline-secondary rounded-pill px-3 py-1 fw-bold small');
-            const createBtn = button('<i class="bi bi-plus-lg me-1"></i> Crear ' + definitions[catalog].title, () => editRecord(panel), 'liquid-glass-btn-primary');
+            panel.exportButton = button('<i class="bi bi-file-earmark-excel me-1 text-success"></i> Exportar a Excel', () => exportPanel(panel), 'btn btn-outline-secondary rounded-pill px-3 py-1 fw-bold small', true);
+            const reloadBtn = button('<i class="bi bi-arrow-clockwise me-1"></i> Recargar', () => { notice(panel, ''); load(panel); }, 'btn btn-outline-secondary rounded-pill px-3 py-1 fw-bold small', true);
+            const createBtn = button('<i class="bi bi-plus-lg me-1"></i> Crear ' + definitions[catalog].title, () => editRecord(panel), 'liquid-glass-btn-primary', true);
 
             actionGroup.append(panel.exportButton, reloadBtn, createBtn);
             toolbar.append(filterGroup, actionGroup);

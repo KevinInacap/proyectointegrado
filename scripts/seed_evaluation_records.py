@@ -17,6 +17,7 @@ from organization.access import SUPER_ADMINISTRATOR_ROLE_NAME, SUPER_ADMINISTRAT
 User = get_user_model()
 
 def seed():
+    raise RuntimeError('Este generador antiguo está deshabilitado: debe adaptarse a roles por cargo y proteger las cuentas existentes antes de volver a utilizarse.')
     print("=== SEEDING EVALUATION OPERATIONAL RECORDS (>= 6 per catalog) ===")
 
     # 0. Ensure SuperAdministrador Role and User exist and are properly configured

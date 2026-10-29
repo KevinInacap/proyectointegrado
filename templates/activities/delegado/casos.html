@@ -1,0 +1,18 @@
+<section class="delegado-card section-content" id="casos-sociales" aria-labelledby="casos-title">
+    <div class="delegado-card-heading"><div class="card-title-group"><svg class="icon section-icon" aria-hidden="true"><use href="#i-users"/></svg><div><h2 id="casos-title">Casos sociales de mi delegación</h2><p>{{ social_case_count }} caso{{ social_case_count|pluralize }} en {{ delegation.name }}.</p></div></div></div>
+    <form class="delegado-filters" action="{{ section_url }}" method="get" role="search">
+        <label class="search-filter"><span class="visually-hidden">Buscar por nombre, RUT o teléfono</span><svg class="icon" aria-hidden="true"><use href="#i-search"/></svg><input type="search" name="q" value="{{ query }}" placeholder="Buscar por nombre, RUT o teléfono…" maxlength="100"></label>
+        <label class="status-filter"><span>Etapa</span><select name="etapa"><option value="">Todas las etapas</option><option value="1"{% if stage_filter == '1' %} selected{% endif %}>1 · Ingreso</option><option value="2"{% if stage_filter == '2' %} selected{% endif %}>2 · Terreno</option><option value="3"{% if stage_filter == '3' %} selected{% endif %}>3 · Resolución</option></select></label>
+        <button type="submit" class="filter-submit">Filtrar</button>{% if query or stage_filter %}<a class="clear-filters" href="{{ section_url }}">Limpiar filtros</a>{% endif %}
+    </form>
+    <div class="delegado-table-wrap"><table class="delegado-table section-table"><caption class="visually-hidden">Casos sociales de {{ delegation.name }}, página {{ page.number }}</caption><thead><tr><th scope="col">Ingreso</th><th scope="col">Vecino</th><th scope="col">RUT</th><th scope="col">Contacto</th><th scope="col">Avance</th></tr></thead><tbody>
+    {% for case in page %}<tr>
+        <td data-label="Ingreso"><span class="cell-value"><time datetime="{{ case.entry_date|date:'Y-m-d' }}">{{ case.entry_date|date:'d M Y' }}</time><small>Caso #{{ case.pk }}</small></span></td>
+        <td data-label="Vecino"><strong class="cell-value">{{ case.user_name }}</strong></td>
+        <td data-label="RUT"><span class="cell-value">{{ case.user_rut }}</span></td>
+        <td data-label="Contacto"><span class="cell-value">{{ case.contact_phone|default:'Sin teléfono' }}</span></td>
+        <td data-label="Avance"><span class="cell-value"><span class="delegado-badge">Etapa {{ case.latest_stage }} de 3</span></span></td>
+    </tr>{% empty %}<tr><td colspan="5" class="delegado-empty"><strong>{% if query or stage_filter %}No encontramos resultados{% else %}Aún no hay casos sociales{% endif %}</strong><p>{% if query or stage_filter %}Prueba otra búsqueda o limpia los filtros.{% else %}Aquí aparecerán los casos de tu delegación.{% endif %}</p></td></tr>{% endfor %}
+    </tbody></table></div>
+    {% include 'activities/delegado/pagination.html' with record_label='casos sociales' %}
+</section>

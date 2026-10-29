@@ -21,6 +21,10 @@ class SocialCase(BaseModel):
         verbose_name="Delegación"
     )
     entry_date = models.DateField(verbose_name="Fecha de ingreso")
+    activity = models.OneToOneField(
+        'activities.Activity', on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='social_case', verbose_name='Atención de ingreso vinculada',
+    )
 
     class Meta:
         verbose_name = "Caso Social"
@@ -191,4 +195,5 @@ class SocialNotification(BaseModel):
 
     def __str__(self):
         return self.message
+
 

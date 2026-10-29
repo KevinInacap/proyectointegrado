@@ -1,0 +1,81 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="284 0 328 320" fill="none" stroke="#E4C38E" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" role="img" aria-labelledby="faro-title faro-desc">
+  <title id="faro-title">Ilustración del Faro Monumental de La Serena</title>
+  <desc id="faro-desc">Fachada frontal con torre cuadrada, cuatro ventanas verticales, coronamiento almenado, linterna, dos torretas cilíndricas con cúpulas y escalinata central. Trazo dorado para fondo carmesí.</desc>
+
+  <!-- Un litoral plano deja que la silueta del edificio sea protagonista. -->
+  <g opacity=".28" stroke-width=".85">
+    <path d="M0 274h120m22 0h63m15 0h92m279 0h49"/>
+    <path d="M0 285c47-3 89 1 133-1s92-2 139 0m318 0 50-1"/>
+    <path d="M14 294h77m16 0h44m24-2 54 1m-210 10 113-1m19 1 42 1m370-10 77-1"/>
+    <path d="M0 313c65-3 119-1 178 0m22 1h77m290-2 73 1"/>
+  </g>
+  <g opacity=".45" stroke-width="1">
+    <path d="M158 191q7-5 14 0 7-5 14-1M233 222q5-4 10 0 5-4 10-1M567 133q5-4 10 0 5-4 10-1"/>
+  </g>
+
+  <!-- Linterna compacta y mástil, sin aguja ni pisos añadidos. -->
+  <g opacity=".92">
+    <path d="M449 10v16" stroke-width="1"/>
+    <path d="m434 31 15-8 15 8-2 3h-26Z"/>
+    <path d="M437 34v16h24V34m-18 0v16m12-16v16m-18-3h24" stroke-width="1.15"/>
+    <path d="M433 51h32v4h-32Z"/>
+
+    <!-- Cornisa y parapeto de la torre con almenas rectangulares. -->
+    <path d="M422 55v-7h10v7h10v-7h14v7h10v-7h10v18h-54Z"/>
+    <path d="M422 61h54M424 66l5 9h40l5-9M429 70h40"/>
+    <path d="M428 68v8h7v-8m12 0v8h6v-8m12 0v8h7v-8" stroke-width=".9"/>
+
+    <!-- Fuste cuadrado, apenas ensanchado hacia la base. -->
+    <path d="m430 76-7 148h52l-7-148" fill="#E4C38E" fill-opacity=".025"/>
+    <path d="m434 78-6 143m35-143 7 143" opacity=".35" stroke-width=".85"/>
+    <path d="M429 81h40" opacity=".6"/>
+
+    <!-- Cuatro vanos con arco, con sus marcos de ladrillo. -->
+    <g stroke-width="1.2">
+      <path d="M444 105V93a5 5 0 0 1 10 0v12Zm-3-1V92h2v-4h3v-2h6v2h3v4h2v12h-3m-10 0h-3"/>
+      <path d="M444 139v-12a5 5 0 0 1 10 0v12Zm-3-1v-12h2v-4h3v-2h6v2h3v4h2v12h-3m-10 0h-3"/>
+      <path d="M444 173v-12a5 5 0 0 1 10 0v12Zm-3-1v-12h2v-4h3v-2h6v2h3v4h2v12h-3m-10 0h-3"/>
+      <path d="M443 208v-13a6 6 0 0 1 12 0v13Zm-3-1v-13h2v-4h4v-2h6v2h4v4h2v13h-3m-12 0h-3"/>
+    </g>
+
+    <!-- Cuerpo bajo y ancho, con almenado continuo. -->
+    <path d="M344 232v-15h17v8h15v-8h16v8h15v-8h16v8h15v-8h20v8h15v-8h16v8h15v-8h16v8h15v-8h17v15Z"/>
+    <path d="M344 232h210v5H344ZM343 237v39h212v-39"/>
+    <path d="M346 271h207m-207 5h207"/>
+    <path d="M344 229h210" opacity=".35" stroke-width=".8"/>
+
+    <!-- Acceso principal de arco y ventanales laterales. -->
+    <path d="M434 276v-27a15 15 0 0 1 30 0v27m-26 0v-26a11 11 0 0 1 22 0v26"/>
+    <path d="M431 272v-23h2v-8h4v-6h6v-3h12v3h6v6h4v8h2v23" stroke-width="1.1"/>
+    <path d="M449 250v26" opacity=".45"/>
+    <g stroke-width="1.15">
+      <path d="M365 264v-15a5 5 0 0 1 10 0v15Zm-3 0v-16h2v-4h3v-3h6v3h3v4h2v16"/>
+      <path d="M400 264v-15a5 5 0 0 1 10 0v15Zm-3 0v-16h2v-4h3v-3h6v3h3v4h2v16"/>
+      <path d="M488 264v-15a5 5 0 0 1 10 0v15Zm-3 0v-16h2v-4h3v-3h6v3h3v4h2v16"/>
+      <path d="M523 264v-15a5 5 0 0 1 10 0v15Zm-3 0v-16h2v-4h3v-3h6v3h3v4h2v16"/>
+    </g>
+
+    <!-- Dos torretas cilíndricas, con cubiertas redondeadas. -->
+    <g>
+      <path d="M326 206q1-10 15-11 14 1 15 11ZM341 191v4"/>
+      <path d="M327 209q14 4 28 0m-29-3q15 5 30 0m-29 3-2 30q16 8 32 0l-2-30"/>
+      <path d="M325 239q16 5 32 0l-6 9h-20Z"/>
+      <path d="M333 248v28m17-28v28m-17-1h17"/>
+      <path d="M338 220v-6h5v6m-16 6q14 4 28 0m-29 9q15 5 30 0m-23-24-1 28m16-28 1 28" opacity=".48" stroke-width=".8"/>
+
+      <path d="M542 206q1-10 15-11 14 1 15 11ZM557 191v4"/>
+      <path d="M543 209q14 4 28 0m-29-3q15 5 30 0m-29 3-2 30q16 8 32 0l-2-30"/>
+      <path d="M541 239q16 5 32 0l-6 9h-20Z"/>
+      <path d="M549 248v28m17-28v28m-17-1h17"/>
+      <path d="M554 220v-6h5v6m-16 6q14 4 28 0m-29 9q15 5 30 0m-23-24-1 28m16-28 1 28" opacity=".48" stroke-width=".8"/>
+    </g>
+
+    <!-- Terraza y escalinata frontal, sobre una explanada plana. -->
+    <path d="M296 276h114m78 0h115M288 280h119m84 0h121"/>
+    <path d="m420 276-14 33m72-33 14 33M420 276h58m-61 7h64m-67 6h70m-73 6h76m-79 6h82m-85 6h88m-91 4h94"/>
+    <path d="m407 274-14 32h12l15-32Zm72 0 15 32h12l-14-32Z"/>
+    <path d="M404 282h12m-15 7h12m-15 7h12m78-14h12m-9 7h12m-9 7h12" opacity=".45" stroke-width=".8"/>
+    <path d="M287 281v9h113m99 0h113v-9M297 281v9m21-9v9m21-9v9m21-9v9m21-9v9m136-9v9m21-9v9m21-9v9m21-9v9m21-9v9" opacity=".45" stroke-width=".85"/>
+  </g>
+</svg>
+

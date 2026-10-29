@@ -28,6 +28,8 @@ def seed_position_roles(apps, schema_editor):
                 'is_system': True,
             },
         )
+        if not role.is_system or role.deleted_at is not None:
+            continue
         definitions = PermissionDefinition.objects.using(database).filter(
             code__in=permissions,
             deleted_at__isnull=True,
@@ -50,6 +52,7 @@ def seed_position_roles(apps, schema_editor):
         role = Role.objects.using(database).filter(
             name__iexact=role_name,
             deleted_at__isnull=True,
+            is_system=True,
         ).first()
         if role:
             profile.roles.add(role)

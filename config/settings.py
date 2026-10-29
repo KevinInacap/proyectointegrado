@@ -48,6 +48,8 @@ SECURE_HSTS_PRELOAD = SECURE_HSTS_SECONDS > 0
 # Application definition
 
 INSTALLED_APPS = [
+    'daphne',
+    'channels',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -61,10 +63,12 @@ INSTALLED_APPS = [
     'activities',
     'agenda',
     'social',
+    'websocket',
 ]
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'core.middleware.PrivateResponseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -88,12 +92,20 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'core.session_guard.session_guard_context',
             ],
         },
     },
 ]
 
 WSGI_APPLICATION = 'config.wsgi.application'
+ASGI_APPLICATION = 'config.asgi.application'
+
+CHANNEL_LAYERS = {
+    'default': {
+        'BACKEND': 'channels.layers.InMemoryChannelLayer',
+    }
+}
 
 
 # Database
@@ -182,4 +194,7 @@ EMAIL_BACKEND = (
     if EMAIL_HOST_PASSWORD else
     'django.core.mail.backends.console.EmailBackend'
 )
+
+LOGIN_URL = '/'
+
 

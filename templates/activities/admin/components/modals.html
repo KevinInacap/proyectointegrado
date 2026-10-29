@@ -134,30 +134,25 @@
                 <div class="modal-body">
                     <form id="formVecino" novalidate onsubmit="guardarVecino(event)">
                         <input type="hidden" id="vecinoId">
-                        <div class="mb-2"><label class="form-label small fw-bold">RUT</label><input type="text"
+                        <div class="mb-2"><label for="vecinoRut" class="form-label small fw-bold">RUT</label><input type="text"
                                 class="form-control form-control-sm" id="vecinoRut" maxlength="15" required></div>
-                        <div class="mb-2"><label class="form-label small fw-bold">Correo electrónico (opcional)</label><input type="email"
+                        <div class="mb-2"><label for="vecinoEmail" class="form-label small fw-bold">Correo electrónico (opcional)</label><input type="email"
                                 class="form-control form-control-sm" id="vecinoEmail" maxlength="254" autocomplete="email"></div>
-                        <div class="mb-2"><label class="form-label small fw-bold">Nombre Completo</label><input
+                        <div class="mb-2"><label for="vecinoNombre" class="form-label small fw-bold">Nombre Completo</label><input
                                 type="text" class="form-control form-control-sm" id="vecinoNombre" maxlength="150" required></div>
-                        <div class="mb-2"><label class="form-label small fw-bold">Dirección</label><input type="text"
+                        <div class="mb-2"><label for="vecinoDireccion" class="form-label small fw-bold">Dirección</label><input type="text"
                                 class="form-control form-control-sm" id="vecinoDireccion" maxlength="255" required></div>
-                        <div class="mb-2"><label class="form-label small fw-bold">Teléfono</label><input type="text"
-                                class="form-control form-control-sm" id="vecinoTelefono" maxlength="20"></div>
+                        <div class="mb-2"><label for="vecinoTelefono" class="form-label small fw-bold">Teléfono (opcional)</label><input type="tel"
+                                class="form-control form-control-sm" id="vecinoTelefono" maxlength="20" autocomplete="tel"></div>
                         <div class="row g-2 mb-3">
                             <div class="col-6">
-                                <label class="form-label small fw-bold">Territorio</label>
+                                <label for="vecinoTerritorio" class="form-label small fw-bold">Territorio</label>
                                 <select class="form-select form-select-sm" id="vecinoTerritorio">
-                                    <option value="Delegación Avenida del Mar">Delegación Avenida del Mar</option>
-                                    <option value="Delegación Centro Histórico">Delegación Centro Histórico</option>
-                                    <option value="Delegación Las Compañías">Delegación Las Compañías</option>
-                                    <option value="Delegación La Pampa">Delegación La Pampa</option>
-                                    <option value="Delegación La Antena">Delegación La Antena</option>
-                                    <option value="Delegación Sector Rural">Delegación Sector Rural</option>
+                                    {% for delegation in delegations %}<option value="{{ delegation.name }}">{{ delegation.name }}</option>{% endfor %}
                                 </select>
                             </div>
                             <div class="col-6">
-                                <label class="form-label small fw-bold">Estado</label>
+                                <label for="vecinoEstado" class="form-label small fw-bold">Estado</label>
                                 <select class="form-select form-select-sm" id="vecinoEstado">
                                     <option value="Activo">Activo</option>
                                     <option value="Inactivo">Inactivo</option>
@@ -236,7 +231,7 @@
                                         <div class="col-md-6" id="wrapperPasswordUsuario">
                                             <label class="form-label small fw-bold mb-1" id="lblPasswordUsuario">Contraseña <span class="text-danger">*</span></label>
                                             <div class="input-group input-group-sm">
-                                                <input type="password" class="form-control form-control-sm" id="usrPassword" placeholder="Mínimo 8 caracteres">
+                                                <input type="password" class="form-control form-control-sm" id="usrPassword" maxlength="128" placeholder="Mínimo 8 caracteres">
                                                 <button class="btn btn-outline-secondary" type="button" onclick="togglePasswordVisibility('usrPassword', this)">
                                                     <i class="bi bi-eye"></i>
                                                 </button>
@@ -286,7 +281,7 @@
                                         <div class="p-2 border rounded-3 bg-light mb-2" id="rolesCheckboxesContainer" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 4px;">
                                             <!-- Generado dinámicamente desde la BD -->
                                         </div>
-                                        <small class="text-secondary" id="usrCargoRoleHelp">El cargo asigna su rol base automáticamente. Puedes añadir roles complementarios.</small>
+                                        <small class="text-secondary" id="usrCargoRoleHelp">Selecciona un cargo para ver sus roles. El rol base se asigna automáticamente.</small>
                                     </div>
 
                                     <!-- Privilegios Superusuario -->
@@ -516,7 +511,7 @@
                     <div class="mb-3">
                         <label class="form-label small fw-bold">Nueva Contraseña</label>
                         <div class="input-group">
-                            <input type="password" class="form-control" id="pwdNuevaClave"
+                            <input type="password" class="form-control" id="pwdNuevaClave" maxlength="128"
                                 placeholder="Nueva contraseña segura" minlength="8" autocomplete="new-password"
                                 aria-describedby="pwdReglasClave" required>
                             <button class="btn btn-outline-secondary" type="button"
@@ -740,7 +735,7 @@
                                             class="bi bi-person-fill"></i></span>
                                     <input type="text"
                                         class="form-control bg-light border-start-0 text-dark fw-semibold"
-                                        value="{{ request.user.get_full_name|default:'Administrador Municipal' }}"
+                                        value="{{ request.user.profile.full_name|default:request.user.username }}"
                                         readonly>
                                     <span class="input-group-text bg-light border-start-0" title="Dato protegido"><i
                                             class="bi bi-lock-fill text-muted" style="font-size: 0.75rem;"></i></span>
@@ -756,7 +751,7 @@
                                             class="bi bi-envelope-fill"></i></span>
                                     <input type="email"
                                         class="form-control bg-light border-start-0 text-dark fw-semibold"
-                                        value="{{ request.user.email|default:'admin.municipal@laserena.cl' }}" readonly>
+                                        value="{{ request.user.email|default:'No registrado' }}" readonly>
                                     <span class="input-group-text bg-light border-start-0" title="Dato protegido"><i
                                             class="bi bi-lock-fill text-muted" style="font-size: 0.75rem;"></i></span>
                                 </div>
@@ -770,9 +765,9 @@
                                             class="bi bi-card-heading"></i></span>
                                     <input type="text"
                                         class="form-control bg-light border-start-0 text-dark fw-semibold"
-                                        value="18.492.301-4" readonly>
+                                        value="{{ request.user.profile.rut|default:'No registrado' }}" readonly>
                                     <span class="input-group-text bg-light border-start-0"
-                                        title="Verificado Registro Civil"><i class="bi bi-patch-check-fill text-success"
+                                        title="Dato registrado en el perfil"><i class="bi bi-patch-check-fill text-success"
                                             style="font-size: 0.8rem;"></i></span>
                                 </div>
                             </div>
@@ -785,7 +780,7 @@
                                             class="bi bi-calendar-event-fill"></i></span>
                                     <input type="text"
                                         class="form-control bg-light border-start-0 text-dark fw-semibold"
-                                        value="14 de Agosto de 1994" readonly>
+                                        value="No registrado" readonly>
                                     <span class="input-group-text bg-light border-start-0" title="Dato protegido"><i
                                             class="bi bi-lock-fill text-muted" style="font-size: 0.75rem;"></i></span>
                                 </div>
@@ -800,7 +795,7 @@
                                             class="bi bi-calendar-check-fill"></i></span>
                                     <input type="text"
                                         class="form-control bg-light border-start-0 text-dark fw-semibold"
-                                        value="02 de Enero de 2021" readonly>
+                                        value="No registrado" readonly>
                                     <span class="input-group-text bg-light border-start-0" title="Dato protegido"><i
                                             class="bi bi-lock-fill text-muted" style="font-size: 0.75rem;"></i></span>
                                 </div>
@@ -814,7 +809,7 @@
                                             class="bi bi-briefcase-fill"></i></span>
                                     <input type="text"
                                         class="form-control bg-light border-start-0 text-dark fw-semibold"
-                                        value="Administrador General del Sistema SGR" readonly>
+                                        value="{{ request.user.profile.position.name|default:'No registrado' }}" readonly>
                                     <span class="input-group-text bg-light border-start-0" title="Dato protegido"><i
                                             class="bi bi-lock-fill text-muted" style="font-size: 0.75rem;"></i></span>
                                 </div>
@@ -828,7 +823,7 @@
                                             class="bi bi-geo-alt-fill"></i></span>
                                     <input type="text"
                                         class="form-control bg-light border-start-0 text-dark fw-semibold"
-                                        value="Edificio Consistorial — La Serena Centro" readonly>
+                                        value="{{ request.user.profile.delegation.name|default:'No registrado' }}" readonly>
                                     <span class="input-group-text bg-light border-start-0" title="Dato protegido"><i
                                             class="bi bi-lock-fill text-muted" style="font-size: 0.75rem;"></i></span>
                                 </div>
@@ -842,9 +837,9 @@
                                     <span class="input-group-text bg-light text-muted border-end-0"><i
                                             class="bi bi-key-fill"></i></span>
                                     <input type="text" class="form-control bg-light border-start-0 text-danger fw-bold"
-                                        value="Super Administrador (Nivel 1 - Control Total)" readonly>
+                                        value="{% for role in request.user.profile.roles.all %}{% if not role.deleted_at %}{{ role.name }}{% if not forloop.last %}, {% endif %}{% endif %}{% empty %}Sin rol asignado{% endfor %}" readonly>
                                     <span class="input-group-text bg-light border-start-0"
-                                        title="Máximo nivel de seguridad"><i class="bi bi-shield-shaded text-danger"
+                                        title="Roles registrados"><i class="bi bi-shield-shaded text-danger"
                                             style="font-size: 0.8rem;"></i></span>
                                 </div>
                             </div>
@@ -855,7 +850,7 @@
                 <div
                     class="modal-footer bg-white py-2 px-4 border-top d-flex justify-content-between align-items-center">
                     <span class="small text-muted"><i class="bi bi-info-circle me-1"></i> Sesión iniciada como
-                        Administrador</span>
+                        {{ request.user.username }}</span>
                     <div class="d-flex gap-2">
                         <button type="button" class="btn btn-secondary btn-sm rounded-pill px-4"
                             data-bs-dismiss="modal">Cerrar</button>
@@ -894,6 +889,7 @@
                 <div class="modal-body p-4 bg-light">
                     <form id="formRol" novalidate onsubmit="guardarRolSubmit(event)">
                         <input type="hidden" id="rolFormId">
+                        <p class="small text-muted mb-3">Cada rol pertenece a un cargo. Selecciona el cargo y configura las acciones que podrá realizar.</p>
 
                         <!-- Datos Generales del Rol -->
                         <div class="card border-0 shadow-sm rounded-3 p-3 mb-3 bg-white">
@@ -901,14 +897,21 @@
                                 <i class="bi bi-info-circle-fill text-primary me-2"></i> Identificación del Rol
                             </h6>
                             <div class="row g-3">
+                                <div class="col-md-12">
+                                    <label for="rolFormCargo" class="form-label small fw-bold text-secondary">Cargo asociado <span class="text-danger">*</span></label>
+                                    <select class="form-select" id="rolFormCargo" required aria-describedby="rolFormCargoHelp" disabled>
+                                        <option value="">Cargando cargos…</option>
+                                    </select>
+                                    <small class="text-muted" id="rolFormCargoHelp">Selecciona un cargo activo. El rol base permanece asociado a su cargo.</small>
+                                </div>
                                 <div class="col-md-5">
-                                    <label class="form-label small fw-bold text-secondary">Nombre del Rol <span
+                                    <label for="rolFormNombre" class="form-label small fw-bold text-secondary">Nombre del Rol <span
                                             class="text-danger">*</span></label>
                                     <input type="text" class="form-control" id="rolFormNombre" maxlength="50" required
                                         placeholder="Ej: Operador de Terreno, Coordinador Social">
                                 </div>
                                 <div class="col-md-7">
-                                    <label class="form-label small fw-bold text-secondary">Descripción Institucional
+                                    <label for="rolFormDescripcion" class="form-label small fw-bold text-secondary">Descripción Institucional
                                         <span class="text-danger">*</span></label>
                                     <input type="text" class="form-control" id="rolFormDescripcion" maxlength="255" required
                                         placeholder="Ej: Gestión de atenciones ciudadanas y derivaciones territoriales">
@@ -981,7 +984,7 @@
                     <div class="d-flex align-items-center gap-2">
                         <button type="button" class="btn btn-secondary rounded-pill px-4 fw-semibold"
                             data-bs-dismiss="modal">Cancelar</button>
-                        <button type="button" class="liquid-glass-btn-primary" onclick="ejecutarGuardarRol()">
+                        <button type="button" id="btnGuardarRol" class="liquid-glass-btn-primary" onclick="ejecutarGuardarRol()">
                             <i class="bi bi-check-lg"></i> Guardar Rol & Permisos
                         </button>
                     </div>
@@ -1242,11 +1245,12 @@
                                     <form id="formCatalogoCargo" novalidate class="liquid-glass-card border-0 p-3 shadow-sm">
                                         <input type="hidden" id="catalogoCargoId">
                                         <h6 class="fw-bold mb-3" id="tituloFormCargo" style="color: #8B1D2C;">Nuevo cargo</h6>
-                                        <label class="form-label small fw-bold">Nombre</label>
-                                        <input id="catalogoCargoNombre" class="form-control mb-2" maxlength="100" required placeholder="Ej. Encargado territorial">
-                                        <label class="form-label small fw-bold">Descripción</label>
+                                        <p class="small text-muted">Al guardar un cargo se crea su rol base con el mismo nombre y sin permisos. Configura sus permisos en Roles.</p>
+                                        <label for="catalogoCargoNombre" class="form-label small fw-bold">Nombre</label>
+                                        <input id="catalogoCargoNombre" class="form-control mb-2" maxlength="50" required placeholder="Ej. Encargado territorial">
+                                        <label for="catalogoCargoDescripcion" class="form-label small fw-bold">Descripción</label>
                                         <textarea id="catalogoCargoDescripcion" class="form-control mb-2" rows="2" maxlength="500" placeholder="Responsabilidad principal"></textarea>
-                                        <label class="form-label small fw-bold">Estado</label>
+                                        <label for="catalogoCargoEstado" class="form-label small fw-bold">Estado</label>
                                         <select id="catalogoCargoEstado" class="form-select mb-3"><option>Activo</option><option>Inactivo</option></select>
                                         <div class="d-flex gap-2"><button class="btn btn-muni-red flex-grow-1 fw-semibold rounded-pill" type="submit"><i class="bi bi-database-check me-1"></i>Guardar</button><button class="btn btn-outline-muni-red rounded-pill px-3" type="button" onclick="limpiarFormCargo()">Limpiar</button></div>
                                     </form>

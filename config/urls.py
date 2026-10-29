@@ -13,7 +13,9 @@ urlpatterns = [
     path('api/catalogs/', include('metrics.urls')),
     path('api/agenda/', include(('agenda.urls', 'agenda'), namespace='agenda')),
     path('social/', include('social.urls')),
+    path('chat/', include('websocket.urls')),
 ]
 
 if settings.DEBUG:
     urlpatterns += static(settings.STATIC_URL, document_root=settings.BASE_DIR / 'static')
+

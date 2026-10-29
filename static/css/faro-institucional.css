@@ -1,0 +1,159 @@
+/* Shared artwork and caption for every municipal dashboard. */
+.municipal-landmark {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    flex: 0 1 300px;
+    min-height: 150px;
+    margin: auto 0 0;
+    padding: 8px 8px 18px;
+    color: #f3dfbd;
+}
+.municipal-landmark > img {
+    display: block;
+    flex: 1 1 0;
+    min-height: 0;
+    width: 100%;
+    height: 100%;
+    max-height: 245px;
+    object-fit: contain;
+    object-position: center bottom;
+    opacity: .86;
+}
+.municipal-landmark > figcaption { flex: 0 0 auto; padding: 7px 0 0; }
+.municipal-landmark > figcaption > span {
+    display: block;
+    font-family: "Dancing Script", Georgia, serif;
+    font-size: 1.9rem;
+    font-style: italic;
+    font-weight: 700;
+    line-height: 1.15;
+}
+.municipal-landmark > figcaption > small {
+    display: block;
+    margin-top: 3px;
+    color: #f5e9e9;
+    font-size: .73rem;
+    font-weight: 600;
+    line-height: 1.5;
+}
+
+/* Navigation can scroll independently on shorter screens. */
+.sidebar:has(> .municipal-landmark) .sidebar-menu-scrollable {
+    flex: 1 1 auto !important;
+    min-height: 0;
+    overflow-y: auto !important;
+}
+.sidebar > .municipal-landmark {
+    flex: 0 0 clamp(170px, 33vh, 315px);
+    min-height: 170px;
+    padding: 0 20px 20px;
+}
+.social-dashboard .sidebar > .municipal-landmark {
+    flex-basis: clamp(150px, 28vh, 280px);
+    min-height: 150px;
+}
+.side-panel > .municipal-landmark { padding-inline: 0; }
+.delegado-shell .side-panel > .municipal-landmark {
+    flex: 1 1 210px;
+    min-height: 155px;
+    max-height: 265px;
+    padding-bottom: 12px;
+}
+.delegado-shell .municipal-landmark > figcaption > span { font-size: 1.65rem; }
+.delegado-shell .municipal-landmark > figcaption > small { font-size: 11px; }
+
+/* The same complete facade also replaces the ornamental hero photos. */
+.serena-hero-vector { isolation: isolate; background: linear-gradient(110deg, #8b1d2c, #68121e 68%, #4f101b); }
+.serena-hero-vector .serena-hero-content {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(180px, 260px);
+    align-items: center;
+    gap: 32px;
+    margin: 0;
+    padding: 26px 36px;
+}
+.serena-hero-copy { position: relative; z-index: 1; min-width: 0; }
+.serena-hero-vector .serena-hero-eyebrow {
+    margin: 0 0 10px;
+    color: #edc793;
+    font-size: .68rem;
+    font-weight: 700;
+    letter-spacing: .11em;
+    text-transform: uppercase;
+}
+.serena-hero-vector .serena-hero-content h1 {
+    margin: 0 0 9px;
+    color: #fff;
+    font-size: clamp(1.75rem, 2.7vw, 2.45rem);
+    font-weight: 800;
+    line-height: 1.16;
+    letter-spacing: -.025em;
+}
+.serena-hero-vector .serena-hero-description {
+    max-width: 65ch;
+    margin: 0;
+    color: #f5e9e9;
+    font-size: .92rem;
+    font-weight: 500;
+    line-height: 1.6;
+}
+.serena-hero-art { display: flex; align-items: center; justify-content: center; min-width: 0; }
+.serena-hero-art img { display: block; width: 100%; height: 210px; object-fit: contain; opacity: .72; }
+.delegado-hero .hero-landmark { right: 20px; bottom: 0; width: min(36%, 300px); height: calc(100% - 12px); }
+
+/* The older social route shares the same illustration and crimson sidebar. */
+.asistente-wrapper:has(.municipal-landmark) { background: linear-gradient(135deg, #0f172a, #1e3a8a 50%, #0f172a); }
+.asistente-sidebar:has(> .municipal-landmark) {
+    box-sizing: border-box;
+    overflow-y: auto;
+    background: linear-gradient(180deg, #8b1d2c, #68121e 48%, #50101c);
+}
+.asistente-sidebar > .municipal-landmark { flex: 0 0 230px; margin-top: 18px; }
+
+@media (max-height: 700px) {
+    .sidebar > .municipal-landmark,
+    .social-dashboard .sidebar > .municipal-landmark { flex-basis: 170px; min-height: 170px; }
+    .dashboard-shell:not(.delegado-shell) > .side-panel { overflow-y: auto; }
+    .side-panel > .municipal-landmark { flex-basis: 190px; }
+}
+@media (max-width: 900px) {
+    .serena-hero-vector .serena-hero-content { grid-template-columns: minmax(0, 1fr) 170px; gap: 20px; padding: 24px; }
+    .serena-hero-art img { height: 185px; }
+    .delegado-hero .hero-landmark { right: 0; width: 42%; opacity: .18; }
+}
+@media (max-width: 600px) {
+    .serena-hero-vector .serena-hero-content { position: relative; grid-template-columns: minmax(0, 1fr); gap: 0; padding: 24px 22px; }
+    .serena-hero-art { position: absolute; right: 0; bottom: 0; opacity: .18; pointer-events: none; }
+    .serena-hero-art img { width: 140px; height: 140px; }
+}
+@media (max-width: 768px) {
+    .main-wrapper:has(.serena-hero-vector) {
+        margin-left: 0 !important;
+        width: 100% !important;
+        min-width: 0 !important;
+        max-width: 100% !important;
+    }
+}
+@media (max-width: 700px) {
+    .dashboard-shell:not(.delegado-shell) > .side-panel > .municipal-landmark {
+        flex: none;
+        flex-direction: row;
+        align-items: center;
+        justify-content: flex-start;
+        gap: 16px;
+        height: 126px;
+        min-height: 0;
+        margin-top: 12px;
+        padding: 12px 0;
+        border-top: 1px solid #ffffff24;
+    }
+    .dashboard-shell:not(.delegado-shell) > .side-panel > .municipal-landmark > img {
+        flex: 0 0 100px;
+        width: 100px;
+        height: 98px;
+        max-height: 98px;
+    }
+    .asistente-sidebar > .municipal-landmark { flex-basis: 190px; }
+}
+

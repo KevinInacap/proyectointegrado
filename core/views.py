@@ -1,4 +1,6 @@
 from django.shortcuts import render, redirect
+from django.http import JsonResponse
+from django.views.decorators.http import require_GET
 from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.hashers import make_password, check_password
@@ -20,6 +22,7 @@ import re
 import unicodedata
 from .models import LoginThrottle, PasswordRecoveryCode
 from organization.models import UserProfile
+from .session_guard import current_session_state
 
 
 class _RecoveryEmailError(Exception):
@@ -123,11 +126,17 @@ def dashboard_route_for_position(position_name):
 def _start_session_for_user(request, user, profile):
     role_name = profile.roles.filter(deleted_at__isnull=True).values_list('name', flat=True).first()
     position_name = profile.position.name if profile.position and profile.position.status == 'Activo' and profile.position.deleted_at is None else None
-    destination = dashboard_route_for_position(position_name)
+    next_url = request.GET.get('next')
+    if next_url and next_url.startswith('/') and not next_url.startswith('//'):
+        destination = next_url
+    else:
+        destination = dashboard_route_for_position(position_name)
     if destination == 'core:login':
         messages.error(request, 'Tu cuenta todavía no tiene un cargo activo con panel asignado. Contacta a administración.')
         return redirect('core:login')
     login(request, user)
+    remember = str(request.POST.get('remember_me', '')).lower() in ('on', 'true', '1')
+    request.session.set_expiry(settings.SESSION_COOKIE_AGE if remember else 0)
     request.session['user_role'] = role_name or ''
     request.session['user_position'] = position_name
     request.session['user_name'] = profile.full_name
@@ -136,6 +145,13 @@ def _start_session_for_user(request, user, profile):
     return redirect(destination)
 
 def login_view(request):
+    if getattr(getattr(request, 'user', None), 'is_authenticated', False):
+        state = current_session_state(request)
+        if state['fingerprint']:
+            # Un formulario restaurado del historial no puede iniciar otra
+            # cuenta sobre la sesión actual, ni siquiera al reenviar su POST.
+            return redirect(state['redirect_url'])
+        logout(request)
     if not getattr(getattr(request, 'user', None), 'is_authenticated', False):
         for key in ('user_role', 'user_position', 'user_name', 'user_rut', 'user_delegation'):
             request.session.pop(key, None)
@@ -172,9 +188,13 @@ def login_view(request):
 
 def logout_view(request):
     logout(request)
-    request.session.flush()
     messages.info(request, "Has cerrado tu sesión correctamente.")
     return redirect('core:login')
+
+
+@require_GET
+def session_state_view(request):
+    return JsonResponse(current_session_state(request))
 
 
 def password_recovery_view(request):
@@ -298,3 +318,4 @@ def password_recovery_view(request):
             verified_id = None
     step = 'new_password' if verified_id else ('verify' if request.session.get('recovery_pending') else 'request')
     return render(request, 'password_recovery.html', {'step': step})
+

@@ -1,3 +1,4 @@
+from core.input_validation import field_error
 """Administrative JSON endpoints for evaluation catalogs."""
 import json
 import math
@@ -60,6 +61,12 @@ class CatalogForm(forms.ModelForm):
 
     def clean(self):
         data = super().clean()
+        for name, value in list(data.items()):
+            if isinstance(value, str):
+                message = field_error(value, getattr(self.fields[name], 'max_length', None) or 500,
+                                      'label' if name == 'name' else 'text')
+                if message:
+                    self.add_error(name, message)
         for name in self._invalid_types:
             self.add_error(name, 'Tipo de dato inválido.')
         return data

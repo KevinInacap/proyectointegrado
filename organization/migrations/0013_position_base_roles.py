@@ -25,10 +25,9 @@ def seed_missing_position_roles(apps, schema_editor):
                 is_system=True,
                 permissions_data=[],
             )
-        elif role.deleted_at is not None:
-            role.deleted_at = None
-            role.is_system = True
-            role.save(using=database, update_fields=['deleted_at', 'is_system', 'updated_at'])
+        elif role.deleted_at is not None or not role.is_system:
+            # La coincidencia de nombre no autoriza reactivar ni asignar el rol.
+            continue
 
         for profile in position.users.using(database).filter(deleted_at__isnull=True).iterator():
             profile.roles.add(role)

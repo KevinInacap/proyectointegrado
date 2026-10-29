@@ -17,6 +17,7 @@ class AttentionApiSecurityTests(TestCase):
         self.profile = UserProfile.objects.create(
             user=self.user, rut='12345678-5', full_name='Gestor Prueba',
             email='gestor-prueba@example.com', delegation=self.north, status='Activo',
+            position=Position.objects.get(name='Gestor Territorial'),
         )
         self.profile.roles.add(self.role)
         self.client.force_login(self.user)
@@ -27,7 +28,7 @@ class AttentionApiSecurityTests(TestCase):
             subattention_type='RSH', status='Activo',
         )
         self.payload = {
-            'contact_name': 'Solicitante Real', 'contact_phone': '123456',
+            'contact_name': 'Solicitante Real', 'contact_phone': '912345678',
             'title': 'Problema', 'description': 'Acción',
             'delegation': self.north.name, 'catalog_id': self.catalog.pk,
             'attention_type': 'Social', 'subattention_type': 'RSH',
@@ -114,6 +115,31 @@ class AttentionApiSecurityTests(TestCase):
         self.assertEqual(self.client.get(self.url).status_code, 403)
         self.assertEqual(self.post().status_code, 403)
 
+    def test_social_case_attention_is_visible_but_edited_through_social_workflow(self):
+        from social.models import SocialCase
+
+        activity = Activity.objects.create(
+            activity_code='SOC-TEST-1', activity_date='2026-01-01',
+            contact_name='Vecina social', problem_description='Solicitud social',
+            executed_action='Ingreso de ficha', delegation=self.north,
+        )
+        case = SocialCase.objects.create(
+            user_rut='12.345.678-5', user_name='Vecina social',
+            delegation=self.north, entry_date='2026-01-01', activity=activity,
+        )
+        listed = self.client.get(self.url).json()['atenciones']
+        self.assertEqual(listed[0]['social_case_id'], case.pk)
+        detail_url = reverse('activities:api_atencion_detail', args=[activity.pk])
+        self.assertEqual(self.client.get(detail_url).json()['atencion']['social_case_id'], case.pk)
+        edited = self.client.put(detail_url, json.dumps({'contact_name': 'Otro nombre'}), content_type='application/json')
+        self.assertEqual(edited.status_code, 409)
+        self.role.permissions_data = ['lectura', 'edicion', 'cierre']
+        self.role.save(update_fields=['permissions_data', 'updated_at'])
+        self.assertEqual(self.client.delete(detail_url).status_code, 409)
+        activity.refresh_from_db()
+        self.assertEqual(activity.contact_name, 'Vecina social')
+        self.assertIsNone(activity.deleted_at)
+
 
 class DashboardAccessTests(TestCase):
     def setUp(self):
@@ -128,6 +154,53 @@ class DashboardAccessTests(TestCase):
     def set_position(self, name):
         self.profile.position, _ = Position.objects.get_or_create(name=name)
         self.profile.save(update_fields=['position', 'updated_at'])
+
+    def test_account_actions_are_available_once_and_never_in_a_sidebar(self):
+        role = Role.objects.create(name='Consulta de cuenta', permissions_data=['lectura'])
+        for position, route in (
+            ('Administrador General', 'activities:dashboard_admin'),
+            ('Asistente Social', 'activities:dashboard_asistente'),
+            ('Asistente Social', 'social:dashboard_asistente'),
+            ('Auditor Municipal', 'activities:dashboard_auditor'),
+            ('Coordinador del Sistema', 'activities:dashboard_coordinador'),
+            ('Delegado Municipal', 'activities:dashboard_delegado'),
+            ('Gestor Territorial', 'activities:dashboard_gestor'),
+            ('Verificador Técnico', 'activities:dashboard_verificador'),
+            ('Usuario de Consulta', 'activities:dashboard_consulta'),
+            ('Cargo de prueba de cuenta', 'activities:dashboard_cargo'),
+        ):
+            with self.subTest(position=position, route=route):
+                self.set_position(position)
+                self.profile.roles.set([Role.objects.get(name='Administrador') if position == 'Administrador General' else role])
+                response = self.client.get(reverse(route))
+                self.assertEqual(response.status_code, 200)
+                body = response.content.decode()
+                self.assertEqual(body.count('data-account-toggle'), 1)
+                self.assertEqual(body.count('data-account-profile-open'), 1)
+                self.assertEqual(body.count('data-action="logout"'), 1)
+                sidebar = body.partition('<aside')[2].partition('</aside>')[0]
+                self.assertNotIn(self.profile.full_name, sidebar)
+                self.assertNotIn(reverse('core:logout'), sidebar)
+                self.assertNotIn('data-account-toggle', sidebar)
+                self.assertContains(response, 'js/account-menu.js')
+
+    def test_account_profile_displays_only_the_authenticated_identity(self):
+        self.set_position('Delegado Municipal')
+        response = self.client.get(reverse('activities:dashboard_delegado'))
+        dialog = response.content.decode().partition('id="account-profile-dialog"')[2].partition('</dialog>')[0]
+        self.assertIn(self.profile.full_name, dialog)
+        self.assertIn(self.profile.rut, dialog)
+        self.assertIn(self.profile.email, dialog)
+        self.assertIn(self.delegation.name, dialog)
+
+    def test_account_profile_treats_persisted_identity_as_text(self):
+        self.set_position('Delegado Municipal')
+        self.profile.full_name = 'Cuenta <img src=x onerror=alert(1)>'
+        self.profile.save(update_fields=['full_name', 'updated_at'])
+        response = self.client.get(reverse('activities:dashboard_delegado'))
+        dialog = response.content.decode().partition('id="account-profile-dialog"')[2].partition('</dialog>')[0]
+        self.assertIn('Cuenta &lt;img src=x onerror=alert(1)&gt;', dialog)
+        self.assertNotIn('<img src=x', dialog)
 
     def test_session_role_does_not_grant_admin_dashboard(self):
         session = self.client.session
@@ -152,7 +225,7 @@ class DashboardAccessTests(TestCase):
             self.assertEqual(response.status_code, 200)
             if position_name == 'Delegado Municipal':
                 self.assertContains(response, 'Panel de tu delegación')
-                self.assertContains(response, 'Atenciones de mi delegación')
+                self.assertContains(response, 'Gestión de tu delegación')
                 self.assertContains(response, 'Nueva atención')
             elif position_name == 'Asistente Social':
                 self.assertContains(response, 'Panel de Gestión Social Territorial')
@@ -196,7 +269,7 @@ class DashboardAccessTests(TestCase):
             problem_description='Otro asunto', executed_action='Recepción',
             delegation=other_delegation,
         )
-        url = reverse('activities:dashboard_delegado')
+        url = reverse('activities:dashboard_delegado_section', args=['atenciones'])
         response = self.client.get(url)
         self.assertContains(response, own.activity_code)
         self.assertNotContains(response, 'ACT-AJENA-1')
@@ -214,6 +287,44 @@ class DashboardAccessTests(TestCase):
         response = self.client.get(url)
         self.assertContains(response, 'Tu rol no tiene accesos habilitados')
         self.assertNotContains(response, own.activity_code)
+
+    def test_delegado_sees_only_local_cases_and_neighbors_with_read_permission(self):
+        from social.models import SocialCase
+
+        self.set_position('Delegado Municipal')
+        role = Role.objects.create(name='Consulta delegada', permissions_data=['lectura'])
+        self.profile.roles.add(role)
+        other = Delegation.objects.create(name='Otra delegación', scope='Sur')
+        SocialCase.objects.create(
+            user_rut='12.345.678-5', user_name='Caso local',
+            delegation=self.delegation, entry_date='2026-01-02',
+        )
+        SocialCase.objects.create(
+            user_rut='14.222.111-0', user_name='Caso ajeno',
+            delegation=other, entry_date='2026-01-02',
+        )
+        Vecino.objects.create(nombre='Vecino local', rut='12345678-5', territorio=self.delegation.name)
+        Vecino.objects.create(nombre='Vecino ajeno', rut='23456789-6', territorio=other.name)
+        url = reverse('activities:dashboard_delegado_section', args=['casos-sociales'])
+        for section, visible in (('casos-sociales', 'Caso local'), ('vecinos', 'Vecino local')):
+            response = self.client.get(reverse('activities:dashboard_delegado_section', args=[section]))
+            self.assertContains(response, visible)
+            self.assertNotContains(response, 'Caso ajeno')
+            self.assertNotContains(response, 'Vecino ajeno')
+            self.assertEqual(response.context['social_case_count'], 1)
+            self.assertEqual(response.context['neighbor_count'], 1)
+
+        role.permissions_data = []
+        role.save(update_fields=['permissions_data', 'updated_at'])
+        self.assertNotContains(self.client.get(url), 'Caso local')
+        role.permissions_data = ['lectura']
+        role.save(update_fields=['permissions_data', 'updated_at'])
+        self.profile.delegation = None
+        self.profile.save(update_fields=['delegation', 'updated_at'])
+        response = self.client.get(url)
+        self.assertContains(response, 'Tu perfil no tiene una delegación activa asignada')
+        self.assertNotContains(response, 'Caso local')
+        self.assertNotContains(response, 'Vecino local')
 
     def test_delegado_attention_crud_updates_dashboard_and_paginates(self):
         from metrics.models import AttentionType, SubAttention
@@ -233,7 +344,7 @@ class DashboardAccessTests(TestCase):
         response = self.client.post(api, json.dumps(payload), content_type='application/json')
         self.assertEqual(response.status_code, 201)
         pk = response.json()['id']
-        dashboard = reverse('activities:dashboard_delegado')
+        dashboard = reverse('activities:dashboard_delegado_section', args=['atenciones'])
         self.assertContains(self.client.get(dashboard), 'Consulta de alumbrado')
         detail = reverse('activities:api_atencion_detail', args=[pk])
         self.assertEqual(self.client.put(detail, json.dumps({'problem_description': 'Consulta editada'}), content_type='application/json').status_code, 200)
@@ -284,6 +395,32 @@ class DashboardAccessTests(TestCase):
         self.assertNotContains(response, 'Panel demostrativo')
         self.assertContains(response, 'id="mapaDelegacionesReal"')
         self.assertEqual(Activity.objects.count(), before)
+
+    def test_admin_sections_and_report_tabs_have_reloadable_urls(self):
+        self.set_position('Administrador General')
+        role, _ = Role.objects.get_or_create(name='Administrador')
+        self.profile.roles.add(role)
+        for section in ('delegaciones', 'cargos', 'usuarios', 'roles', 'metas',
+                        'tipo-atencion', 'sub-atencion', 'atenciones', 'tipo-gestion',
+                        'vecinos', 'solicitudes-sociales', 'reportes'):
+            with self.subTest(section=section):
+                url = reverse('activities:dashboard_admin_section', args=[section])
+                self.assertEqual(self.client.get(url).status_code, 200)
+        for tab in ('general', '1vs1', 'multi'):
+            with self.subTest(tab=tab):
+                url = reverse('activities:dashboard_admin_report', args=[tab])
+                self.assertEqual(self.client.get(url).status_code, 200)
+        base = reverse('activities:dashboard_admin')
+        self.assertContains(self.client.get(base), f'data-admin-base="{base}"')
+        self.assertEqual(self.client.get('/activities/dashboard/admin/desconocido/').status_code, 404)
+        self.assertEqual(self.client.get('/activities/dashboard/admin/reportes/desconocido/').status_code, 404)
+
+    def test_admin_section_requires_admin_position(self):
+        self.set_position('Delegado Municipal')
+        role, _ = Role.objects.get_or_create(name='Administrador')
+        self.profile.roles.add(role)
+        url = reverse('activities:dashboard_admin_section', args=['usuarios'])
+        self.assertNotEqual(self.client.get(url).status_code, 200)
 
     def test_position_selects_dashboard_independently_of_role(self):
         for position_name, role_name, route in (
@@ -387,6 +524,90 @@ class DashboardAccessTests(TestCase):
         self.assertContains(response, 'Informes Sociales')
         self.assertContains(response, 'Atención de Emergencias')
         self.assertContains(response, 'Articulación de Redes')
+        self.assertNotContains(response, 'Casos y revisión administrativa')
+        self.assertContains(response, 'id="txtBusquedaCaso"')
+        self.assertContains(response, 'id="selFiltroEtapa"')
+        self.assertContains(response, 'onclick="abrirModalNuevoCaso()"')
+
+    def test_asistente_social_read_only_dashboard_keeps_consultation_without_write_actions(self):
+        self.set_position('Asistente Social')
+        role = Role.objects.create(name='Consulta social de prueba', permissions_data=['lectura'])
+        self.profile.roles.set([role])
+        response = self.client.get(reverse('activities:dashboard_asistente'))
+        self.assertEqual(response.status_code, 200)
+        self.assertNotContains(response, 'Casos y revisión administrativa')
+        self.assertNotContains(response, 'onclick="abrirModalNuevoCaso()"')
+        self.assertNotContains(response, 'onclick="avanzarEtapaCaso(${caso.id})"')
+        self.assertContains(response, 'emitirInformeRapido')
+        self.assertContains(response, 'Exportar Excel')
+
+
+class SocialDashboardSectionTests(TestCase):
+    sections = ('casos', 'flujo', 'terreno', 'beneficios', 'informes',
+                'emergencias', 'redes', 'metas', 'mantenedores')
+
+    @classmethod
+    def setUpTestData(cls):
+        cls.delegation = Delegation.objects.create(name='Sede navegación social', scope='Centro')
+        cls.position, _ = Position.objects.get_or_create(name='Asistente Social')
+        cls.role = Role.objects.get(name='Asistente Social')
+        cls.user = get_user_model().objects.create_user(username='social-navigation')
+        cls.profile = UserProfile.objects.create(
+            user=cls.user, rut='12.345.678-5', full_name='Prueba navegación social',
+            email='social-navigation@example.test', delegation=cls.delegation, position=cls.position,
+        )
+        cls.profile.roles.add(cls.role)
+
+    def setUp(self):
+        self.client.force_login(self.user)
+
+    def section_url(self, section):
+        return reverse('activities:dashboard_asistente_section', kwargs={'section': section})
+
+    def test_each_section_has_real_links_and_renders_as_the_initial_panel(self):
+        for section in self.sections:
+            with self.subTest(section=section):
+                response = self.client.get(self.section_url(section))
+                self.assertEqual(response.status_code, 200)
+                self.assertEqual(response.context['social_active_section'], section)
+                self.assertContains(response, f'id="panel-{section}" class="panel-view active"')
+                self.assertEqual(response.content.decode().count('class="panel-view active"'), 1)
+                for target in self.sections:
+                    self.assertContains(response, f'href="{self.section_url(target)}"')
+
+    def test_base_and_integral_addresses_remain_compatible_with_cases(self):
+        for route in ('activities:dashboard_asistente', 'activities:dashboard_asistente_integral'):
+            with self.subTest(route=route):
+                response = self.client.get(reverse(route))
+                self.assertEqual(response.status_code, 200)
+                self.assertEqual(response.context['social_navigation']['initial'], 'casos')
+
+    def test_unknown_section_returns_404(self):
+        self.assertEqual(self.client.get(self.section_url('administracion-ajena')).status_code, 404)
+
+    def test_deep_section_requires_the_same_cargo_and_session_as_base_dashboard(self):
+        other_position, _ = Position.objects.get_or_create(name='Gestor Territorial')
+        self.profile.position = other_position
+        self.profile.save(update_fields=['position', 'updated_at'])
+        for section in self.sections:
+            with self.subTest(section=section):
+                self.assertRedirects(self.client.get(self.section_url(section)), reverse('core:login'), fetch_redirect_response=False)
+        self.client.logout()
+        self.assertRedirects(self.client.get(self.section_url('metas')), reverse('core:login'), fetch_redirect_response=False)
+
+    def test_deep_section_obeys_revoked_read_permission(self):
+        self.profile.roles.clear()
+        response = self.client.get(self.section_url('mantenedores'))
+        self.assertNotContains(response, 'id="social-navigation-data"')
+        self.assertNotContains(response, 'id="tablaVecinosMantenedorBody"')
+
+    def test_metrics_refresh_still_works_from_every_deep_section(self):
+        for section in self.sections:
+            with self.subTest(section=section):
+                response = self.client.get(self.section_url(section), {'metrics': '1'})
+                self.assertEqual(response.status_code, 200)
+                self.assertTrue(response.json()['success'])
+                self.assertIn('goal', response.json())
 
 
 class RolePermissionToggleApiTests(TestCase):
@@ -620,6 +841,20 @@ class VerifierWorkflowTests(TestCase):
         outside_denied = self.validate(self.other_activity, {'decision': 'Approved', 'observations': ''})
         self.assertEqual(outside_denied.status_code, 404)
 
+    def test_social_case_is_reviewed_by_social_administration(self):
+        from social.models import SocialCase
+
+        SocialCase.objects.create(
+            user_rut='12.345.678-5', user_name='Persona social',
+            delegation=self.delegation, entry_date='2026-10-20', activity=self.own_activity,
+        )
+        response = self.client.get(reverse('activities:dashboard_verificador'))
+        self.assertNotContains(response, self.own_activity.activity_code)
+        denied = self.validate(self.own_activity, {'decision': 'Approved', 'observations': ''})
+        self.assertEqual(denied.status_code, 409)
+        self.own_activity.refresh_from_db()
+        self.assertEqual(self.own_activity.validation_status, 'Pending')
+
     def test_decision_is_one_way_after_resolution_and_permission_is_required(self):
         approved = self.validate(self.own_activity, {'decision': 'Approved', 'observations': 'Antecedentes revisados.'})
         self.assertEqual(approved.status_code, 200)
@@ -689,6 +924,66 @@ class VecinoApiValidationTests(TestCase):
 
     def put(self, vecino, payload):
         return self.client.put(f'{self.url}{vecino.pk}/', json.dumps(payload), content_type='application/json')
+
+    def test_admin_with_assigned_delegation_manages_all_territories(self):
+        north = Delegation.objects.create(name='Delegación Norte', scope='Norte')
+        south = Delegation.objects.create(name='Delegación Sur', scope='Sur')
+        self.profile.delegation = north
+        self.profile.save(update_fields=['delegation', 'updated_at'])
+        Vecino.objects.create(nombre='Vecino Norte', rut='11.111.111-1', territorio=north.name)
+        other = Vecino.objects.create(nombre='Vecino Sur', rut='22.222.222-2', territorio=south.name)
+
+        rows = self.client.get(self.url).json()['vecinos']
+        self.assertEqual({row['nombre'] for row in rows}, {'Vecino Norte', 'Vecino Sur'})
+        created = self.post(dict(self.payload, territorio=south.name))
+        self.assertEqual(created.status_code, 200, created.content)
+        self.assertEqual(Vecino.objects.get(rut='12.345.678-5').territorio, south.name)
+        updated = self.put(other, {
+            'nombre': 'Vecino Sur actualizado', 'rut': other.rut,
+            'direccion': 'Calle Sur 1', 'territorio': south.name,
+        })
+        self.assertEqual(updated.status_code, 200, updated.content)
+        other.refresh_from_db()
+        self.assertEqual(other.territorio, south.name)
+
+        attention = self.client.post(reverse('activities:api_atenciones'), json.dumps({
+            'delegation': south.name, 'contact_name': 'Vecino Sur',
+            'title': 'Consulta local', 'description': 'Orientación entregada',
+        }), content_type='application/json')
+        self.assertEqual(attention.status_code, 201, attention.content)
+        self.assertEqual(Activity.objects.get(pk=attention.json()['id']).delegation, south)
+
+    def test_social_neighbor_identity_is_corrected_from_its_case(self):
+        from social.models import SocialCase
+
+        delegation = Delegation.objects.create(name='Centro', scope='Centro')
+        neighbor = Vecino.objects.create(
+            nombre='Vecina social', rut='12.345.678-5', telefono='123456',
+            direccion='Calle inicial 1', territorio=delegation.name,
+        )
+        activity = Activity.objects.create(
+            activity_code='SOC-NEIGHBOR-1', activity_date='2026-01-01',
+            contact_name=neighbor.nombre, problem_description='Solicitud social',
+            executed_action='Ingreso', delegation=delegation, neighbor=neighbor,
+        )
+        SocialCase.objects.create(
+            user_rut=neighbor.rut, user_name=neighbor.nombre,
+            delegation=delegation, entry_date='2026-01-01', activity=activity,
+        )
+        changed_identity = self.put(neighbor, {
+            'nombre': 'Nombre distinto', 'rut': neighbor.rut, 'telefono': neighbor.telefono,
+            'direccion': neighbor.direccion, 'territorio': delegation.name,
+        })
+        self.assertEqual(changed_identity.status_code, 409)
+        changed_address = self.put(neighbor, {
+            'nombre': neighbor.nombre, 'rut': neighbor.rut, 'telefono': neighbor.telefono,
+            'direccion': 'Calle nueva 2', 'territorio': delegation.name,
+        })
+        self.assertEqual(changed_address.status_code, 200)
+        self.assertEqual(self.client.delete(f'{self.url}{neighbor.pk}/').status_code, 409)
+        neighbor.refresh_from_db()
+        self.assertEqual(neighbor.nombre, 'Vecina social')
+        self.assertIsNone(neighbor.deleted_at)
 
     def test_existing_legacy_invalid_rut_can_be_edited_if_unchanged(self):
         vecino = Vecino.objects.create(nombre='Vecino antiguo', rut='16.241.879-2', direccion='Calle 1')

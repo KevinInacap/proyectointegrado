@@ -1,0 +1,20 @@
+<section class="delegado-card section-content" id="vecinos" aria-labelledby="vecinos-title">
+    <div class="delegado-card-heading"><div class="card-title-group"><svg class="icon section-icon" aria-hidden="true"><use href="#i-person"/></svg><div><h2 id="vecinos-title">Vecinos de mi delegación</h2><p>{{ neighbor_count }} vecino{{ neighbor_count|pluralize }} en el padrón de {{ delegation.name }}.</p></div></div>{% if can_edit %}<button type="button" class="delegado-primary" data-neighbor-action="create">+ Registrar vecino</button>{% endif %}</div>
+    <p class="registry-intro">Registra al vecino una vez y vincula sus próximas atenciones a esta ficha. Registrar un vecino no crea una cuenta de acceso ni un caso social.</p>
+    <form class="delegado-filters" action="{{ section_url }}" method="get" role="search">
+        <label class="search-filter"><span class="visually-hidden">Buscar por nombre, RUT, dirección o teléfono</span><svg class="icon" aria-hidden="true"><use href="#i-search"/></svg><input type="search" name="q" value="{{ query }}" placeholder="Buscar por nombre, RUT, dirección o teléfono…" maxlength="100"></label>
+        <label class="status-filter"><span>Estado</span><select name="estado"><option value="">Todos los estados</option><option value="Activo"{% if status_filter == 'Activo' %} selected{% endif %}>Activo</option><option value="Inactivo"{% if status_filter == 'Inactivo' %} selected{% endif %}>Inactivo</option></select></label>
+        <button type="submit" class="filter-submit">Filtrar</button>{% if query or status_filter %}<a class="clear-filters" href="{{ section_url }}">Limpiar filtros</a>{% endif %}
+    </form>
+    <div class="delegado-table-wrap"><table class="delegado-table section-table neighbor-table"><caption class="visually-hidden">Vecinos de {{ delegation.name }}, página {{ page.number }}</caption><thead><tr><th scope="col">Vecino</th><th scope="col">RUT</th><th scope="col">Dirección</th><th scope="col">Teléfono</th><th scope="col">Estado</th><th scope="col">Acciones</th></tr></thead><tbody>
+    {% for neighbor in page %}<tr>
+        <td data-label="Vecino"><strong class="cell-value">{{ neighbor.nombre }}</strong></td>
+        <td data-label="RUT"><span class="cell-value">{{ neighbor.rut }}</span></td>
+        <td data-label="Dirección"><span class="cell-value">{{ neighbor.direccion|default:'Sin dirección' }}</span></td>
+        <td data-label="Teléfono"><span class="cell-value">{{ neighbor.telefono|default:'Sin teléfono' }}</span></td>
+        <td data-label="Estado"><span class="cell-value"><span class="delegado-badge{% if neighbor.estado == 'Activo' %} badge-approved{% endif %}">{{ neighbor.estado }}</span></span></td>
+        <td data-label="Acciones"><div class="action-cell"><button type="button" class="row-action" data-neighbor-action="view" data-id="{{ neighbor.pk }}">Ver ficha</button>{% if can_edit %}<button type="button" class="row-action" data-neighbor-action="edit" data-id="{{ neighbor.pk }}">Editar</button>{% if neighbor.estado == 'Activo' %}<a class="row-action" href="{% url 'activities:dashboard_delegado_section' 'atenciones' %}?vecino={{ neighbor.pk }}&amp;nueva=1">Nueva atención</a>{% endif %}{% endif %}{% if can_close %}<button type="button" class="row-action row-danger" data-neighbor-action="delete" data-id="{{ neighbor.pk }}">Baja</button>{% endif %}</div></td>
+    </tr>{% empty %}<tr><td colspan="6" class="delegado-empty"><strong>{% if query or status_filter %}No encontramos resultados{% else %}Aún no hay vecinos registrados{% endif %}</strong><p>{% if query or status_filter %}Prueba otra búsqueda o limpia los filtros.{% else %}Usa «Registrar vecino» para iniciar el padrón de tu delegación.{% endif %}</p></td></tr>{% endfor %}
+    </tbody></table></div>
+    {% include 'activities/delegado/pagination.html' with record_label='vecinos' %}
+</section>

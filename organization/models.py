@@ -36,6 +36,8 @@ class Delegation(BaseModel):
 
 
 class Position(BaseModel):
+    base_role = models.ForeignKey('Role', on_delete=models.PROTECT, null=True, blank=True,
+                                  related_name='base_positions', verbose_name='Rol base del cargo')
     STATUS_CHOICES = [('Activo', 'Activo'), ('Inactivo', 'Inactivo')]
     name = models.CharField(max_length=100, unique=True, verbose_name="Nombre del cargo")
     description = models.TextField(blank=True, default='', verbose_name="Descripción del cargo")
@@ -51,6 +53,9 @@ class Position(BaseModel):
 
 
 class Role(BaseModel):
+    # Los registros históricos ambiguos permanecen sin vincular hasta su revisión.
+    position = models.ForeignKey(Position, on_delete=models.PROTECT, null=True, blank=True,
+                                 related_name='access_roles', verbose_name='Cargo del rol')
     name = models.CharField(max_length=50, unique=True, verbose_name="Nombre del rol")
     description = models.CharField(max_length=255, blank=True, default='', verbose_name="Descripción del rol")
     is_system = models.BooleanField(default=False, verbose_name="Rol de sistema protegido")

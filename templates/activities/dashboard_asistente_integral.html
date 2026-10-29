@@ -3,6 +3,7 @@
 <html lang="es">
 
 <head>
+    {% include 'includes/session_guard.html' %}
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Panel de Gestión Social Territorial · DIDECO — Ilustre Municipalidad de La Serena</title>
@@ -331,9 +332,13 @@
             box-shadow: 0 8px 20px -5px rgba(27, 54, 93, 0.05);
         }
     </style>
+    <link rel="stylesheet" href="{% static 'css/social-dashboard.css' %}?v=20261027">
+    <link rel="stylesheet" href="{% static 'css/faro-institucional.css' %}?v=20261027faro">
+    <link rel="stylesheet" href="{% static 'css/account-menu.css' %}?v=20261027account1">
+    <script src="{% static 'js/account-menu.js' %}?v=20261027account1" defer></script>
 </head>
 
-<body>
+<body class="social-dashboard">
     {% csrf_token %}
 
     <!-- =================================================================
@@ -342,7 +347,7 @@
     <aside class="sidebar" id="sidebar">
         <!-- Logo Oficial La Serena con Escudo -->
         <div class="sidebar-brand-box">
-            <button class="sidebar-collapse-btn" onclick="toggleSidebar()" title="Colapsar menú lateral" aria-label="Menú">
+            <button class="sidebar-collapse-btn" onclick="toggleSidebar()" title="Alternar menú lateral" aria-label="Alternar menú lateral" aria-controls="sidebar" aria-expanded="true">
                 <i class="bi bi-list"></i>
             </button>
             <a href="{% url 'activities:dashboard_asistente' %}" class="sidebar-brand-link" title="Asistencia Social DIDECO · Ilustre Municipalidad de La Serena">
@@ -350,112 +355,77 @@
             </a>
         </div>
 
-        <!-- Tarjeta de Perfil Institucional de Scarlett (Asistente Social) -->
-        <div class="px-3 py-2">
-            <div class="p-2.5 rounded-4 d-flex align-items-center gap-2.5" style="background: rgba(255, 255, 255, 0.08); border: 1px solid rgba(255, 255, 255, 0.12);">
-                <div class="rounded-circle d-flex align-items-center justify-content-center text-white fw-bold shadow-sm"
-                     style="width: 44px; height: 44px; background: linear-gradient(135deg, #C41230 0%, #8B1225 100%); font-size: 1.15rem; flex-shrink: 0; border: 2px solid rgba(255, 255, 255, 0.3);">
-                    {{ first_name|slice:":1"|default:"S"|upper }}
-                </div>
-                <div class="overflow-hidden" style="min-width: 0;">
-                    <div class="text-white fw-bold text-truncate" style="font-size: 0.88rem;">{{ user_name }}</div>
-                    <div class="d-flex align-items-center gap-1.5 mt-0.5">
-                        <span class="badge" style="background: rgba(16, 185, 129, 0.2); color: #34D399; font-size: 0.68rem; font-weight: 700; padding: 2px 6px;">
-                            <i class="bi bi-circle-fill me-1" style="font-size: 0.45rem;"></i> ASISTENTE SOCIAL
-                        </span>
-                    </div>
-                    <div class="text-light text-truncate mt-1" style="font-size: 0.72rem; opacity: 0.8;">
-                        <i class="bi bi-geo-alt-fill text-danger me-1"></i> {{ current_delegation|default:"Consolidado Comunal (Todas las Sedes)" }}
-                    </div>
-                </div>
-            </div>
-        </div>
-
         <!-- Menú de Navegación del Asistente Social (9 PANELES INTERACTIVOS CON CONMUTACIÓN DINÁMICA) -->
-        <nav class="sidebar-menu-scrollable px-2 mt-2">
+        <nav class="sidebar-menu-scrollable px-2 mt-2" aria-label="Gestión social">
+            <div class="social-nav-label">Atención y seguimiento</div>
             <!-- 1. Casos Sociales Únicos -->
-            <button class="nav-item-btn active" id="nav-btn-casos" onclick="cambiarVistaPanel('casos', this)">
+            <a class="nav-item-btn{% if social_active_section == 'casos' %} active{% endif %}" id="nav-btn-casos" href="{% url 'activities:dashboard_asistente_section' section='casos' %}" data-social-panel="casos"{% if social_active_section == 'casos' %} aria-current="page"{% endif %}>
                 <i class="bi bi-people-fill main-icon"></i>
                 <span>Casos Sociales Únicos</span>
                 <span class="badge rounded-pill ms-auto" id="sideBadgeCasos" style="background: #C41230; color: #fff; font-size: 0.72rem;">0</span>
-            </button>
+            </a>
 
             <!-- 2. Flujo 3 Etapas (RN - 012) -->
-            <button class="nav-item-btn" id="nav-btn-flujo" onclick="cambiarVistaPanel('flujo', this)">
+            <a class="nav-item-btn{% if social_active_section == 'flujo' %} active{% endif %}" id="nav-btn-flujo" href="{% url 'activities:dashboard_asistente_section' section='flujo' %}" data-social-panel="flujo"{% if social_active_section == 'flujo' %} aria-current="page"{% endif %}>
                 <i class="bi bi-diagram-3-fill main-icon"></i>
                 <span>Flujo 3 Etapas (RN-012)</span>
                 <span class="badge rounded-pill ms-auto" id="sideBadgeFlujo" style="background: rgba(255,255,255,0.18); color: #fff; font-size: 0.72rem;">0</span>
-            </button>
+            </a>
 
             <!-- 3. Evaluación y Visitas a Terreno -->
-            <button class="nav-item-btn" id="nav-btn-terreno" onclick="cambiarVistaPanel('terreno', this)">
+            <a class="nav-item-btn{% if social_active_section == 'terreno' %} active{% endif %}" id="nav-btn-terreno" href="{% url 'activities:dashboard_asistente_section' section='terreno' %}" data-social-panel="terreno"{% if social_active_section == 'terreno' %} aria-current="page"{% endif %}>
                 <i class="bi bi-camera-fill main-icon"></i>
                 <span>Visitas a Terreno</span>
                 <span class="badge rounded-pill ms-auto" id="sideBadgeTerreno" style="background: rgba(255,255,255,0.18); color: #fff; font-size: 0.72rem;">0</span>
-            </button>
+            </a>
 
             <!-- 4. Gestión de Beneficios & Subsidios -->
-            <button class="nav-item-btn" id="nav-btn-beneficios" onclick="cambiarVistaPanel('beneficios', this)">
+            <a class="nav-item-btn{% if social_active_section == 'beneficios' %} active{% endif %}" id="nav-btn-beneficios" href="{% url 'activities:dashboard_asistente_section' section='beneficios' %}" data-social-panel="beneficios"{% if social_active_section == 'beneficios' %} aria-current="page"{% endif %}>
                 <i class="bi bi-gift-fill main-icon"></i>
                 <span>Catálogo de Ayudas</span>
                 <span class="badge rounded-pill ms-auto" id="sideBadgeBeneficios" style="background: rgba(255,255,255,0.18); color: #fff; font-size: 0.72rem;">0</span>
-            </button>
+            </a>
 
             <!-- 5. Informes Sociales Formales -->
-            <button class="nav-item-btn" id="nav-btn-informes" onclick="cambiarVistaPanel('informes', this)">
+            <a class="nav-item-btn{% if social_active_section == 'informes' %} active{% endif %}" id="nav-btn-informes" href="{% url 'activities:dashboard_asistente_section' section='informes' %}" data-social-panel="informes"{% if social_active_section == 'informes' %} aria-current="page"{% endif %}>
                 <i class="bi bi-file-earmark-text-fill main-icon"></i>
                 <span>Informes Sociales</span>
                 <span class="badge rounded-pill ms-auto" id="sideBadgeInformes" style="background: rgba(255,255,255,0.18); color: #fff; font-size: 0.72rem;">0</span>
-            </button>
+            </a>
 
             <!-- 6. Atención de Emergencias & Catástrofes -->
-            <button class="nav-item-btn" id="nav-btn-emergencias" onclick="cambiarVistaPanel('emergencias', this)">
+            <a class="nav-item-btn{% if social_active_section == 'emergencias' %} active{% endif %}" id="nav-btn-emergencias" href="{% url 'activities:dashboard_asistente_section' section='emergencias' %}" data-social-panel="emergencias"{% if social_active_section == 'emergencias' %} aria-current="page"{% endif %}>
                 <i class="bi bi-lightning-charge-fill main-icon text-danger"></i>
                 <span>Emergencias y Crisis</span>
                 <span class="badge rounded-pill ms-auto" id="sideBadgeEmergencias" style="background: #C41230; color: #fff; font-size: 0.72rem;">0</span>
-            </button>
+            </a>
 
             <!-- 7. Articulación de Redes Comunitarias -->
-            <button class="nav-item-btn" id="nav-btn-redes" onclick="cambiarVistaPanel('redes', this)">
+            <a class="nav-item-btn{% if social_active_section == 'redes' %} active{% endif %}" id="nav-btn-redes" href="{% url 'activities:dashboard_asistente_section' section='redes' %}" data-social-panel="redes"{% if social_active_section == 'redes' %} aria-current="page"{% endif %}>
                 <i class="bi bi-diagram-2-fill main-icon"></i>
                 <span>Articulación de Redes</span>
                 <span class="badge rounded-pill ms-auto" id="sideBadgeRedes" style="background: rgba(255,255,255,0.18); color: #fff; font-size: 0.72rem;">0</span>
-            </button>
+            </a>
 
+            <div class="social-nav-label social-nav-label-secondary">Gestión territorial</div>
             <!-- 8. Metas y Semáforo SGR -->
-            <button class="nav-item-btn" id="nav-btn-metas" onclick="cambiarVistaPanel('metas', this)">
+            <a class="nav-item-btn{% if social_active_section == 'metas' %} active{% endif %}" id="nav-btn-metas" href="{% url 'activities:dashboard_asistente_section' section='metas' %}" data-social-panel="metas"{% if social_active_section == 'metas' %} aria-current="page"{% endif %}>
                 <i class="bi bi-speedometer2 main-icon"></i>
                 <span>Metas y Semáforo SGR</span>
                 <span class="badge rounded-pill ms-auto bg-danger" id="sideBadgeSgrPct" style="font-size: 0.70rem;">0,0%</span>
-            </button>
+            </a>
 
             <!-- 9. Mantenedores y Padrón Territorial SGR -->
-            <button class="nav-item-btn" id="nav-btn-mantenedores" onclick="cambiarVistaPanel('mantenedores', this)" title="Padrón Territorial de Vecinos">
+            <a class="nav-item-btn{% if social_active_section == 'mantenedores' %} active{% endif %}" id="nav-btn-mantenedores" href="{% url 'activities:dashboard_asistente_section' section='mantenedores' %}" data-social-panel="mantenedores"{% if social_active_section == 'mantenedores' %} aria-current="page"{% endif %} title="Padrón Territorial de Vecinos">
                 <i class="bi bi-building-gear main-icon" style="color: #F59E0B;"></i>
                 <span>Mantenedores SGR</span>
                 <span class="badge rounded-pill ms-auto" id="sideBadgeVecinos" style="background: rgba(245, 158, 11, 0.25); color: #F59E0B; font-size: 0.72rem;">0</span>
-            </button>
-            <a class="nav-item-btn" href="{% url 'social:dashboard_asistente' %}">
-                <i class="bi bi-clipboard2-check-fill main-icon"></i>
-                <span>Casos y revisión administrativa</span>
             </a>
         </nav>
 
-        <!-- Fotografía Institucional Faro Monumental La Serena -->
-        <div class="sidebar-faro-footer">
-            <div class="sidebar-faro-image-wrap">
-                <img src="{% static 'img/delegacion_costa.jpg' %}"
-                    data-fallback="{% static 'img/faro_real_sunset.jpg' %}"
-                    onerror="this.onerror=null; if(this.dataset.fallback) this.src=this.dataset.fallback;"
-                    alt="Faro Monumental junto a la costa de La Serena" class="sidebar-faro-bg-img">
-                <div class="sidebar-faro-fade-layer"></div>
-            </div>
-            <div class="sidebar-faro-caption">
-                <div class="sidebar-faro-title">La Serena</div>
-                <div class="sidebar-faro-lema">Siempre cerca de ti</div>
-            </div>
-        </div>
+        {% include 'includes/faro_institucional.html' %}
     </aside>
+    <button class="social-sidebar-backdrop" type="button" onclick="toggleSidebar(false)" aria-label="Cerrar menú lateral" tabindex="-1" hidden></button>
 
     <!-- =================================================================
          2. CONTENEDOR PRINCIPAL
@@ -464,13 +434,13 @@
         <!-- Barra de Navegación Superior (Top Bar Institucional con Línea Roja) -->
         <header class="top-header" style="border-top: 3.5px solid var(--muni-red);">
             <div class="header-left d-flex align-items-center gap-3">
-                <button class="btn-hamburger" onclick="toggleSidebar()" title="Alternar menú lateral" aria-label="Menú">
+                <button class="btn-hamburger" onclick="toggleSidebar()" title="Alternar menú lateral" aria-label="Alternar menú lateral" aria-controls="sidebar" aria-expanded="true">
                     <i class="bi bi-list"></i>
                 </button>
                 <div class="header-title-wrapper">
                     <span class="header-sys-name fw-bold" style="color: var(--muni-navy); font-family: 'Montserrat', sans-serif;">DIDECO · Sistema Municipal</span>
                     <span class="header-sys-divider text-muted">|</span>
-                    <span class="header-sub-name text-secondary fw-semibold" id="headerSubName">Gestión de Asistencia Social y Casos Comunitarios</span>
+                    <span class="header-sub-name text-secondary fw-semibold" id="headerSubName">Asistencia social</span>
                 </div>
             </div>
 
@@ -481,28 +451,7 @@
                     <span class="badge-count" id="badgeNotifCount">0</span>
                 </button>
 
-                <!-- Perfil y Cierre de Sesión -->
-                <div class="dropdown">
-                    <button class="user-dropdown-btn d-flex align-items-center gap-2 border-0 bg-transparent" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                        <span class="user-avatar-img d-inline-flex align-items-center justify-content-center text-white fw-bold"
-                              style="width: 36px; height: 36px; border-radius: 50%; background: var(--muni-red);">
-                            {{ first_name|slice:":1"|default:"S"|upper }}
-                        </span>
-                        <span class="user-identity text-start d-none d-sm-block">
-                            <span class="user-info-text fw-bold d-block" style="color: var(--muni-navy); font-size: 0.85rem;">{{ user_name }}</span>
-                            <span class="user-context-text text-muted" style="font-size: 0.72rem;">Asistente Social · {{ current_delegation|default:"Consolidado Comunal" }}</span>
-                        </span>
-                        <i class="bi bi-chevron-down text-muted" style="font-size: 0.75rem;"></i>
-                    </button>
-                    <ul class="dropdown-menu dropdown-menu-end shadow-sm border-0 rounded-4 mt-2" style="min-width: 220px;">
-                        <li><span class="dropdown-header text-uppercase small fw-bold text-danger">Municipalidad La Serena</span></li>
-                        <li><a class="dropdown-item py-2 fw-semibold" href="javascript:void(0)" onclick="abrirModalPerfilAsistente()"><i class="bi bi-person-badge-fill me-2 text-danger"></i> Mi Perfil Funcionario</a></li>
-                        <li><a class="dropdown-item py-2 fw-semibold" href="javascript:void(0)" onclick="cambiarVistaPanel('mantenedores', document.getElementById('nav-btn-mantenedores'))"><i class="bi bi-building-gear me-2 text-danger"></i> Mantenedor de Vecinos</a></li>
-                        <li><a class="dropdown-item py-2 fw-semibold" href="javascript:void(0)" onclick="cambiarVistaPanel('metas', document.getElementById('nav-btn-metas'))"><i class="bi bi-speedometer me-2 text-danger"></i> Metas SGR y Normativa RN-012</a></li>
-                        <li><hr class="dropdown-divider"></li>
-                        <li><a class="dropdown-item py-2 fw-bold text-danger" href="{% url 'core:logout' %}"><i class="bi bi-box-arrow-right me-2"></i> Cerrar Sesión</a></li>
-                    </ul>
-                </div>
+                {% include 'includes/account_menu.html' %}
             </div>
         </header>
 
@@ -512,51 +461,43 @@
             <!-- =========================================================
                  PANEL 1: CASOS SOCIALES ÚNICOS (VISTA PRINCIPAL DEFAULT)
                  ========================================================= -->
-            <section id="panel-casos" class="panel-view">
+            <section id="panel-casos" class="panel-view{% if social_active_section == 'casos' %} active{% else %} d-none{% endif %}">
                 <!-- 1. Encabezado de la Vista -->
-                <div class="d-flex justify-content-between align-items-start flex-wrap gap-3 mb-4">
-                    <div>
-                        <div class="d-flex align-items-center gap-2 mb-1.5 flex-wrap">
-                            <span class="badge" style="background: rgba(196, 18, 48, 0.1); color: var(--muni-red); font-weight: 800; font-size: 0.76rem; letter-spacing: 0.04em;">
-                                <i class="bi bi-heart-pulse-fill me-1"></i> DIDECO · DIRECCIÓN DE DESARROLLO COMUNITARIO
-                            </span>
-                            <span class="badge" style="background: rgba(27, 54, 93, 0.08); color: var(--muni-navy); font-weight: 700; font-size: 0.76rem;">
-                                <i class="bi bi-shield-check me-1"></i> MODELO PROTOCOLAR RN-012
-                            </span>
-                        </div>
-                        <h1 class="fw-bold m-0" style="font-family: 'Montserrat', sans-serif; color: var(--muni-navy); font-size: 1.7rem; letter-spacing: -0.01em;">
-                            <i class="bi bi-people-fill text-danger me-2"></i>Casos Sociales Únicos · Fichas Territoriales
-                        </h1>
-                        <p class="text-secondary m-0 mt-1" style="font-size: 0.88rem;">
-                            Delegación: <strong class="text-dark">{{ current_delegation }}</strong> · Período: <strong>{{ current_period }}</strong> · Casos, gestiones y borradores de informes
-                        </p>
+                <div class="social-page-heading">
+                    <div class="social-heading-copy">
+                        <p class="social-eyebrow">DIDECO · Asistencia social <span>RN-012</span></p>
+                        <h1>Casos sociales</h1>
+                        <p class="social-page-description">Atención y seguimiento de fichas territoriales.</p>
                     </div>
 
                     <!-- Botonera de Acciones Inmediatas -->
-                    <div class="d-flex align-items-center gap-2 flex-wrap">
-                        <button class="btn btn-outline-secondary rounded-pill px-3 py-1.5 fw-bold" onclick="exportarCasosExcel()" style="font-size: 0.86rem; border-color: #CBD5E1;">
-                            <i class="bi bi-file-earmark-excel-fill text-success me-1"></i> Exportar Excel
+                    <div class="social-heading-actions">
+                        <button class="btn social-export-btn" type="button" onclick="exportarCasosExcel()">
+                            <i class="bi bi-file-earmark-excel text-success"></i> Exportar Excel
                         </button>
-                        <button class="liquid-glass-btn-secondary" onclick="abrirModalEmergencia()">
-                            <i class="bi bi-lightning-charge-fill"></i> + Atención Emergencia
-                        </button>
-                        <button class="liquid-glass-btn-primary" onclick="abrirModalNuevoCaso()">
-                            <i class="bi bi-plus-circle-fill"></i> + Nuevo Caso Social
-                        </button>
+                        {% if can_edit_social %}<button class="liquid-glass-btn-secondary" type="button" onclick="abrirModalEmergencia()">
+                            <i class="bi bi-lightning-charge-fill"></i> Atención de emergencia
+                        </button>{% endif %}
+                        {% if can_edit_social %}<button class="liquid-glass-btn-primary" type="button" onclick="abrirModalNuevoCaso()">
+                            <i class="bi bi-plus-lg"></i> Nuevo caso social
+                        </button>{% endif %}
+                    </div>
+                    <div class="social-page-context">
+                        <span><i class="bi bi-geo-alt" aria-hidden="true"></i> {{ current_delegation|default:"Consolidado comunal" }}</span>
+                        <span><i class="bi bi-calendar3" aria-hidden="true"></i> {{ current_period }}</span>
                     </div>
                 </div>
 
                 <!-- 2. Semáforo SGR & Avance Social Trimestral -->
                 <div class="semaforo-banner-card mb-4">
-                    <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
-                        <div class="d-flex align-items-center gap-3">
+                    <div class="social-goal-layout">
+                        <div class="social-goal-status">
                             <span class="beacon-pulse" id="sgrBeaconDot"></span>
                             <div>
-                                <div class="d-flex align-items-center gap-2">
+                                <div class="d-flex align-items-center gap-2 flex-wrap">
                                     <span class="fw-bold" style="color: var(--muni-navy); font-size: 1rem;">
                                         Semáforo SGR: <span id="sgrStatusLabel" class="text-muted fw-bold">Calculando…</span>
                                     </span>
-                                    <span class="badge bg-light text-secondary border" style="font-size: 0.70rem; font-weight: 800;">META VIGENTE</span>
                                 </div>
                                 <div class="text-muted small mt-0.5">
                                     Meta acumulada esperada al día: <strong class="text-dark" id="sgrMetaEsperada">—</strong> · Cumplimiento de gestiones: <strong class="text-danger" id="sgrCumplimientoVal">—</strong>
@@ -564,11 +505,11 @@
                             </div>
                         </div>
 
-                        <div class="text-end" style="min-width: 280px;">
-                            <div class="d-flex justify-content-between align-items-center mb-1">
-                                <span class="text-muted small fw-bold">Avance de gestiones del período:</span>
+                        <div class="social-goal-progress">
+                            <div class="social-progress-label mb-2">
+                                <span class="text-muted small fw-bold">Gestiones del período</span>
                                 <span class="fw-bold small" style="color: var(--muni-navy);">
-                                    <span id="lblAvanceCount">—</span> / {{ goal_data.target|default_if_none:"Sin meta" }} {{ goal_data.unit }} (<span id="lblAvancePct">—</span>)
+                                    {% if goal_data.target %}<span id="lblAvanceCount">—</span> / {{ goal_data.target }} {{ goal_data.unit }} · {% else %}<span id="lblAvanceCount" hidden>—</span>{% endif %}<span id="lblAvancePct">—</span>
                                 </span>
                             </div>
                             <div class="progress rounded-pill" style="height: 9px; background: #E2E8F0;">
@@ -580,7 +521,7 @@
                 </div>
 
                 <!-- 3. Cuatro Tarjetas de Indicadores (Casos Totales y 3 Etapas RN-012) -->
-                <div class="row g-3 mb-4">
+                <div class="row g-3 mb-4 social-kpi-grid" aria-label="Resumen de casos por etapa">
                     <div class="col-sm-6 col-xl-3">
                         <div class="social-kpi-card" onclick="filtrarPorEtapa('todas')" role="button" tabindex="0" title="Ver todos los casos sociales">
                             <div class="d-flex justify-content-between align-items-start mb-2">
@@ -643,83 +584,110 @@
                 </div>
 
                 <!-- 4. Filtros y Búsqueda Interactiva -->
-                <div class="d-flex justify-content-between align-items-center flex-wrap gap-2.5 mb-3">
-                    <div class="d-flex align-items-center gap-2 flex-grow-1 flex-wrap">
-                        <div class="position-relative" style="min-width: 300px; flex-grow: 1;">
-                            <i class="bi bi-search position-absolute top-50 start-0 translate-middle-y ms-3 text-muted"></i>
-                            <input type="text" class="form-control rounded-pill ps-5" placeholder="Buscar por RUT, Nombre de usuario o Delegación..." id="txtBusquedaCaso" onkeyup="aplicarFiltrosTabla()">
+                <div class="social-cases-card">
+                    <div class="social-cases-heading">
+                        <div>
+                            <h2>Listado de casos</h2>
+                            <p>Consulta la ficha y continúa la atención de cada persona.</p>
                         </div>
-
+                        <div class="social-results-count" role="status" aria-live="polite">
+                            <strong id="lblCasosMostrados">0</strong> de <span id="lblCasosTotales">0</span> casos
+                        </div>
+                    </div>
+                    <form method="get" class="social-case-filters" id="formFiltrosCasos" onsubmit="event.preventDefault(); aplicarFiltrosTabla(1);">
+                        <div class="social-search-field">
+                            <label for="txtBusquedaCaso">Buscar caso</label>
+                            <div class="position-relative">
+                                <i class="bi bi-search position-absolute top-50 start-0 translate-middle-y ms-3 text-muted" aria-hidden="true"></i>
+                                <input type="search" name="q" value="{{ query|default:'' }}" class="form-control ps-5" placeholder="RUT, nombre, asunto o delegación" id="txtBusquedaCaso" oninput="aplicarFiltrosTabla(1)">
+                            </div>
+                        </div>
+                        <div class="social-delegation-field">
                         {% if has_assigned_delegation %}
-                        <div class="d-inline-flex align-items-center gap-1.5 px-3 py-1.5 rounded-pill shadow-xs" style="background: rgba(196, 18, 48, 0.08); border: 1.5px solid rgba(196, 18, 48, 0.25); color: #C41230; font-size: 0.82rem; font-weight: 700;" title="Tu delegación territorial asignada (acceso restringido a tu sede)">
-                            <i class="bi bi-geo-alt-fill"></i> {{ current_delegation }}
+                        <span class="social-filter-label">Delegación asignada</span>
+                        <div class="social-assigned-delegation" title="Tu acceso está restringido a esta delegación">
+                            <i class="bi bi-geo-alt" aria-hidden="true"></i> <span>{{ current_delegation }}</span>
                         </div>
-                        <input type="hidden" id="selFiltroDelegacion" value="{{ current_delegation }}">
+                        <input type="hidden" name="delegacion" id="selFiltroDelegacion" value="{{ current_delegation }}">
                         {% else %}
-                        <select class="form-select rounded-pill w-auto" id="selFiltroDelegacion" onchange="aplicarFiltrosTabla()" style="font-size: 0.85rem;">
+                        <label for="selFiltroDelegacion">Delegación</label>
+                        <select class="form-select" name="delegacion" id="selFiltroDelegacion" onchange="aplicarFiltrosTabla(1)">
                             <option value="">Todas las Delegaciones</option>
                             {% for d in active_delegations %}
-                            <option value="{{ d.name }}">{{ d.name }}</option>
+                            <option value="{{ d.name }}" {% if delegacion_filter == d.name %}selected{% endif %}>{{ d.name }}</option>
                             {% endfor %}
                         </select>
                         {% endif %}
-
-                        <select class="form-select rounded-pill w-auto" id="selFiltroEtapa" onchange="aplicarFiltrosTabla()" style="font-size: 0.85rem;">
-                            <option value="">Todas las Etapas (1 a 3)</option>
-                            <option value="1">Etapa 1: Ingreso & Antecedentes</option>
-                            <option value="2">Etapa 2: Terreno & Levantamiento</option>
-                            <option value="3">Etapa 3: Resuelto & Beneficio</option>
+                        </div>
+                        <div class="social-stage-field">
+                        <label for="selFiltroEtapa">Etapa de atención</label>
+                        <select class="form-select" name="etapa" id="selFiltroEtapa" onchange="aplicarFiltrosTabla(1)">
+                            <option value="" {% if not etapa_filter %}selected{% endif %}>Todas las etapas</option>
+                            <option value="1" {% if etapa_filter == '1' %}selected{% endif %}>1 · Ingreso</option>
+                            <option value="2" {% if etapa_filter == '2' %}selected{% endif %}>2 · Terreno</option>
+                            <option value="3" {% if etapa_filter == '3' %}selected{% endif %}>3 · Resuelto</option>
                         </select>
-                    </div>
-
-                    <div class="text-muted small">
-                        Mostrando <strong id="lblCasosMostrados" class="text-danger">0</strong> de <span id="lblCasosTotales">0</span> casos registrados
-                    </div>
-                </div>
+                        </div>
+                        <button class="social-clear-filters" type="button" onclick="restablecerFiltrosCasos()" title="Limpiar búsqueda y filtros">
+                            <i class="bi bi-arrow-counterclockwise" aria-hidden="true"></i> Limpiar
+                        </button>
+                    </form>
 
                 <!-- 5. Tabla de Casos Sociales Territoriales -->
-                <div class="rounded-4 border bg-white shadow-sm mb-4 table-container-noscroll" style="overflow-x: hidden; width: 100%;">
-                    <table class="table align-middle m-0" id="tablaCasosSociales" style="table-layout: fixed; width: 100%; border-collapse: collapse;">
+                <div class="social-table-scroll" role="region" aria-label="Casos sociales; desplaza horizontalmente para ver todas las columnas" tabindex="0">
+                    <table class="table align-middle m-0" id="tablaCasosSociales">
+                        <caption class="visually-hidden">Casos sociales con datos de contacto, delegación, etapa y acciones disponibles.</caption>
                         <colgroup>
-                            <col style="width: 14%;">
-                            <col style="width: 22%;">
-                            <col style="width: 15%;">
-                            <col style="width: 11%;">
-                            <col style="width: 16%;">
-                            <col style="width: 10%;">
                             <col style="width: 12%;">
+                            <col style="width: 19%;">
+                            <col style="width: 17%;">
+                            <col style="width: 11%;">
+                            <col style="width: 15%;">
+                            <col style="width: 9%;">
+                            <col style="width: 17%;">
                         </colgroup>
                         <thead style="background: rgba(241, 245, 249, 0.95); border-bottom: 2px solid #CBD5E1;">
                             <tr style="font-size: 0.76rem; font-weight: 800; color: #1E293B; text-transform: uppercase; letter-spacing: 0.03em;">
-                                <th class="py-3 px-3">RUT VECINO</th>
-                                <th class="py-3 px-2">PERSONA USUARIA</th>
-                                <th class="py-3 px-2">DELEGACIÓN</th>
-                                <th class="py-3 px-2 text-center">FECHA INGRESO</th>
-                                <th class="py-3 px-2">ASUNTO / FUNCIÓN</th>
-                                <th class="py-3 px-1 text-center">FLUJO RN-012</th>
-                                <th class="py-3 px-2 text-center">ACCIONES</th>
+                                <th scope="col" class="py-3 px-3">RUT vecino</th>
+                                <th scope="col" class="py-3 px-2">Persona usuaria</th>
+                                <th scope="col" class="py-3 px-2">Delegación</th>
+                                <th scope="col" class="py-3 px-2 text-center">Ingreso</th>
+                                <th scope="col" class="py-3 px-2">Asunto / función</th>
+                                <th scope="col" class="py-3 px-1 text-center">Etapa</th>
+                                <th scope="col" class="py-3 px-2 text-center">Acciones</th>
                             </tr>
                         </thead>
                         <tbody id="tablaCasosSocialesBody" style="font-size: 0.86rem;">
                             <!-- Inyectado dinámicamente con JavaScript -->
                         </tbody>
                     </table>
+                </div>
 
                     <div id="emptyStateCasos" class="p-5 text-center text-muted" style="display: none;">
                         <i class="bi bi-inbox-fill d-block fs-1 mb-2 text-secondary opacity-50"></i>
                         <h6 class="fw-bold text-dark">No hay casos sociales registrados para los filtros seleccionados</h6>
                         <p class="small text-muted mb-3">Puedes registrar un nuevo caso social o restablecer los filtros de búsqueda.</p>
-                        <button class="liquid-glass-btn-primary" onclick="abrirModalNuevoCaso()">
-                            <i class="bi bi-plus-circle-fill"></i> Registrar Primer Caso Social
+                        <button class="liquid-glass-btn-secondary" type="button" onclick="restablecerFiltrosCasos()">
+                            <i class="bi bi-arrow-counterclockwise"></i> Limpiar filtros
                         </button>
                     </div>
+
+                    <!-- Barra de Paginación de Casos Sociales -->
+                    <nav id="paginacionCasosWrapper" class="d-flex justify-content-between align-items-center flex-wrap gap-2 px-3 py-3 border-top bg-light" aria-label="Paginación de casos sociales">
+                        <div class="small text-muted fw-semibold" id="lblResumenPaginacionCasos">
+                            Mostrando {{ casos_page.start_index }}–{{ casos_page.end_index }} de {{ casos_page.paginator.count }} · Página {{ casos_page.number }} de {{ casos_page.paginator.num_pages }}
+                        </div>
+                        <div class="d-flex align-items-center gap-1" id="controlesPaginacionCasos">
+                            <!-- Controles dinámicos -->
+                        </div>
+                    </nav>
                 </div>
             </section>
 
             <!-- =========================================================
                  PANEL 2: FLUJO 3 ETAPAS (RN-012) - KANBAN SECUENCIAL
                  ========================================================= -->
-            <section id="panel-flujo" class="panel-view d-none">
+            <section id="panel-flujo" class="panel-view{% if social_active_section == 'flujo' %} active{% else %} d-none{% endif %}">
                 <div class="d-flex justify-content-between align-items-start flex-wrap gap-3 mb-4">
                     <div>
                         <span class="badge" style="background: rgba(196, 18, 48, 0.1); color: var(--muni-red); font-weight: 800; font-size: 0.76rem; letter-spacing: 0.04em;">
@@ -733,9 +701,9 @@
                         </p>
                     </div>
                     <div>
-                        <button class="liquid-glass-btn-primary" onclick="abrirModalNuevoCaso()">
+                        {% if can_edit_social %}<button class="liquid-glass-btn-primary" onclick="abrirModalNuevoCaso()">
                             <i class="bi bi-plus-circle-fill"></i> + Ingresar Nuevo Caso al Flujo
-                        </button>
+                        </button>{% endif %}
                     </div>
                 </div>
 
@@ -804,7 +772,7 @@
             <!-- =========================================================
                  PANEL 3: VISITAS A TERRENO & LEVANTAMIENTO FOTOGRÁFICO
                  ========================================================= -->
-            <section id="panel-terreno" class="panel-view d-none">
+            <section id="panel-terreno" class="panel-view{% if social_active_section == 'terreno' %} active{% else %} d-none{% endif %}">
                 <div class="d-flex justify-content-between align-items-start flex-wrap gap-3 mb-4">
                     <div>
                         <span class="badge" style="background: rgba(245, 158, 11, 0.12); color: #B45309; font-weight: 800; font-size: 0.76rem; letter-spacing: 0.04em;">
@@ -818,9 +786,9 @@
                         </p>
                     </div>
                     <div>
-                        <button class="liquid-glass-btn-primary" onclick="abrirModalVisitaTerreno()">
+                        {% if can_edit_social %}<button class="liquid-glass-btn-primary" onclick="abrirModalVisitaTerreno()">
                             <i class="bi bi-camera-fill"></i> + Agendar Visita en Terreno
-                        </button>
+                        </button>{% endif %}
                     </div>
                 </div>
 
@@ -858,7 +826,7 @@
             <!-- =========================================================
                  PANEL 4: CATÁLOGO DE AYUDAS Y BENEFICIOS SOCIALES
                  ========================================================= -->
-            <section id="panel-beneficios" class="panel-view d-none">
+            <section id="panel-beneficios" class="panel-view{% if social_active_section == 'beneficios' %} active{% else %} d-none{% endif %}">
                 <div class="d-flex justify-content-between align-items-start flex-wrap gap-3 mb-4">
                     <div>
                         <span class="badge" style="background: rgba(16, 185, 129, 0.12); color: #047857; font-weight: 800; font-size: 0.76rem; letter-spacing: 0.04em;">
@@ -889,9 +857,9 @@
                                 <p class="text-muted small mb-2">Revisa los requisitos vigentes y documenta la prestación antes de registrar una resolución.</p>
                                 <div class="small fw-semibold text-danger mb-3"><i class="bi bi-check2 me-1"></i> Sujeto a verificación administrativa</div>
                             </div>
-                            <button class="liquid-glass-btn-primary w-100 justify-content-center" onclick="asignarBeneficioDirecto('Subsidio de Agua Potable (SAP)')">
+                            {% if can_edit_social %}<button class="liquid-glass-btn-primary w-100 justify-content-center" onclick="asignarBeneficioDirecto('Subsidio de Agua Potable (SAP)')">
                                 <i class="bi bi-plus-circle-fill"></i> Otorgar a Vecino
-                            </button>
+                            </button>{% endif %}
                         </div>
                     </div>
 
@@ -909,9 +877,9 @@
                                 <p class="text-muted small mb-2">Aporte monetario mensual del Estado para menores de 18 años, madres gestantes y personas con discapacidad según Ley N° 18.020.</p>
                                 <div class="small fw-semibold text-danger mb-3"><i class="bi bi-check2 me-1"></i> RSH hasta 60%</div>
                             </div>
-                            <button class="liquid-glass-btn-primary w-100 justify-content-center" onclick="asignarBeneficioDirecto('Subsidio Único Familiar (SUF)')">
+                            {% if can_edit_social %}<button class="liquid-glass-btn-primary w-100 justify-content-center" onclick="asignarBeneficioDirecto('Subsidio Único Familiar (SUF)')">
                                 <i class="bi bi-plus-circle-fill"></i> Otorgar a Vecino
-                            </button>
+                            </button>{% endif %}
                         </div>
                     </div>
 
@@ -929,9 +897,9 @@
                                 <p class="text-muted small mb-2">Apoyo para compra de uniformes, útiles escolares y subsidio para estudiantes destacados de La Serena.</p>
                                 <div class="small fw-semibold text-danger mb-3"><i class="bi bi-check2 me-1"></i> Alumnos vulnerables de la comuna</div>
                             </div>
-                            <button class="liquid-glass-btn-primary w-100 justify-content-center" onclick="asignarBeneficioDirecto('Beca Municipal de Estudios y Útiles')">
+                            {% if can_edit_social %}<button class="liquid-glass-btn-primary w-100 justify-content-center" onclick="asignarBeneficioDirecto('Beca Municipal de Estudios y Útiles')">
                                 <i class="bi bi-plus-circle-fill"></i> Otorgar a Vecino
-                            </button>
+                            </button>{% endif %}
                         </div>
                     </div>
 
@@ -949,9 +917,9 @@
                                 <p class="text-muted small mb-2">Caja de víveres e insumos de primera necesidad para familias en situación de emergencia o cesantía.</p>
                                 <div class="small fw-semibold text-danger mb-3"><i class="bi bi-check2 me-1"></i> Informe Social emitido</div>
                             </div>
-                            <button class="liquid-glass-btn-primary w-100 justify-content-center" onclick="asignarBeneficioDirecto('Canasta de Alimentos DIDECO')">
+                            {% if can_edit_social %}<button class="liquid-glass-btn-primary w-100 justify-content-center" onclick="asignarBeneficioDirecto('Canasta de Alimentos DIDECO')">
                                 <i class="bi bi-plus-circle-fill"></i> Despachar Canasta
-                            </button>
+                            </button>{% endif %}
                         </div>
                     </div>
 
@@ -969,9 +937,9 @@
                                 <p class="text-muted small mb-2">Financiamiento de medicamentos de alto costo, exámenes clínicos y pasajes médicos a Santiago.</p>
                                 <div class="small fw-semibold text-danger mb-3"><i class="bi bi-check2 me-1"></i> Derivación CESFAM u Hospital</div>
                             </div>
-                            <button class="liquid-glass-btn-primary w-100 justify-content-center" onclick="asignarBeneficioDirecto('Subsidio Médico y Fármacos')">
+                            {% if can_edit_social %}<button class="liquid-glass-btn-primary w-100 justify-content-center" onclick="asignarBeneficioDirecto('Subsidio Médico y Fármacos')">
                                 <i class="bi bi-plus-circle-fill"></i> Tramitar Ayuda
-                            </button>
+                            </button>{% endif %}
                         </div>
                     </div>
 
@@ -989,9 +957,9 @@
                                 <p class="text-muted small mb-2">Condonación total del pago de aseo domiciliario municipal para adultos mayores y familias vulnerables.</p>
                                 <div class="small fw-semibold text-danger mb-3"><i class="bi bi-check2 me-1"></i> Requisitos por verificar</div>
                             </div>
-                            <button class="liquid-glass-btn-primary w-100 justify-content-center" onclick="asignarBeneficioDirecto('Exención de Derechos de Aseo')">
+                            {% if can_edit_social %}<button class="liquid-glass-btn-primary w-100 justify-content-center" onclick="asignarBeneficioDirecto('Exención de Derechos de Aseo')">
                                 <i class="bi bi-plus-circle-fill"></i> Gestionar Exención
-                            </button>
+                            </button>{% endif %}
                         </div>
                     </div>
                 </div>
@@ -1000,7 +968,7 @@
             <!-- =========================================================
                  PANEL 5: INFORMES SOCIALES OFICIALES (TRIBUNALES Y SALUD)
                  ========================================================= -->
-            <section id="panel-informes" class="panel-view d-none">
+            <section id="panel-informes" class="panel-view{% if social_active_section == 'informes' %} active{% else %} d-none{% endif %}">
                 <div class="d-flex justify-content-between align-items-start flex-wrap gap-3 mb-4">
                     <div>
                         <span class="badge" style="background: rgba(29, 78, 216, 0.1); color: #1D4ED8; font-weight: 800; font-size: 0.76rem; letter-spacing: 0.04em;">
@@ -1043,7 +1011,7 @@
             <!-- =========================================================
                  PANEL 6: ATENCIÓN DE EMERGENCIAS Y CRISIS
                  ========================================================= -->
-            <section id="panel-emergencias" class="panel-view d-none">
+            <section id="panel-emergencias" class="panel-view{% if social_active_section == 'emergencias' %} active{% else %} d-none{% endif %}">
                 <div class="d-flex justify-content-between align-items-start flex-wrap gap-3 mb-4">
                     <div>
                         <span class="badge" style="background: rgba(239, 68, 68, 0.15); color: #B91C1C; font-weight: 800; font-size: 0.76rem; letter-spacing: 0.04em;">
@@ -1057,9 +1025,9 @@
                         </p>
                     </div>
                     <div>
-                        <button class="liquid-glass-btn-primary" onclick="abrirModalEmergencia()">
+                        {% if can_edit_social %}<button class="liquid-glass-btn-primary" onclick="abrirModalEmergencia()">
                             <i class="bi bi-lightning-charge-fill"></i> + Registrar Solicitud Urgente
-                        </button>
+                        </button>{% endif %}
                     </div>
                 </div>
 
@@ -1073,9 +1041,9 @@
                             <p class="small m-0 text-white-50 mt-0.5">Registrar una solicitud no equivale a confirmar la entrega de materiales. La administración recibe una revisión.</p>
                         </div>
                     </div>
-                    <button class="btn btn-light rounded-pill px-3 py-1.5 fw-bold text-danger" onclick="abrirModalEmergencia()">
+                    {% if can_edit_social %}<button class="btn btn-light rounded-pill px-3 py-1.5 fw-bold text-danger" onclick="abrirModalEmergencia()">
                         <i class="bi bi-plus-circle-fill me-1"></i> Registrar Siniestro
-                    </button>
+                    </button>{% endif %}
                 </div>
 
                 <!-- Historial de Despachos de Emergencia -->
@@ -1104,7 +1072,7 @@
             <!-- =========================================================
                  PANEL 7: ARTICULACIÓN DE REDES COMUNITARIAS
                  ========================================================= -->
-            <section id="panel-redes" class="panel-view d-none">
+            <section id="panel-redes" class="panel-view{% if social_active_section == 'redes' %} active{% else %} d-none{% endif %}">
                 <div class="d-flex justify-content-between align-items-start flex-wrap gap-3 mb-4">
                     <div>
                         <span class="badge" style="background: rgba(180, 83, 9, 0.12); color: #B45309; font-weight: 800; font-size: 0.76rem; letter-spacing: 0.04em;">
@@ -1118,9 +1086,9 @@
                         </p>
                     </div>
                     <div>
-                        <button class="liquid-glass-btn-primary" onclick="abrirModalDerivacionRedes()">
+                        {% if can_edit_social %}<button class="liquid-glass-btn-primary" onclick="abrirModalDerivacionRedes()">
                             <i class="bi bi-arrow-right-circle-fill"></i> + Nueva Derivación a Red
-                        </button>
+                        </button>{% endif %}
                     </div>
                 </div>
 
@@ -1181,7 +1149,7 @@
             <!-- =========================================================
                  PANEL 8: METAS Y SEMÁFORO SGR (CÁLCULO NORMATIVO COMPLETO)
                  ========================================================= -->
-            <section id="panel-metas" class="panel-view d-none">
+            <section id="panel-metas" class="panel-view{% if social_active_section == 'metas' %} active{% else %} d-none{% endif %}">
                 <div class="d-flex justify-content-between align-items-start flex-wrap gap-3 mb-4">
                     <div>
                         <span class="badge" style="background: rgba(196, 18, 48, 0.1); color: var(--muni-red); font-weight: 800; font-size: 0.76rem; letter-spacing: 0.04em;">
@@ -1263,7 +1231,7 @@
             <!-- =========================================================
                  PANEL 9: MANTENEDORES SGR - PADRÓN TERRITORIAL DE VECINOS
                  ========================================================= -->
-            <section id="panel-mantenedores" class="panel-view d-none">
+            <section id="panel-mantenedores" class="panel-view{% if social_active_section == 'mantenedores' %} active{% else %} d-none{% endif %}">
                 <div class="d-flex justify-content-between align-items-start flex-wrap gap-3 mb-4">
                     <div>
                         <span class="badge" style="background: rgba(245, 158, 11, 0.15); color: #B45309; font-weight: 800; font-size: 0.76rem; letter-spacing: 0.04em;">
@@ -1281,31 +1249,35 @@
                         <button class="btn btn-outline-secondary rounded-pill px-3 py-1.5 fw-bold" onclick="exportarVecinosExcel()" style="font-size: 0.86rem; border-color: #CBD5E1;">
                             <i class="bi bi-file-earmark-excel-fill text-success me-1"></i> Exportar Vecinos Excel
                         </button>
-                        <button class="liquid-glass-btn-primary" onclick="abrirModalCrearVecino()">
+                        {% if can_edit_social %}<button class="liquid-glass-btn-primary" onclick="abrirModalCrearVecino()">
                             <i class="bi bi-person-plus-fill"></i> + Registrar Nuevo Vecino
-                        </button>
+                        </button>{% endif %}
                     </div>
                 </div>
 
                 <!-- Filtros del Mantenedor -->
-                <div class="d-flex justify-content-between align-items-center flex-wrap gap-2.5 mb-3">
+                <form method="get" class="d-flex justify-content-between align-items-center flex-wrap gap-2.5 mb-3" onsubmit="event.preventDefault(); filtrarTablaVecinos(1);">
                     <div class="d-flex align-items-center gap-2 flex-grow-1 flex-wrap">
                         <div class="position-relative" style="min-width: 300px; flex-grow: 1;">
                             <i class="bi bi-search position-absolute top-50 start-0 translate-middle-y ms-3 text-muted"></i>
-                            <input type="text" class="form-control rounded-pill ps-5" placeholder="Buscar por RUT, Nombre o Dirección..." id="txtBusquedaVecino" onkeyup="filtrarTablaVecinos()">
+                            <input type="text" name="vq" value="{{ vecinos_query|default:'' }}" class="form-control rounded-pill ps-5" placeholder="Buscar por RUT, Nombre, Teléfono o Dirección..." id="txtBusquedaVecino" oninput="filtrarTablaVecinos(1)">
                         </div>
 
-                        <select class="form-select rounded-pill w-auto" id="selFiltroEstadoVecino" onchange="filtrarTablaVecinos()" style="font-size: 0.85rem;">
-                            <option value="">Todos los Estados</option>
-                            <option value="Activo">Solo Activos</option>
-                            <option value="Inactivo">Solo Inactivos</option>
+                        <select class="form-select rounded-pill w-auto" name="vestado" id="selFiltroEstadoVecino" onchange="filtrarTablaVecinos(1)" style="font-size: 0.85rem;">
+                            <option value="" {% if not vecinos_estado %}selected{% endif %}>Todos los Estados</option>
+                            <option value="Activo" {% if vecinos_estado == 'Activo' %}selected{% endif %}>Solo Activos</option>
+                            <option value="Inactivo" {% if vecinos_estado == 'Inactivo' %}selected{% endif %}>Solo Inactivos</option>
                         </select>
+
+                        <button type="button" class="btn btn-outline-secondary rounded-pill px-3 py-1.5 fw-bold" style="font-size: 0.82rem;" onclick="restablecerFiltrosVecinos()">
+                            <i class="bi bi-arrow-counterclockwise"></i> Limpiar
+                        </button>
                     </div>
 
                     <div class="text-muted small">
-                        Padrón Sede: <strong id="lblVecinosMostrados" class="text-danger">0</strong> vecinos
+                        Padrón Sede: <strong id="lblVecinosMostrados" class="text-danger">0</strong> de <span id="lblVecinosTotales">0</span> vecinos
                     </div>
-                </div>
+                </form>
 
                 <!-- Tabla de Vecinos -->
                 <div class="rounded-4 border bg-white shadow-sm overflow-hidden mb-4">
@@ -1325,6 +1297,15 @@
                             <!-- Inyectado dinámicamente -->
                         </tbody>
                     </table>
+                    <!-- Barra de Paginación del Mantenedor de Vecinos -->
+                    <nav id="paginacionVecinosWrapper" class="d-flex justify-content-between align-items-center flex-wrap gap-2 px-3 py-3 border-top bg-light" aria-label="Paginación de vecinos">
+                        <div class="small text-muted fw-semibold" id="lblResumenPaginacionVecinos">
+                            Mostrando {{ vecinos_page.start_index }}–{{ vecinos_page.end_index }} de {{ vecinos_page.paginator.count }} · Página {{ vecinos_page.number }} de {{ vecinos_page.paginator.num_pages }}
+                        </div>
+                        <div class="d-flex align-items-center gap-1" id="controlesPaginacionVecinos">
+                            <!-- Controles dinámicos -->
+                        </div>
+                    </nav>
                 </div>
             </section>
 
@@ -1396,6 +1377,20 @@
                                     <option value="redes">Articulación de Redes Comunitarias</option>
                                 </select>
                             </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold small text-dark" for="casoTipoAtencion">Tipo de Atención</label>
+                                <select class="form-select rounded-3" id="casoTipoAtencion" onchange="filtrarSubAtencionesSociales('caso')" {% if attention_types and subattentions %}required{% else %}disabled{% endif %}>
+                                    <option value="">Selecciona un tipo</option>
+                                    {% for tipo in attention_types %}<option value="{{ tipo.id }}">{{ tipo.name }}</option>{% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold small text-dark" for="casoSubAtencion">Sub Atención</label>
+                                <select class="form-select rounded-3" id="casoSubAtencion" {% if attention_types and subattentions %}required{% else %}disabled{% endif %}>
+                                    <option value="">Selecciona una subatención</option>
+                                    {% for sub in subattentions %}<option value="{{ sub.id }}" data-attention-type="{{ sub.attention_type_id }}" hidden disabled>{{ sub.name }}</option>{% endfor %}
+                                </select>
+                            </div>
 
 
                             <div class="col-12">
@@ -1411,8 +1406,68 @@
 
                         <div class="d-flex justify-content-end gap-2 mt-4 pt-3 border-top">
                             <button type="button" class="btn btn-outline-secondary rounded-pill px-4 fw-bold" data-bs-dismiss="modal">Cancelar</button>
-                            <button type="submit" class="liquid-glass-btn-primary">
+                            <button type="submit" {% if not can_edit_social %}disabled{% endif %} class="liquid-glass-btn-primary">
                                 <i class="bi bi-check-circle-fill"></i> Guardar Caso Social
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal 1B: Editar Caso Social (Persistencia Real API PUT) -->
+    <div class="modal fade" id="modalEditarCaso" tabindex="-1" aria-labelledby="modalEditarCasoLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content rounded-4 border-0 shadow-lg">
+                <div class="modal-header text-white" style="background: linear-gradient(135deg, #1B365D 0%, #0F172A 100%);">
+                    <div>
+                        <h5 class="modal-title fw-bold" id="modalEditarCasoLabel">
+                            <i class="bi bi-pencil-square me-2"></i>Editar Caso Social · DIDECO
+                        </h5>
+                        <p class="small m-0 text-white-50">Actualización directa y auditada de la Ficha Social en base de datos</p>
+                    </div>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <form id="formEditarCaso" onsubmit="guardarEdicionCaso(event)">
+                        <input type="hidden" id="editCasoId">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold small text-dark" for="editCasoRut">RUT de la Persona Usuaria <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control rounded-3" id="editCasoRut" required oninput="formatearRutChileno(this)">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold small text-dark" for="editCasoNombre">Nombre Completo Beneficiario <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control rounded-3" id="editCasoNombre" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold small text-dark" for="editCasoTelefono">Teléfono de Contacto <span class="text-danger">*</span></label>
+                                <input type="tel" class="form-control rounded-3" id="editCasoTelefono" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold small text-dark" for="editCasoCategoria">Función Social / Área <span class="text-danger">*</span></label>
+                                <select class="form-select rounded-3" id="editCasoCategoria" required>
+                                    <option value="beneficio">Gestión de Beneficios y Subsidios</option>
+                                    <option value="diagnostico">Evaluación y Diagnóstico (Visita Terreno)</option>
+                                    <option value="informe">Informe Social Formal (Tribunal / CESFAM)</option>
+                                    <option value="emergencia">Atención de Emergencia / Catástrofe</option>
+                                    <option value="redes">Articulación de Redes Comunitarias</option>
+                                </select>
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label fw-bold small text-dark" for="editCasoAsunto">Asunto / Beneficio Específico <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control rounded-3" id="editCasoAsunto" required>
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label fw-bold small text-dark" for="editCasoDescripcion">Diagnóstico Socioeconómico Inicial <span class="text-danger">*</span></label>
+                                <textarea class="form-control rounded-3" id="editCasoDescripcion" rows="3" required></textarea>
+                            </div>
+                        </div>
+                        <div class="d-flex justify-content-end gap-2 mt-4 pt-3 border-top">
+                            <button type="button" class="btn btn-outline-secondary rounded-pill px-4 fw-bold" data-bs-dismiss="modal">Cancelar</button>
+                            <button type="submit" {% if not can_edit_social %}disabled{% endif %} class="liquid-glass-btn-primary" style="background: linear-gradient(135deg, #1B365D 0%, #0F172A 100%) !important;">
+                                <i class="bi bi-check2-circle"></i> Guardar Cambios
                             </button>
                         </div>
                     </form>
@@ -1461,7 +1516,7 @@
 
                         <div class="d-flex justify-content-end gap-2 mt-4 pt-3 border-top">
                             <button type="button" class="btn btn-outline-secondary rounded-pill px-4 fw-bold" data-bs-dismiss="modal">Cancelar</button>
-                            <button type="submit" class="liquid-glass-btn-primary" style="background: linear-gradient(135deg, #1B365D 0%, #0F172A 100%) !important;">
+                            <button type="submit" {% if not can_edit_social %}disabled{% endif %} class="liquid-glass-btn-primary" style="background: linear-gradient(135deg, #1B365D 0%, #0F172A 100%) !important;">
                                 <i class="bi bi-camera-fill text-warning"></i> Registrar gestión de Etapa 2
                             </button>
                         </div>
@@ -1515,6 +1570,20 @@
                                 </select>
                                 {% endif %}
                             </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold small text-dark" for="emerTipoAtencion">Tipo de Atención</label>
+                                <select class="form-select rounded-3" id="emerTipoAtencion" onchange="filtrarSubAtencionesSociales('emer')" {% if attention_types and subattentions %}required{% else %}disabled{% endif %}>
+                                    <option value="">Selecciona un tipo</option>
+                                    {% for tipo in attention_types %}<option value="{{ tipo.id }}">{{ tipo.name }}</option>{% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold small text-dark" for="emerSubAtencion">Sub Atención</label>
+                                <select class="form-select rounded-3" id="emerSubAtencion" {% if attention_types and subattentions %}required{% else %}disabled{% endif %}>
+                                    <option value="">Selecciona una subatención</option>
+                                    {% for sub in subattentions %}<option value="{{ sub.id }}" data-attention-type="{{ sub.attention_type_id }}" hidden disabled>{{ sub.name }}</option>{% endfor %}
+                                </select>
+                            </div>
                             <div class="col-12">
                                 <label class="form-label fw-bold small text-dark" for="emerAyuda">Ayuda solicitada <span class="text-danger">*</span></label>
                                 <input type="text" class="form-control rounded-3" id="emerAyuda" placeholder="Ej: 2 Cajas de víveres, 4 Colchones, 8 Frazadas, 10 Planchas de zinc" required>
@@ -1526,8 +1595,8 @@
                         </div>
                         <div class="d-flex justify-content-end gap-2 mt-4 pt-3 border-top">
                             <button type="button" class="btn btn-outline-secondary rounded-pill px-4 fw-bold" data-bs-dismiss="modal">Cancelar</button>
-                            <button type="submit" class="liquid-glass-btn-primary">
-                                <i class="bi bi-lightning-charge-fill"></i> Confirmar Despacho Inmediato
+                            <button type="submit" {% if not can_edit_social %}disabled{% endif %} class="liquid-glass-btn-primary">
+                                <i class="bi bi-lightning-charge-fill"></i> Registrar Solicitud
                             </button>
                         </div>
                     </form>
@@ -1636,7 +1705,7 @@
                         </div>
                         <div class="d-flex justify-content-end gap-2 mt-4 pt-3 border-top">
                             <button type="button" class="btn btn-outline-secondary rounded-pill px-4 fw-bold" data-bs-dismiss="modal">Cancelar</button>
-                            <button type="submit" class="liquid-glass-btn-primary" style="background: linear-gradient(135deg, #059669 0%, #047857 100%) !important;">
+                            <button type="submit" {% if not can_edit_social %}disabled{% endif %} class="liquid-glass-btn-primary" style="background: linear-gradient(135deg, #059669 0%, #047857 100%) !important;">
                                 <i class="bi bi-check-circle-fill"></i> Conceder Subsidio
                             </button>
                         </div>
@@ -1682,7 +1751,7 @@
                         </div>
                         <div class="d-flex justify-content-end gap-2 mt-4 pt-3 border-top">
                             <button type="button" class="btn btn-outline-secondary rounded-pill px-4 fw-bold" data-bs-dismiss="modal">Cancelar</button>
-                            <button type="submit" class="liquid-glass-btn-primary" style="background: linear-gradient(135deg, #B45309 0%, #78350F 100%) !important;">
+                            <button type="submit" {% if not can_edit_social %}disabled{% endif %} class="liquid-glass-btn-primary" style="background: linear-gradient(135deg, #B45309 0%, #78350F 100%) !important;">
                                 <i class="bi bi-send-fill"></i> Solicitar Revisión
                             </button>
                         </div>
@@ -1729,7 +1798,7 @@
                         </div>
                         <div class="d-flex justify-content-end gap-2 mt-4 pt-3 border-top">
                             <button type="button" class="btn btn-outline-secondary rounded-pill px-4 fw-bold" data-bs-dismiss="modal">Cancelar</button>
-                            <button type="submit" class="liquid-glass-btn-primary">
+                            <button type="submit" {% if not can_edit_social %}disabled{% endif %} class="liquid-glass-btn-primary">
                                 <i class="bi bi-save-fill"></i> Guardar Vecino en BD
                             </button>
                         </div>
@@ -1780,7 +1849,7 @@
                         </div>
                         <div class="d-flex justify-content-end gap-2 mt-4 pt-3 border-top">
                             <button type="button" class="btn btn-outline-secondary rounded-pill px-4 fw-bold" data-bs-dismiss="modal">Cancelar</button>
-                            <button type="submit" class="liquid-glass-btn-primary" style="background: linear-gradient(135deg, #1B365D 0%, #0F172A 100%) !important;">
+                            <button type="submit" {% if not can_edit_social %}disabled{% endif %} class="liquid-glass-btn-primary" style="background: linear-gradient(135deg, #1B365D 0%, #0F172A 100%) !important;">
                                 <i class="bi bi-check2-circle"></i> Guardar Cambios
                             </button>
                         </div>
@@ -1793,6 +1862,8 @@
     <!-- =================================================================
          4. SCRIPT PRINCIPAL: GESTIÓN REACTIVA DE LOS 9 PANELES (JS PRO)
          ================================================================= -->
+    {{ social_navigation|json_script:"social-navigation-data" }}
+    <script src="{% static 'js/social-navigation.js' %}?v=20261027a"></script>
     {{ casos_sociales|json_script:"social-cases-data" }}
     {{ vecinos_data|json_script:"social-neighbors-data" }}
     {{ goal_data|json_script:"social-goal-data" }}
@@ -1821,6 +1892,10 @@
         const funcionarioNombre = JSON.parse(document.getElementById('social-worker-name').textContent);
         let derivacionesRedes = JSON.parse(document.getElementById('social-referrals-data').textContent);
         const puedeCerrarCaso = {{ can_close_social|yesno:"true,false" }};
+        const puedeEditarCaso = {{ can_edit_social|yesno:"true,false" }};
+        const SOCIAL_PAGE_SIZE = 8;
+        let casosPageCurrent = Math.max(1, parseInt(new URLSearchParams(window.location.search).get('page') || '1', 10) || 1);
+        let vecinosPageCurrent = Math.max(1, parseInt(new URLSearchParams(window.location.search).get('vpage') || '1', 10) || 1);
 
         function escapeHtml(value) {
             return String(value ?? '').replace(/[&<>"']/g, char => ({
@@ -1837,6 +1912,17 @@
         function fechaLocalIso() {
             const now = new Date();
             return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+        }
+
+        function filtrarSubAtencionesSociales(prefix) {
+            const typeId = document.getElementById(`${prefix}TipoAtencion`).value;
+            const sub = document.getElementById(`${prefix}SubAtencion`);
+            sub.value = '';
+            for (const option of sub.querySelectorAll('[data-attention-type]')) {
+                const visible = option.dataset.attentionType === typeId;
+                option.hidden = !visible;
+                option.disabled = !visible;
+            }
         }
 
         async function apiSocial(url, method = 'GET', payload = null) {
@@ -1880,14 +1966,19 @@
             try {
                 const data = await apiSocial('/social/api/casos/');
                 casosSociales = data.cases.map(casoDesdeApi);
+                const vecinosData = await apiSocial('/api/vecinos/');
+                if (Array.isArray(vecinosData.vecinos)) {
+                    vecinosList = vecinosData.vecinos;
+                }
                 const metrics = await apiSocial(window.location.pathname + '?metrics=1');
                 Object.assign(metaSgr, metrics.goal);
-                renderizarTablaCasos(casosSociales);
+                aplicarFiltrosTabla(casosPageCurrent);
                 renderizarKanbanFlujo();
                 renderizarVisitasTerreno();
                 renderizarInformesSociales();
                 renderizarEmergencias();
                 renderizarMetasSgr();
+                renderizarTablaVecinosMantenedor();
                 actualizarIndicadores();
                 poblarSelectsModales();
                 return true;
@@ -1913,12 +2004,29 @@
             renderizarTablaVecinosMantenedor();
             actualizarIndicadores();
             poblarSelectsModales();
+            aplicarFiltrosTabla();
+            actualizarEstadoMenu();
+            if (window.SocialPanelNavigation) {
+                window.socialPanelNavigation = window.SocialPanelNavigation.init({
+                    ...JSON.parse(document.getElementById('social-navigation-data').textContent),
+                    render: cambiarVistaPanel
+                });
+            }
+            document.querySelectorAll('.social-kpi-grid .social-kpi-card').forEach(card => {
+                card.addEventListener('keydown', event => {
+                    if (event.key === 'Enter' || event.key === ' ') {
+                        event.preventDefault();
+                        card.click();
+                    }
+                });
+            });
         });
 
         // =============================================================
         // CONMUTADOR MAESTRO DE VISTAS (SIDEBAR & NAVEGACIÓN REACTIVA)
         // =============================================================
-        function cambiarVistaPanel(panelId, btnElement) {
+        function cambiarVistaPanel(panelId) {
+            if (!document.getElementById('panel-' + panelId)) return;
             // 1. Ocultar todos los paneles
             document.querySelectorAll('.panel-view').forEach(p => {
                 p.classList.add('d-none');
@@ -1933,13 +2041,12 @@
             }
 
             // 3. Actualizar clase active en el menú lateral
-            document.querySelectorAll('.sidebar .nav-item-btn').forEach(btn => btn.classList.remove('active'));
-            if (btnElement) {
-                btnElement.classList.add('active');
-            } else {
-                const sideBtn = document.getElementById('nav-btn-' + panelId);
-                if (sideBtn) sideBtn.classList.add('active');
-            }
+            document.querySelectorAll('.sidebar .nav-item-btn').forEach(link => {
+                const selected = link.dataset.socialPanel === panelId;
+                link.classList.toggle('active', selected);
+                if (selected) link.setAttribute('aria-current', 'page');
+                else link.removeAttribute('aria-current');
+            });
 
             // 4. Actualizar título superior de la aplicación
             const subTitleEl = document.getElementById('headerSubName');
@@ -1956,10 +2063,11 @@
             };
             if (subTitleEl && titulos[panelId]) {
                 subTitleEl.innerText = titulos[panelId];
+                document.title = titulos[panelId].split(' · ')[0] + ' · DIDECO — Ilustre Municipalidad de La Serena';
             }
 
             // 5. Renderizar vista correspondiente
-            if (panelId === 'casos') renderizarTablaCasos(casosSociales);
+            if (panelId === 'casos') aplicarFiltrosTabla();
             else if (panelId === 'flujo') renderizarKanbanFlujo();
             else if (panelId === 'terreno') renderizarVisitasTerreno();
             else if (panelId === 'informes') renderizarInformesSociales();
@@ -1968,19 +2076,81 @@
             else if (panelId === 'metas') renderizarMetasSgr();
             else if (panelId === 'mantenedores') renderizarTablaVecinosMantenedor();
 
+            if (window.matchMedia('(max-width: 768px)').matches) toggleSidebar(false);
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
         // =============================================================
-        // 1. RENDERIZADO TABLA DE CASOS SOCIALES
+        // 1. RENDERIZADO TABLA DE CASOS SOCIALES (CON PAGINACIÓN Y EDICIÓN)
         // =============================================================
-        function renderizarTablaCasos(lista) {
+        function construirControlesPaginacion(contenedorId, resumenId, totalItems, pageActual, nombreFuncionIrPagina, etiquetaUnidad) {
+            const contenedor = document.getElementById(contenedorId);
+            const resumen = document.getElementById(resumenId);
+            const totalPages = Math.max(1, Math.ceil(totalItems / SOCIAL_PAGE_SIZE));
+            const currentPage = Math.min(Math.max(1, pageActual), totalPages);
+            const startIdx = totalItems === 0 ? 0 : (currentPage - 1) * SOCIAL_PAGE_SIZE + 1;
+            const endIdx = Math.min(currentPage * SOCIAL_PAGE_SIZE, totalItems);
+
+            if (resumen) {
+                resumen.innerText = totalItems === 0
+                    ? `Sin ${etiquetaUnidad} para mostrar`
+                    : `Mostrando ${startIdx}–${endIdx} de ${totalItems} ${etiquetaUnidad} · Página ${currentPage} de ${totalPages}`;
+            }
+            if (!contenedor) return currentPage;
+            contenedor.innerHTML = '';
+
+            const btnPrev = document.createElement('button');
+            btnPrev.type = 'button';
+            btnPrev.className = 'btn btn-sm btn-outline-secondary rounded-pill px-3 fw-bold';
+            btnPrev.disabled = currentPage <= 1;
+            btnPrev.innerHTML = '<i class="bi bi-chevron-left"></i> Anterior';
+            btnPrev.onclick = () => window[nombreFuncionIrPagina](currentPage - 1);
+            contenedor.appendChild(btnPrev);
+
+            for (let p = 1; p <= totalPages; p++) {
+                const btnPage = document.createElement('button');
+                btnPage.type = 'button';
+                btnPage.className = p === currentPage
+                    ? 'btn btn-sm rounded-pill px-3 fw-bold text-white'
+                    : 'btn btn-sm btn-outline-secondary rounded-pill px-2.5 fw-bold';
+                if (p === currentPage) btnPage.style.background = '#C41230';
+                btnPage.innerText = String(p);
+                btnPage.onclick = () => window[nombreFuncionIrPagina](p);
+                contenedor.appendChild(btnPage);
+            }
+
+            const btnNext = document.createElement('button');
+            btnNext.type = 'button';
+            btnNext.className = 'btn btn-sm btn-outline-secondary rounded-pill px-3 fw-bold';
+            btnNext.disabled = currentPage >= totalPages;
+            btnNext.innerHTML = 'Siguiente <i class="bi bi-chevron-right"></i>';
+            btnNext.onclick = () => window[nombreFuncionIrPagina](currentPage + 1);
+            contenedor.appendChild(btnNext);
+
+            return currentPage;
+        }
+
+        function irPaginaCasos(pagina) {
+            aplicarFiltrosTabla(pagina);
+        }
+
+        function renderizarTablaCasos(lista, pagina = casosPageCurrent) {
             const tbody = document.getElementById('tablaCasosSocialesBody');
             const emptyState = document.getElementById('emptyStateCasos');
             if (!tbody) return;
             tbody.innerHTML = '';
 
-            if (lista.length === 0) {
+            const totalFiltrados = lista.length;
+            casosPageCurrent = construirControlesPaginacion(
+                'controlesPaginacionCasos',
+                'lblResumenPaginacionCasos',
+                totalFiltrados,
+                pagina,
+                'irPaginaCasos',
+                'casos'
+            );
+
+            if (totalFiltrados === 0) {
                 if (emptyState) emptyState.style.display = 'block';
                 const lbl = document.getElementById('lblCasosMostrados');
                 if (lbl) lbl.innerText = '0';
@@ -1988,9 +2158,12 @@
             }
             if (emptyState) emptyState.style.display = 'none';
             const lbl = document.getElementById('lblCasosMostrados');
-            if (lbl) lbl.innerText = lista.length;
+            if (lbl) lbl.innerText = totalFiltrados;
 
-            lista.forEach(raw => {
+            const inicio = (casosPageCurrent - 1) * SOCIAL_PAGE_SIZE;
+            const paginaItems = lista.slice(inicio, inicio + SOCIAL_PAGE_SIZE);
+
+            paginaItems.forEach(raw => {
                 const caso = registroSeguro(raw);
                 const tr = document.createElement('tr');
                 tr.style.borderBottom = '1px solid #E2E8F0';
@@ -2062,17 +2235,20 @@
                         ${stepBadge}
                     </td>
                     <td class="py-3 px-2 text-center">
-                        <div class="d-inline-flex align-items-center justify-content-center gap-1.5">
-                            <button class="btn-action-round btn-action-view" onclick="verExpedienteCaso(${caso.id})" title="Ver Ficha y Expediente Social">
+                        <div class="social-case-actions">
+                            <button class="btn-action-round btn-action-view" onclick="verExpedienteCaso(${caso.id})" title="Ver Ficha y Expediente Social" aria-label="Ver ficha y expediente social">
                                 <i class="bi bi-eye-fill"></i>
                             </button>
-                            <button class="btn-action-round btn-action-advance" onclick="avanzarEtapaCaso(${caso.id})" title="Avanzar Etapa Flujo RN-012">
+                            ${puedeEditarCaso ? `<button class="btn-action-round" style="background: rgba(37, 99, 235, 0.12); color: #1D4ED8;" onclick="abrirModalEditarCaso(${caso.id})" title="Editar Caso Social" aria-label="Editar caso social">
+                                <i class="bi bi-pencil-fill"></i>
+                            </button>` : ''}
+                            {% if can_edit_social %}${caso.etapa < 3 ? `<button class="btn-action-round btn-action-advance" onclick="avanzarEtapaCaso(${caso.id})" title="Avanzar Etapa Flujo RN-012" aria-label="Registrar gestión o avanzar etapa">
                                 <i class="bi bi-arrow-right-circle-fill"></i>
-                            </button>
-                            <button class="btn-action-round btn-action-report" onclick="emitirInformeRapido(${caso.id})" title="Emitir Informe Social PDF">
+                            </button>` : ''}{% endif %}
+                            <button class="btn-action-round btn-action-report" onclick="emitirInformeRapido(${caso.id})" title="Emitir Informe Social PDF" aria-label="Emitir informe social PDF">
                                 <i class="bi bi-printer-fill"></i>
                             </button>
-                            ${puedeCerrarCaso ? `<button class="btn-action-round" style="background: rgba(239, 68, 68, 0.1); color: #DC2626;" onclick="eliminarCaso(${caso.id})" title="Dar de baja / Archivar">
+                            ${puedeCerrarCaso ? `<button class="btn-action-round" style="background: rgba(239, 68, 68, 0.1); color: #DC2626;" onclick="eliminarCaso(${caso.id})" title="Dar de baja / Archivar" aria-label="Archivar caso social">
                                 <i class="bi bi-trash3-fill"></i>
                             </button>` : ''}
                         </div>
@@ -2117,9 +2293,9 @@
                     <p class="small text-secondary mt-1 mb-2 text-truncate" title="${c.asunto}">${c.asunto}</p>
                     <div class="d-flex justify-content-between align-items-center pt-2 border-top">
                         <span class="small text-muted"><i class="bi bi-geo-alt text-danger"></i> ${c.delegacion}</span>
-                        <button class="btn btn-sm btn-outline-primary rounded-pill py-0.5 px-2 fw-bold" style="font-size: 0.75rem;" onclick="avanzarEtapaCaso(${c.id})">
+                        {% if can_edit_social %}<button class="btn btn-sm btn-outline-primary rounded-pill py-0.5 px-2 fw-bold" style="font-size: 0.75rem;" onclick="avanzarEtapaCaso(${c.id})">
                             Registrar Etapa 2 <i class="bi bi-arrow-right"></i>
-                        </button>
+                        </button>{% endif %}
                     </div>
                 `;
                 list1.appendChild(card);
@@ -2141,9 +2317,9 @@
                     </div>
                     <div class="d-flex justify-content-between align-items-center pt-2 mt-2 border-top">
                         <button class="btn btn-sm btn-light rounded-pill py-0.5 px-2 small" onclick="verExpedienteCaso(${c.id})">Ver Ficha</button>
-                        <button class="btn btn-sm btn-outline-success rounded-pill py-0.5 px-2 fw-bold" style="font-size: 0.75rem;" onclick="avanzarEtapaCaso(${c.id})">
+                        {% if can_edit_social %}<button class="btn btn-sm btn-outline-success rounded-pill py-0.5 px-2 fw-bold" style="font-size: 0.75rem;" onclick="avanzarEtapaCaso(${c.id})">
                             Registrar Etapa 3 <i class="bi bi-check2-circle"></i>
-                        </button>
+                        </button>{% endif %}
                     </div>
                 `;
                 list2.appendChild(card);
@@ -2189,9 +2365,9 @@
                     <div class="col-12 p-4 text-center text-muted bg-white rounded-4 border">
                         <i class="bi bi-camera fs-1 opacity-50 d-block mb-2"></i>
                         <h6>No hay visitas domiciliarias registradas aún</h6>
-                        <button class="liquid-glass-btn-primary mt-2" onclick="abrirModalVisitaTerreno()">
+                        {% if can_edit_social %}<button class="liquid-glass-btn-primary mt-2" onclick="abrirModalVisitaTerreno()">
                             + Agendar Primera Visita en Terreno
-                        </button>
+                        </button>{% endif %}
                     </div>
                 `;
                 return;
@@ -2362,28 +2538,66 @@
         }
 
         // =============================================================
-        // 8. RENDERIZADO MANTENEDOR DE VECINOS SGR (CRUD REAL)
+        // 8. RENDERIZADO MANTENEDOR DE VECINOS SGR (CRUD REAL + PAGINACIÓN)
         // =============================================================
-        function renderizarTablaVecinosMantenedor() {
+        function irPaginaVecinos(pagina) {
+            filtrarTablaVecinos(pagina);
+        }
+
+        function restablecerFiltrosVecinos() {
+            const txt = document.getElementById('txtBusquedaVecino');
+            const est = document.getElementById('selFiltroEstadoVecino');
+            if (txt) txt.value = '';
+            if (est) est.value = '';
+            filtrarTablaVecinos(1);
+        }
+
+        function renderizarTablaVecinosMantenedor(listaFiltrada = null, pagina = vecinosPageCurrent) {
             const tbody = document.getElementById('tablaMantenedorVecinosBody');
             const lbl = document.getElementById('lblVecinosMostrados');
+            const lblTotal = document.getElementById('lblVecinosTotales');
             if (!tbody) return;
             tbody.innerHTML = '';
 
-            if (lbl) lbl.innerText = vecinosList.length;
+            if (lblTotal) lblTotal.innerText = vecinosList.length;
 
-            if (vecinosList.length === 0) {
+            const txt = (document.getElementById('txtBusquedaVecino')?.value || '').toLowerCase().trim();
+            const est = document.getElementById('selFiltroEstadoVecino')?.value || '';
+            const filtrados = Array.isArray(listaFiltrada) ? listaFiltrada : vecinosList.filter(v => {
+                if (est && v.estado !== est) return false;
+                if (txt) {
+                    const campos = `${v.rut || ''} ${v.nombre || ''} ${v.direccion || ''} ${v.telefono || ''}`.toLowerCase();
+                    if (!campos.includes(txt)) return false;
+                }
+                return true;
+            });
+
+            if (lbl) lbl.innerText = filtrados.length;
+
+            vecinosPageCurrent = construirControlesPaginacion(
+                'controlesPaginacionVecinos',
+                'lblResumenPaginacionVecinos',
+                filtrados.length,
+                pagina,
+                'irPaginaVecinos',
+                'vecinos'
+            );
+
+            if (filtrados.length === 0) {
                 tbody.innerHTML = `
                     <tr>
                         <td colspan="7" class="p-4 text-center text-muted">
-                            No hay vecinos registrados en {{ current_delegation }}.
+                            No hay vecinos registrados para los filtros seleccionados en {{ current_delegation }}.
                         </td>
                     </tr>
                 `;
                 return;
             }
 
-            vecinosList.forEach(raw => {
+            const inicio = (vecinosPageCurrent - 1) * SOCIAL_PAGE_SIZE;
+            const paginaItems = filtrados.slice(inicio, inicio + SOCIAL_PAGE_SIZE);
+
+            paginaItems.forEach(raw => {
                 const v = registroSeguro(raw);
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
@@ -2397,9 +2611,9 @@
                     </td>
                     <td class="py-3 px-2 text-center">
                         <div class="d-inline-flex gap-1">
-                            <button class="btn btn-sm btn-outline-primary rounded-pill px-2.5 py-0.5 fw-bold" style="font-size: 0.78rem;" onclick="abrirModalEditarVecino(${v.id})">
+                            {% if can_edit_social %}<button class="btn btn-sm btn-outline-primary rounded-pill px-2.5 py-0.5 fw-bold" style="font-size: 0.78rem;" onclick="abrirModalEditarVecino(${v.id})">
                                 <i class="bi bi-pencil-fill"></i> Editar
-                            </button>
+                            </button>{% endif %}
                             ${puedeCerrarCaso ? `<button class="btn btn-sm btn-outline-danger rounded-pill px-2 py-0.5 fw-bold" style="font-size: 0.78rem;" onclick="eliminarVecinoMantenedor(${v.id})">
                                 <i class="bi bi-trash3-fill"></i>
                             </button>` : ''}
@@ -2410,17 +2624,8 @@
             });
         }
 
-        function filtrarTablaVecinos() {
-            const txt = document.getElementById('txtBusquedaVecino').value.toLowerCase().trim();
-            const est = document.getElementById('selFiltroEstadoVecino').value;
-
-            const rows = document.querySelectorAll('#tablaMantenedorVecinosBody tr');
-            rows.forEach(r => {
-                const textContent = r.innerText.toLowerCase();
-                const matchTxt = !txt || textContent.includes(txt);
-                const matchEst = !est || textContent.includes(est.toLowerCase());
-                r.style.display = (matchTxt && matchEst) ? '' : 'none';
-            });
+        function filtrarTablaVecinos(pagina = 1) {
+            renderizarTablaVecinosMantenedor(null, pagina);
         }
 
         // =============================================================
@@ -2469,7 +2674,10 @@
             if (sideBadgeSgrPct) sideBadgeSgrPct.innerText = pctTexto;
 
             const pBar = document.getElementById('sgrProgressBar');
-            if (pBar) pBar.style.width = porcentaje + '%';
+            if (pBar) {
+                pBar.style.width = porcentaje + '%';
+                pBar.setAttribute('aria-valuenow', porcentaje.toFixed(1));
+            }
 
             const lblStatus = document.getElementById('sgrStatusLabel');
             const beaconDot = document.getElementById('sgrBeaconDot');
@@ -2492,6 +2700,15 @@
                 if (panelStatus) { panelStatus.className = 'fw-bold m-0 text-danger'; panelStatus.innerText = 'Rojo (rezago)'; }
                 if (beaconDot) { beaconDot.style.backgroundColor = '#EF4444'; beaconDot.style.boxShadow = '0 0 12px #EF4444'; }
             }
+            const goalColor = !metaSgr.target || metaSgr.expected_pct === null ? '#94A3B8'
+                : porcentaje >= metaSgr.expected_pct ? '#059669'
+                : porcentaje >= metaSgr.expected_pct * 0.6 ? '#B45309' : '#C41230';
+            if (pBar) pBar.style.background = goalColor;
+            if (sgrCumplimientoVal) {
+                sgrCumplimientoVal.classList.remove('text-danger');
+                sgrCumplimientoVal.style.color = goalColor;
+            }
+            document.querySelector('.semaforo-banner-card').style.borderLeftColor = goalColor;
         }
 
         // =============================================================
@@ -2500,13 +2717,24 @@
         function filtrarPorEtapa(etapa) {
             const selEtapa = document.getElementById('selFiltroEtapa');
             if (selEtapa) selEtapa.value = etapa === 'todas' ? '' : etapa;
-            aplicarFiltrosTabla();
+            aplicarFiltrosTabla(1);
         }
 
-        function aplicarFiltrosTabla() {
+        function restablecerFiltrosCasos() {
+            document.getElementById('txtBusquedaCaso').value = '';
+            document.getElementById('selFiltroEtapa').value = '';
+            const delegationFilter = document.getElementById('selFiltroDelegacion');
+            if (delegationFilter.type !== 'hidden') delegationFilter.value = '';
+            aplicarFiltrosTabla(1);
+        }
+
+        function aplicarFiltrosTabla(pagina = 1) {
             const texto = document.getElementById('txtBusquedaCaso').value.toLowerCase().trim();
             const delegacion = document.getElementById('selFiltroDelegacion').value;
             const etapa = document.getElementById('selFiltroEtapa').value;
+            document.querySelectorAll('.social-kpi-grid .social-kpi-card').forEach((card, index) => {
+                card.setAttribute('aria-pressed', etapa === (index === 0 ? '' : String(index)) ? 'true' : 'false');
+            });
 
             const filtrados = casosSociales.filter(caso => {
                 if (delegacion && caso.delegacion !== delegacion) return false;
@@ -2516,12 +2744,13 @@
                     const matchNombre = caso.nombre.toLowerCase().includes(texto);
                     const matchAsunto = caso.asunto.toLowerCase().includes(texto);
                     const matchDelegacion = caso.delegacion.toLowerCase().includes(texto);
-                    if (!matchRut && !matchNombre && !matchAsunto && !matchDelegacion) return false;
+                    const matchDesc = (caso.descripcion || '').toLowerCase().includes(texto);
+                    if (!matchRut && !matchNombre && !matchAsunto && !matchDelegacion && !matchDesc) return false;
                 }
                 return true;
             });
 
-            renderizarTablaCasos(filtrados);
+            renderizarTablaCasos(filtrados, pagina);
         }
 
         // =============================================================
@@ -2568,6 +2797,71 @@
         function abrirModalNuevoCaso() {
             const modal = new bootstrap.Modal(document.getElementById('modalNuevoCaso'));
             modal.show();
+        }
+
+        function abrirModalEditarCaso(id) {
+            const c = casosSociales.find(item => item.id === id);
+            if (!c) return;
+            document.getElementById('editCasoId').value = c.id;
+            document.getElementById('editCasoRut').value = c.rut;
+            document.getElementById('editCasoNombre').value = c.nombre;
+            document.getElementById('editCasoTelefono').value = c.telefono === 'No informado' ? '' : (c.telefono || '');
+            document.getElementById('editCasoCategoria').value = c.categoria || 'beneficio';
+            document.getElementById('editCasoAsunto').value = c.asunto || '';
+            let descLimpia = c.descripcion || '';
+            if (descLimpia.startsWith('[') && descLimpia.includes('] ')) {
+                const rest = descLimpia.split('] ', 2)[1] || '';
+                const dotIdx = rest.indexOf('. ');
+                descLimpia = dotIdx !== -1 ? rest.slice(dotIdx + 2) : rest;
+            }
+            document.getElementById('editCasoDescripcion').value = descLimpia;
+            const modal = new bootstrap.Modal(document.getElementById('modalEditarCaso'));
+            modal.show();
+        }
+
+        async function guardarEdicionCaso(e) {
+            e.preventDefault();
+            const id = parseInt(document.getElementById('editCasoId').value, 10);
+            const rut = document.getElementById('editCasoRut').value.trim();
+            const nombre = document.getElementById('editCasoNombre').value.trim();
+            const telefono = document.getElementById('editCasoTelefono').value.trim();
+            const categoria = document.getElementById('editCasoCategoria').value;
+            const asunto = document.getElementById('editCasoAsunto').value.trim();
+            const descripcion = document.getElementById('editCasoDescripcion').value.trim();
+
+            if (!validarRutChileno(rut)) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'RUT Inválido',
+                    text: 'El RUT ingresado no cumple con el algoritmo Módulo 11 de Chile.',
+                    confirmButtonColor: '#C41230'
+                });
+                return;
+            }
+
+            try {
+                const data = await apiSocial(`/social/api/casos/${id}/`, 'PUT', {
+                    user_rut: rut,
+                    user_name: nombre,
+                    contact_phone: telefono,
+                    initial_problem: `[${categoria}] ${asunto}. ${descripcion}`
+                });
+                const refreshed = await recargarCasos();
+                bootstrap.Modal.getInstance(document.getElementById('modalEditarCaso')).hide();
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Caso Social Actualizado',
+                    text: mensajeGuardado(data.message, refreshed),
+                    confirmButtonColor: '#C41230'
+                });
+            } catch (err) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'No se pudo actualizar el caso',
+                    text: err.message,
+                    confirmButtonColor: '#C41230'
+                });
+            }
         }
 
         function abrirModalVisitaTerreno() {
@@ -2653,6 +2947,8 @@
                     contact_phone: telefono,
                     delegation_id: delegationId,
                     entry_date: fechaLocalIso(),
+                    attention_type_id: document.getElementById('casoTipoAtencion').value,
+                    subattention_id: document.getElementById('casoSubAtencion').value,
                     initial_problem: `[${categoria}] ${asunto}. ${descripcion}`
                 });
                 const refreshed = await recargarCasos();
@@ -2736,6 +3032,8 @@
                     user_rut: rut,
                     delegation_id: delegacionId,
                     entry_date: fechaLocalIso(),
+                    attention_type_id: document.getElementById('emerTipoAtencion').value,
+                    subattention_id: document.getElementById('emerSubAtencion').value,
                     initial_problem: `[emergencia] ${tipo}. Ayuda solicitada: ${ayuda}. Observaciones: ${obs}`
                 });
                 const refreshed = await recargarCasos();
@@ -3322,26 +3620,32 @@
             return dv === dvEsperado;
         }
 
-        function toggleSidebar() {
-            document.getElementById('sidebar').classList.toggle('active');
+        function actualizarEstadoMenu() {
+            const mobile = window.matchMedia('(max-width: 768px)').matches;
+            const open = mobile ? document.getElementById('sidebar').classList.contains('mobile-open') : !document.body.classList.contains('sidebar-collapsed');
+            document.querySelectorAll('[aria-controls="sidebar"]').forEach(button => button.setAttribute('aria-expanded', String(open)));
+            document.querySelector('.social-sidebar-backdrop').hidden = !(mobile && open);
+            document.getElementById('sidebar').inert = !open;
+            document.getElementById('sidebar').setAttribute('aria-hidden', String(!open));
         }
 
-        function abrirModalPerfilAsistente() {
-            Swal.fire({
-                title: 'Perfil Institucional DIDECO',
-                html: `
-                    <div class="text-start p-2">
-                        <div class="mb-2"><strong>Funcionario:</strong> {{ user_name }}</div>
-                        <div class="mb-2"><strong>Cargo Institucional:</strong> Asistente Social / Trabajadora Social</div>
-                        <div class="mb-2"><strong>Dirección:</strong> DIDECO (Dirección de Desarrollo Comunitario)</div>
-                        <div class="mb-2"><strong>Delegación Asignada:</strong> {{ current_delegation|default:"Consolidado Comunal" }}</div>
-                        <div class="mb-2"><strong>Sistema:</strong> Sistema de Gestión de Resultados (SGR)</div>
-                        <div><strong>Normativa de Atención:</strong> Flujo Secuencial 3 Etapas (RN-012)</div>
-                    </div>
-                `,
-                confirmButtonColor: '#C41230'
-            });
+        function toggleSidebar(forceOpen) {
+            const mobile = window.matchMedia('(max-width: 768px)').matches;
+            const focusWasInSidebar = document.getElementById('sidebar').contains(document.activeElement);
+            if (mobile) {
+                const sidebar = document.getElementById('sidebar');
+                sidebar.classList.toggle('mobile-open', typeof forceOpen === 'boolean' ? forceOpen : !sidebar.classList.contains('mobile-open'));
+            } else {
+                document.body.classList.toggle('sidebar-collapsed', typeof forceOpen === 'boolean' ? !forceOpen : !document.body.classList.contains('sidebar-collapsed'));
+            }
+            actualizarEstadoMenu();
+            if (focusWasInSidebar && document.getElementById('sidebar').inert) document.querySelector('.top-header .btn-hamburger').focus();
         }
+
+        window.addEventListener('resize', actualizarEstadoMenu);
+        document.addEventListener('keydown', event => {
+            if (event.key === 'Escape' && window.matchMedia('(max-width: 768px)').matches) toggleSidebar(false);
+        });
 
         function mostrarNotificacionesSociales() {
             const pendientes = derivacionesRedes.filter(d => /pendiente/i.test(d.estado)).length;
