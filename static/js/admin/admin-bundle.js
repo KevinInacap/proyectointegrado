@@ -4142,13 +4142,13 @@
                         <!-- Contenido Principal -->
                         <div class="p-3 pb-2">
                             <div class="text-muted text-uppercase fw-bold mb-1" style="font-size: 0.70rem; letter-spacing: 0.05em;">
-                                ${d.sector}
+                                ${escapeHtml(d.sector)}
                             </div>
                             <h4 class="fw-bold mb-1" style="color: var(--muni-navy); font-size: 1.25rem;">
-                                ${d.nombre}
+                                ${escapeHtml(d.nombre)}
                             </h4>
                             <div class="text-secondary small text-truncate mb-3" style="font-size: 0.82rem;">
-                                <i class="bi bi-geo-alt-fill text-danger me-1"></i>${d.direccion}
+                                <i class="bi bi-geo-alt-fill text-danger me-1"></i>${escapeHtml(d.direccion)}
                             </div>
 
                             <!-- Cápsula de Gestor y Horario (Vidrio Esmerilado) -->
@@ -4157,7 +4157,7 @@
                                     <span class="text-muted small" style="font-size: 0.74rem;">
                                         <i class="bi bi-person-badge text-primary me-1"></i>Encargado:
                                     </span>
-                                    <span class="fw-bold text-dark small" style="font-size: 0.78rem;">${d.delegado || 'No registrado'}</span>
+                                    <span class="fw-bold text-dark small" style="font-size: 0.78rem;">${escapeHtml(d.delegado || 'No registrado')}</span>
                                 </div>
                             </div>
                         </div>
@@ -4170,7 +4170,7 @@
                                 <i class="bi bi-folder2-open me-1"></i> ${d.atencionesMes == null ? 'Sin registros' : `${d.atencionesMes} atenciones mes`}
                             </span>
                             <span class="text-secondary small fw-semibold" style="font-size: 0.74rem;">
-                                <i class="bi bi-clock text-muted me-1"></i>${d.horario && d.horario !== 'Horario no registrado' ? d.horario : '08:30 - 14:00'}
+                                <i class="bi bi-clock text-muted me-1"></i>${escapeHtml(d.horario || 'Horario no registrado')}
                             </span>
                         </div>
                         
@@ -4447,7 +4447,7 @@
                                 ${barriosHtml}
                             </div>
                             <small class="text-muted">
-                                * Cada sector cuenta con enlace territorial directo con directivas de Juntas de Vecinos y clubes de personas mayores.
+                                Los sectores registrados se muestran cuando hay información disponible.
                             </small>
                         </div>
 
