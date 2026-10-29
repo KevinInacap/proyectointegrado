@@ -1087,7 +1087,10 @@ def _attention_neighbor(request, data, delegation, current=None):
 
 def _register_attention_neighbor(request, payload):
     if _vecino_rut_exists(payload['rut']):
-        raise ValidationError('Ya existe un vecino con ese RUT. Búscalo en el padrón; si no está en tu delegación, consulta con administración.')
+        raise ValidationError(
+            'Este RUT ya tiene una ficha. Vuelve a consultarlo; si la ficha no está disponible en tu padrón, solicita su revisión a administración.',
+            code='rut_conflict',
+        )
     if _vecino_email_exists(payload['email']):
         raise ValidationError('Ya existe un vecino con ese correo electrónico.')
     try:
@@ -1098,6 +1101,11 @@ def _register_attention_neighbor(request, payload):
                 action='CREATE', new_value=_serialize_vecino(neighbor), source_ip=request.META.get('REMOTE_ADDR'),
             )
     except IntegrityError:
+        if _vecino_rut_exists(payload['rut']):
+            raise ValidationError(
+                'Este RUT acaba de ser registrado. Vuelve a consultarlo para utilizar la ficha existente.',
+                code='rut_conflict',
+            )
         raise ValidationError('El vecino ya fue registrado. Búscalo en el padrón antes de reintentar.')
     return neighbor
 
@@ -1116,16 +1124,21 @@ def _vecino_scope(request):
 
 
 def _filter_vecinos(qs, query, *, exact_rut=False):
+    if exact_rut:
+        # Use the same identity rule as duplicate validation, including legacy
+        # RUTs containing tabs or other non-canonical separators.
+        normalized = _normalize_vecino_rut(query)
+        matches = [pk for pk, rut in qs.values_list('pk', 'rut')
+                   if _normalize_vecino_rut(rut) == normalized]
+        return qs.filter(pk__in=matches)
     conditions = (Q(nombre__icontains=query) | Q(rut__icontains=query) |
                   Q(direccion__icontains=query) | Q(telefono__icontains=query))
-    if exact_rut or (re.fullmatch(r'[0-9.kK\s-]+', query) and any(character.isdigit() for character in query)):
+    if re.fullmatch(r'[0-9.kK\s-]+', query) and any(character.isdigit() for character in query):
         from django.db.models import Value
         from django.db.models.functions import Replace, Upper
         qs = qs.annotate(search_rut=Upper(Replace(Replace(Replace('rut', Value('.'), Value('')),
                                                                         Value('-'), Value('')),
                                                        Value(' '), Value(''))))
-        if exact_rut:
-            return qs.filter(search_rut=_normalize_vecino_rut(query))
         conditions |= Q(search_rut__icontains=_normalize_vecino_rut(query))
     return qs.filter(conditions)
 
@@ -1162,11 +1175,29 @@ def api_vecinos(request):
             if estado in {'Activo', 'Inactivo'}:
                 qs = qs.filter(estado=estado)
         vecinos = [_serialize_vecino(v) for v in qs]
+        lookup_result = {}
+        if rut_lookup:
+            existing_unavailable = not vecinos and _vecino_rut_exists(rut)
+            profile = _actor(request)
+            assigned = bool(profile and profile.delegation and profile.delegation.status == 'Activo'
+                            and profile.delegation.deleted_at is None)
+            can_register = (not vecinos and not existing_unavailable and assigned
+                            and _has_matrix_permission(request, 'edicion'))
+            message = ''
+            if existing_unavailable:
+                message = ('Este RUT ya tiene una ficha que no está disponible en tu padrón. '
+                           'Solicita a administración que revise la ficha antes de registrar otra.')
+            elif not vecinos and not can_register:
+                message = 'Tu perfil necesita permiso de edición y una delegación activa para registrar vecinos.'
+            lookup_result = {
+                'found': bool(vecinos), 'can_register': can_register,
+                'rut_unavailable': existing_unavailable, 'message': message,
+            }
         paginator = Paginator(vecinos, 8)
         page_obj = paginator.get_page(request.GET.get('page') or 1)
         return JsonResponse({
             'success': True,
-            **({'found': bool(vecinos)} if rut_lookup else {}),
+            **lookup_result,
             'vecinos': vecinos,
             'paginated_vecinos': list(page_obj.object_list),
             'pagination': {
@@ -1478,6 +1509,8 @@ def api_atenciones(request):
         return JsonResponse({'success': False, 'message': 'Fecha de atención o visita inválida.'}, status=400)
     if activity_date > timezone.localdate():
         return JsonResponse({'success': False, 'message': 'La fecha de atención no puede ser futura.'}, status=400)
+    if activity_date < datetime.date(1900, 1, 1):
+        return JsonResponse({'success': False, 'message': 'Revisa el año de la fecha de atención; debe ser 1900 o posterior.'}, status=400)
     from django.db import transaction
     from django.db.models import Q
     from uuid import uuid4
@@ -1523,7 +1556,10 @@ def api_atenciones(request):
             try:
                 neighbor = _register_attention_neighbor(request, registration)
             except ValidationError as exc:
-                return JsonResponse({'success': False, 'message': exc.messages[0]}, status=400)
+                return JsonResponse({
+                    'success': False, 'message': exc.messages[0],
+                    'rut_conflict': getattr(exc, 'code', None) == 'rut_conflict',
+                }, status=400)
         typed_fields = {'attention_type': attention_type, 'subattention': subattention} if attention_type else {}
         act = Activity.objects.create(
             activity_code=code, activity_date=activity_date,
@@ -1593,6 +1629,8 @@ def api_atencion_detail(request, pk):
             return JsonResponse({'success': False, 'message': 'Fecha de atención o visita inválida.'}, status=400)
         if a.activity_date > timezone.localdate():
             return JsonResponse({'success': False, 'message': 'La fecha de atención no puede ser futura.'}, status=400)
+        if a.activity_date < datetime.date(1900, 1, 1):
+            return JsonResponse({'success': False, 'message': 'Revisa el año de la fecha de atención; debe ser 1900 o posterior.'}, status=400)
     if 'delegation' in data:
         delegation = _delegation_for_write(request, data['delegation'])
         if not delegation:
@@ -1640,7 +1678,10 @@ def api_atencion_detail(request, pk):
             try:
                 a.neighbor = _register_attention_neighbor(request, registration)
             except ValidationError as exc:
-                return JsonResponse({'success': False, 'message': exc.messages[0]}, status=400)
+                return JsonResponse({
+                    'success': False, 'message': exc.messages[0],
+                    'rut_conflict': getattr(exc, 'code', None) == 'rut_conflict',
+                }, status=400)
         a.save()
         AuditLog.objects.create(
             user=request.user,

@@ -109,7 +109,11 @@
     if (!data || typeof data !== 'object' || Array.isArray(data)) {
       throw new Error('El servidor devolvió una respuesta inesperada. Actualiza la página antes de volver a intentarlo.');
     }
-    if (!response.ok || !data.success) throw new Error(typeof data.message === 'string' && data.message ? data.message : 'La operación no pudo completarse.');
+    if (!response.ok || !data.success) {
+      const error = new Error(typeof data.message === 'string' && data.message ? data.message : 'La operación no pudo completarse.');
+      error.rutConflict = data.rut_conflict === true;
+      throw error;
+    }
     return data;
   };
 
@@ -167,6 +171,7 @@
       ? 'Este RUT no está en el padrón de tu delegación. Completa nombre y dirección; al guardar se registrarán el vecino y su atención juntos.'
       : mode === 'existing' ? 'Vecino identificado. Completa la atención; sus datos personales se mantienen desde su ficha en Vecinos.'
       : mode === 'blocked' ? 'El vecino está inactivo. Revisa o reactiva su ficha en Vecinos antes de registrar la atención.'
+      : mode === 'unavailable' ? 'Este RUT ya tiene una ficha fuera del padrón disponible para tu perfil. Administración debe revisar su delegación o su baja; no se creará un duplicado.'
       : 'Consulta primero el RUT. Si no está registrado se habilitará su ficha, sin perder la atención que estás completando.';
     save.disabled = saving || !['existing', 'new'].includes(mode);
     const link = document.getElementById('neighbor-record-link');
@@ -217,6 +222,11 @@
         neighborSelect.value = '';
         resolvedRut = normalizeRut(rut);
         form.elements.neighbor_rut.value = rut;
+        if (data.can_register !== true) {
+          syncNeighborMode('unavailable');
+          status.textContent = data.message || 'No se puede registrar este RUT desde tu perfil. Solicita a administración revisar su ficha.';
+          return;
+        }
         syncNeighborMode('new');
         if (restorePreviousContact) {
           form.elements.contact_name.value = previousContact.name;
@@ -236,7 +246,7 @@
   };
   neighborLookup?.addEventListener('click', loadNeighbors);
   neighborSearch?.addEventListener('input', () => {
-    if (resolvedRut && normalizeRut(neighborSearch.value) === resolvedRut && ['existing', 'new', 'blocked'].includes(neighborMode())) return;
+    if (resolvedRut && normalizeRut(neighborSearch.value) === resolvedRut && ['existing', 'new', 'blocked', 'unavailable'].includes(neighborMode())) return;
     ++neighborSearchVersion;
     selectNeighbor(null);
     form.elements.neighbor_rut.value = '';
@@ -344,6 +354,7 @@
     const digits = phone.replace(/\D/g, '');
     if (neighborMode() !== 'existing' && phone && (!/^\+?[\d\s()-]+$/.test(phone) || digits.length < 7 || digits.length > 15)) fail('phone', 'Usa entre 7 y 15 dígitos, con +, espacios o guiones si los necesitas.');
     if (!date.value || date.validity.badInput) fail('date', 'Selecciona una fecha válida.');
+    else if (date.value < date.min) fail('date', 'Revisa el año: la fecha debe ser desde 1900 y no puede ser futura.');
     else if (date.value > date.max) fail('date', 'La fecha de atención no puede ser futura.');
     const keepLegacy = editingId && legacyType && !type.value && !subtype.value;
     if (!keepLegacy) {
@@ -493,6 +504,14 @@
     save.setAttribute('aria-busy', 'true');
     const originalLabel = save.textContent;
     save.textContent = 'Guardando…';
+    const restoreSubmit = () => {
+      saving = false;
+      neighborSearch.disabled = false;
+      neighborLookup.disabled = false;
+      syncNeighborMode(neighborMode());
+      save.removeAttribute('aria-busy');
+      save.textContent = originalLabel;
+    };
     try {
       const result = await request(editingId ? detailUrl(editingId) : app.dataset.listUrl,
         { method: editingId ? 'PUT' : 'POST', body: JSON.stringify(payload) });
@@ -501,16 +520,13 @@
       if (app.dataset.section === 'inicio') window.location.assign(app.dataset.attentionsUrl);
       else window.location.reload();
     } catch (error) {
+      restoreSubmit();
+      if (error.rutConflict) await loadNeighbors();
       showSummary(error.message);
-      await notify('error', 'No se pudo guardar', error.message);
+      await notify('error', error.rutConflict ? 'Revisa la ficha del RUT' : 'No se pudo guardar', error.message);
       summary?.focus();
     } finally {
-      saving = false;
-      neighborSearch.disabled = false;
-      neighborLookup.disabled = false;
-      syncNeighborMode(neighborMode());
-      save.removeAttribute('aria-busy');
-      save.textContent = originalLabel;
+      restoreSubmit();
     }
   });
 
