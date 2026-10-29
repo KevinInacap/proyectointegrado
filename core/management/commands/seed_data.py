@@ -153,7 +153,7 @@ class Command(BaseCommand):
         # system-role matrices so rerunning the seed does not overwrite custom grants.
         role_permission_defaults = (
             (role_coordinador, ['lectura', 'edicion', 'derivacion']),
-            (role_delegado, ['lectura', 'edicion', 'derivacion']),
+            (role_delegado, ['lectura', 'edicion', 'derivacion', 'cierre']),
             (role_funcionario, ['lectura', 'edicion', 'derivacion']),
             (role_verificador, ['lectura', 'edicion', 'cierre']),
             (role_consulta, ['lectura']),

@@ -369,6 +369,10 @@ def dashboard_delegado_view(request, section='inicio'):
             filtered = filtered.filter(neighbor=selected_neighbor)
         if unlinked_filter:
             filtered = filtered.filter(neighbor__isnull=True)
+        if query:
+            filtered = filtered.filter(Q(activity_code__icontains=query) |
+                                       Q(contact_name__icontains=query) |
+                                       Q(problem_description__icontains=query))
         attention_scope_counts = {
             'total': filtered.count(),
             'followup': filtered.filter(validation_status__in=['Pending', 'Requires correction']).count(),
@@ -383,10 +387,6 @@ def dashboard_delegado_view(request, section='inicio'):
             allowed_statuses.add('followup')
         if status not in allowed_statuses:
             status = ''
-        if query:
-            filtered = filtered.filter(Q(activity_code__icontains=query) |
-                                       Q(contact_name__icontains=query) |
-                                       Q(problem_description__icontains=query))
         if status == 'followup':
             filtered = filtered.filter(validation_status__in=['Pending', 'Requires correction'])
         elif status:
