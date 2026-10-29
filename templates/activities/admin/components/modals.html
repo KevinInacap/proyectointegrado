@@ -231,7 +231,7 @@
                                         <div class="col-md-6" id="wrapperPasswordUsuario">
                                             <label class="form-label small fw-bold mb-1" id="lblPasswordUsuario">Contraseña <span class="text-danger">*</span></label>
                                             <div class="input-group input-group-sm">
-                                                <input type="password" class="form-control form-control-sm" id="usrPassword" placeholder="Mínimo 8 caracteres">
+                                                <input type="password" class="form-control form-control-sm" id="usrPassword" maxlength="128" placeholder="Mínimo 8 caracteres">
                                                 <button class="btn btn-outline-secondary" type="button" onclick="togglePasswordVisibility('usrPassword', this)">
                                                     <i class="bi bi-eye"></i>
                                                 </button>
@@ -511,7 +511,7 @@
                     <div class="mb-3">
                         <label class="form-label small fw-bold">Nueva Contraseña</label>
                         <div class="input-group">
-                            <input type="password" class="form-control" id="pwdNuevaClave"
+                            <input type="password" class="form-control" id="pwdNuevaClave" maxlength="128"
                                 placeholder="Nueva contraseña segura" minlength="8" autocomplete="new-password"
                                 aria-describedby="pwdReglasClave" required>
                             <button class="btn btn-outline-secondary" type="button"
@@ -735,7 +735,7 @@
                                             class="bi bi-person-fill"></i></span>
                                     <input type="text"
                                         class="form-control bg-light border-start-0 text-dark fw-semibold"
-                                        value="{{ request.user.get_full_name|default:'Administrador Municipal' }}"
+                                        value="{{ request.user.profile.full_name|default:request.user.username }}"
                                         readonly>
                                     <span class="input-group-text bg-light border-start-0" title="Dato protegido"><i
                                             class="bi bi-lock-fill text-muted" style="font-size: 0.75rem;"></i></span>
@@ -751,7 +751,7 @@
                                             class="bi bi-envelope-fill"></i></span>
                                     <input type="email"
                                         class="form-control bg-light border-start-0 text-dark fw-semibold"
-                                        value="{{ request.user.email|default:'admin.municipal@laserena.cl' }}" readonly>
+                                        value="{{ request.user.email|default:'No registrado' }}" readonly>
                                     <span class="input-group-text bg-light border-start-0" title="Dato protegido"><i
                                             class="bi bi-lock-fill text-muted" style="font-size: 0.75rem;"></i></span>
                                 </div>
@@ -765,9 +765,9 @@
                                             class="bi bi-card-heading"></i></span>
                                     <input type="text"
                                         class="form-control bg-light border-start-0 text-dark fw-semibold"
-                                        value="18.492.301-4" readonly>
+                                        value="{{ request.user.profile.rut|default:'No registrado' }}" readonly>
                                     <span class="input-group-text bg-light border-start-0"
-                                        title="Verificado Registro Civil"><i class="bi bi-patch-check-fill text-success"
+                                        title="Dato registrado en el perfil"><i class="bi bi-patch-check-fill text-success"
                                             style="font-size: 0.8rem;"></i></span>
                                 </div>
                             </div>
@@ -780,7 +780,7 @@
                                             class="bi bi-calendar-event-fill"></i></span>
                                     <input type="text"
                                         class="form-control bg-light border-start-0 text-dark fw-semibold"
-                                        value="14 de Agosto de 1994" readonly>
+                                        value="No registrado" readonly>
                                     <span class="input-group-text bg-light border-start-0" title="Dato protegido"><i
                                             class="bi bi-lock-fill text-muted" style="font-size: 0.75rem;"></i></span>
                                 </div>
@@ -795,7 +795,7 @@
                                             class="bi bi-calendar-check-fill"></i></span>
                                     <input type="text"
                                         class="form-control bg-light border-start-0 text-dark fw-semibold"
-                                        value="02 de Enero de 2021" readonly>
+                                        value="No registrado" readonly>
                                     <span class="input-group-text bg-light border-start-0" title="Dato protegido"><i
                                             class="bi bi-lock-fill text-muted" style="font-size: 0.75rem;"></i></span>
                                 </div>
@@ -809,7 +809,7 @@
                                             class="bi bi-briefcase-fill"></i></span>
                                     <input type="text"
                                         class="form-control bg-light border-start-0 text-dark fw-semibold"
-                                        value="Administrador General del Sistema SGR" readonly>
+                                        value="{{ request.user.profile.position.name|default:'No registrado' }}" readonly>
                                     <span class="input-group-text bg-light border-start-0" title="Dato protegido"><i
                                             class="bi bi-lock-fill text-muted" style="font-size: 0.75rem;"></i></span>
                                 </div>
@@ -823,7 +823,7 @@
                                             class="bi bi-geo-alt-fill"></i></span>
                                     <input type="text"
                                         class="form-control bg-light border-start-0 text-dark fw-semibold"
-                                        value="Edificio Consistorial — La Serena Centro" readonly>
+                                        value="{{ request.user.profile.delegation.name|default:'No registrado' }}" readonly>
                                     <span class="input-group-text bg-light border-start-0" title="Dato protegido"><i
                                             class="bi bi-lock-fill text-muted" style="font-size: 0.75rem;"></i></span>
                                 </div>
@@ -837,9 +837,9 @@
                                     <span class="input-group-text bg-light text-muted border-end-0"><i
                                             class="bi bi-key-fill"></i></span>
                                     <input type="text" class="form-control bg-light border-start-0 text-danger fw-bold"
-                                        value="Super Administrador (Nivel 1 - Control Total)" readonly>
+                                        value="{% for role in request.user.profile.roles.all %}{% if not role.deleted_at %}{{ role.name }}{% if not forloop.last %}, {% endif %}{% endif %}{% empty %}Sin rol asignado{% endfor %}" readonly>
                                     <span class="input-group-text bg-light border-start-0"
-                                        title="Máximo nivel de seguridad"><i class="bi bi-shield-shaded text-danger"
+                                        title="Roles registrados"><i class="bi bi-shield-shaded text-danger"
                                             style="font-size: 0.8rem;"></i></span>
                                 </div>
                             </div>
@@ -850,7 +850,7 @@
                 <div
                     class="modal-footer bg-white py-2 px-4 border-top d-flex justify-content-between align-items-center">
                     <span class="small text-muted"><i class="bi bi-info-circle me-1"></i> Sesión iniciada como
-                        Administrador</span>
+                        {{ request.user.username }}</span>
                     <div class="d-flex gap-2">
                         <button type="button" class="btn btn-secondary btn-sm rounded-pill px-4"
                             data-bs-dismiss="modal">Cerrar</button>
@@ -1238,7 +1238,7 @@
                                         <input type="hidden" id="catalogoCargoId">
                                         <h6 class="fw-bold mb-3" id="tituloFormCargo" style="color: #8B1D2C;">Nuevo cargo</h6>
                                         <label class="form-label small fw-bold">Nombre</label>
-                                        <input id="catalogoCargoNombre" class="form-control mb-2" maxlength="100" required placeholder="Ej. Encargado territorial">
+                                        <input id="catalogoCargoNombre" class="form-control mb-2" maxlength="50" required placeholder="Ej. Encargado territorial">
                                         <label class="form-label small fw-bold">Descripción</label>
                                         <textarea id="catalogoCargoDescripcion" class="form-control mb-2" rows="2" maxlength="500" placeholder="Responsabilidad principal"></textarea>
                                         <label class="form-label small fw-bold">Estado</label>

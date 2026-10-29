@@ -69,6 +69,17 @@ class AdminApiIsolatedTests(SimpleTestCase):
         self.assertIsNone(views._validated_permissions('usuarios.view'))
         self.assertIsNone(views._validated_permissions([123]))
 
+    def test_administrator_password_length_limit(self):
+        self.assertEqual(views._password({'password': 'A' * 128}), 'A' * 128)
+        self.assertIsNone(views._password({'password': 'A' * 129}))
+
+    def test_delegation_text_minimum_matches_form(self):
+        valid = {'name': 'Sede Norte', 'scope': 'Zona Norte', 'commune': 'La Serena'}
+        self.assertIsNone(views._validate_delegation_details(valid))
+        for field in ('name', 'scope', 'commune'):
+            with self.subTest(field=field):
+                self.assertIsNotNone(views._validate_delegation_details({**valid, field: 'Ab'}))
+
     def test_unsafe_delegation_url(self):
         self.assertIsNotNone(views._validate_delegation_details({
             'photo_url': '/static/../secret.png',

@@ -781,60 +781,40 @@
             mostrarToast('✓ PDF descargado');
         }
 
-        function abrirFichaVecino(id) {
+        let fichaVecinoRequestId = 0;
+        async function abrirFichaVecino(id) {
             const v = datasetVecinos.find(item => item.id === id);
             if (!v) return;
+            const requestId = ++fichaVecinoRequestId;
             document.getElementById('fichaNombre').textContent = v.nombre;
             document.getElementById('fichaRut').textContent = v.rut;
             document.getElementById('fichaDireccion').textContent = v.direccion;
             document.getElementById('fichaTelefono').textContent = v.telefono;
             document.getElementById('fichaTerritorio').textContent = v.territorio;
-            document.getElementById('fichaEstado').innerHTML = `<span class="badge-status ${v.estado.toLowerCase()}">${v.estado}</span>`;
-
-            // Generar Historial Cronológico de Trámites y Reclamaciones
-            const timelineEl = document.getElementById('fichaHistorialTickets');
-            if (timelineEl) {
-                timelineEl.innerHTML = `
-                    <div class="timeline-ticket-item">
-                        <span class="timeline-ticket-dot" style="border-color: #10B981;"></span>
-                        <div class="d-flex justify-content-between align-items-center mb-1">
-                            <strong class="text-dark small">Subsidio Agua Potable y Alcantarillado (SAP)</strong>
-                            <span class="text-muted" style="font-size: 0.72rem;">24 Sep 2026</span>
-                        </div>
-                        <div class="d-flex align-items-center gap-2 mb-1">
-                            <span class="badge bg-success-subtle text-success border border-success-subtle" style="font-size:0.7rem;">Resuelto</span>
-                            <span class="text-secondary small" style="font-size:0.75rem;"><i class="bi bi-person-workspace text-primary me-1"></i> Canal: Presencial (${v.territorio})</span>
-                        </div>
-                        <p class="text-muted small m-0" style="font-size:0.74rem;">Ficha RSH validada con 40% de vulnerabilidad. Beneficio otorgado por 3 años.</p>
-                    </div>
-                    <div class="timeline-ticket-item">
-                        <span class="timeline-ticket-dot" style="border-color: #D97706;"></span>
-                        <div class="d-flex justify-content-between align-items-center mb-1">
-                            <strong class="text-dark small">Reclamo Alumbrado Público y Luminarias</strong>
-                            <span class="text-muted" style="font-size: 0.72rem;">12 Sep 2026</span>
-                        </div>
-                        <div class="d-flex align-items-center gap-2 mb-1">
-                            <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle" style="font-size:0.7rem;">En Curso</span>
-                            <span class="text-secondary small" style="font-size:0.75rem;"><i class="bi bi-telephone-fill text-info me-1"></i> Canal: Telefónico (Mesa Central 1400)</span>
-                        </div>
-                        <p class="text-muted small m-0" style="font-size:0.74rem;">Derivado a Dirección de Alumbrado Comunal. Cuadrilla programada para inspección.</p>
-                    </div>
-                    <div class="timeline-ticket-item">
-                        <span class="timeline-ticket-dot" style="border-color: #0284C7;"></span>
-                        <div class="d-flex justify-content-between align-items-center mb-1">
-                            <strong class="text-dark small">Certificado de Residencia y Audiencia Delegado</strong>
-                            <span class="text-muted" style="font-size: 0.72rem;">28 Ago 2026</span>
-                        </div>
-                        <div class="d-flex align-items-center gap-2 mb-1">
-                            <span class="badge bg-primary-subtle text-primary border border-primary-subtle" style="font-size:0.7rem;">Completado</span>
-                            <span class="text-secondary small" style="font-size:0.75rem;"><i class="bi bi-laptop text-success me-1"></i> Canal: Portal Web Vecino</span>
-                        </div>
-                        <p class="text-muted small m-0" style="font-size:0.74rem;">Certificado digital firmado con código QR municipal y remitido al correo.</p>
-                    </div>
-                `;
-            }
-
+            const status = document.getElementById('fichaEstado');
+            status.textContent = v.estado;
+            const timeline = document.getElementById('fichaHistorialTickets');
+            if (timeline) timeline.textContent = 'Cargando historial...';
             bsModalFicha.show();
+            try {
+                const response = await fetch(`/api/vecinos/${id}/`, {headers: {'Accept': 'application/json'}});
+                const data = await response.json();
+                if (!response.ok || !data.success) throw new Error(data.message || 'No se pudo consultar el historial.');
+                if (requestId !== fichaVecinoRequestId || !timeline) return;
+                const history = Array.isArray(data.recent_attentions) ? data.recent_attentions : [];
+                timeline.innerHTML = history.length ? history.map(item => `
+                    <div class="timeline-ticket-item">
+                        <span class="timeline-ticket-dot"></span>
+                        <div class="d-flex justify-content-between gap-2 mb-1">
+                            <strong class="text-dark small">${escapeHtml(item.code || 'Atención')}</strong>
+                            <span class="text-muted small">${escapeHtml(item.date || '')}</span>
+                        </div>
+                        <div class="small text-secondary">${escapeHtml(item.status || 'Sin estado')}</div>
+                        <p class="text-muted small m-0">${escapeHtml(item.subject || 'Sin descripción')}</p>
+                    </div>`).join('') : '<p class="text-muted small mb-0">No hay atenciones registradas.</p>';
+            } catch (error) {
+                if (requestId === fichaVecinoRequestId && timeline) timeline.textContent = 'No se pudo cargar el historial. Inténtalo nuevamente.';
+            }
         }
 
         function exportarFichaIndividualPDF() {
@@ -2769,24 +2749,31 @@
             renderTablaUsuarios();
         }
 
-        async function toggleEstadoUsuario(id, nombre) {
+        const cambiosEstadoUsuariosEnCurso = new Set();
+        async function toggleEstadoUsuario(id) {
+            id = Number(id);
+            const user = datasetUsuarios.find(item => Number(item.id) === id);
+            if (!user || cambiosEstadoUsuariosEnCurso.has(id)) return;
+            cambiosEstadoUsuariosEnCurso.add(id);
             try {
+                const action = user.status === 'Activo' ? 'desactivar' : 'activar';
+                const result = await Swal.fire({
+                    icon: 'warning', titleText: `¿Deseas ${action} esta cuenta?`,
+                    text: `Se cambiará el acceso de ${user.full_name}.`, showCancelButton: true,
+                    confirmButtonText: 'Sí, cambiar estado', cancelButtonText: 'Cancelar', confirmButtonColor: '#8B1D2C'
+                });
+                if (!result.isConfirmed) return;
                 const res = await fetch(`/api/users/${id}/toggle-status/`, {
-                    method: 'POST',
-                    headers: {
-                        'X-CSRFToken': getCookie('csrftoken') || ''
-                    }
+                    method: 'POST', headers: {'X-CSRFToken': getCookie('csrftoken') || ''}
                 });
                 const data = await res.json();
-                if (!data.success) {
-                    mostrarToast('⚠ ' + data.message);
-                    return;
-                }
-                mostrarToast('✓ ' + data.message);
-                cargarUsuariosDesdeDB(false);
+                if (!res.ok || !data.success) throw new Error(data.message || 'No se pudo cambiar el estado.');
+                await cargarUsuariosDesdeDB(false);
+                await Swal.fire({icon: 'success', titleText: 'Estado actualizado', text: data.message});
             } catch (err) {
-                console.error("Error toggle:", err);
-                mostrarToast('⚠ Error al cambiar estado del usuario.');
+                await Swal.fire({icon: 'error', titleText: 'No se pudo cambiar el estado', text: err.message || 'Comprueba la conexión y vuelve a intentarlo.'});
+            } finally {
+                cambiosEstadoUsuariosEnCurso.delete(id);
             }
         }
 
@@ -3463,7 +3450,7 @@
                 controlesPaginacionCargosInicializados = true;
             }
             try { await cargarCatalogosOrganizacion(); }
-            catch (error) { Swal.fire('No fue posible cargar los cargos', error.message, 'error'); }
+            catch (error) { Swal.fire({icon: 'error', titleText: 'No fue posible cargar los cargos', text: error.message}); }
         }
 
         function renderCargosMantenedor() {
@@ -3536,7 +3523,7 @@
                 if (delegationList) delegationList.open = window.innerWidth >= 992;
                 bootstrap.Modal.getOrCreateInstance(modalEl).show();
             } catch (error) {
-                Swal.fire('No fue posible abrir el catálogo', error.message, 'error');
+                Swal.fire({icon: 'error', titleText: 'No fue posible abrir el catálogo', text: error.message});
             }
         }
 
@@ -3621,7 +3608,7 @@
                     description: document.getElementById('catalogoDelegacionDescripcion').value.trim()
                 });
                 limpiarFormDelegacion();
-            } catch (error) { Swal.fire('No se pudo guardar', error.message, 'error'); }
+            } catch (error) { Swal.fire({icon: 'error', titleText: 'No se pudo guardar', text: error.message}); }
         }
 
         async function guardarCargoCatalogo(event) {
@@ -3634,15 +3621,30 @@
             try {
                 await enviarCatalogo(id ? `/organization/positions/${id}/update/` : '/organization/positions/', {name: document.getElementById('catalogoCargoNombre').value.trim(), description: document.getElementById('catalogoCargoDescripcion').value.trim(), status: document.getElementById('catalogoCargoEstado').value});
                 limpiarFormCargo();
-            } catch (error) { Swal.fire('No se pudo guardar', error.message, 'error'); }
+            } catch (error) { Swal.fire({icon: 'error', titleText: 'No se pudo guardar', text: error.message}); }
         }
 
-        async function alternarDelegacionCatalogo(id) {
-            try { await enviarCatalogo(`/organization/delegations/${id}/toggle-status/`, {}); } catch (error) { Swal.fire('No se pudo cambiar el estado', error.message, 'error'); }
+        async function confirmarCambioEstadoCatalogo(id, items, tipo, endpoint) {
+            const item = items.find(row => Number(row.id) === Number(id));
+            if (!item) return;
+            const accion = item.status === 'Activo' ? 'desactivar' : 'activar';
+            const result = await Swal.fire({
+                icon: 'question', titleText: `¿Deseas ${accion} este ${tipo}?`,
+                text: `Se cambiará el estado de ${item.name}.`, showCancelButton: true,
+                confirmButtonText: 'Sí, cambiar estado', cancelButtonText: 'Cancelar',
+                confirmButtonColor: '#8B1D2C'
+            });
+            if (!result.isConfirmed) return;
+            try { await enviarCatalogo(`${endpoint}/${id}/toggle-status/`, {}); }
+            catch (error) { Swal.fire({icon: 'error', titleText: 'No se pudo cambiar el estado', text: error.message}); }
         }
 
-        async function alternarCargoCatalogo(id) {
-            try { await enviarCatalogo(`/organization/positions/${id}/toggle-status/`, {}); } catch (error) { Swal.fire('No se pudo cambiar el estado', error.message, 'error'); }
+        function alternarDelegacionCatalogo(id) {
+            return confirmarCambioEstadoCatalogo(id, catalogoDelegacionesDB, 'registro', '/organization/delegations');
+        }
+
+        function alternarCargoCatalogo(id) {
+            return confirmarCambioEstadoCatalogo(id, catalogoCargosDB, 'cargo', '/organization/positions');
         }
 
         async function eliminarCargoCatalogo(id) {
@@ -3671,7 +3673,7 @@
             try {
                 await enviarCatalogo(`/organization/positions/${id}/delete/`, {});
             } catch (error) {
-                Swal.fire('No se pudo eliminar el cargo', error.message, 'error');
+                Swal.fire({icon: 'error', titleText: 'No se pudo eliminar el cargo', text: error.message});
             }
         }
 
@@ -3690,7 +3692,7 @@
             });
             if (!result.isConfirmed) return;
             try { await enviarCatalogo(`/organization/delegations/${id}/delete/`, {}); }
-            catch (error) { Swal.fire('No se pudo eliminar la delegación', error.message, 'error'); }
+            catch (error) { Swal.fire({icon: 'error', titleText: 'No se pudo eliminar la delegación', text: error.message}); }
         }
 
         /* ==========================================================================
@@ -4140,13 +4142,13 @@
                         <!-- Contenido Principal -->
                         <div class="p-3 pb-2">
                             <div class="text-muted text-uppercase fw-bold mb-1" style="font-size: 0.70rem; letter-spacing: 0.05em;">
-                                ${d.sector}
+                                ${escapeHtml(d.sector)}
                             </div>
                             <h4 class="fw-bold mb-1" style="color: var(--muni-navy); font-size: 1.25rem;">
-                                ${d.nombre}
+                                ${escapeHtml(d.nombre)}
                             </h4>
                             <div class="text-secondary small text-truncate mb-3" style="font-size: 0.82rem;">
-                                <i class="bi bi-geo-alt-fill text-danger me-1"></i>${d.direccion}
+                                <i class="bi bi-geo-alt-fill text-danger me-1"></i>${escapeHtml(d.direccion)}
                             </div>
 
                             <!-- Cápsula de Gestor y Horario (Vidrio Esmerilado) -->
@@ -4155,7 +4157,7 @@
                                     <span class="text-muted small" style="font-size: 0.74rem;">
                                         <i class="bi bi-person-badge text-primary me-1"></i>Encargado:
                                     </span>
-                                    <span class="fw-bold text-dark small" style="font-size: 0.78rem;">${d.delegado || 'No registrado'}</span>
+                                    <span class="fw-bold text-dark small" style="font-size: 0.78rem;">${escapeHtml(d.delegado || 'No registrado')}</span>
                                 </div>
                             </div>
                         </div>
@@ -4168,7 +4170,7 @@
                                 <i class="bi bi-folder2-open me-1"></i> ${d.atencionesMes == null ? 'Sin registros' : `${d.atencionesMes} atenciones mes`}
                             </span>
                             <span class="text-secondary small fw-semibold" style="font-size: 0.74rem;">
-                                <i class="bi bi-clock text-muted me-1"></i>${d.horario && d.horario !== 'Horario no registrado' ? d.horario : '08:30 - 14:00'}
+                                <i class="bi bi-clock text-muted me-1"></i>${escapeHtml(d.horario || 'Horario no registrado')}
                             </span>
                         </div>
                         
@@ -4284,15 +4286,15 @@
                         <div>
                             <div class="d-flex align-items-center gap-2 mb-2">
                                 <div class="user-avatar-pill ${f.rol.includes('Coordinador') || f.rol.includes('Delegado') ? 'admin' : ''}" style="width:42px; height:42px; font-size:0.9rem; font-weight:800; background: var(--muni-navy); color:#FFF;">
-                                    ${f.avatar}
+                                    ${escapeHtml(f.avatar)}
                                 </div>
                                 <div style="min-width:0;">
-                                    <div class="fw-bold text-truncate" style="color: var(--muni-navy); font-size: 0.92rem;" title="${f.nombre}">${f.nombre}</div>
+                                    <div class="fw-bold text-truncate" style="color: var(--muni-navy); font-size: 0.92rem;" title="${escapeHtml(f.nombre)}">${escapeHtml(f.nombre)}</div>
                                 </div>
                             </div>
-                            <div class="small text-secondary mb-2"><strong>Cargo:</strong> ${f.cargo}</div>
+                            <div class="small text-secondary mb-2"><strong>Cargo:</strong> ${escapeHtml(f.cargo)}</div>
                             <span class="role-badge-pill role-badge-${f.rol.toLowerCase().includes('gestor') ? 'gestor' : f.rol.toLowerCase().includes('verificador') ? 'verificador' : 'admin'} mb-2">
-                                ${f.rol}
+                                ${escapeHtml(f.rol)}
                             </span>
                         </div>
                     </div>
@@ -4302,7 +4304,7 @@
             // Construir Barrios HTML
             const barriosHtml = data.barrios.length ? data.barrios.map(b => `
                 <span class="badge bg-white text-dark border px-3 py-2 rounded-pill me-1 mb-2 shadow-xs" style="font-size:0.82rem; font-weight:600;">
-                    <i class="bi bi-geo-alt-fill text-danger me-1"></i> ${b}
+                    <i class="bi bi-geo-alt-fill text-danger me-1"></i> ${escapeHtml(b)}
                 </span>
             `).join('') : '<span class="text-secondary small">Sin sectores descriptivos registrados.</span>';
 
@@ -4310,7 +4312,7 @@
             const metricasHtml = data.metricasAtencion.length ? data.metricasAtencion.map(m => `
                 <div class="mb-3">
                     <div class="d-flex justify-content-between small fw-bold mb-1">
-                        <span style="color: var(--muni-navy);">${m.tipo}</span>
+                        <span style="color: var(--muni-navy);">${escapeHtml(m.tipo)}</span>
                         <span class="text-primary fw-bold">${m.cantidad} (${m.porcentaje}%)</span>
                     </div>
                     <div class="progress" style="height: 8px; border-radius: 6px; background: rgba(226, 232, 240, 0.8);">
@@ -4326,7 +4328,7 @@
                         <i class="bi bi-arrow-left"></i> Volver a todas las delegaciones
                     </button>
                     <span class="badge bg-white text-secondary border px-3 py-2 rounded-pill small fw-bold shadow-xs">
-                        <i class="bi bi-geo-alt-fill text-danger me-1"></i> Ficha Territorial Oficial: ${data.nombre}
+                        <i class="bi bi-geo-alt-fill text-danger me-1"></i> Ficha Territorial Oficial: ${escapeHtml(data.nombre)}
                     </span>
                 </div>
 
@@ -4338,20 +4340,20 @@
                             <div>
                                 <div class="d-flex align-items-center gap-2 mb-2 flex-wrap">
                                     <span class="badge rounded-pill px-3 py-1 text-uppercase fw-bold" style="background: var(--muni-navy); color: #FFF; font-size: 0.72rem; letter-spacing: 0.05em;">
-                                        Sede Municipal Activa
+                                        Sede municipal: ${escapeHtml(data.dbStatus || 'Sin estado')}
                                     </span>
                                     <span class="badge rounded-pill px-3 py-1 fw-bold text-white shadow-xs" style="background: ${data.colorSemaforo}; font-size: 0.72rem;">
-                                        <i class="bi bi-circle-fill me-1" style="font-size: 0.55rem;"></i>${data.statusSemaforo}
+                                        <i class="bi bi-circle-fill me-1" style="font-size: 0.55rem;"></i>${escapeHtml(data.statusSemaforo)}
                                     </span>
                                     <span class="badge bg-white text-dark border px-2 py-1 rounded-pill small fw-bold">
-                                        <i class="bi bi-star-fill text-warning me-1"></i>${data.satisfaccion} Satisfacción
+                                        <i class="bi bi-star-fill text-warning me-1"></i>${escapeHtml(data.satisfaccion)} Satisfacción
                                     </span>
                                 </div>
                                 <h2 class="m-0 fw-bold" style="color: var(--muni-navy); font-size: 1.85rem; letter-spacing: -0.3px;">
-                                    ${data.nombre}
+                                    ${escapeHtml(data.nombre)}
                                 </h2>
                                 <p class="text-secondary m-0 fw-semibold" style="font-size: 0.95rem;">
-                                    ${data.sector} • Cobertura Comunal La Serena
+                                    ${escapeHtml(data.sector)} • Cobertura Comunal La Serena
                                 </p>
                             </div>
                             
@@ -4365,16 +4367,16 @@
                         <!-- Datos Institucionales de la Delegación -->
                         <div class="row g-2 mt-3 pt-3 border-top text-dark small" style="border-color: rgba(226, 232, 240, 0.9) !important; font-size: 0.88rem;">
                             <div class="col-md-4">
-                                <i class="bi bi-geo-alt-fill text-danger me-1"></i> <strong>Sede:</strong> ${data.direccion}
+                                <i class="bi bi-geo-alt-fill text-danger me-1"></i> <strong>Sede:</strong> ${escapeHtml(data.direccion)}
                             </div>
                             <div class="col-md-3">
-                                <i class="bi bi-telephone-fill text-primary me-1"></i> <strong>Fono:</strong> ${data.telefono}
+                                <i class="bi bi-telephone-fill text-primary me-1"></i> <strong>Fono:</strong> ${escapeHtml(data.telefono)}
                             </div>
                             <div class="col-md-2">
-                                <i class="bi bi-clock-fill text-success me-1"></i> <strong>Horario:</strong> ${data.horario}
+                                <i class="bi bi-clock-fill text-success me-1"></i> <strong>Horario:</strong> ${escapeHtml(data.horario)}
                             </div>
                             <div class="col-md-3 text-md-end">
-                                <i class="bi bi-person-badge-fill text-warning me-1"></i> <strong>Delegado(a):</strong> ${data.delegado}
+                                <i class="bi bi-person-badge-fill text-warning me-1"></i> <strong>Delegado(a):</strong> ${escapeHtml(data.delegado)}
                             </div>
                         </div>
                     </div>
@@ -4383,7 +4385,7 @@
                 <div class="p-4 pt-1">
                     <!-- Resumen Territorial Municipal -->
                     <div class="alert alert-light border-start border-4 mb-4 py-3 px-4 text-secondary shadow-xs" style="border-left-color: ${data.colorSemaforo} !important; background: rgba(255, 255, 255, 0.9); border-radius: 12px; font-size: 0.92rem; line-height: 1.5;">
-                        <i class="bi bi-info-circle-fill text-primary me-2 fs-6"></i> ${data.resumen}
+                        <i class="bi bi-info-circle-fill text-primary me-2 fs-6"></i> ${escapeHtml(data.resumen)}
                     </div>
 
                     <!-- KPIs Específicos de esta Delegación en Cápsulas Liquid Glass -->
@@ -4415,7 +4417,7 @@
                             <div class="delegacion-detail-kpi-card">
                                 <div class="text-muted small fw-bold text-uppercase" style="font-size: 0.72rem; letter-spacing: 0.04em;">Casos Resueltos</div>
                                 <div class="fs-3 fw-bold my-1 text-primary">${data.tuboResueltos || 'Sin datos'}</div>
-                                <small class="text-info fw-bold"><i class="bi bi-shield-check me-1"></i>Satisfacción: ${data.satisfaccion}</small>
+                                <small class="text-info fw-bold"><i class="bi bi-shield-check me-1"></i>Satisfacción: ${escapeHtml(data.satisfaccion)}</small>
                             </div>
                         </div>
                     </div>
@@ -4445,7 +4447,7 @@
                                 ${barriosHtml}
                             </div>
                             <small class="text-muted">
-                                * Cada sector cuenta con enlace territorial directo con directivas de Juntas de Vecinos y clubes de personas mayores.
+                                Los sectores registrados se muestran cuando hay información disponible.
                             </small>
                         </div>
 
@@ -4463,13 +4465,17 @@
             `;
 
             panel.style.display = 'block';
+            if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches && panel.animate) {
+                panel.animate([{ opacity: 0, transform: 'translateY(8px)' }, { opacity: 1, transform: 'translateY(0)' }],
+                    { duration: 180, easing: 'ease-out' });
+            }
 
             // Desplazamiento suave al panel de detalle
             setTimeout(() => {
-                panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                panel.scrollIntoView({ behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'nearest' });
             }, 100);
 
-            mostrarToast(`✓ Ficha territorial de ${data.nombre} cargada correctamente.`);
+            mostrarToast(`✓ Ficha territorial de ${escapeHtml(data.nombre)} cargada correctamente.`);
         }
 
         function exportarFichaDelegacionPDF(id) {
@@ -5198,7 +5204,7 @@
                     elNom.disabled = rol.is_system && (rol.name === 'Administrador' || rol.name === 'Operador' || rol.name === 'Consultor');
                 }
                 if (elDesc) elDesc.value = rol.description || '';
-                if (elTitle) elTitle.innerHTML = `<i class="bi bi-pencil-square text-warning me-2"></i> Editar Rol: ${rol.name}`;
+                if (elTitle) elTitle.innerHTML = `<i class="bi bi-pencil-square text-warning me-2"></i> Editar Rol: ${escapeHtml(rol.name)}`;
                 renderPermisosMatrix(rol.permissions || []);
             }
 
@@ -5721,7 +5727,7 @@
                     timer: 3500,
                     timerProgressBar: true,
                     icon: iconType,
-                    title: msg.replace(/✓ |⚠ |⏸ /g, '')
+                    titleText: msg.replace(/✓ |⚠ |⏸ /g, '')
                 });
             } else {
                 console.log('[Toast]:', msg);
@@ -6376,30 +6382,23 @@
                 bodyEl.innerHTML = `
                     <div class="mb-3">
                         <label class="form-label small fw-bold">Nombre Completo</label>
-                        <input type="text" class="form-control" id="drawerInputNombre" value="${v.nombre}" onkeypress="bloquearNumerosInput(event)">
+                        <input type="text" class="form-control" id="drawerInputNombre" maxlength="150" required value="${escapeHtml(v.nombre)}" onkeypress="bloquearNumerosInput(event)">
                     </div>
                     <div class="mb-3">
                         <label class="form-label small fw-bold">RUT Chileno</label>
-                        <input type="text" class="form-control" id="drawerInputRut" value="${v.rut}" readonly>
+                        <input type="text" class="form-control" id="drawerInputRut" maxlength="15" value="${escapeHtml(v.rut)}" readonly>
                     </div>
                     <div class="mb-3">
                         <label class="form-label small fw-bold">Dirección</label>
-                        <input type="text" class="form-control" id="drawerInputDireccion" value="${v.direccion}">
+                        <input type="text" class="form-control" id="drawerInputDireccion" maxlength="255" required value="${escapeHtml(v.direccion)}">
                     </div>
                     <div class="mb-3">
                         <label class="form-label small fw-bold">Teléfono Móvil</label>
-                        <input type="text" class="form-control" id="drawerInputTelefono" value="${v.telefono}">
+                        <input type="text" class="form-control" id="drawerInputTelefono" maxlength="20" value="${escapeHtml(v.telefono)}">
                     </div>
                     <div class="mb-3">
                         <label class="form-label small fw-bold">Territorio / Delegación</label>
-                        <select class="form-select" id="drawerSelectTerritorio">
-                            <option value="Centro" ${v.territorio === 'Centro' ? 'selected' : ''}>Centro Histórico</option>
-                            <option value="Norte" ${v.territorio === 'Norte' ? 'selected' : ''}>Las Compañías</option>
-                            <option value="Sur" ${v.territorio === 'Sur' ? 'selected' : ''}>La Pampa</option>
-                            <option value="Oriente" ${v.territorio === 'Oriente' ? 'selected' : ''}>La Antena - La Florida</option>
-                            <option value="Costa" ${v.territorio === 'Costa' ? 'selected' : ''}>Avenida del Mar</option>
-                            <option value="Rural" ${v.territorio === 'Rural' ? 'selected' : ''}>Sector Rural</option>
-                        </select>
+                        <input class="form-control" id="drawerSelectTerritorio" maxlength="100" value="${escapeHtml(v.territorio)}">
                     </div>
                     <div class="mb-3">
                         <label class="form-label small fw-bold">Estado</label>
@@ -6417,11 +6416,11 @@
                 bodyEl.innerHTML = `
                     <div class="mb-3">
                         <label class="form-label small fw-bold">Nombre Funcionario</label>
-                        <input type="text" class="form-control" id="drawerInputNombre" value="${u.full_name}" onkeypress="bloquearNumerosInput(event)">
+                        <input type="text" class="form-control" id="drawerInputNombre" maxlength="150" required value="${escapeHtml(u.full_name)}" onkeypress="bloquearNumerosInput(event)">
                     </div>
                     <div class="mb-3">
                         <label class="form-label small fw-bold">Correo Institucional</label>
-                        <input type="email" class="form-control" id="drawerInputEmail" value="${u.email}">
+                        <input type="email" class="form-control" id="drawerInputEmail" maxlength="100" required value="${escapeHtml(u.email)}">
                     </div>
                     <div class="mb-3">
                         <label class="form-label small fw-bold">Estado del Funcionario</label>
@@ -6450,83 +6449,42 @@
         }
         window.cerrarAdminDrawer = cerrarAdminDrawer;
 
-        function ejecutarGuardadoDrawer() {
-            if (!drawerActivoTipo || !drawerActivoId) {
-                cerrarAdminDrawer();
+        async function ejecutarGuardadoDrawer() {
+            if (!drawerActivoTipo || !drawerActivoId) return;
+            const isNeighbor = drawerActivoTipo === 'vecino';
+            const record = (isNeighbor ? datasetVecinos : datasetUsuarios).find(item => item.id === drawerActivoId);
+            if (!record) return;
+            const name = document.getElementById('drawerInputNombre')?.value.trim() || '';
+            const status = document.getElementById('drawerSelectEstado')?.value;
+            const address = document.getElementById('drawerInputDireccion')?.value.trim() || '';
+            const email = document.getElementById('drawerInputEmail')?.value.trim() || '';
+            if (!name || (isNeighbor && !address) || (!isNeighbor && !validarEmail(email))) {
+                await Swal.fire({icon: 'warning', titleText: 'Revisa los datos', text: 'Ingresa un nombre y una dirección o correo válido, según corresponda.'});
                 return;
             }
-
-            if (drawerActivoTipo === 'vecino') {
-                const v = datasetVecinos.find(item => item.id === drawerActivoId);
-                if (v) {
-                    const nuevoNombre = document.getElementById('drawerInputNombre')?.value?.trim();
-                    const nuevaDir = document.getElementById('drawerInputDireccion')?.value?.trim();
-                    const nuevoTel = document.getElementById('drawerInputTelefono')?.value?.trim();
-                    const nuevoTer = document.getElementById('drawerSelectTerritorio')?.value;
-                    const nuevoEst = document.getElementById('drawerSelectEstado')?.value;
-
-                    if (!nuevoNombre || !nuevaDir) {
-                        Swal.fire({ icon: 'warning', title: 'Campos requeridos', text: 'El nombre y la dirección son obligatorios y no pueden quedar vacíos.' });
-                        return;
-                    }
-
-                    v.nombre = sanitizarTexto(nuevoNombre);
-                    v.direccion = sanitizarTexto(nuevaDir);
-                    v.telefono = sanitizarTexto(nuevoTel);
-                    v.territorio = nuevoTer;
-                    v.estado = nuevoEst;
-
-                    ejecutarFiltroCompletoVecinos();
-                    cerrarAdminDrawer();
-                    Swal.fire({
-                        toast: true,
-                        position: 'top-end',
-                        icon: 'success',
-                        title: '✓ Vecino actualizado desde el panel lateral',
-                        showConfirmButton: false,
-                        timer: 2000
-                    });
-                }
-            } else if (drawerActivoTipo === 'usuario') {
-                const u = datasetUsuarios.find(item => item.id === drawerActivoId);
-                if (u) {
-                    const nuevoNombre = document.getElementById('drawerInputNombre')?.value?.trim();
-                    const nuevoEmail = document.getElementById('drawerInputEmail')?.value?.trim();
-                    const nuevoEst = document.getElementById('drawerSelectEstado')?.value;
-
-                    if (!validarEmail(nuevoEmail)) {
-                        Swal.fire({ icon: 'warning', title: 'Correo Inválido', text: 'Por favor ingrese un formato de correo válido.' });
-                        return;
-                    }
-
-                    fetch(`/api/users/${u.id}/update/`, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'X-CSRFToken': getCookie('csrftoken') || ''
-                        },
-                        body: JSON.stringify({
-                            full_name: sanitizarTexto(nuevoNombre),
-                            email: nuevoEmail,
-                            status: nuevoEst
-                        })
-                    }).then(r => r.json()).then(data => {
-                        if (data.success) {
-                            cerrarAdminDrawer();
-                            cargarUsuariosDesdeDB(false);
-                            Swal.fire({
-                                toast: true,
-                                position: 'top-end',
-                                icon: 'success',
-                                title: '✓ Funcionario actualizado en tiempo real en la BD',
-                                showConfirmButton: false,
-                                timer: 2500
-                            });
-                        } else {
-                            Swal.fire({ icon: 'error', title: 'Error', text: data.message });
-                        }
-                    });
-                }
+            const payload = isNeighbor ? {
+                nombre: name, rut: record.rut, direccion: address,
+                telefono: document.getElementById('drawerInputTelefono')?.value.trim() || '',
+                territorio: document.getElementById('drawerSelectTerritorio')?.value.trim() || '', estado: status
+            } : {full_name: name, email, status};
+            const button = document.getElementById('btnDrawerGuardar');
+            if (button?.disabled) return;
+            if (button) button.disabled = true;
+            try {
+                const response = await fetch(isNeighbor ? `/api/vecinos/${record.id}/` : `/api/users/${record.id}/update/`, {
+                    method: 'POST', headers: {'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken') || ''},
+                    body: JSON.stringify(payload)
+                });
+                const data = await response.json();
+                if (!response.ok || !data.success) throw new Error(data.message || 'No se pudo guardar el registro.');
+                cerrarAdminDrawer();
+                if (isNeighbor) await cargarVecinosDesdeDB(false);
+                else await cargarUsuariosDesdeDB(false);
+                await Swal.fire({icon: 'success', titleText: 'Cambios guardados', text: data.message || 'El registro fue actualizado.'});
+            } catch (error) {
+                await Swal.fire({icon: 'error', titleText: 'No se guardaron los cambios', text: error.message || 'Comprueba la conexión y vuelve a intentarlo.'});
+            } finally {
+                if (button) button.disabled = false;
             }
         }
         window.ejecutarGuardadoDrawer = ejecutarGuardadoDrawer;

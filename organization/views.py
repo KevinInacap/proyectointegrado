@@ -136,7 +136,7 @@ def _text(data, key, default=''):
 
 def _password(data, key='password'):
     value = data.get(key, '')
-    return value if isinstance(value, str) else None
+    return value if isinstance(value, str) and len(value) <= 128 else None
 
 
 def _protected_account(request, profile):
@@ -261,7 +261,7 @@ def _validate_delegation_details(data):
     name, scope, commune = (_text(data, field) for field in ('name', 'scope', 'commune'))
     label_pattern = r"[^\W_][\w .,'’&/-]{1,99}"
     if any(
-        not re.fullmatch(label_pattern, value, flags=re.UNICODE)
+        len(value) < 3 or not re.fullmatch(label_pattern, value, flags=re.UNICODE)
         or not re.search(r'[^\W\d_]', value, flags=re.UNICODE)
         for value in (name, scope, commune)
     ):
@@ -801,7 +801,7 @@ def api_user_reset_password(request, pk):
     new_password = _password(data)
 
     if not new_password:
-        return JsonResponse({'success': False, 'message': 'La contraseña es obligatoria.'}, status=400)
+        return JsonResponse({'success': False, 'message': 'La contraseña es obligatoria y admite hasta 128 caracteres.'}, status=400)
 
     if not profile.user:
         return JsonResponse({'success': False, 'message': 'El perfil no tiene una cuenta de autenticación vinculada.'}, status=400)
