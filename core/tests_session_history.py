@@ -1,12 +1,26 @@
+from html.parser import HTMLParser
+
 from django.conf import settings
 from django.contrib.auth import SESSION_KEY, get_user_model
 from django.contrib.sessions.models import Session
 from django.http import HttpResponse
 from django.test import Client, RequestFactory, TestCase, override_settings
 from django.urls import reverse
+from django.utils import timezone
 
 from organization.models import Delegation, Position, Role, UserProfile
 from .middleware import PrivateResponseMiddleware
+
+
+class LoginFormParser(HTMLParser):
+    def __init__(self):
+        super().__init__()
+        self.action = None
+
+    def handle_starttag(self, tag, attrs):
+        attrs = dict(attrs)
+        if tag == 'form' and attrs.get('id') == 'loginForm':
+            self.action = attrs.get('action')
 
 
 @override_settings(PASSWORD_HASHERS=['django.contrib.auth.hashers.MD5PasswordHasher'])
@@ -73,6 +87,60 @@ class SessionHistoryTests(TestCase):
             self.assert_private_no_store(response)
         self.assertEqual(self.client.session[SESSION_KEY], str(self.social.pk))
         self.assertEqual(self.client.session.session_key, original_key)
+
+    def test_anonymous_or_expired_session_shows_login(self):
+        self.assertContains(self.client.get(reverse('core:login')), 'id="loginForm"')
+        self.sign_in(self.social)
+        old_key = self.client.session.session_key
+        Session.objects.filter(session_key=old_key).update(expire_date=timezone.now())
+        response = self.client.get(reverse('core:login'))
+        self.assertContains(response, 'id="loginForm"')
+        self.assertNotIn(SESSION_KEY, self.client.session)
+
+    def test_login_next_allows_local_paths_but_rejects_external_redirects(self):
+        for target, expected in (
+            ('/activities/dashboard/asistente-social/', '/activities/dashboard/asistente-social/'),
+            ('//evil.example/', reverse('activities:dashboard_asistente')),
+            ('/\\evil.example/', reverse('activities:dashboard_asistente')),
+            ('/%5Cevil.example/', reverse('activities:dashboard_asistente')),
+            ('/%2f%2fevil.example/', reverse('activities:dashboard_asistente')),
+        ):
+            with self.subTest(target=target):
+                self.client.get(reverse('core:logout'))
+                response = self.client.post(reverse('core:login'), {
+                    'username': self.social.username, 'password': 'PruebaSesion2026!',
+                }, query_params={'next': target})
+                self.assertEqual(response.status_code, 302)
+                self.assertEqual(response.url, expected)
+
+    def test_next_does_not_bypass_inactive_position_at_sign_in(self):
+        Position.objects.filter(pk=self.social.profile.position_id).update(status='Inactivo')
+        response = self.client.post(reverse('core:login'), {
+            'username': self.social.username, 'password': 'PruebaSesion2026!',
+        }, query_params={'next': '/activities/dashboard/asistente-social/'})
+        self.assertRedirects(response, reverse('core:login'), fetch_redirect_response=False)
+        self.assertNotIn(SESSION_KEY, self.client.session)
+
+    def test_login_form_preserves_next_from_request_to_submission(self):
+        target = '/activities/dashboard/asistente-social/?page=2'
+        response = self.client.get(reverse('core:login'), query_params={'next': target})
+        parser = LoginFormParser()
+        parser.feed(response.content.decode())
+        self.assertIsNotNone(parser.action)
+        response = self.client.post(parser.action, {
+            'username': self.social.username, 'password': 'PruebaSesion2026!',
+        })
+        self.assertEqual(response.url, target)
+        self.assertEqual(self.client.session[SESSION_KEY], str(self.social.pk))
+
+    def test_login_requires_csrf_token(self):
+        client = Client(enforce_csrf_checks=True)
+        payload = {'username': self.social.username, 'password': 'PruebaSesion2026!'}
+        self.assertEqual(client.post(reverse('core:login'), payload).status_code, 403)
+        client.get(reverse('core:login'))
+        response = client.post(reverse('core:login'), payload,
+                               HTTP_X_CSRFTOKEN=client.cookies[settings.CSRF_COOKIE_NAME].value)
+        self.assertRedirects(response, reverse('activities:dashboard_asistente'), fetch_redirect_response=False)
 
     def test_login_and_session_state_responses_are_not_cached(self):
         login = self.client.get(reverse('core:login'))

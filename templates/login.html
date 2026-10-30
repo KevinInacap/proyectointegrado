@@ -534,6 +534,23 @@
             }
         }
 
+        /* En pantallas anchas pero bajas debe poder alcanzarse todo el formulario. */
+        @media (min-width: 992px) and (max-height: 620px) {
+            html, body {
+                height: auto;
+                min-height: 100vh;
+                overflow-y: auto;
+            }
+
+            .portal-fullscreen {
+                height: auto;
+                min-height: 100vh;
+                overflow: visible;
+                padding-top: 5.5rem;
+                padding-bottom: 5rem;
+            }
+        }
+
         @media (max-width: 991px) {
 
             html,
@@ -616,8 +633,9 @@
                 {% endfor %}
                 {% endif %}
 
-                <form method="post" action="{% url 'core:login' %}" id="loginForm" novalidate>
+                <form method="post" action="{% url 'core:login' %}{% if request.GET.next %}?next={{ request.GET.next|urlencode }}{% endif %}" id="loginForm" novalidate>
                     {% csrf_token %}
+                    <p id="loginFormError" class="alert alert-danger small py-2 px-3" role="alert" hidden></p>
 
                     <!-- Campo RUT / Usuario -->
                     <div class="form-field-group">
@@ -625,7 +643,7 @@
                         <div class="input-glass-container">
                             <i class="bi bi-person input-prefix-icon" aria-hidden="true"></i>
                             <input type="text" id="username" name="username" class="form-control-glass"
-                                placeholder="Tu usuario, correo o RUT" required autocomplete="username">
+                                placeholder="Tu usuario, correo o RUT" required autocomplete="username" maxlength="254">
                         </div>
                     </div>
 
@@ -637,7 +655,7 @@
                             <input type="password" id="password" name="password" class="form-control-glass"
                                 placeholder="••••••••" required autocomplete="current-password">
                             <button type="button" id="togglePassword" class="btn-toggle-pwd"
-                                title="Mostrar u ocultar contraseña" aria-label="Mostrar u ocultar contraseña"
+                                title="Mostrar contraseña" aria-label="Mostrar contraseña" aria-pressed="false"
                                 tabindex="0">
                                 <i class="bi bi-eye" id="eyeIcon" aria-hidden="true"></i>
                             </button>
@@ -700,6 +718,21 @@
             const form = document.getElementById('loginForm');
             const usernameInput = document.getElementById('username');
             const submitButton = document.getElementById('btnSubmit');
+            const errorBox = document.getElementById('loginFormError');
+
+            function showValidationError(message, field) {
+                field.setAttribute('aria-invalid', 'true');
+                if (window.Swal && typeof window.Swal.fire === 'function') {
+                    window.Swal.fire({
+                        icon: 'warning', titleText: 'Revisa tus datos', text: message,
+                        confirmButtonColor: '#B80003', background: '#0F172A', color: '#ffffff'
+                    }).then(() => field.focus());
+                } else {
+                    errorBox.textContent = message;
+                    errorBox.hidden = false;
+                    field.focus();
+                }
+            }
 
             // Alternar visibilidad de contraseña
             if (toggle && pwd && icon) {
@@ -708,6 +741,9 @@
                     const isPass = pwd.getAttribute('type') === 'password';
                     pwd.setAttribute('type', isPass ? 'text' : 'password');
                     icon.className = isPass ? 'bi bi-eye-slash' : 'bi bi-eye';
+                    toggle.setAttribute('aria-pressed', String(isPass));
+                    toggle.setAttribute('aria-label', isPass ? 'Ocultar contraseña' : 'Mostrar contraseña');
+                    toggle.setAttribute('title', isPass ? 'Ocultar contraseña' : 'Mostrar contraseña');
                 });
             }
 
@@ -719,29 +755,19 @@
                     if (submitting) return;
                     const rut = usernameInput.value.trim();
                     const password = pwd.value;
+                    errorBox.hidden = true;
+                    usernameInput.removeAttribute('aria-invalid');
+                    pwd.removeAttribute('aria-invalid');
 
                     if (!rut || !password) {
-                        Swal.fire({
-                            icon: 'warning',
-                            title: 'Campos requeridos',
-                            text: 'Ingresa tu usuario, correo o RUT y tu contraseña.',
-                            confirmButtonColor: '#B80003',
-                            background: '#0F172A',
-                            color: '#ffffff'
-                        });
+                        showValidationError('Ingresa tu usuario, correo o RUT y tu contraseña.', !rut ? usernameInput : pwd);
                         return;
                     }
 
-                    const identifierPattern = /^[A-Za-zÁÉÍÓÚÜÑáéíóúüñ0-9kK._%+@\-\s]+$/;
-                    if (!identifierPattern.test(rut) || rut.length > 150 || (rut.includes('@') && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(rut))) {
-                        Swal.fire({
-                            icon: 'warning',
-                            title: 'Carácter no permitido',
-                            text: 'Ingresa tu nombre de usuario, un correo válido o un RUT.',
-                            confirmButtonColor: '#B80003',
-                            background: '#0F172A',
-                            color: '#ffffff'
-                        });
+                    // El servidor resuelve exactamente el usuario, correo o RUT;
+                    // no descartar identidades válidas por una expresión restrictiva.
+                    if (rut.length > 254 || /[\x00-\x1f\x7f]/.test(rut)) {
+                        showValidationError('Ingresa una identificación de hasta 254 caracteres, sin caracteres de control.', usernameInput);
                         return;
                     }
 

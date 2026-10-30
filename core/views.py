@@ -13,7 +13,9 @@ from django.db import transaction
 from django.db.models import F, Value, Q
 from django.db.models.functions import Replace, Upper
 from django.utils import timezone
+from django.utils.http import url_has_allowed_host_and_scheme
 from datetime import timedelta
+from urllib.parse import unquote
 import hashlib
 import hmac
 import ipaddress
@@ -126,14 +128,15 @@ def dashboard_route_for_position(position_name):
 def _start_session_for_user(request, user, profile):
     role_name = profile.roles.filter(deleted_at__isnull=True).values_list('name', flat=True).first()
     position_name = profile.position.name if profile.position and profile.position.status == 'Activo' and profile.position.deleted_at is None else None
-    next_url = request.GET.get('next')
-    if next_url and next_url.startswith('/') and not next_url.startswith('//'):
-        destination = next_url
-    else:
-        destination = dashboard_route_for_position(position_name)
+    destination = dashboard_route_for_position(position_name)
     if destination == 'core:login':
         messages.error(request, 'Tu cuenta todavía no tiene un cargo activo con panel asignado. Contacta a administración.')
         return redirect('core:login')
+    next_url = request.GET.get('next', '')
+    # Solo rutas locales, incluyendo una comprobación de caracteres codificados.
+    if (next_url.startswith('/') and url_has_allowed_host_and_scheme(next_url, allowed_hosts=set())
+            and url_has_allowed_host_and_scheme(unquote(next_url), allowed_hosts=set())):
+        destination = next_url
     login(request, user)
     remember = str(request.POST.get('remember_me', '')).lower() in ('on', 'true', '1')
     request.session.set_expiry(settings.SESSION_COOKIE_AGE if remember else 0)
