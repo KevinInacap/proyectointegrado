@@ -33,7 +33,7 @@
             <div class="d-flex align-items-center gap-2 flex-grow-1 flex-wrap">
                 <div class="position-relative" style="min-width: 280px;">
                     <i class="bi bi-search position-absolute top-50 start-0 translate-middle-y ms-3 text-muted"></i>
-                    <input type="text" class="form-control rounded-pill ps-5" placeholder="Buscar por RUT, vecino o código de evidencia..." id="txtBuscarAtencion" onkeyup="filtrarAtenciones()">
+                    <input type="text" class="form-control rounded-pill ps-5" placeholder="Buscar por RUT, vecino o código de evidencia..." id="txtBuscarAtencion" oninput="filtrarAtenciones()">
                 </div>
                 <select class="form-select rounded-pill w-auto" id="selFiltroDelegacionAtencion" onchange="filtrarAtenciones()">
                     <option value="">Todas las Delegaciones</option>

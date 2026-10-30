@@ -1,0 +1,42 @@
+# Preparación para la preevaluación sumativa III
+
+Fecha de revisión: 30 de octubre de 2026. Fuente: `PRE-EVALUACIÓN SUMATIVA III.pdf`, páginas 1–3, proporcionado por el estudiante. La pauta evalúa una demostración individual y local; AWS no es parte de esta evaluación. El puntaje final depende también de que cada estudiante ejecute y explique su CRUD ante el docente. No es posible garantizar una nota mediante pruebas automatizadas.
+
+## CRUD propuesto: vecinos del panel de administración
+
+| Criterio de la pauta | Dónde verlo y cómo demostrarlo | Evidencia y pendiente |
+| --- | --- | --- |
+| Ejecución local e inicio de sesión (5 puntos) | Seguir «Ejecutar en local» del README; ingresar con una cuenta autorizada de administrador. | La prueba `activities/test_evaluacion_sumativa.py` envía credenciales al inicio de sesión y comprueba la respuesta del panel. Cada estudiante debe comprobar sus propias credenciales y explicar el acceso en su equipo. |
+| Listar, crear, editar y eliminar con persistencia (15 puntos) | Abrir Vecinos; crear una ficha de prueba con RUT válido y único; verificarla en la tabla; editar su dirección; comprobar el cambio; confirmar su baja. | La prueba automatizada consulta la base de pruebas después de crear, editar y dar de baja y revisa el registro de auditoría. La baja es lógica: el registro deja de aparecer en la lista y se conserva para auditoría. Explicar y mostrar rutas, vista, modelo, plantilla y código del formulario durante la presentación. |
+| Ventanas modales Bootstrap y confirmación SweetAlert2 (8 puntos) | Usar «Nuevo Vecino», luego «Editar» en su fila y «Baja» para mostrar la confirmación; cancelar una vez y después confirmar. | El formulario de alta y edición está en el modal Bootstrap `modalVecino`; la baja usa SweetAlert2 y solo envía DELETE al confirmar. Falta la demostración visual individual en el navegador del estudiante. |
+| Búsqueda, filtros y paginación combinados (12 puntos) | Con suficientes vecinos ficticios que cumplan los mismos filtros, buscar, filtrar por estado y territorio, avanzar a otra página y comprobar el rango y los resultados; limpiar filtros. | `scripts/test_admin_neighbors_pagination.cjs` ejecuta el código de la tabla con 25 registros simulados y comprueba páginas, filtros, búsqueda, recarga y página vacía. Preparar suficientes datos ficticios para demostrar más de una página real. |
+
+## Qué se corrigió en esta revisión
+
+- La tabla de vecinos cortaba los resultados a diez, pero no creaba botones para avanzar a otras páginas. Ahora crea un paginador accesible, limita los números visibles y conserva la página tras recargar cuando sigue siendo válida. Si se elimina el último registro de la última página, retrocede a una página existente.
+- Las columnas ocultas volvían a aparecer en las filas al cambiar de página o filtrar. Ahora se mantiene la selección al dibujar la tabla.
+- Las búsquedas de vecinos, atenciones y auditoría se ejecutaban solo al soltar una tecla; ahora también reaccionan a pegar, cortar o borrar texto.
+- Se retiró del listado un contador inicial de cuatro registros que no correspondía a datos cargados.
+
+## Dónde está el código para explicar
+
+- Rutas: `activities/urls.py`, nombres `api_vecinos` y `api_vecino_detail`, y ruta del panel de administración.
+- Vista: `activities/views.py`, funciones `dashboard_admin_view`, `api_vecinos` y `api_vecino_detail`; validan acceso y datos, consultan y modifican la base y registran auditoría.
+- Modelo: `activities/models.py`, clase `Vecino`; auditoría en `core/models.py`, clase `AuditLog`.
+- Plantilla de la lista: `templates/activities/admin/views/vecinos.html`.
+- Modal y campos: `templates/activities/admin/components/modals/neighbor_forms.html`.
+- Interacciones: `static/js/admin/neighbors.js`, funciones `abrirModalVecino`, `guardarVecino`, `eliminarVecino`, `ejecutarFiltroCompletoVecinos`, `renderTablaVecinos` y `actualizarPaginadorVecinos`.
+- Las validaciones son específicas del proyecto y se aplican en JavaScript y en el servidor. Este CRUD usa JSON y validación del servidor, no una clase Django `forms.Form`: explicar el formulario HTML y esas validaciones con honestidad.
+- Referencias de animación y revisión anterior: `docs/REFERENCIAS_ANIMACIONES_Y_AUDITORIA_ADMIN.md`.
+
+## Ensayo sugerido
+
+1. Ejecutar el servidor local, iniciar sesión y navegar a Vecinos. Tener una cuenta autorizada y datos ficticios con RUT válidos; nunca usar datos personales reales para una demostración improvisada.
+2. Crear un vecino, buscarlo, modificar su dirección y recargar la sección para verificar que quedó guardada. Mostrar qué ocurre con campos vacíos, correo o RUT inválidos y RUT duplicado.
+3. Con más de diez vecinos que coincidan, combinar búsqueda y filtros, navegar a la página 2, volver y limpiar los filtros. Verificar el contador.
+4. Mostrar la ventana de confirmación de baja, cancelar, volver a abrir y confirmar; explicar que la ficha conserva auditoría aunque desaparezca del listado.
+5. Abrir los archivos indicados y explicar el recorrido: botón y modal → JavaScript → ruta → vista y validaciones → modelo/base de datos → respuesta JSON → actualización de la tabla. Practicar este recorrido individualmente.
+
+## Comprobaciones y límites
+
+Se ejecutaron 270 pruebas Django sobre una base temporal aislada, 20 archivos de pruebas JavaScript y `makemigrations --check --dry-run`, sin fallos. La prueba de JavaScript usa un DOM simulado; no sustituye una prueba visual de Bootstrap, SweetAlert2, animaciones o clics en un navegador real. En este entorno el control del navegador está deshabilitado; queda pendiente hacer el ensayo visual local completo y la explicación individual. Las pruebas no constituyen garantía de ausencia total de errores ni de la calificación.

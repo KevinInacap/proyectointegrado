@@ -40,6 +40,8 @@ flowchart LR
 
 ## Ejecutar en local
 
+Para preparar la demostración del CRUD de vecinos y revisar los criterios de la preevaluación sumativa III, consulta [la guía de evaluación del panel de administración](docs/EVALUACION_SUMATIVA_III_ADMIN.md).
+
 Requiere Python 3.12 o superior y Git para clonar el repositorio. Desde Git Bash:
 
 ```bash

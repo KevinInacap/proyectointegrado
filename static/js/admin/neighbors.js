@@ -10,7 +10,7 @@
                 if (updated) updated.textContent = `Actualizado ${new Intl.DateTimeFormat('es-CL', {hour:'2-digit', minute:'2-digit'}).format(new Date())}`;
                 actualizarOpcionesTerritorioVecinos();
                 actualizarIndicadoresDiscretos();
-                ejecutarFiltroCompletoVecinos();
+                ejecutarFiltroCompletoVecinos(false);
                 if (mostrarAviso) mostrarToast(`✓ ${datasetVecinos.length} vecinos cargados desde la base de datos`);
                 return true;
             } catch (error) {
@@ -24,6 +24,10 @@
             const tbody = document.getElementById('tablaVecinosBody');
             if (!tbody) return;
             tbody.innerHTML = '';
+
+            const totalPaginas = Math.max(1, Math.ceil(filasFiltradasVecinos.length / filasPorPagina));
+            paginaActual = Math.min(Math.max(1, paginaActual), totalPaginas);
+            actualizarPaginadorVecinos(totalPaginas);
 
             const inicio = (paginaActual - 1) * filasPorPagina;
             const fin = inicio + filasPorPagina;
@@ -69,6 +73,12 @@
                 tbody.appendChild(tr);
             });
 
+            [['colRUT', 'col-rut'], ['colDireccion', 'col-dir'], ['colTelefono', 'col-tel'],
+                ['colTerritorio', 'col-terr'], ['colEstado', 'col-est']].forEach(([id, clase]) => {
+                const control = document.getElementById(id);
+                if (control) toggleColumna(clase, control.checked);
+            });
+
             document.getElementById('lblRegistrosInfo').textContent = `Mostrando ${inicio + 1} - ${Math.min(fin, filasFiltradasVecinos.length)} de ${filasFiltradasVecinos.length} registros`;
             actualizarIndicadorTablaVecinos(inicio + 1, Math.min(fin, filasFiltradasVecinos.length), filasFiltradasVecinos.length);
             actualizarIndicadoresDiscretos();
@@ -82,7 +92,7 @@
             button.setAttribute('aria-expanded', String(open));
         }
 
-        function ejecutarFiltroCompletoVecinos() {
+        function ejecutarFiltroCompletoVecinos(reiniciarPagina = true) {
             const texto = (document.getElementById('searchVecinosInput')?.value || '').toLocaleLowerCase('es').trim();
             const est = document.getElementById('filtroEstadoVecino')?.value || '';
             const terr = document.getElementById('filtroTerritorioVecino')?.value || '';
@@ -121,8 +131,35 @@
             badge.style.display = count > 0 ? 'inline-block' : 'none';
             badge.textContent = count;
 
-            paginaActual = 1;
+            if (reiniciarPagina) paginaActual = 1;
             renderTablaVecinos();
+        }
+
+        function actualizarPaginadorVecinos(totalPaginas) {
+            const container = document.getElementById('paginadorPills');
+            if (!container) return;
+            container.innerHTML = '';
+            if (totalPaginas <= 1) return;
+            const paginas = new Set([1, totalPaginas]);
+            for (let pagina = Math.max(1, paginaActual - 2); pagina <= Math.min(totalPaginas, paginaActual + 2); pagina++) paginas.add(pagina);
+            let anterior = 0;
+            [...paginas].sort((a, b) => a - b).forEach(pagina => {
+                if (pagina - anterior > 1) {
+                    const separador = document.createElement('span');
+                    separador.textContent = '…';
+                    separador.setAttribute('aria-hidden', 'true');
+                    container.appendChild(separador);
+                }
+                const boton = document.createElement('button');
+                boton.type = 'button';
+                boton.className = `page-pill${pagina === paginaActual ? ' active' : ''}`;
+                boton.textContent = pagina;
+                boton.setAttribute('aria-label', `Página ${pagina}`);
+                if (pagina === paginaActual) boton.setAttribute('aria-current', 'page');
+                boton.addEventListener('click', () => { paginaActual = pagina; renderTablaVecinos(); });
+                container.appendChild(boton);
+                anterior = pagina;
+            });
         }
 
         function removerFiltro(id) { const control = document.getElementById(id); if (control) control.value = ''; ejecutarFiltroCompletoVecinos(); }

@@ -29,7 +29,7 @@
                                 <span class="input-group-text bg-white border-end-0"><i
                                         class="bi bi-search text-muted"></i></span>
                                 <input type="text" class="form-control border-start-0" id="searchVecinosInput"
-                                    onkeyup="ejecutarFiltroCompletoVecinos()" placeholder="Buscar vecino...">
+                                    oninput="ejecutarFiltroCompletoVecinos()" aria-label="Buscar vecino" placeholder="Buscar vecino...">
                             </div>
 
                             <button type="button" class="btn-toolbar-excel" id="btnToggleFiltros" aria-controls="panelFiltrosAvanzados" aria-expanded="false" onclick="togglePanelFiltros()">
@@ -181,11 +181,9 @@
                                 <option value="40">40</option>
                                 <option value="50">50</option>
                             </select>
-                            <span id="lblRegistrosInfo" class="small">Mostrando 4 registros</span>
+                            <span id="lblRegistrosInfo" class="small">Esperando datos</span>
                         </div>
-                        <div class="pagination-pills" id="paginadorPills">
-                            <button class="page-pill active">1</button>
-                        </div>
+                        <div class="pagination-pills" id="paginadorPills" aria-label="Páginas de vecinos"></div>
                     </div>
                 </div>
             </section>
