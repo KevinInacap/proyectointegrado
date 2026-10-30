@@ -44,8 +44,8 @@
         // Cancel only our own transition, never unrelated animations on the element.
         transitions.get(node)?.cancel();
         transitions.set(node, node.animate(
-            [{opacity: 0.45, transform: 'translateY(10px)'}, {opacity: 1, transform: 'translateY(0)'}],
-            {duration: 360, easing: 'cubic-bezier(.22, 1, .36, 1)'}
+            [{opacity: 0.35, transform: 'translateY(14px)'}, {opacity: 1, transform: 'translateY(0)'}],
+            {duration: 520, easing: 'cubic-bezier(.22, 1, .36, 1)'}
         ));
     }
     document.addEventListener('DOMContentLoaded', () => {
@@ -154,7 +154,8 @@
         let frame;
         const observer = new MutationObserver(records => {
             for (const record of records) {
-                if (record.type === 'attributes' && record.target.classList.contains('maintainer-view') && record.target.classList.contains('active')) pending.add(record.target);
+                // La entrada de cada sección la controla el CSS; animarla de
+                // nuevo aquí la acortaba y hacía brusco el cambio de vista.
                 if (record.type === 'attributes' && record.attributeName === 'aria-busy' && record.target.matches?.('[data-catalog]')) syncCatalogNav(record.target);
                 if (record.type === 'childList') {
                     const table = record.target.closest?.('tbody');

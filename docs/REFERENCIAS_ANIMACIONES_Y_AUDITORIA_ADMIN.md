@@ -21,6 +21,7 @@ En esta entrega se utilizan CSS y las API existentes del navegador; no se añadi
 - Se respeta `prefers-reduced-motion`: los movimientos se desactivan cuando la persona lo solicita en su sistema.
 - El servidor AWS consultado el 30 de octubre de 2026 entregaba estáticos con caché de siete días y una versión antigua de `neighbors.js`. Se cambiaron las versiones en las URL de los archivos actualizados y el script de despliegue verifica todos los estáticos propios por contenido. Es necesario desplegar la nueva versión en la instancia para verla allí.
 - Se verificaron las pruebas automatizadas, pero está pendiente la revisión visual real de la duración, apariencia y respuesta de las animaciones: el acceso al navegador local estaba deshabilitado en la configuración del entorno.
+- Ajuste posterior solicitado: entrada de secciones de 680 ms, modales de 620 ms y ficha de delegación de 650 ms. Al elegir otra delegación se cancela la animación anterior; con movimiento reducido se omiten las animaciones. Se eliminó una segunda animación que interfería con la entrada de las secciones. La revisión visual continúa pendiente hasta recuperar el acceso al navegador.
 
 ## Problemas corregidos
 

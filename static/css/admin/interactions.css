@@ -51,28 +51,39 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
 /* Transiciones visibles y coherentes para la navegación del administrador.
    No se retrasa la acción: la transición acompaña al contenido ya disponible. */
 .maintainer-view.active {
-  animation: admin-view-enter 380ms cubic-bezier(.22, 1, .36, 1) both;
+  animation: admin-view-enter 680ms cubic-bezier(.22, 1, .36, 1) backwards;
 }
 @keyframes admin-view-enter {
-  from { opacity: .42; transform: translateY(12px); }
+  from { opacity: .22; transform: translateY(18px); }
   to { opacity: 1; transform: translateY(0); }
 }
 
 /* El archivo base usa !important para los modales. Igualar esa prioridad
    permite que la duración y el movimiento definidos aquí sí se apliquen. */
 .modal.fade .modal-dialog {
-  transform: translateY(22px) scale(.975) !important;
-  transition: transform 360ms cubic-bezier(.22, 1, .36, 1), opacity 280ms ease !important;
+  transform: translateY(26px) scale(.975) !important;
+  transition: transform 620ms cubic-bezier(.22, 1, .36, 1), opacity 500ms ease !important;
 }
 .modal.show .modal-dialog { transform: translateY(0) scale(1) !important; }
-.modal.show .modal-body form { animation: admin-form-enter 340ms 60ms ease-out both; }
+.modal.show .modal-body form { animation: admin-form-enter 570ms 75ms cubic-bezier(.22, 1, .36, 1) backwards; }
 @keyframes admin-form-enter {
   from { opacity: .45; transform: translateY(9px); }
   to { opacity: 1; transform: translateY(0); }
 }
+/* Los primeros campos acompañan al modal sin bloquear la edición. */
+.modal.show .modal-body form > .row > [class*="col-"] {
+  animation: admin-field-enter 510ms cubic-bezier(.22, 1, .36, 1) backwards;
+}
+.modal.show .modal-body form > .row > [class*="col-"]:nth-child(2) { animation-delay: 35ms; }
+.modal.show .modal-body form > .row > [class*="col-"]:nth-child(3) { animation-delay: 70ms; }
+.modal.show .modal-body form > .row > [class*="col-"]:nth-child(n+4) { animation-delay: 105ms; }
+@keyframes admin-field-enter {
+  from { opacity: .62; transform: translateY(7px); }
+  to { opacity: 1; transform: translateY(0); }
+}
 
 .advanced-filters-panel.show {
-  animation: admin-filter-enter 320ms cubic-bezier(.22, 1, .36, 1) both !important;
+  animation: admin-filter-enter 540ms cubic-bezier(.22, 1, .36, 1) backwards !important;
   background: linear-gradient(120deg, #fff 0%, #f7f9fc 65%, #f7edf0 100%);
   box-shadow: 0 8px 24px rgba(40, 28, 40, .06);
 }
@@ -83,17 +94,17 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
 
 .sidebar .submenu-item-btn.active {
   background: linear-gradient(115deg, rgba(184, 39, 61, .85), rgba(95, 17, 34, .95)) !important;
-  animation: admin-nav-select 320ms cubic-bezier(.22, 1, .36, 1) both;
+  animation: admin-nav-select 520ms cubic-bezier(.22, 1, .36, 1) backwards;
 }
 @keyframes admin-nav-select {
   from { opacity: .65; transform: translateX(0); }
-  to { opacity: 1; transform: translateX(4px); }
+  to { opacity: 1; transform: translateX(0); }
 }
 .page-pill.active {
   color: #fff !important;
   background: linear-gradient(125deg, #a21e37, #68121e) !important;
   box-shadow: 0 4px 12px rgba(104, 18, 30, .25);
-  animation: admin-page-select 280ms cubic-bezier(.22, 1, .36, 1);
+  animation: admin-page-select 480ms cubic-bezier(.22, 1, .36, 1);
 }
 @keyframes admin-page-select {
   from { transform: scale(.86); opacity: .55; }
@@ -113,7 +124,8 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
 @media (prefers-reduced-motion: reduce) {
   .maintainer-view.active, .stagger-item, .sidebar .submenu-item-btn.active,
   .page-pill.active, .advanced-filters-panel.show,
-  .modal.show .modal-body form, .btn-muni-red, .liquid-glass-btn-primary {
+  .modal.show .modal-body form, .modal.show .modal-body form > .row > [class*="col-"],
+  .btn-muni-red, .liquid-glass-btn-primary {
     animation: none !important;
   }
   .modal.fade .modal-dialog { transform: none !important; transition: none !important; }
@@ -135,11 +147,13 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
 :is(.content-body, .modal) :is(.btn-muni-red, .btn-primary, .btn-success, button[type="submit"]):not(:disabled) {
   background-size: 180% 100% !important;
   background-position: 0 50% !important;
-  transition: transform 200ms ease, box-shadow 200ms ease, background-position 420ms ease !important;
+  transition: transform 280ms ease, box-shadow 280ms ease, background-position 620ms ease !important;
 }
 :is(.content-body, .modal) :is(.btn-muni-red, .btn-primary, .btn-success, button[type="submit"]):not(:disabled):hover {
   background-position: 100% 50% !important;
+  transform: translateY(-2px);
 }
+:is(.content-body, .modal) :is(.btn-muni-red, .btn-primary, .btn-success, button[type="submit"]):not(:disabled):active { transform: translateY(0) scale(.97); }
 :is(.content-body, .modal) button:not(:disabled):not(.page-pill):not(.btn-close):not(.btn-muni-red):not(.btn-primary):not(.btn-success):not([type="submit"]) {
   transition: transform 180ms ease, box-shadow 180ms ease, background-color 180ms ease;
 }

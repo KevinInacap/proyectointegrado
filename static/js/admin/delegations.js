@@ -512,6 +512,8 @@
             if (typeof initSpotlightEffect === 'function') initSpotlightEffect();
         }
 
+        let animacionFichaDelegacion = null;
+        let desplazamientoFichaDelegacion = null;
         function seleccionarDelegacion(id) {
             if (typeof cerrarAdminDrawer === 'function') cerrarAdminDrawer();
             delegacionSeleccionadaActiva = id;
@@ -717,13 +719,16 @@
             `;
 
             panel.style.display = 'block';
+            animacionFichaDelegacion?.cancel();
             if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches && panel.animate) {
-                panel.animate([{ opacity: 0, transform: 'translateY(8px)' }, { opacity: 1, transform: 'translateY(0)' }],
-                    { duration: 180, easing: 'ease-out' });
+                animacionFichaDelegacion = panel.animate(
+                    [{ opacity: .3, transform: 'translateY(18px)' }, { opacity: 1, transform: 'translateY(0)' }],
+                    { duration: 650, easing: 'cubic-bezier(.22, 1, .36, 1)' });
             }
 
             // Desplazamiento suave al panel de detalle
-            setTimeout(() => {
+            clearTimeout(desplazamientoFichaDelegacion);
+            desplazamientoFichaDelegacion = setTimeout(() => {
                 panel.scrollIntoView({ behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'nearest' });
             }, 100);
 
