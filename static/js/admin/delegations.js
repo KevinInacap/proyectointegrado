@@ -132,6 +132,7 @@
         let paginaActualDelegaciones = 1;
         let filasPorPaginaDelegaciones = 10;
         let vistaDelegacionesActiva = 'cards';
+        let controlesDelegacionesInicializados = false;
 
         function normalizarBusquedaDelegacion(value) {
             return String(value || '').trim().toLocaleLowerCase('es-CL').normalize('NFD').replace(/[\u0300-\u036f]/g, '');
@@ -285,20 +286,38 @@
         window.seleccionarVistaDelegaciones = seleccionarVistaDelegaciones;
 
         async function initDelegacionesView() {
-            document.getElementById('buscarDelegaciones')?.addEventListener('input', buscarDelegaciones);
-            document.getElementById('estadoDelegaciones')?.addEventListener('change', filtrarEstadoDelegaciones);
-            document.getElementById('tamanoPaginaDelegaciones')?.addEventListener('change', event => {
-                filasPorPaginaDelegaciones = Math.min(50, Math.max(10, Number(event.target.value) || 10));
-                paginaActualDelegaciones = 1;
-                renderizarDelegacionesCards(filtroZonaActivo);
-            });
-            document.querySelectorAll('[data-vista-delegaciones]').forEach(option => {
-                option.addEventListener('click', () => seleccionarVistaDelegaciones(option.dataset.vistaDelegaciones));
-            });
+            if (!controlesDelegacionesInicializados) {
+                document.getElementById('buscarDelegaciones')?.addEventListener('input', buscarDelegaciones);
+                document.getElementById('estadoDelegaciones')?.addEventListener('change', filtrarEstadoDelegaciones);
+                document.getElementById('tamanoPaginaDelegaciones')?.addEventListener('change', event => {
+                    filasPorPaginaDelegaciones = Math.min(50, Math.max(10, Number(event.target.value) || 10));
+                    paginaActualDelegaciones = 1;
+                    renderizarDelegacionesCards(filtroZonaActivo);
+                });
+                document.querySelectorAll('[data-vista-delegaciones]').forEach(option => {
+                    option.addEventListener('click', () => seleccionarVistaDelegaciones(option.dataset.vistaDelegaciones));
+                });
+                controlesDelegacionesInicializados = true;
+            }
             seleccionarVistaDelegaciones(vistaDelegacionesActiva);
-            try { await cargarCatalogosOrganizacion(); }
-            catch (error) { console.warn('No fue posible sincronizar las fichas territoriales:', error); }
-            renderizarDelegacionesCards(filtroZonaActivo);
+            const grid = document.getElementById('delegacionesCardsGrid');
+            const table = document.getElementById('tablaDelegacionesBody');
+            if (grid) {
+                grid.setAttribute('aria-busy', 'true');
+                grid.innerHTML = '<div class="admin-loading" role="status"><span class="spinner-border spinner-border-sm" aria-hidden="true"></span> Cargando delegaciones…</div>';
+            }
+            if (table) table.innerHTML = '<tr><td colspan="8"><div class="admin-loading" role="status"><span class="spinner-border spinner-border-sm" aria-hidden="true"></span> Cargando delegaciones…</div></td></tr>';
+            try {
+                await cargarCatalogosOrganizacion();
+                renderizarDelegacionesCards(filtroZonaActivo);
+            } catch (error) {
+                console.warn('No fue posible sincronizar las fichas territoriales:', error);
+                if (grid) grid.innerHTML = '<p class="text-danger">No se pudieron cargar las delegaciones. Vuelve a abrir esta sección para intentar nuevamente.</p>';
+                if (table) table.innerHTML = '<tr><td colspan="8" class="text-danger text-center py-3">No se pudieron cargar las delegaciones.</td></tr>';
+                if (document.getElementById('view-delegaciones')?.classList.contains('active') && window.Swal) {
+                    Swal.fire({icon: 'error', titleText: 'Delegaciones no disponibles', text: error.message});
+                }
+            } finally { if (grid) grid.removeAttribute('aria-busy'); }
         }
 
         function renderizarDelegacionesCards(filtro = 'todas') {

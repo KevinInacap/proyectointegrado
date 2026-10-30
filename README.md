@@ -109,6 +109,8 @@ La configuración local no certifica un despliegue en AWS. Antes de alojar el si
 
 El registro de pruebas y los pendientes exactos de la segunda evaluación están en [Verificación de la segunda evaluación](docs/VERIFICACION_SEGUNDA_EVALUACION.md).
 
+La revisión del panel de administración y las referencias para futuras mejoras de animación están en [Referencias y auditoría del panel](docs/REFERENCIAS_ANIMACIONES_Y_AUDITORIA_ADMIN.md). Los antecedentes funcionales y sus pendientes se encuentran en [Revisión de los archivos de octubre](docs/REVISION_ADJUNTOS_OCTUBRE_2026.md).
+
 ---
 
 **Ilustre Municipalidad de La Serena · Proyecto Integrado**

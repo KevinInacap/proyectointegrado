@@ -77,6 +77,39 @@
                 }
             };
         }
+        // Los formularios que necesitan catálogos señalan la espera en el
+        // botón que los abrió, únicamente mientras la solicitud está activa.
+        let openingTrigger = null;
+        document.addEventListener('click', event => {
+            const button = event.target.closest?.('button');
+            if (!button) return;
+            openingTrigger = button;
+            queueMicrotask(() => { if (openingTrigger === button) openingTrigger = null; });
+        }, true);
+        for (const name of ['abrirCatalogosOrganizacion', 'abrirModalNuevaAtencion', 'abrirModalRol']) {
+            const original = window[name];
+            if (typeof original !== 'function') continue;
+            window[name] = async function (...args) {
+                const button = openingTrigger;
+                let indicator = null;
+                if (button && !button.disabled) {
+                    indicator = document.createElement('span');
+                    indicator.className = 'admin-option-loading admin-button-loading';
+                    indicator.setAttribute('aria-hidden', 'true');
+                    button.append(indicator);
+                    button.disabled = true;
+                    button.setAttribute('aria-busy', 'true');
+                }
+                try { return await original.apply(this, args); }
+                finally {
+                    if (indicator) {
+                        indicator.remove();
+                        button.disabled = false;
+                        button.removeAttribute('aria-busy');
+                    }
+                }
+            };
+        }
         const pending = new Set();
         const pagers = new Set(['paginadorPills', 'paginadorPillsUsuarios', 'paginadorPillsRoles']);
         function labelPages(container) {
@@ -85,6 +118,23 @@
                 if (button.classList.contains('active')) button.setAttribute('aria-current', 'page');
                 else button.removeAttribute('aria-current');
             });
+        }
+        function syncCatalogNav(root) {
+            const view = root.closest('.maintainer-view');
+            if (!view?.id?.startsWith('view-')) return;
+            const option = document.getElementById('sub-' + view.id.slice(5));
+            if (!option) return;
+            const loading = Boolean(view.querySelector('[data-catalog][aria-busy="true"]'));
+            let indicator = option.querySelector('.admin-catalog-option-loading');
+            if (loading && !indicator) {
+                indicator = document.createElement('span');
+                indicator.className = 'admin-option-loading admin-catalog-option-loading';
+                indicator.setAttribute('aria-hidden', 'true');
+                option.append(indicator);
+            }
+            if (!loading) indicator?.remove();
+            if (loading) option.setAttribute('aria-busy', 'true');
+            else option.removeAttribute('aria-busy');
         }
         // Some renderers replace all pagination buttons after activation. Restore
         // keyboard focus to the selected replacement, without moving other focus.
@@ -102,6 +152,7 @@
         const observer = new MutationObserver(records => {
             for (const record of records) {
                 if (record.type === 'attributes' && record.target.classList.contains('maintainer-view') && record.target.classList.contains('active')) pending.add(record.target);
+                if (record.type === 'attributes' && record.attributeName === 'aria-busy' && record.target.matches?.('[data-catalog]')) syncCatalogNav(record.target);
                 if (record.type === 'childList') {
                     const table = record.target.closest?.('tbody');
                     if (table) pending.add(table.closest('.table-responsive') || table);
@@ -115,8 +166,15 @@
             });
         });
         const main = document.querySelector('.content-body');
-        if (main) observer.observe(main, {subtree: true, childList: true, attributes: true, attributeFilter: ['class']});
+        if (main) {
+            observer.observe(main, {subtree: true, childList: true, attributes: true, attributeFilter: ['class', 'aria-busy']});
+            main.querySelectorAll('[data-catalog][aria-busy="true"]').forEach(syncCatalogNav);
+        }
         pagers.forEach(id => { const pager = document.getElementById(id); if (pager) labelPages(pager); });
-        document.querySelectorAll('.modal').forEach(modal => modal.addEventListener('shown.bs.modal', () => modal.querySelector('input:not([type=hidden]):not([disabled]), select, textarea')?.focus()));
+        document.querySelectorAll('.modal').forEach(modal => modal.addEventListener('shown.bs.modal', () => {
+            // Los catálogos usan pestañas: nunca enfocar el formulario oculto.
+            const fields = modal.querySelectorAll('input:not([type=hidden]):not([disabled]), select:not([disabled]), textarea:not([disabled])');
+            [...fields].find(field => field.getClientRects().length > 0)?.focus();
+        }));
     });
 })();

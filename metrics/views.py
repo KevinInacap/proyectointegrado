@@ -1,4 +1,5 @@
 from core.input_validation import field_error
+from core.admin_rate_limit import consume_admin_creation
 """Administrative JSON endpoints for evaluation catalogs."""
 import json
 import math
@@ -9,6 +10,7 @@ from django.db import IntegrityError, transaction
 from django.db.models import Q
 from django.http import JsonResponse
 from django.views.decorators.http import require_GET, require_http_methods
+from core.models import AuditLog
 from organization.models import UserProfile
 from organization.access import is_administrator_role
 from .models import AttentionType, Goal, MeasurementItem, SubAttention, ManagementType, MeasurementPeriod
@@ -185,7 +187,8 @@ def validate_extra(model, data, instance=None):
     return None
 
 
-def save_form(model, form, instance=None):
+def save_form(request, model, form, instance=None):
+    previous = serialize(instance) if instance is not None else None
     if not form.is_valid():
         return error('Datos inválidos.', details=form.errors.get_json_data())
     extra = validate_extra(model, form.cleaned_data, instance)
@@ -196,8 +199,15 @@ def save_form(model, form, instance=None):
             obj = form.save(commit=False)
             obj.full_clean()
             obj.save()
-    except (IntegrityError, ValidationError) as exc:
-        return error('Datos inválidos o duplicados.', details=str(exc))
+            AuditLog.objects.create(
+                user=request.user, affected_table=f'catalogo_{model._meta.model_name}',
+                affected_record_id=str(obj.pk), action='UPDATE' if instance is not None else 'CREATE',
+                previous_value=previous, new_value=serialize(obj), source_ip=request.META.get('REMOTE_ADDR'),
+            )
+    except ValidationError as exc:
+        return error('Datos inválidos o duplicados.', details=exc.message_dict if hasattr(exc, 'message_dict') else exc.messages)
+    except IntegrityError:
+        return error('No se pudo guardar. Revisa si el registro ya existe.', 409)
     return JsonResponse(serialize(obj), status=201 if instance is None else 200)
 
 
@@ -221,8 +231,11 @@ def catalog_collection(request, catalog):
         return error('Catálogo desconocido.', 404)
     model, form_class = CATALOGS[catalog]
     if request.method == 'POST':
+        blocked = consume_admin_creation(request)
+        if blocked is not None:
+            return blocked
         try:
-            return save_form(model, form_class(defaults(model, body(request))))
+            return save_form(request, model, form_class(defaults(model, body(request))))
         except ValueError as exc:
             return error(str(exc))
     try:
@@ -296,7 +309,13 @@ def catalog_detail(request, catalog, pk):
         # and the transaction also catches database-enforced concurrent references.
         try:
             with transaction.atomic():
+                previous = serialize(obj)
                 obj.delete()
+                AuditLog.objects.create(
+                    user=request.user, affected_table=f'catalogo_{model._meta.model_name}',
+                    affected_record_id=str(pk), action='DELETE', previous_value=previous,
+                    source_ip=request.META.get('REMOTE_ADDR'),
+                )
         except IntegrityError:
             return error('El registro tiene relaciones que impiden su eliminación.', 409)
         from django.http import HttpResponse
@@ -307,4 +326,4 @@ def catalog_detail(request, catalog, pk):
         return error(str(exc))
     if request.method == 'PATCH':
         data = {**serialize(obj), **data}
-    return save_form(model, form_class(defaults(model, data), instance=obj), obj)
+    return save_form(request, model, form_class(defaults(model, data), instance=obj), obj)

@@ -69,6 +69,12 @@ class AdminApiIsolatedTests(SimpleTestCase):
         self.assertIsNone(views._validated_permissions('usuarios.view'))
         self.assertIsNone(views._validated_permissions([123]))
 
+    def test_identifier_lists_reject_extreme_or_non_ascii_numbers_without_error(self):
+        for value in ([True], ['²'], ['9' * 5000], ['9223372036854775808'], [0], [1] * 1001):
+            with self.subTest(value=str(value)[:40]):
+                self.assertIsNone(views._ids(value))
+        self.assertEqual(views._ids(['1', 2, '1']), [1, 2])
+
     def test_administrator_password_length_limit(self):
         self.assertEqual(views._password({'password': 'A' * 128}), 'A' * 128)
         self.assertIsNone(views._password({'password': 'A' * 129}))
@@ -85,13 +91,15 @@ class AdminApiIsolatedTests(SimpleTestCase):
             'photo_url': '/static/../secret.png',
         }))
 
-    def test_invalid_role_payload_rejected_before_database_write(self):
+    @patch('core.admin_rate_limit.consume_admin_creation', return_value=None)
+    def test_invalid_role_payload_rejected_before_database_write(self, _quota):
         request = self.request('post', {'name': 'Prueba', 'permissions': 'usuarios.view'})
         request.user = SimpleNamespace(is_authenticated=True, is_active=True, is_superuser=True)
         response = views.api_role_create(request)
         self.assertEqual(response.status_code, 400)
 
-    def test_invalid_user_status_rejected_before_database_write(self):
+    @patch('core.admin_rate_limit.consume_admin_creation', return_value=None)
+    def test_invalid_user_status_rejected_before_database_write(self, _quota):
         request = self.request('post', {
             'username': 'prueba', 'full_name': 'Prueba Usuario',
             'email': 'prueba@example.com', 'rut': '12345678-5',
@@ -439,6 +447,32 @@ class AdminCatalogRegressionTests(TestCase):
     def post(self, name, data, *args):
         return self.client.post(reverse('organization:' + name, args=args), data=json.dumps(data), content_type='application/json')
 
+    def test_explicit_status_changes_are_idempotent_and_audited_once(self):
+        from core.models import AuditLog
+        cargo = Position.objects.create(name='Cargo sin funcionarios')
+        delegacion = Delegation.objects.create(name='Sede sin funcionarios', scope='Prueba', commune='La Serena')
+        user = get_user_model().objects.create_user(username='estado-idempotente')
+        profile = UserProfile.objects.create(user=user, rut='10.111.222-3', full_name='Persona Prueba',
+                                             email='estado-idempotente@example.test')
+        for endpoint, item, table in (
+            ('api_position_toggle', cargo, 'cargo'),
+            ('api_delegation_toggle', delegacion, 'delegacion'),
+            ('api_user_toggle_status', profile, 'usuario'),
+        ):
+            with self.subTest(endpoint=endpoint):
+                for _ in range(2):
+                    response = self.post(endpoint, {'status': 'Inactivo'}, item.pk)
+                    self.assertEqual(response.status_code, 200, response.content)
+                item.refresh_from_db()
+                self.assertEqual(item.status, 'Inactivo')
+                self.assertEqual(AuditLog.objects.filter(affected_table=table, affected_record_id=str(item.pk), action='UPDATE').count(), 1)
+                bad = self.post(endpoint, {'status': '<script>'}, item.pk)
+                self.assertEqual(bad.status_code, 400)
+                item.refresh_from_db()
+                self.assertEqual(item.status, 'Inactivo')
+        user.refresh_from_db()
+        self.assertFalse(user.is_active)
+
     def test_long_cargo_description_does_not_overflow_role_and_both_persist(self):
         response = self.post('api_positions', {'name': 'Orientador Comunitario Auditado', 'description': 'X' * 500})
         self.assertEqual(response.status_code, 200, response.content)
@@ -572,6 +606,33 @@ class AdminCatalogRegressionTests(TestCase):
         self.assertEqual(second.status_code, 200, second.content)
         self.assertNotEqual(first.json()['role']['name'], second.json()['role']['name'])
         self.assertLessEqual(len(second.json()['role']['name']), 50)
+
+    def test_repeated_explicit_role_duplicate_does_not_create_another_copy(self):
+        cargo = Position.objects.get(name='Asistente Social')
+        role = Role.objects.get(name='Asistente Social')
+        payload = {'name': 'Rol duplicado explícito', 'position_id': cargo.pk}
+        self.assertEqual(self.post('api_role_duplicate', payload, role.pk).status_code, 200)
+        response = self.post('api_role_duplicate', payload, role.pk)
+        self.assertEqual(response.status_code, 400, response.content)
+        self.assertEqual(Role.objects.filter(name__startswith='Rol duplicado explícito').count(), 1)
+
+    def test_custom_permission_rejects_markup_control_characters_and_nonobject_json(self):
+        from .models import PermissionDefinition
+        for payload in (
+            {'module_id': 'vecinos', 'code': 'vecinos.nueva', 'name': '<script>evil</script>', 'desc': ''},
+            {'module_id': 'vecinos', 'code': 'vecinos.nueva', 'name': 'Permiso\x00 oculto', 'desc': ''},
+            {'module_id': 'vecinos', 'code': 'vecinos.nueva', 'name': ['Permiso'], 'desc': ''},
+        ):
+            with self.subTest(payload=payload):
+                self.assertEqual(self.post('api_add_custom_permission', payload).status_code, 400)
+        malformed = self.client.post(reverse('organization:api_add_custom_permission'), data='[]', content_type='application/json')
+        self.assertEqual(malformed.status_code, 400)
+        self.assertFalse(PermissionDefinition.objects.filter(code='vecinos.nueva').exists())
+        response = self.post('api_add_custom_permission', {
+            'module_id': 'vecinos', 'code': 'vecinos.nueva', 'name': 'Nueva función', 'desc': 'Consulta institucional',
+        })
+        self.assertEqual(response.status_code, 200, response.content)
+        self.assertTrue(PermissionDefinition.objects.filter(code='vecinos.nueva').exists())
 
     def test_duplicate_role_with_full_description_does_not_overflow(self):
         role = Role.objects.create(name='Descripción Completa', description='X' * 255)

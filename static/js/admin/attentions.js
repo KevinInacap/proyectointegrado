@@ -1,8 +1,9 @@
-        async function cargarAtencionesDB() {
+        async function cargarAtencionesDB(silencioError = false) {
             try {
                 const resp = await fetch('/api/atenciones/');
                 if (!resp.ok) throw new Error('Error al consultar atenciones');
                 const data = await resp.json();
+                if (!data.success || !Array.isArray(data.atenciones)) throw new Error('La respuesta de atenciones no es válida.');
                 if (data.success && Array.isArray(data.atenciones)) {
                     datasetAtenciones = data.atenciones;
                     window.datasetAtenciones = datasetAtenciones;
@@ -25,13 +26,15 @@
                     }
                     renderTablaAtenciones(datasetAtenciones);
                 }
+                return true;
             } catch (err) {
                 console.error('Error cargando atenciones desde MySQL:', err);
                 const tbody = document.getElementById('tablaAtencionesBody');
                 if (tbody) tbody.innerHTML = '<tr><td colspan="8" class="text-center py-4 text-danger">No se pudieron cargar las atenciones. Inténtalo nuevamente.</td></tr>';
-                if (document.getElementById('view-atenciones')?.classList.contains('active') && window.Swal) {
+                if (!silencioError && document.getElementById('view-atenciones')?.classList.contains('active') && window.Swal) {
                     Swal.fire({icon: 'error', title: 'Atenciones no disponibles', text: 'No se pudo consultar el listado. Revisa la conexión e inténtalo nuevamente.'});
                 }
+                return false;
             }
         }
 
@@ -129,22 +132,38 @@
 
         let catalogsForAttentionForm = null;
 
+        async function cargarTodasLasPaginasAtencion(url) {
+            const records = [];
+            let page = 1;
+            while (true) {
+                const response = await fetch(`${url}?page_size=50&page=${page}`, {
+                    credentials: 'same-origin', headers: { Accept: 'application/json' }
+                });
+                if (!response.ok) throw new Error('No se pudo cargar el catálogo completo.');
+                const data = await response.json();
+                if (!Array.isArray(data.results) || !Number.isInteger(data.count) || data.count < 0) {
+                    throw new Error('El catálogo recibido no es válido.');
+                }
+                records.push(...data.results);
+                if (records.length >= data.count) return records;
+                if (!data.results.length) throw new Error('No se pudo cargar el catálogo completo.');
+                page += 1;
+            }
+        }
+
         async function cargarCatalogosFormularioAtencion(forceRefresh = false) {
             if (forceRefresh) catalogsForAttentionForm = null;
             if (catalogsForAttentionForm) return catalogsForAttentionForm;
-            catalogsForAttentionForm = (async () => {
-                const [delegationResponse, typeResponse, subResponse] = await Promise.all([
+            const pending = (async () => {
+                const [delegationResponse, types, subattentions] = await Promise.all([
                     fetch('/api/delegations/', { credentials: 'same-origin', headers: { Accept: 'application/json' } }),
-                    fetch('/api/catalogs/attention-types/?page_size=50', { credentials: 'same-origin', headers: { Accept: 'application/json' } }),
-                    fetch('/api/catalogs/subattentions/?page_size=50', { credentials: 'same-origin', headers: { Accept: 'application/json' } })
+                    cargarTodasLasPaginasAtencion('/api/catalogs/attention-types/'),
+                    cargarTodasLasPaginasAtencion('/api/catalogs/subattentions/')
                 ]);
-                if (!delegationResponse.ok || !typeResponse.ok || !subResponse.ok) {
-                    catalogsForAttentionForm = null;
+                if (!delegationResponse.ok) {
                     throw new Error('No se pudieron cargar las delegaciones y catálogos autorizados. Recarga la página e inténtalo de nuevo.');
                 }
-                const [delegationData, typeData, subData] = await Promise.all([
-                    delegationResponse.json(), typeResponse.json(), subResponse.json()
-                ]);
+                const delegationData = await delegationResponse.json();
                 const delegationSelect = document.getElementById('selAtencionDelegacion');
                 const typeSelect = document.getElementById('selAtencionTipo');
                 const subSelect = document.getElementById('selAtencionSubtipo');
@@ -156,8 +175,8 @@
                     });
                 };
                 fill(delegationSelect, 'Selecciona una delegación', delegationData.delegations || [], record => record.name, true);
-                fill(typeSelect, 'Selecciona un tipo', typeData.results || [], record => record.name, true);
-                fill(subSelect, 'Primero selecciona un tipo', subData.results || [], record => record.name, true);
+                fill(typeSelect, 'Selecciona un tipo', types, record => record.name, true);
+                fill(subSelect, 'Primero selecciona un tipo', subattentions, record => record.name, true);
                 if (typeSelect && subSelect) {
                     subSelect.disabled = true;
                     typeSelect.onchange = () => {
@@ -165,7 +184,7 @@
                         let hasOptions = false;
                         [...subSelect.options].forEach(option => {
                             if (!option.value) return;
-                            const record = (subData.results || []).find(item => String(item.id) === option.value);
+                            const record = subattentions.find(item => String(item.id) === option.value);
                             const matches = Boolean(typeId) && record && String(record.attention_type) === typeId && record.status === 'Activo';
                             option.hidden = !matches;
                             option.disabled = !matches;
@@ -177,6 +196,10 @@
                     };
                 }
             })();
+            catalogsForAttentionForm = pending;
+            pending.catch(() => {
+                if (catalogsForAttentionForm === pending) catalogsForAttentionForm = null;
+            });
             return catalogsForAttentionForm;
         }
 
@@ -196,9 +219,13 @@
         function completarDatosVecinoAtencion() {
             const select = document.getElementById('selAtencionVecino');
             const vecino = (window.vecinosAtencionCatalogo || []).find(row => Number(row.id) === Number(select?.value));
+            const name = document.getElementById('txtAtencionNombre');
+            const phone = document.getElementById('txtAtencionTelefono');
+            if (name) name.readOnly = Boolean(vecino);
+            if (phone) phone.readOnly = Boolean(vecino);
             if (!vecino) return;
-            document.getElementById('txtAtencionNombre').value = vecino.nombre || '';
-            document.getElementById('txtAtencionTelefono').value = vecino.telefono || '';
+            if (name) name.value = vecino.nombre || '';
+            if (phone) phone.value = vecino.telefono || '';
         }
 
         async function abrirModalNuevaAtencion(editId = null) {
@@ -248,6 +275,7 @@
                 if (saveButton) saveButton.innerHTML = '<i class="bi bi-check-lg me-1"></i> Guardar Atención';
                 if (info) info.textContent = 'El usuario y la fecha se registrarán automáticamente.';
             }
+            completarDatosVecinoAtencion();
             if (bsModalNuevaAtencion) {
                 bsModalNuevaAtencion.show();
             } else {
@@ -259,7 +287,9 @@
             }
         }
 
+        let guardandoAtencion = false;
         async function guardarAtencionDB() {
+            if (guardandoAtencion) return;
             const editId = document.getElementById('atencionEditId')?.value;
             const contact_name = document.getElementById('txtAtencionNombre')?.value?.trim();
             const contact_phone = document.getElementById('txtAtencionTelefono')?.value?.trim();
@@ -281,6 +311,7 @@
             }
 
             const btn = document.getElementById('btnGuardarAtencionDB');
+            guardandoAtencion = true;
             if (btn) btn.disabled = true;
 
             try {
@@ -308,7 +339,11 @@
                     throw new Error(data.message || 'No se pudo guardar la atención.');
                 }
                 if (bsModalNuevaAtencion) bsModalNuevaAtencion.hide();
-                await cargarAtencionesDB();
+                const actualizado = await cargarAtencionesDB(true);
+                if (actualizado === false) {
+                    await Swal.fire({icon: 'warning', title: 'Atención guardada', text: 'Los datos se guardaron, pero no se pudo actualizar el listado. Recarga la sección antes de continuar.'});
+                    return;
+                }
                 Swal.fire({
                     icon: 'success',
                     title: editId ? 'Cambios guardados' : 'Atención registrada',
@@ -323,6 +358,7 @@
                     text: err.message
                 });
             } finally {
+                guardandoAtencion = false;
                 if (btn) btn.disabled = false;
             }
         }

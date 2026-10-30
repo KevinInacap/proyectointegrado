@@ -577,7 +577,8 @@
             if (!user || cambiosEstadoUsuariosEnCurso.has(id)) return;
             cambiosEstadoUsuariosEnCurso.add(id);
             try {
-                const action = user.status === 'Activo' ? 'desactivar' : 'activar';
+                const desiredStatus = user.status === 'Activo' ? 'Inactivo' : 'Activo';
+                const action = desiredStatus === 'Inactivo' ? 'desactivar' : 'activar';
                 const result = await Swal.fire({
                     icon: 'warning', titleText: `¿Deseas ${action} esta cuenta?`,
                     text: `Se cambiará el acceso de ${user.full_name}.`, showCancelButton: true,
@@ -585,7 +586,8 @@
                 });
                 if (!result.isConfirmed) return;
                 const res = await fetch(`/api/users/${id}/toggle-status/`, {
-                    method: 'POST', headers: {'X-CSRFToken': getCookie('csrftoken') || ''}
+                    method: 'POST', headers: {'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken') || ''},
+                    body: JSON.stringify({status: desiredStatus})
                 });
                 const data = await res.json();
                 if (!res.ok || !data.success) throw new Error(data.message || 'No se pudo cambiar el estado.');
@@ -603,8 +605,8 @@
             const nombre = u ? u.full_name : 'este funcionario';
 
             const result = await Swal.fire({
-                title: '¿Eliminar Funcionario?',
-                text: `¿Estás seguro de que deseas dar de baja a "${nombre}"? Esta acción desactivará su cuenta institucional.`,
+                title: '¿Eliminar funcionario definitivamente?',
+                text: `Se eliminarán permanentemente la cuenta y el perfil de "${nombre}". Esta acción no se puede deshacer.`,
                 icon: 'warning',
                 showCancelButton: true,
                 confirmButtonColor: '#B80003',

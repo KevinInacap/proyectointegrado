@@ -96,7 +96,7 @@ class Command(BaseCommand):
             name="Auditor Municipal",
             defaults={"description": "Fiscalización, calidad y auditoría.", "status": "Activo"}
         )
-        pos_consulta, _ = Position.objects.get_or_create(
+        pos_consulta, pos_consulta_created = Position.objects.get_or_create(
             name="Usuario de Consulta",
             defaults={"description": "Consulta de tableros e indicadores.", "status": "Activo"}
         )
@@ -131,19 +131,19 @@ class Command(BaseCommand):
         role_admin.save(update_fields=['is_system', 'updated_at'])
         role_coordinador, _ = Role.objects.get_or_create(
             name="Coordinador del Sistema",
-            defaults={"description": "Supervisión institucional, metas y reportes consolidados comunales.", "position": pos_coordinador}
+            defaults={"description": "Supervisión institucional, metas y reportes consolidados comunales.", "position": pos_coordinador, "is_system": True}
         )
         role_delegado, _ = Role.objects.get_or_create(
             name="Delegado Municipal",
-            defaults={"description": "Jefatura de delegación y gestión del tubo de trabajo colectivo.", "position": pos_delegado}
+            defaults={"description": "Jefatura de delegación y gestión del tubo de trabajo colectivo.", "position": pos_delegado, "is_system": True}
         )
         role_funcionario, _ = Role.objects.get_or_create(
             name="Gestor Territorial",
-            defaults={"description": "Registro operativo de actividades, atenciones, compromisos y evidencias.", "position": pos_gestor}
+            defaults={"description": "Registro operativo de actividades, atenciones, compromisos y evidencias.", "position": pos_gestor, "is_system": True}
         )
         role_verificador, _ = Role.objects.get_or_create(
             name="Verificador Técnico",
-            defaults={"description": "Revisión técnica, aprobación o rechazo de evidencias registradas.", "position": pos_verificador}
+            defaults={"description": "Revisión técnica, aprobación o rechazo de evidencias registradas.", "position": pos_verificador, "is_system": True}
         )
         role_consulta, _ = Role.objects.get_or_create(
             name="Usuario de Consulta",
@@ -151,6 +151,7 @@ class Command(BaseCommand):
                 "description": "Visualización de tableros, reportes e indicadores sin facultades de edición.",
                 "permissions_data": ['lectura'],
                 "position": pos_consulta,
+                "is_system": True,
             }
         )
         # The application checks these persisted role permissions at request time;
@@ -164,10 +165,20 @@ class Command(BaseCommand):
             (role_consulta, ['lectura']),
         )
         for role, permissions in role_permission_defaults:
+            # Un nombre coincidente no convierte un rol personalizado en sistema.
+            if not role.is_system or role.deleted_at is not None:
+                continue
             if not role.permissions_data:
                 role.permissions_data = permissions
-            role.is_system = True
             role.save(update_fields=['permissions_data', 'is_system', 'updated_at'])
+        # El cargo Consulta se incorpora aquí en instalaciones nuevas, después
+        # de las migraciones que ya habían creado su rol de sistema. Solo lo
+        # vinculamos si la nueva posición y las asignaciones son inequívocas.
+        if (pos_consulta_created and role_consulta.is_system and role_consulta.deleted_at is None
+                and role_consulta.position_id is None and not role_consulta.base_positions.exists()
+                and not role_consulta.users.exclude(position_id=pos_consulta.pk).exists()):
+            role_consulta.position = pos_consulta
+            role_consulta.save(update_fields=['position', 'updated_at'])
         # Solo vinculamos automáticamente roles que ya nacieron asociados a ese cargo.
         # Los roles históricos ambiguos no se apropian por coincidencia de nombres.
         for position, role in ((pos_admin, role_admin), (pos_coordinador, role_coordinador),

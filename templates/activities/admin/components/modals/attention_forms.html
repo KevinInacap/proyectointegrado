@@ -21,15 +21,15 @@
                             <div class="col-12">
                                 <label class="form-label small fw-bold mb-1" for="selAtencionVecino">Vincular ficha de vecino</label>
                                 <select class="form-select form-select-sm" id="selAtencionVecino" onchange="completarDatosVecinoAtencion()"><option value="">Contacto sin ficha de vecino</option></select>
-                                <small class="text-muted">Al guardar el nombre de la atención, también se actualizará el vecino vinculado.</small>
+                                <small class="text-muted">Si vinculas una ficha, se usa el nombre y teléfono registrados. Corrige esos datos en la ficha del vecino.</small>
                             </div>
                             <div class="col-md-6">
-                                <label class="form-label small fw-bold mb-1">Nombre Vecino(a) / Contacto <span class="text-danger">*</span></label>
+                                <label class="form-label small fw-bold mb-1" for="txtAtencionNombre">Nombre Vecino(a) / Contacto <span class="text-danger">*</span></label>
                                 <input type="text" class="form-control form-control-sm" id="txtAtencionNombre" maxlength="150" placeholder="Ej: Patricia Soto Cárdenas" required>
                             </div>
                             <div class="col-md-6">
-                                <label class="form-label small fw-bold mb-1">Teléfono o RUT de Contacto</label>
-                                <input type="text" class="form-control form-control-sm" id="txtAtencionTelefono" maxlength="20" placeholder="+56 9 8452 1102">
+                                <label class="form-label small fw-bold mb-1" for="txtAtencionTelefono">Teléfono de contacto</label>
+                                <input type="tel" class="form-control form-control-sm" id="txtAtencionTelefono" maxlength="20" placeholder="+56 9 8452 1102">
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label small fw-bold mb-1" for="txtAtencionFecha">Fecha de atención / visita <span class="text-danger">*</span></label>

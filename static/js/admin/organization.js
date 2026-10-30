@@ -271,7 +271,8 @@
         async function confirmarCambioEstadoCatalogo(id, items, tipo, endpoint) {
             const item = items.find(row => Number(row.id) === Number(id));
             if (!item) return;
-            const accion = item.status === 'Activo' ? 'desactivar' : 'activar';
+            const desiredStatus = item.status === 'Activo' ? 'Inactivo' : 'Activo';
+            const accion = desiredStatus === 'Inactivo' ? 'desactivar' : 'activar';
             const result = await Swal.fire({
                 icon: 'question', titleText: `¿Deseas ${accion} este ${tipo}?`,
                 text: `Se cambiará el estado de ${item.name}.`, showCancelButton: true,
@@ -279,7 +280,7 @@
                 confirmButtonColor: '#8B1D2C'
             });
             if (!result.isConfirmed) return;
-            try { await enviarCatalogo(`${endpoint}/${id}/toggle-status/`, {}); }
+            try { await enviarCatalogo(`${endpoint}/${id}/toggle-status/`, {status: desiredStatus}); }
             catch (error) { Swal.fire({icon: 'error', titleText: 'No se pudo cambiar el estado', text: error.message}); }
         }
 

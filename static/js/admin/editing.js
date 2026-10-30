@@ -179,8 +179,13 @@
                 const data = await response.json();
                 if (!response.ok || !data.success) throw new Error(data.message || 'No se pudo guardar el registro.');
                 cerrarAdminDrawer();
-                if (isNeighbor) await cargarVecinosDesdeDB(false);
-                else await cargarUsuariosDesdeDB(false);
+                if (isNeighbor) {
+                    const actualizado = await cargarVecinosDesdeDB(false, true);
+                    if (actualizado === false) {
+                        await Swal.fire({icon: 'warning', titleText: 'Cambios guardados', text: 'El vecino se guardó, pero no se pudo actualizar el listado. Recarga la sección antes de continuar.'});
+                        return;
+                    }
+                } else await cargarUsuariosDesdeDB(false);
                 await Swal.fire({icon: 'success', titleText: 'Cambios guardados', text: data.message || 'El registro fue actualizado.'});
             } catch (error) {
                 await Swal.fire({icon: 'error', titleText: 'No se guardaron los cambios', text: error.message || 'Comprueba la conexión y vuelve a intentarlo.'});

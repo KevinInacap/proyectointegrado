@@ -1,6 +1,9 @@
 import json
+from unittest.mock import patch
 from django.contrib.auth import get_user_model
+from django.db import IntegrityError
 from django.test import TestCase, override_settings
+from core.models import AuditLog
 from organization.models import Position, Role, UserProfile
 from .models import AttentionType, MeasurementItem, MeasurementPeriod, SubAttention
 
@@ -76,6 +79,36 @@ class CatalogAPITests(TestCase):
         self.assertEqual(self.send('patch', f'/items/{pk}/', {'status': 'Inactivo'}).json()['status'], 'Inactivo')
         self.assertEqual(self.client.delete(f'/items/{pk}/').status_code, 204)
         self.assertEqual(self.client.get(f'/items/{pk}/').status_code, 404)
+
+    def test_catalog_changes_are_audited_with_persisted_values(self):
+        self.client.force_login(self.admin)
+        created = self.send('post', '/items/', {'code': 'IT-AUDIT', 'name': 'Ítem de auditoría'})
+        self.assertEqual(created.status_code, 201, created.content)
+        pk = created.json()['id']
+        changed = self.send('patch', f'/items/{pk}/', {'name': 'Nombre corregido'})
+        self.assertEqual(changed.status_code, 200, changed.content)
+        deleted = self.client.delete(f'/items/{pk}/')
+        self.assertEqual(deleted.status_code, 204)
+        logs = list(AuditLog.objects.filter(affected_table='catalogo_measurementitem', affected_record_id=str(pk)).order_by('pk'))
+        self.assertEqual([log.action for log in logs], ['CREATE', 'UPDATE', 'DELETE'])
+        self.assertEqual(logs[1].previous_value['name'], 'Ítem de auditoría')
+        self.assertEqual(logs[1].new_value['name'], 'Nombre corregido')
+        self.assertEqual(logs[2].previous_value['name'], 'Nombre corregido')
+
+    def test_catalog_integrity_error_does_not_leak_database_details(self):
+        self.client.force_login(self.admin)
+        with patch.object(MeasurementItem, 'save', side_effect=IntegrityError('detalles privados')):
+            response = self.send('post', '/items/', {'code': 'IT-RACE', 'name': 'Ítem nuevo'})
+        self.assertEqual(response.status_code, 409)
+        self.assertNotIn('detalles privados', response.content.decode())
+        self.assertFalse(MeasurementItem.objects.filter(code='IT-RACE').exists())
+
+    def test_catalog_save_rolls_back_when_audit_fails(self):
+        self.client.force_login(self.admin)
+        with patch('metrics.views.AuditLog.objects.create', side_effect=RuntimeError('auditoría caída')):
+            with self.assertRaises(RuntimeError):
+                self.send('post', '/items/', {'code': 'IT-ROLLBACK', 'name': 'Ítem nuevo'})
+        self.assertFalse(MeasurementItem.objects.filter(code='IT-ROLLBACK').exists())
 
     def test_catalog_search_covers_descriptions_and_combines_filters(self):
         self.client.force_login(self.admin)

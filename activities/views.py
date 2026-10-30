@@ -1110,7 +1110,7 @@ def _register_attention_neighbor(request, payload):
                 'Este RUT acaba de ser registrado. Vuelve a consultarlo para utilizar la ficha existente.',
                 code='rut_conflict',
             )
-        raise ValidationError('El vecino ya fue registrado. Búscalo en el padrón antes de reintentar.')
+        raise ValidationError('No se pudo guardar el vecino. Verifica si ya está registrado e inténtalo de nuevo.')
     return neighbor
 
 def _vecino_scope(request):
@@ -1249,11 +1249,12 @@ def api_vecinos(request):
             return JsonResponse({'success': False, 'message': 'Ya existe un vecino registrado con ese RUT.'}, status=400)
         if _vecino_email_exists(payload['email']):
             return JsonResponse({'success': False, 'message': 'Ya existe un vecino registrado con ese correo electrónico.'}, status=400)
-        vecino = Vecino.objects.create(**payload)
-        AuditLog.objects.create(
-            user=request.user if request.user.is_authenticated else None,
-            affected_table='vecino', affected_record_id=str(vecino.id), action='CREATE',
-            new_value=_serialize_vecino(vecino), source_ip=request.META.get('REMOTE_ADDR'))
+        try:
+            # La ficha y su auditoría deben confirmarse juntas; también cubre
+            # una colisión de RUT/correo producida entre dos solicitudes.
+            vecino = _register_attention_neighbor(request, payload)
+        except ValidationError as exc:
+            return JsonResponse({'success': False, 'message': exc.messages[0]}, status=400)
         return JsonResponse({'success': True, 'message': 'Vecino guardado en la base de datos.', 'vecino': _serialize_vecino(vecino)})
 
 def api_vecino_detail(request, pk):
@@ -1298,9 +1299,15 @@ def api_vecino_detail(request, pk):
             return JsonResponse({'success': False, 'message': 'Solicitud JSON inválida.'}, status=400)
         if not isinstance(data, dict):
             return JsonResponse({'success': False, 'message': 'La solicitud debe ser un objeto JSON.'}, status=400)
-        payload = _vecino_payload(data)
+        # Los paneles pueden enviar solo los campos editados: no sustituir
+        # teléfono, estado u otros datos existentes por valores predeterminados.
+        current_fields = {
+            key: getattr(vecino, key) or ''
+            for key in ('nombre', 'rut', 'email', 'direccion', 'telefono', 'territorio', 'estado')
+        }
+        payload = _vecino_payload({**current_fields, **data})
         profile = _actor(request)
-        if isinstance(data.get('rut'), str) and data['rut'].strip() == vecino.rut:
+        if 'rut' not in data or (isinstance(data.get('rut'), str) and data['rut'].strip() == vecino.rut):
             payload['rut'] = vecino.rut
         if 'territorio' not in data:
             payload['territorio'] = vecino.territorio or ''
@@ -1350,21 +1357,26 @@ def api_vecino_detail(request, pk):
         previous = _serialize_vecino(vecino)
         for field, value in payload.items():
             setattr(vecino, field, value)
-        vecino.save()
-        AuditLog.objects.create(
-            user=request.user if request.user.is_authenticated else None,
-            affected_table='vecino', affected_record_id=str(vecino.id), action='UPDATE',
-            previous_value=previous, new_value=_serialize_vecino(vecino), source_ip=request.META.get('REMOTE_ADDR'))
+        try:
+            with transaction.atomic():
+                vecino.save()
+                AuditLog.objects.create(
+                    user=request.user if request.user.is_authenticated else None,
+                    affected_table='vecino', affected_record_id=str(vecino.id), action='UPDATE',
+                    previous_value=previous, new_value=_serialize_vecino(vecino), source_ip=request.META.get('REMOTE_ADDR'))
+        except IntegrityError:
+            return JsonResponse({'success': False, 'message': 'El RUT o correo ya está registrado. Actualiza el listado e inténtalo nuevamente.'}, status=409)
         return JsonResponse({'success': True, 'message': 'Vecino actualizado en la base de datos.', 'vecino': _serialize_vecino(vecino)})
     elif request.method == 'DELETE':
         previous = _serialize_vecino(vecino)
         vecino.deleted_at = timezone.now()
         vecino.estado = 'Inactivo'
-        vecino.save(update_fields=['deleted_at', 'estado', 'updated_at'])
-        AuditLog.objects.create(
-            user=request.user if request.user.is_authenticated else None,
-            affected_table='vecino', affected_record_id=str(vecino.id), action='DELETE',
-            previous_value=previous, source_ip=request.META.get('REMOTE_ADDR'))
+        with transaction.atomic():
+            vecino.save(update_fields=['deleted_at', 'estado', 'updated_at'])
+            AuditLog.objects.create(
+                user=request.user if request.user.is_authenticated else None,
+                affected_table='vecino', affected_record_id=str(vecino.id), action='DELETE',
+                previous_value=previous, source_ip=request.META.get('REMOTE_ADDR'))
         return JsonResponse({'success': True, 'message': 'Vecino dado de baja y conservado en auditoría.'})
 
 def _attention_payload(request):
@@ -1517,8 +1529,12 @@ def api_atenciones(request):
     phone = _attention_text(data, 'contact_phone', 20)
     problem = _attention_text(data, 'problem_description', 1000) if 'problem_description' in data else _attention_text(data, 'title', 1000, required=True)
     action = _attention_text(data, 'executed_action', 1000) if 'executed_action' in data else _attention_text(data, 'description', 1000, required=True)
-    if not contact or phone is None or not problem or not action:
-        return JsonResponse({'success': False, 'message': 'Solicitante, problema o acción inválidos.'}, status=400)
+    if not contact:
+        return JsonResponse({'success': False, 'message': 'Ingresa un nombre de contacto válido; si vinculaste una ficha, corrige el nombre en el padrón.'}, status=400)
+    if phone is None:
+        return JsonResponse({'success': False, 'message': 'Ingresa un teléfono válido de 8 a 15 dígitos; si vinculaste una ficha, corrígelo en el padrón.'}, status=400)
+    if not problem or not action:
+        return JsonResponse({'success': False, 'message': 'Completa el problema y la acción realizada con texto válido.'}, status=400)
     # Estado enviado por la interfaz no autoriza una aprobación.
     if 'is_collective_agenda' in data and not isinstance(data['is_collective_agenda'], bool):
         return JsonResponse({'success': False, 'message': 'Agenda colectiva inválida.'}, status=400)

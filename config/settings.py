@@ -197,4 +197,8 @@ EMAIL_BACKEND = (
 
 LOGIN_URL = '/'
 
+# Límite compartido por cuenta para altas en catálogos organizacionales.
+SGR_ADMIN_CREATE_LIMIT = max(1, int(os.getenv('SGR_ADMIN_CREATE_LIMIT', '60')))
+SGR_ADMIN_CREATE_WINDOW_SECONDS = max(1, int(os.getenv('SGR_ADMIN_CREATE_WINDOW_SECONDS', '60')))
+
 

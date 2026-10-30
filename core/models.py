@@ -77,3 +77,14 @@ class LoginThrottle(models.Model):
 
     class Meta:
         db_table = 'limite_intentos_login'
+
+
+class AdminCreationQuota(models.Model):
+    """Una ventana de altas administrativas por cuenta, compartida entre procesos."""
+    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE,
+                                primary_key=True, related_name='admin_creation_quota')
+    window_started_at = models.DateTimeField(default=timezone.now)
+    attempts = models.PositiveIntegerField(default=0)
+
+    class Meta:
+        db_table = 'limite_altas_admin'

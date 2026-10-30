@@ -86,6 +86,69 @@ class OrganizationDelegationAccessTests(TestCase):
             data=json.dumps(changes), content_type='application/json',
         )
 
+    def test_local_user_manager_cannot_reset_or_change_an_administrators_account(self):
+        self.permission_role.permissions_data += ['usuarios.reset_password', 'usuarios.toggle_status', 'usuarios.edit']
+        self.permission_role.save(update_fields=['permissions_data', 'updated_at'])
+        target = self.admin.profile
+        old_password = self.admin.password
+        for endpoint, payload in (
+            ('api_user_reset_password', {'password': 'NuevaClaveSegura!829'}),
+            ('api_user_toggle_status', {}),
+            ('api_user_update', {'full_name': 'Cambio no autorizado'}),
+        ):
+            with self.subTest(endpoint=endpoint):
+                response = self.client.post(
+                    reverse('organization:' + endpoint, args=[target.pk]),
+                    data=json.dumps(payload), content_type='application/json',
+                )
+                self.assertEqual(response.status_code, 403, response.content)
+        self.admin.refresh_from_db()
+        target.refresh_from_db()
+        self.assertEqual(self.admin.password, old_password)
+        self.assertTrue(self.admin.is_active)
+        self.assertEqual(target.status, 'Activo')
+        self.assertEqual(target.full_name, 'Administración de prueba')
+
+    def test_functional_administrator_cannot_reset_institutional_superadmin(self):
+        from .access import SUPER_ADMINISTRATOR_RUT
+        superuser = get_user_model().objects.create_user(username='super-institucional')
+        target = UserProfile.objects.create(
+            user=superuser, full_name='Cuenta institucional protegida', rut=SUPER_ADMINISTRATOR_RUT,
+            email='super-institucional@example.test', delegation=self.north,
+            position=Position.objects.get(name='Administrador General'),
+        )
+        role, _ = Role.objects.get_or_create(name='SuperAdministrador')
+        target.roles.add(role)
+        self.client.force_login(self.admin)
+        old_password = superuser.password
+        response = self.client.post(
+            reverse('organization:api_user_reset_password', args=[target.pk]),
+            data=json.dumps({'password': 'NuevaClaveSegura!829'}), content_type='application/json',
+        )
+        self.assertEqual(response.status_code, 403, response.content)
+        superuser.refresh_from_db()
+        self.assertEqual(superuser.password, old_password)
+
+    def test_local_user_manager_keeps_access_to_regular_local_accounts(self):
+        self.permission_role.permissions_data += ['usuarios.reset_password', 'usuarios.toggle_status']
+        self.permission_role.save(update_fields=['permissions_data', 'updated_at'])
+        regular = get_user_model().objects.create_user(username='funcionario-local', password='AnteriorSegura!2026')
+        target = UserProfile.objects.create(
+            user=regular, full_name='Funcionario local', rut='18.100.000-4',
+            email='funcionario-local@example.test', delegation=self.north, position=self.local_position,
+        )
+        response = self.client.post(
+            reverse('organization:api_user_reset_password', args=[target.pk]),
+            data=json.dumps({'password': 'NuevaClaveSegura!829'}), content_type='application/json',
+        )
+        self.assertEqual(response.status_code, 200, response.content)
+        regular.refresh_from_db()
+        self.assertTrue(regular.check_password('NuevaClaveSegura!829'))
+        response = self.client.post(reverse('organization:api_user_toggle_status', args=[target.pk]))
+        self.assertEqual(response.status_code, 200, response.content)
+        regular.refresh_from_db()
+        self.assertFalse(regular.is_active)
+
     def test_catalog_permission_cannot_promote_a_cargo_to_administrator(self):
         for name in ('Ádministrador General', 'Super Administrador'):
             with self.subTest(name=name):

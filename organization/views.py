@@ -1,4 +1,5 @@
-from core.input_validation import validated_payload, USER_FIELDS, ROLE_FIELDS, POSITION_FIELDS, DELEGATION_FIELDS
+from core.input_validation import validated_payload, USER_FIELDS, ROLE_FIELDS, POSITION_FIELDS, DELEGATION_FIELDS, PERMISSION_FIELDS
+from core.admin_rate_limit import limit_admin_creation
 from .role_assignment import roles_with_position_base as _roles_with_position_base
 from .authorization import admin_only, permission_gate, _has_administrator_role, _users_scope, _delegations_scope
 from .permission_catalog import _permissions_catalog, _all_system_perm_codes
@@ -56,7 +57,19 @@ def _password(data, key='password'):
 def _protected_account(request, profile):
     if is_super_administrator(getattr(request, 'user', None)):
         return False
-    return not request.user.is_superuser and (profile.user.is_staff or profile.user.is_superuser)
+    if request.user.is_superuser:
+        return False
+    # Los permisos de dotación territorial no autorizan a cambiar cuentas con
+    # acceso administrativo, aunque estén en la misma delegación. En especial,
+    # restablecer su clave permitiría asumir todos sus permisos.
+    if is_super_administrator(profile):
+        return True
+    if not _has_administrator_role(request.user) and any(
+        is_administrator_role(role)
+        for role in profile.roles.filter(deleted_at__isnull=True)
+    ):
+        return True
+    return profile.user.is_staff or profile.user.is_superuser
 
 
 def _boolean(data, key):
@@ -71,11 +84,20 @@ def _boolean(data, key):
 
 
 def _ids(value):
-    if not isinstance(value, list) or any(
-        isinstance(item, bool) or not str(item).isdigit() for item in value
-    ):
+    if not isinstance(value, list) or len(value) > 1000:
         return None
-    return list(dict.fromkeys(int(item) for item in value))
+    ids = []
+    for item in value:
+        if isinstance(item, bool) or not isinstance(item, (int, str)):
+            return None
+        text = str(item)
+        if len(text) > 19 or not re.fullmatch(r'[0-9]+', text):
+            return None
+        pk = int(text)
+        if not 0 < pk <= 9223372036854775807:
+            return None
+        ids.append(pk)
+    return list(dict.fromkeys(ids))
 
 
 def _valid_status(value, allow_blocked=False):
@@ -255,6 +277,7 @@ def api_users_list(request):
     })
 
 @permission_gate({'POST': 'usuarios.create'})
+@limit_admin_creation
 @validated_payload(USER_FIELDS)
 def api_user_create(request):
     """
@@ -439,7 +462,7 @@ def api_user_update(request, pk):
     if _protected_account(request, profile) or (not request.user.is_superuser and (
         _boolean(data, 'is_staff') is True or _boolean(data, 'is_superuser') is True
     )):
-        return JsonResponse({'success': False, 'message': 'Solo un superusuario puede administrar acceso técnico.'}, status=403)
+        return JsonResponse({'success': False, 'message': 'No tienes autorización para administrar esta cuenta protegida.'}, status=403)
 
     if (None in (full_name, email, rut, password) or not full_name or len(full_name) > 150
             or len(email) > 100 or len(rut) > 12 or not _valid_status(status, True)):
@@ -616,6 +639,7 @@ def api_user_update(request, pk):
         return JsonResponse({'success': False, 'message': 'No se pudo completar la operación. Inténtalo nuevamente.'}, status=500)
 
 @permission_gate({'POST': 'usuarios.toggle_status'})
+@validated_payload({})
 def api_user_toggle_status(request, pk):
     """
     Habilita o Inhabilita un usuario con 1 click.
@@ -623,18 +647,21 @@ def api_user_toggle_status(request, pk):
     if request.method != 'POST':
         return JsonResponse({'success': False, 'message': 'Método no permitido'}, status=405)
 
-    profile = get_object_or_404(_users_scope(request), id=pk)
-    if _protected_account(request, profile):
-        return JsonResponse({'success': False, 'message': 'Cuenta técnica protegida.'}, status=403)
-    if profile.user_id == request.user.id:
-        return JsonResponse({'success': False, 'message': 'No puede cambiar su propio estado.'}, status=400)
-    
-    # Prevenir deshabilitar al usuario admin principal
-    if profile.user and profile.user.username == 'admin' and profile.status == 'Activo':
-        return JsonResponse({'success': False, 'message': 'No es posible inhabilitar la cuenta de Administrador Principal del sistema.'}, status=400)
-
-    nuevo_estado = 'Inactivo' if profile.status == 'Activo' else 'Activo'
+    data = _get_request_data(request)
+    if 'status' in data and data['status'] not in ('Activo', 'Inactivo'):
+        return JsonResponse({'success': False, 'message': 'Estado inválido.'}, status=400)
     with transaction.atomic():
+        profile = get_object_or_404(_users_scope(request).select_for_update(), id=pk)
+        if _protected_account(request, profile):
+            return JsonResponse({'success': False, 'message': 'No tienes autorización para administrar esta cuenta protegida.'}, status=403)
+        if profile.user_id == request.user.id:
+            return JsonResponse({'success': False, 'message': 'No puede cambiar su propio estado.'}, status=400)
+        nuevo_estado = data.get('status') or ('Inactivo' if profile.status == 'Activo' else 'Activo')
+        if profile.user and profile.user.username == 'admin' and nuevo_estado == 'Inactivo':
+            return JsonResponse({'success': False, 'message': 'No es posible inhabilitar la cuenta de Administrador Principal del sistema.'}, status=400)
+        if profile.status == nuevo_estado and profile.user.is_active == (nuevo_estado == 'Activo'):
+            return JsonResponse({'success': True, 'new_status': nuevo_estado,
+                                 'is_active': nuevo_estado == 'Activo', 'message': 'La cuenta ya tenía ese estado.'})
         profile.status = nuevo_estado
         profile.save(update_fields=['status', 'updated_at'])
         if profile.user:
@@ -666,7 +693,7 @@ def api_user_delete(request, pk):
 
     profile = get_object_or_404(_users_scope(request), id=pk)
     if _protected_account(request, profile):
-        return JsonResponse({'success': False, 'message': 'Cuenta técnica protegida.'}, status=403)
+        return JsonResponse({'success': False, 'message': 'No tienes autorización para administrar esta cuenta protegida.'}, status=403)
     if profile.user_id == request.user.id:
         return JsonResponse({'success': False, 'message': 'No puede dar de baja su propia cuenta.'}, status=400)
 
@@ -729,7 +756,7 @@ def api_user_reset_password(request, pk):
 
     profile = get_object_or_404(_users_scope(request), id=pk)
     if _protected_account(request, profile):
-        return JsonResponse({'success': False, 'message': 'Cuenta técnica protegida.'}, status=403)
+        return JsonResponse({'success': False, 'message': 'No tienes autorización para administrar esta cuenta protegida.'}, status=403)
     data = _get_request_data(request)
     new_password = _password(data)
 
@@ -834,6 +861,7 @@ def api_roles_list(request):
 
 @permission_gate({'POST': 'roles.create'})
 @admin_only
+@limit_admin_creation
 @validated_payload(ROLE_FIELDS)
 def api_role_create(request):
     """
@@ -1073,6 +1101,7 @@ def api_role_delete(request, pk):
 
 @permission_gate({'POST': 'roles.create'})
 @admin_only
+@limit_admin_creation
 @validated_payload(ROLE_FIELDS)
 def api_role_duplicate(request, pk):
     """
@@ -1094,6 +1123,8 @@ def api_role_duplicate(request, pk):
         return JsonResponse({'success': False, 'message': 'El nombre Administrador está reservado para el rol de sistema.'}, status=400)
     candidate_name = base_name
     counter = 1
+    if 'name' in data and Role.objects.filter(name__iexact=base_name).exists():
+        return JsonResponse({'success': False, 'message': 'Ya existe un rol con ese nombre.'}, status=400)
     while Role.objects.filter(name__iexact=candidate_name).exists():
         counter += 1
         suffix = f' {counter}'
@@ -1152,6 +1183,8 @@ def api_role_duplicate(request, pk):
 
 @permission_gate({'POST': 'roles.manage_features'})
 @admin_only
+@limit_admin_creation
+@validated_payload(PERMISSION_FIELDS)
 def api_add_custom_permission(request):
     """
     Permite al Super Administrador registrar una nueva función/privilegio dinámico en el catálogo.
@@ -1222,6 +1255,7 @@ def _catalog_audit(request, table, record, action, previous=None):
 
 
 @permission_gate({'GET': 'delegaciones.view', 'POST': 'delegaciones.create'})
+@limit_admin_creation
 @validated_payload(DELEGATION_FIELDS)
 def api_delegations(request):
     """Lista y crea delegaciones usadas por la asignación real de funcionarios."""
@@ -1367,15 +1401,22 @@ def api_delegation_update(request, pk):
 
 
 @permission_gate({'POST': 'delegaciones.delete'})
+@validated_payload({})
 def api_delegation_toggle(request, pk):
     if request.method != 'POST':
         return JsonResponse({'success': False, 'message': 'Método no permitido.'}, status=405)
-    item = get_object_or_404(_delegations_scope(request), id=pk)
-    previous = {'name': item.name, 'scope': item.scope, 'status': item.status}
-    if item.status == 'Activo' and item.users.filter(deleted_at__isnull=True, status='Activo').exists():
-        return JsonResponse({'success': False, 'message': 'La delegación tiene funcionarios activos.'}, status=400)
-    item.status = 'Inactivo' if item.status == 'Activo' else 'Activo'
+    data = _get_request_data(request)
+    if 'status' in data and data['status'] not in ('Activo', 'Inactivo'):
+        return JsonResponse({'success': False, 'message': 'Estado inválido.'}, status=400)
     with transaction.atomic():
+        item = get_object_or_404(_delegations_scope(request).select_for_update(), id=pk)
+        previous = {'name': item.name, 'scope': item.scope, 'status': item.status}
+        nuevo_estado = data.get('status') or ('Inactivo' if item.status == 'Activo' else 'Activo')
+        if nuevo_estado == item.status:
+            return JsonResponse({'success': True, 'message': 'La delegación ya tenía ese estado.', 'status': item.status})
+        if nuevo_estado == 'Inactivo' and item.users.filter(deleted_at__isnull=True, status='Activo').exists():
+            return JsonResponse({'success': False, 'message': 'La delegación tiene funcionarios activos.'}, status=400)
+        item.status = nuevo_estado
         item.save(update_fields=['status', 'updated_at'])
         _catalog_audit(request, 'delegacion', item, 'UPDATE', previous)
     return JsonResponse({'success': True, 'message': f"Delegación {item.status.lower()} correctamente.", 'status': item.status})
@@ -1442,6 +1483,7 @@ def _position_mutation_denied(request, item=None, name=None):
 
 
 @permission_gate({'GET': 'cargos.view', 'POST': 'cargos.create'})
+@limit_admin_creation
 @validated_payload(POSITION_FIELDS)
 def api_positions(request):
     """Lista y crea cargos institucionales asignables a funcionarios."""
@@ -1520,18 +1562,25 @@ def api_position_update(request, pk):
 
 
 @permission_gate({'POST': 'cargos.delete'})
+@validated_payload({})
 def api_position_toggle(request, pk):
     if request.method != 'POST':
         return JsonResponse({'success': False, 'message': 'Método no permitido.'}, status=405)
-    item = get_object_or_404(Position, id=pk, deleted_at__isnull=True)
-    denied = _position_mutation_denied(request, item)
-    if denied:
-        return denied
-    previous = {'name': item.name, 'description': item.description, 'status': item.status}
-    if item.status == 'Activo' and item.users.filter(deleted_at__isnull=True, status='Activo').exists():
-        return JsonResponse({'success': False, 'message': 'El cargo tiene funcionarios activos.'}, status=400)
-    item.status = 'Inactivo' if item.status == 'Activo' else 'Activo'
+    data = _get_request_data(request)
+    if 'status' in data and data['status'] not in ('Activo', 'Inactivo'):
+        return JsonResponse({'success': False, 'message': 'Estado inválido.'}, status=400)
     with transaction.atomic():
+        item = get_object_or_404(Position.objects.select_for_update(), id=pk, deleted_at__isnull=True)
+        denied = _position_mutation_denied(request, item)
+        if denied:
+            return denied
+        previous = {'name': item.name, 'description': item.description, 'status': item.status}
+        nuevo_estado = data.get('status') or ('Inactivo' if item.status == 'Activo' else 'Activo')
+        if nuevo_estado == item.status:
+            return JsonResponse({'success': True, 'message': 'El cargo ya tenía ese estado.', 'status': item.status})
+        if nuevo_estado == 'Inactivo' and item.users.filter(deleted_at__isnull=True, status='Activo').exists():
+            return JsonResponse({'success': False, 'message': 'El cargo tiene funcionarios activos.'}, status=400)
+        item.status = nuevo_estado
         item.save(update_fields=['status', 'updated_at'])
         _catalog_audit(request, 'cargo', item, 'UPDATE', previous)
     return JsonResponse({'success': True, 'message': f"Cargo {item.status.lower()} correctamente.", 'status': item.status})

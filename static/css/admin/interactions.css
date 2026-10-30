@@ -1,6 +1,15 @@
 /* Short transitions keep forms and data changes readable without delaying actions. */
 .modal.fade .modal-dialog { transform: translateY(10px) scale(.99); transition: transform 180ms ease-out; }
 .modal.show .modal-dialog { transform: none; }
+/* El movimiento de entrada es breve y no retrasa el formulario ni sus datos. */
+.modal.show .modal-body form { animation: admin-form-in 220ms ease-out both; }
+.admin-option-loading {
+  display: inline-block; flex: 0 0 auto; width: .85rem; height: .85rem;
+  margin-inline-start: auto; border: 2px solid currentColor;
+  border-right-color: transparent; border-radius: 50%; vertical-align: middle;
+  animation: admin-option-spin 700ms linear infinite;
+}
+.admin-button-loading { margin-inline-start: .55rem; }
 .admin-loading {
   display: flex; align-items: center; justify-content: center; gap: .65rem;
   min-height: 6rem; padding: 1.25rem; color: #526477; background: #f8fafc;
@@ -21,10 +30,14 @@ input[aria-invalid="true"], textarea[aria-invalid="true"], select[aria-invalid="
 button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible { outline: 3px solid #b17a2c; outline-offset: 2px; }
 @keyframes admin-dialog-in { from { opacity: 0; transform: translateY(8px) scale(.99); } to { opacity: 1; transform: none; } }
 @keyframes admin-dialog-out { to { opacity: 0; transform: translateY(5px) scale(.99); } }
+@keyframes admin-form-in { from { opacity: .65; transform: translateY(5px); } to { opacity: 1; transform: none; } }
+@keyframes admin-option-spin { to { transform: rotate(360deg); } }
 @media (prefers-reduced-motion: reduce) {
   .maintainer-view { animation: none !important; }
   .modal.fade .modal-dialog { transition: none; transform: none; }
   .swal2-popup.swal2-show, .swal2-popup.swal2-hide, .filter-chip, .active-filter-chip { animation: none; }
+  .modal.show .modal-body form, .admin-option-loading { animation: none; }
+  .admin-option-loading { border-right-color: currentColor; }
   .page-pill, .delegacion-filter-pill, .usuario-filter-pill, #paginaAnteriorCargos,
   #paginaSiguienteCargos, #btnToggleFiltros { transition: none !important; }
   .page-pill:active, .delegacion-filter-pill:active, .usuario-filter-pill:active,

@@ -1,4 +1,4 @@
-        async function cargarVecinosDesdeDB(mostrarAviso = false) {
+        async function cargarVecinosDesdeDB(mostrarAviso = false, silencioError = false) {
             try {
                 const response = await fetch('/api/vecinos/');
                 const data = await response.json();
@@ -12,9 +12,11 @@
                 actualizarIndicadoresDiscretos();
                 ejecutarFiltroCompletoVecinos();
                 if (mostrarAviso) mostrarToast(`✓ ${datasetVecinos.length} vecinos cargados desde la base de datos`);
+                return true;
             } catch (error) {
                 console.error('Error cargando vecinos:', error);
-                Swal.fire({icon: 'error', title: 'No se pudieron cargar los vecinos', text: error.message, confirmButtonColor: '#A30F32'});
+                if (!silencioError) Swal.fire({icon: 'error', title: 'No se pudieron cargar los vecinos', text: error.message, confirmButtonColor: '#A30F32'});
+                return false;
             }
         }
 
@@ -550,7 +552,11 @@
                 const data = await response.json();
                 if (!response.ok || !data.success) throw new Error(data.errors ? Object.values(data.errors).join(' ') : (data.message || 'No fue posible guardar el vecino.'));
                 if (bsModalVecino) bsModalVecino.hide();
-                await cargarVecinosDesdeDB(false);
+                const actualizado = await cargarVecinosDesdeDB(false, true);
+                if (actualizado === false) {
+                    await Swal.fire({icon: 'warning', title: 'Vecino guardado', text: 'Los datos se guardaron, pero no se pudo actualizar el listado. Recarga la sección antes de continuar.', confirmButtonColor: '#A30F32'});
+                    return;
+                }
                 mostrarToast('✓ ' + data.message);
                 Swal.fire({icon: 'success', title: 'Vecino guardado', text: data.message || 'Datos del vecino guardados exitosamente.', confirmButtonColor: '#1B365D'});
             } catch (error) {

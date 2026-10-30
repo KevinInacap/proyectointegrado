@@ -346,6 +346,32 @@
             return { viewName: parts[0] || 'dashboard', reportView: parts[1] || 'general' };
         }
 
+        // El indicador acompaña la petición real; no retrasa el cambio de vista.
+        const adminViewRequests = new Map();
+        function loadAdminView(viewName, load) {
+            if (adminViewRequests.has(viewName)) return adminViewRequests.get(viewName);
+            const option = document.getElementById('sub-' + viewName)
+                || document.getElementById('nav-btn-' + viewName);
+            let indicator = null;
+            if (option) {
+                indicator = document.createElement('span');
+                indicator.className = 'admin-option-loading';
+                indicator.setAttribute('aria-hidden', 'true');
+                option.append(indicator);
+                option.setAttribute('aria-busy', 'true');
+            }
+            const request = Promise.resolve().then(load);
+            adminViewRequests.set(viewName, request);
+            const finish = () => {
+                if (adminViewRequests.get(viewName) !== request) return;
+                adminViewRequests.delete(viewName);
+                indicator?.remove();
+                option?.removeAttribute('aria-busy');
+            };
+            request.then(finish, error => { finish(); console.warn('No se pudo preparar la vista:', error); });
+            return request;
+        }
+
         function switchView(viewName, updateUrl = true, reportView = 'general') {
             const targetView = document.getElementById('view-' + viewName);
             if (!targetView || !targetView.classList.contains('maintainer-view')) return;
@@ -395,13 +421,16 @@
                     // Los indicadores se cargan desde la API del módulo, no desde cifras de demostración.
                 }, 50);
             }
-            if (viewName === 'usuarios') cargarUsuariosDesdeDB(false);
-            if (viewName === 'vecinos') cargarVecinosDesdeDB(false);
-            if (viewName === 'delegaciones') initDelegacionesView();
-            if (viewName === 'cargos') initCargosView();
-            if (viewName === 'roles') initRolesView(false);
-            if (viewName === 'solicitudes-sociales' && typeof window.loadSocialReviewRequests === 'function') window.loadSocialReviewRequests();
-            if (viewName === 'atenciones') cargarAtencionesDB();
+            const loaders = {
+                usuarios: () => cargarUsuariosDesdeDB(false),
+                vecinos: () => cargarVecinosDesdeDB(false),
+                delegaciones: () => initDelegacionesView(),
+                cargos: () => initCargosView(),
+                roles: () => initRolesView(false),
+                atenciones: () => cargarAtencionesDB(),
+                'solicitudes-sociales': () => window.loadSocialReviewRequests?.()
+            };
+            if (loaders[viewName]) loadAdminView(viewName, loaders[viewName]);
         }
 
         document.addEventListener('DOMContentLoaded', () => {

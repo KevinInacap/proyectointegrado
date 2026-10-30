@@ -37,6 +37,12 @@ const event = {preventDefault(){}, currentTarget:{querySelector(){return null;}}
     nodes.vecinoTelefono.value = '12345';
     await ctx.guardarVecino(event);
     assert.equal(requests.length,2,'un teléfono nuevo inválido debe rechazarse');
+    nodes.vecinoTelefono.value = '123456';
+    ctx.cargarVecinosDesdeDB = async () => false;
+    await ctx.guardarVecino(event);
+    assert.equal(requests.length, 3);
+    assert.equal(alerts.at(-1).icon, 'warning');
+    assert.match(alerts.at(-1).text, /se guardaron.*no se pudo actualizar/i);
     let exported;
     const sheet = {'!ref':'A1:A1', A1:{t:'s', v:'=HYPERLINK("https://example.test")', f:'HYPERLINK("https://example.test")'}};
     ctx.window = {XLSX: {}};

@@ -2,6 +2,7 @@ import json
 from unittest.mock import patch
 
 from django.contrib.auth import get_user_model
+from django.db import IntegrityError
 from django.test import TestCase
 from django.urls import reverse
 from django.utils import timezone
@@ -99,6 +100,40 @@ class DelegadoRegistryTests(TestCase):
                 neighbor.refresh_from_db()
                 self.assertEqual(neighbor.nombre, self.registration['nombre'])
                 self.assertEqual(neighbor.estado, 'Activo')
+
+    def test_neighbor_create_and_update_are_atomic_with_audit(self):
+        url = reverse('activities:api_vecinos')
+        with patch('activities.views.AuditLog.objects.create', side_effect=RuntimeError('auditoría caída')):
+            with self.assertRaises(RuntimeError):
+                self.client.post(url, json.dumps(self.registration), content_type='application/json')
+        self.assertFalse(Vecino.objects.exists())
+        neighbor = self.neighbor()
+        detail = reverse('activities:api_vecino_detail', args=[neighbor.pk])
+        payload = dict(self.registration, direccion='Dirección cambiada')
+        with patch('activities.views.AuditLog.objects.create', side_effect=RuntimeError('auditoría caída')):
+            with self.assertRaises(RuntimeError):
+                self.client.put(detail, json.dumps(payload), content_type='application/json')
+        neighbor.refresh_from_db()
+        self.assertEqual(neighbor.direccion, self.registration['direccion'])
+
+    def test_partial_neighbor_edit_preserves_unsent_values(self):
+        neighbor = self.neighbor(estado='Inactivo', telefono='912345678')
+        detail = reverse('activities:api_vecino_detail', args=[neighbor.pk])
+        response = self.client.put(detail, json.dumps({'direccion': 'Nueva dirección 10'}), content_type='application/json')
+        self.assertEqual(response.status_code, 200, response.content)
+        neighbor.refresh_from_db()
+        self.assertEqual(neighbor.direccion, 'Nueva dirección 10')
+        self.assertEqual(neighbor.telefono, '912345678')
+        self.assertEqual(neighbor.estado, 'Inactivo')
+        self.assertEqual(neighbor.nombre, self.registration['nombre'])
+
+    def test_neighbor_collision_is_reported_without_database_details(self):
+        url = reverse('activities:api_vecinos')
+        with patch('activities.views.Vecino.objects.create', side_effect=IntegrityError('detalles privados')):
+            response = self.client.post(url, json.dumps(self.registration), content_type='application/json')
+        self.assertEqual(response.status_code, 400)
+        self.assertNotIn('detalles privados', response.content.decode())
+        self.assertFalse(Vecino.objects.exists())
 
     def test_attention_failure_rolls_back_neighbor_and_both_audits(self):
         with patch('activities.views.Activity.objects.create', side_effect=RuntimeError('Fallo simulado')):

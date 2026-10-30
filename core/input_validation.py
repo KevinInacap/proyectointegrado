@@ -73,6 +73,8 @@ def validated_payload(schema):
 USER_FIELDS = {'username': (150, 'username', True), 'full_name': (150, 'name', True), 'email': (100, 'email', True), 'rut': (12, 'text', True)}
 ROLE_FIELDS = {'name': (50, 'label', True), 'description': (255, 'text', False)}
 POSITION_FIELDS = {'name': (50, 'label', True), 'description': (500, 'text', False)}
+PERMISSION_FIELDS = {'module_id': (50, 'text', False), 'code': (100, 'text', True),
+    'name': (120, 'label', True), 'desc': (255, 'text', False)}
 DELEGATION_FIELDS = {'name': (100, 'label', True), 'scope': (100, 'label', True), 'commune': (100, 'name', True),
     'address': (200, 'text', False), 'phone': (30, 'phone', False), 'email': (120, 'email', False),
     'manager_name': (150, 'name', False), 'schedule': (120, 'text', False), 'description': (500, 'text', False), 'photo_url': (255, 'text', False)}

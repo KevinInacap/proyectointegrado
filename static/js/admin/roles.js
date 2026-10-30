@@ -6,6 +6,7 @@
         let paginaActualRoles = 1;
         let filasPorPaginaRoles = 10;
         let rolEliminarId = null;
+        let eliminandoRol = false;
         let verPermisosExtendidos = false;
         let solicitudRolesActual = 0;
 
@@ -179,6 +180,11 @@
             renderTablaRoles();
         }
 
+        function rolProtegido(rol) {
+            return Boolean(rol && (rol.is_system || rol.is_base_role || rol.is_admin_role ||
+                ['Operador', 'Consultor', 'Verificador'].includes(rol.name)));
+        }
+
         function renderTablaRoles() {
             const tbody = document.getElementById('tablaRolesBody');
             if (!tbody) return;
@@ -223,8 +229,8 @@
                 permsHtml += ` <a href="javascript:void(0)" class="ms-2 text-primary text-decoration-none fw-semibold small" onclick="abrirModalVerPermisos(${r.id})" title="Ver detalle de permisos">Ver detalle</a>`;
 
                 // Botones de acción fieles al PDF (Lápiz editar y Basurero borrar) + Duplicar
-                const isCoreProtected = (r.name === 'Administrador' || r.name === 'Operador' || r.name === 'Consultor');
-                const btnDelete = `<button class="btn-action-icon btn-action-delete" onclick="abrirModalEliminarRol(${r.id})" title="${isCoreProtected ? 'Rol del sistema protegido' : 'Eliminar este rol'}">
+                const isCoreProtected = rolProtegido(r);
+                const btnDelete = `<button type="button" class="btn-action-icon btn-action-delete" ${isCoreProtected ? 'disabled' : `onclick="abrirModalEliminarRol(${Number(r.id)})"`} aria-label="${isCoreProtected ? 'Rol protegido' : 'Eliminar rol'}" title="${isCoreProtected ? 'Rol base o de sistema protegido' : 'Eliminar este rol'}">
                     <i class="bi bi-trash" style="color: ${isCoreProtected ? '#94A3B8' : '#DC2626'};"></i>
                 </button>`;
 
@@ -568,7 +574,7 @@
 
             if (elNombre) elNombre.textContent = `¿Eliminar el rol "${rol.name}"?`;
 
-            const isCoreProtected = rol.is_system || rol.name === 'Administrador';
+            const isCoreProtected = rolProtegido(rol);
             const hasUsers = (rol.users_count > 0);
 
             if (isCoreProtected) {
@@ -589,10 +595,14 @@
         }
 
         async function ejecutarEliminarRolConfirmado() {
-            if (!rolEliminarId) return;
+            if (!rolEliminarId || eliminandoRol) return;
+            const requestedId = rolEliminarId;
+            const btnConfirm = document.getElementById('btnConfirmarEliminarRol');
+            eliminandoRol = true;
+            if (btnConfirm) btnConfirm.disabled = true;
 
             try {
-                const res = await fetch(`/api/roles/${rolEliminarId}/delete/`, {
+                const res = await fetch(`/api/roles/${requestedId}/delete/`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -602,7 +612,7 @@
                 const data = await res.json();
                 if (!data.success) throw new Error(data.message || 'Error al eliminar el rol');
 
-                datasetRoles = datasetRoles.filter(r => r.id !== rolEliminarId);
+                datasetRoles = datasetRoles.filter(r => r.id !== requestedId);
                 renderTarjetasPermisosRoles(datasetRoles);
                 if (bsModalEliminarRol) bsModalEliminarRol.hide();
                 filtrarRoles();
@@ -610,6 +620,9 @@
             } catch (err) {
                 console.warn("No se pudo eliminar el rol:", err);
                 Swal.fire({icon: 'error', title: 'No se eliminó el rol', text: err.message || 'La base de datos rechazó la operación.', confirmButtonColor: '#A30F32'});
+            } finally {
+                eliminandoRol = false;
+                if (btnConfirm && rolEliminarId === requestedId) btnConfirm.disabled = false;
             }
         }
 
