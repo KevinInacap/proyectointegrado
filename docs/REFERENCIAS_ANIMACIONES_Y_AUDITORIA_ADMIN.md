@@ -15,6 +15,13 @@ Actualizado: 30 de octubre de 2026.
 
 En esta entrega se utilizan CSS y las API existentes del navegador; no se añadieron estas bibliotecas como dependencias. Las animaciones son breves y los indicadores de carga acompañan peticiones reales. Los formularios se mantienen utilizables con movimiento reducido.
 
+## Revisión de visibilidad y publicación
+
+- Las transiciones anteriores de secciones y formularios eran muy breves y una regla del tema tenía prioridad sobre la transición del modal. Se reforzaron las entradas de secciones, formularios, filtros, opciones y paginadores, y se añadieron degradados y respuestas al pasar y presionar botones. La acción no espera a que termine la animación.
+- Se respeta `prefers-reduced-motion`: los movimientos se desactivan cuando la persona lo solicita en su sistema.
+- El servidor AWS consultado el 30 de octubre de 2026 entregaba estáticos con caché de siete días y una versión antigua de `neighbors.js`. Se cambiaron las versiones en las URL de los archivos actualizados y el script de despliegue verifica todos los estáticos propios por contenido. Es necesario desplegar la nueva versión en la instancia para verla allí.
+- Se verificaron las pruebas automatizadas, pero está pendiente la revisión visual real de la duración, apariencia y respuesta de las animaciones: el acceso al navegador local estaba deshabilitado en la configuración del entorno.
+
 ## Problemas corregidos
 
 - Las pantallas de cargos, roles, delegaciones, vecinos, usuarios y atenciones muestran carga durante consultas reales; abrir un formulario o cambiar una lista tiene una transición breve. El foco entra a un campo visible y la preferencia de movimiento reducido se respeta.

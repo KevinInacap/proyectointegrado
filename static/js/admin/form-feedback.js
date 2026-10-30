@@ -43,7 +43,10 @@
         if (!node || !node.animate || window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return;
         // Cancel only our own transition, never unrelated animations on the element.
         transitions.get(node)?.cancel();
-        transitions.set(node, node.animate([{opacity: 0.65, transform: 'translateY(5px)'}, {opacity: 1, transform: 'translateY(0)'}], {duration: 180, easing: 'ease-out'}));
+        transitions.set(node, node.animate(
+            [{opacity: 0.45, transform: 'translateY(10px)'}, {opacity: 1, transform: 'translateY(0)'}],
+            {duration: 360, easing: 'cubic-bezier(.22, 1, .36, 1)'}
+        ));
     }
     document.addEventListener('DOMContentLoaded', () => {
         document.querySelectorAll('form').forEach(form => { form.noValidate = true; });

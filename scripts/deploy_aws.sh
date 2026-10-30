@@ -31,20 +31,14 @@ backup_dir="$(dirname "$project_root")/sgr-backups"
 deployed_marker="$backup_dir/deployed.sha"
 
 static_matches() {
-    cmp -s static/css/admin/admin-glass-pro.css staticfiles/css/admin/admin-glass-pro.css &&
-    cmp -s static/js/admin/admin-bundle.js staticfiles/js/admin/admin-bundle.js &&
-    cmp -s static/js/admin/roles.js staticfiles/js/admin/roles.js &&
-    cmp -s static/js/admin/form-feedback.js staticfiles/js/admin/form-feedback.js &&
-    cmp -s static/css/admin/interactions.css staticfiles/css/admin/interactions.css &&
-    cmp -s static/js/session-guard.js staticfiles/js/session-guard.js &&
-    cmp -s static/js/social-navigation.js staticfiles/js/social-navigation.js &&
-    cmp -s staticfiles/css/admin/admin-glass-pro.css /var/www/sgr/static/css/admin/admin-glass-pro.css &&
-    cmp -s staticfiles/js/admin/admin-bundle.js /var/www/sgr/static/js/admin/admin-bundle.js &&
-    cmp -s staticfiles/js/admin/roles.js /var/www/sgr/static/js/admin/roles.js &&
-    cmp -s staticfiles/js/admin/form-feedback.js /var/www/sgr/static/js/admin/form-feedback.js &&
-    cmp -s staticfiles/css/admin/interactions.css /var/www/sgr/static/css/admin/interactions.css &&
-    cmp -s staticfiles/js/session-guard.js /var/www/sgr/static/js/session-guard.js &&
-    cmp -s staticfiles/js/social-navigation.js /var/www/sgr/static/js/social-navigation.js
+    # Comprueba todos los archivos propios versionados, no solo una selección:
+    # evita declarar el despliegue correcto con otro módulo antiguo en Nginx.
+    local source relative
+    while IFS= read -r -d '' source; do
+        relative="${source#static/}"
+        cmp -s "$source" "staticfiles/$relative" || return 1
+        cmp -s "$source" "/var/www/sgr/static/$relative" || return 1
+    done < <(git ls-files -z -- static/)
 }
 
 if [[ "$current" == "$target" && -f "$deployed_marker" && "$(< "$deployed_marker")" == "$target" ]] && static_matches; then
@@ -83,10 +77,13 @@ fi
 .venv/bin/python manage.py check --database default
 .venv/bin/python manage.py migrate --noinput
 .venv/bin/python manage.py collectstatic --noinput --verbosity 0
+# collectstatic puede conservar un archivo anterior si el destino tiene una
+# fecha posterior. El checksum garantiza que los archivos propios coincidan.
+rsync -ac "$project_root/static/" "$project_root/staticfiles/"
 # Nginx sirve /var/www/sgr/static, no STATIC_ROOT. Publicar también los
 # archivos nuevos de cada panel evita páginas sin estilos tras actualizar.
 sudo install -d -o nginx -g nginx -m 755 /var/www/sgr/static
-sudo rsync -a --chown=nginx:nginx "$project_root/staticfiles/" /var/www/sgr/static/
+sudo rsync -ac --chown=nginx:nginx "$project_root/staticfiles/" /var/www/sgr/static/
 sudo systemctl restart sgr
 
 for attempt in 1 2 3 4 5; do
@@ -95,6 +92,7 @@ for attempt in 1 2 3 4 5; do
        curl --fail --silent --max-time 8 --output /dev/null http://127.0.0.1/static/css/dashboard_position.css &&
        curl --fail --silent --max-time 8 --output /dev/null http://127.0.0.1/static/css/admin/admin-glass-pro.css &&
        curl --fail --silent --max-time 8 --output /dev/null http://127.0.0.1/static/js/admin/admin-bundle.js &&
+       curl --fail --silent --max-time 8 --output /dev/null http://127.0.0.1/static/js/admin/neighbors.js &&
        curl --fail --silent --max-time 8 --output /dev/null http://127.0.0.1/static/js/admin/roles.js &&
        curl --fail --silent --max-time 8 --output /dev/null http://127.0.0.1/static/js/admin/form-feedback.js &&
        curl --fail --silent --max-time 8 --output /dev/null http://127.0.0.1/static/css/admin/interactions.css &&
