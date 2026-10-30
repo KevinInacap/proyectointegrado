@@ -965,9 +965,11 @@ body {
     min-width: 280px !important;
 }
 
-/* El menú lateral debe mostrarse completo: se compacta, no se oculta tras un scroll. */
+/* El menú se compacta y conserva scroll interno si la altura no alcanza. */
 .sidebar-menu-scrollable {
-    overflow: visible !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    min-height: 0;
     padding-bottom: 0.35rem !important;
     gap: 1px !important;
 }
@@ -1858,7 +1860,7 @@ table,
 /* Menú municipal: una única selección azul sobre el fondo carmesí. */
 .sidebar { background:linear-gradient(180deg,#8b1d2c 0%,#68121e 48%,#50101c 100%) !important; }
 .sidebar-brand-box,.sidebar-menu-scrollable { position:relative; z-index:3; }
-.sidebar-menu-scrollable { flex:1 0 auto !important; }
+.sidebar-menu-scrollable { flex:1 1 auto !important; }
 .sidebar .nav-item-btn {
     min-height:39px; border:1px solid transparent; border-radius:11px;
     transition:background .2s,box-shadow .2s,color .2s;

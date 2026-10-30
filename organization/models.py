@@ -31,7 +31,15 @@ class Delegation(BaseModel):
         creating = self.pk is None
         super().save(*args, **kwargs)
         if creating and not self.code:
-            self.code = f'DEL-{self.pk:03d}'
+            base = f'DEL-{str(self.pk).zfill(3)[-16:]}'
+            candidate = base
+            suffix = 1
+            # Un código ingresado manualmente puede anticipar el siguiente ID.
+            # No debe impedir guardar otra sede con código automático.
+            while type(self).objects.filter(code__iexact=candidate).exists():
+                suffix += 1
+                candidate = f'{base[:20 - len(str(suffix)) - 1]}-{suffix}'
+            self.code = candidate
             type(self).objects.filter(pk=self.pk).update(code=self.code)
 
 

@@ -34,4 +34,18 @@ context.window.matchMedia = () => ({matches:true});
 context.seleccionarDelegacion('centro');
 assert.equal(motions.length, 2, 'movimiento reducido no debe iniciar animaciones');
 assert.equal(cancelled, 2, 'movimiento reducido cancela la transición en curso');
-console.log('OK: ficha de delegación escapa datos, anima la selección y respeta movimiento reducido.');
+let cleared = null, scrollBehavior = null;
+let cardUnselected = false, rowUnselected = false;
+context.clearTimeout = id => { cleared = id; };
+context.document.querySelectorAll = selector => selector === '.delegacion-modular-glass-card'
+    ? [{classList: {remove: name => { cardUnselected = name === 'active-delegacion'; }}}]
+    : [{classList: {remove: name => { rowUnselected = name === 'table-row-selected'; }}}];
+context.document.getElementById = id => id === 'panelDetalleDelegacion' ? panel
+    : id === 'view-delegaciones' ? {scrollIntoView: options => { scrollBehavior = options.behavior; }} : null;
+context.cerrarFichaDelegacion();
+assert.equal(cleared, 1, 'al cerrar se cancela el desplazamiento pendiente');
+assert.equal(panel.style.display, 'none');
+assert.equal(cardUnselected && rowUnselected, true, 'al cerrar se limpia la selección');
+assert.equal(scrollBehavior, 'auto', 'el cierre respeta movimiento reducido');
+assert.equal(vm.runInContext('delegacionSeleccionadaActiva', context), null);
+console.log('OK: ficha de delegación escapa datos, anima la selección, limpia el cierre y respeta movimiento reducido.');

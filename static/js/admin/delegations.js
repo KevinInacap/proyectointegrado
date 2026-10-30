@@ -514,11 +514,24 @@
 
         let animacionFichaDelegacion = null;
         let desplazamientoFichaDelegacion = null;
+        function cerrarFichaDelegacion() {
+            clearTimeout(desplazamientoFichaDelegacion);
+            desplazamientoFichaDelegacion = null;
+            animacionFichaDelegacion?.cancel();
+            animacionFichaDelegacion = null;
+            delegacionSeleccionadaActiva = null;
+            document.querySelectorAll('.delegacion-modular-glass-card').forEach(c => c.classList.remove('active-delegacion'));
+            document.querySelectorAll('.delegacion-table-row').forEach(r => r.classList.remove('table-row-selected'));
+            const panel = document.getElementById('panelDetalleDelegacion');
+            if (panel) panel.style.display = 'none';
+            const view = document.getElementById('view-delegaciones');
+            if (view) view.scrollIntoView({ behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
+        }
         function seleccionarDelegacion(id) {
-            if (typeof cerrarAdminDrawer === 'function') cerrarAdminDrawer();
-            delegacionSeleccionadaActiva = id;
             const data = datasetDelegacionesDetalle[id];
             if (!data) return;
+            if (typeof cerrarAdminDrawer === 'function') cerrarAdminDrawer();
+            delegacionSeleccionadaActiva = id;
 
             // Actualizar estilo activo en las tarjetas modulares
             document.querySelectorAll('.delegacion-modular-glass-card').forEach(c => c.classList.remove('active-delegacion'));
@@ -578,7 +591,7 @@
             panel.innerHTML = `
                 <!-- Barra de Navegación Rápida -->
                 <div class="mb-3 d-flex justify-content-between align-items-center flex-wrap gap-2">
-                    <button class="btn btn-sm btn-outline-muni-red rounded-pill px-3 py-1 fw-bold shadow-xs d-flex align-items-center gap-2" onclick="document.getElementById('panelDetalleDelegacion').style.display='none'; document.getElementById('view-delegaciones').scrollIntoView({behavior: 'smooth'});">
+                    <button class="btn btn-sm btn-outline-muni-red rounded-pill px-3 py-1 fw-bold shadow-xs d-flex align-items-center gap-2" onclick="cerrarFichaDelegacion()">
                         <i class="bi bi-arrow-left"></i> Volver a todas las delegaciones
                     </button>
                     <span class="badge bg-white text-secondary border px-3 py-2 rounded-pill small fw-bold shadow-xs">
@@ -662,9 +675,9 @@
                         </div>
                         <div class="col-sm-6 col-md-3">
                             <div class="delegacion-detail-kpi-card">
-                                <div class="text-muted small fw-bold text-uppercase" style="font-size: 0.72rem; letter-spacing: 0.04em;">Vecinos Atendidos</div>
+                                <div class="text-muted small fw-bold text-uppercase" style="font-size: 0.72rem; letter-spacing: 0.04em;">RUT con caso social</div>
                                 <div class="fs-3 fw-bold my-1" style="color: var(--muni-navy);">${data.vecinosRegistrados == null ? 'Sin datos' : data.vecinosRegistrados}</div>
-                                <small class="text-muted fw-semibold">Población territorial</small>
+                                <small class="text-muted fw-semibold">RUT distintos en esta sede</small>
                             </div>
                         </div>
                         <div class="col-sm-6 col-md-3">
@@ -720,6 +733,7 @@
 
             panel.style.display = 'block';
             animacionFichaDelegacion?.cancel();
+            animacionFichaDelegacion = null;
             if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches && panel.animate) {
                 animacionFichaDelegacion = panel.animate(
                     [{ opacity: .3, transform: 'translateY(18px)' }, { opacity: 1, transform: 'translateY(0)' }],
@@ -769,7 +783,7 @@
             doc.setTextColor(60, 60, 60);
             doc.text(`Sector: ${data.sector} | Sede: ${data.direccion}`, 14, 39);
             doc.text(`Teléfono: ${data.telefono} | Correo: ${data.email || 'No registrado'} | Encargado: ${data.delegado}`, 14, 44);
-            doc.text(`Cumplimiento de Metas: ${data.cumplimiento == null ? 'Sin datos' : `${data.cumplimiento}%`} | Atenciones del Mes: ${data.atencionesMes ?? 'Sin datos'} | Vecinos: ${data.vecinosRegistrados ?? 'Sin datos'}`, 14, 49);
+            doc.text(`Cumplimiento: ${data.cumplimiento == null ? 'Sin datos' : `${data.cumplimiento}%`} | Atenciones del Mes: ${data.atencionesMes ?? 'Sin datos'} | RUT con caso social: ${data.vecinosRegistrados ?? 'Sin datos'}`, 14, 49);
 
             // Tabla de funcionarios
             const rowsStaff = data.funcionarios.map(f => [f.nombre, f.cargo, f.rol]);

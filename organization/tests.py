@@ -447,6 +447,15 @@ class AdminCatalogRegressionTests(TestCase):
     def post(self, name, data, *args):
         return self.client.post(reverse('organization:' + name, args=args), data=json.dumps(data), content_type='application/json')
 
+    def test_generated_delegation_code_avoids_manual_code_collision(self):
+        Delegation.objects.create(id=200001, name='Sede con código manual', scope='Prueba', code='DEL-200002')
+        response = self.post('api_delegations', {'name': 'Sede generada', 'scope': 'Zona Prueba'})
+        self.assertEqual(response.status_code, 200, response.content)
+        generated = Delegation.objects.get(pk=response.json()['id'])
+        self.assertEqual(generated.pk, 200002)
+        self.assertEqual(generated.code, 'DEL-200002-2')
+        self.assertEqual(response.json()['code'], generated.code)
+
     def test_explicit_status_changes_are_idempotent_and_audited_once(self):
         from core.models import AuditLog
         cargo = Position.objects.create(name='Cargo sin funcionarios')

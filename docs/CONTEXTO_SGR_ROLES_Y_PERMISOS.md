@@ -1,5 +1,11 @@
 # Criterios funcionales del SGR
 
+> **Documento histórico:** conserva decisiones y referencias de una etapa anterior. Algunas afirmaciones siguientes sobre asignación independiente de cargos y roles y ausencia de rol base ya no describen la implementación actual. Consultar `organization/models.py`, `organization/views.py`, las migraciones de `organization` y `docs/REFERENCIAS_ANIMACIONES_Y_AUDITORIA_ADMIN.md` para la conducta vigente.
+>
+> En el modelo actual, cargo y rol representan conceptos distintos: el cargo determina el panel y el rol aporta permisos. `Role.position` vincula el rol con un cargo; la creación o duplicación por la API exige un cargo activo y la asignación de roles a un funcionario comprueba su cargo. Un cargo nuevo crea un rol base vinculado sin permisos, configurable después. El campo admite nulos para preservar registros históricos ambiguos pendientes de revisión, de modo que no debe afirmarse que todos los roles antiguos ya están vinculados. La migración `0018_role_position` solo enlaza casos inequívocos; no se debe asignar automáticamente un cargo a los demás sin revisarlos.
+
+## Texto histórico
+
 Este documento conserva las decisiones funcionales que deben mantenerse al ampliar el sistema. La guía y los requisitos de evaluación describen actores, alcance territorial, catálogos y controles; la regla de navegación definida para esta implementación es que el cargo selecciona el panel y el rol concede acciones.
 
 ## Identidad, panel y alcance

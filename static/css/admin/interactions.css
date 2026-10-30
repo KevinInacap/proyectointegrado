@@ -174,3 +174,29 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
   :is(.content-body, .modal) button:not(:disabled):hover,
   :is(.content-body, .modal) button:not(:disabled):active { transform: none !important; }
 }
+
+/* Bootstrap espera la transición del contenedor al cerrar el modal. Mantenerla
+   sincronizada con el diálogo evita ocultarlo antes de terminar su movimiento. */
+.modal.fade { transition: opacity 620ms ease !important; }
+.modal-backdrop.fade { transition: opacity 620ms ease !important; }
+
+/* La selección y los resultados nuevos acompañan filtros y paginación. */
+.delegacion-modular-glass-card {
+  transition: transform 560ms cubic-bezier(.22, 1, .36, 1),
+              border-color 560ms ease, box-shadow 560ms ease !important;
+  animation: admin-result-enter 480ms cubic-bezier(.22, 1, .36, 1) backwards;
+}
+.delegacion-table-row {
+  transition: background-color 500ms ease !important;
+  animation: admin-result-enter 480ms cubic-bezier(.22, 1, .36, 1) backwards;
+}
+@keyframes admin-result-enter {
+  from { opacity: .35; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .modal.fade, .modal-backdrop.fade { transition: none !important; }
+  .delegacion-modular-glass-card, .delegacion-table-row {
+    animation: none !important; transition: none !important;
+  }
+}
